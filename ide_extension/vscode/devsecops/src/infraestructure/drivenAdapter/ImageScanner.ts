@@ -6,8 +6,8 @@ import IScannerGateway from "../../domain/model/gateways/IScannerGateway";
 
 export class ImageScanner implements IScannerGateway{
 
-    scan(elementToScan: string, outputChannel: OutputChannel): void {
-        exec(`/usr/local/bin/docker run --rm -v /var/run/docker.sock:/var/run/docker.sock bancolombia/devsecops-engine-tools:1.54.0 devsecops-engine-tools --platform_devops local --remote_config_repo docker_default_remote_config --module engine_container --tool trivy --image_to_scan ${elementToScan}`, (error, stdout, stderr) => {
+    scan(elementToScan: string, outputChannel: OutputChannel, toolVersion: string): void {
+        exec(`/usr/local/bin/docker run --rm -v /var/run/docker.sock:/var/run/docker.sock bancolombia/devsecops-engine-tools:${toolVersion} devsecops-engine-tools --platform_devops local --remote_config_repo docker_default_remote_config --module engine_container --tool trivy --image_to_scan ${elementToScan}`, (error, stdout, stderr) => {
             if (error) {
                 console.error(`exec error: ${error}`);
                 console.error(`stderr: ${stderr}`);
