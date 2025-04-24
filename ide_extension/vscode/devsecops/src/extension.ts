@@ -153,7 +153,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const imageScanDisposable = vscode.commands.registerCommand('devsecops.imageScan', async () => {
 		const images = await getDockerImages();
-		images.map((image) => console.log(image));
 		let  imageName = "";
 		const imageOptions = images.map(image => image.label);
 		const quickPickItems: vscode.QuickPickItem[] = images.map(i => {
@@ -175,7 +174,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 		vscode.window.showInformationMessage(`DevSecOps Image Scanning: ${imageName}`);
 
-		const scanner = imageScanRequest();
+		const scanner = await imageScanRequest();
 		const outputChannel = vscode.window.createOutputChannel('IaC Scan Results');
 		scanner.makeScan(
 			imageName,
