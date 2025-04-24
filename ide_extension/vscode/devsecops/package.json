@@ -101,11 +101,11 @@
       },
       {
         "command": "devsecops.iacScan",
-        "title": "IAC SCAN"
+        "title": "DevSecOps Iac Scan"
       },
       {
         "command": "devsecops.imageScan",
-        "title": "IMAGE SCAN"
+        "title": "DevSecOps Image Scan"
       }
     ],
     "menus": {
@@ -124,7 +124,7 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "rm -rfv ./out && npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
