@@ -84,6 +84,29 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
+	const isInstalledDocker = async () => {
+
+		const options: IOptions = {
+			env: {
+				...process.env,
+				PATH: process.env.PATH + ':/usr/local/bin'
+			}
+		};
+
+		const dockerCli = new Docker(options);
+		return dockerCli.command('version').then(function (data) {
+				const output = data.raw.split('\n');
+				const version = output[1].split(':')[1].trim();
+				return version;
+			}
+		).catch(function (err) {
+				console.error(err);
+				return false;
+			}
+		);
+
+	};
+
 	const getDockerImages = async () => {
 		const options: IOptions = {
 			env: {
@@ -92,7 +115,14 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		};
 		const dockerCli = new Docker(options);
-	
+
+		const isDockerInstalled = await isInstalledDocker();
+
+		if(!isDockerInstalled) {
+			vscode.window.showErrorMessage('Docker is not installed or not found in the PATH.');
+			return [];
+		}
+
 		return dockerCli.command('images').then(function (data) {
 			const output = data.raw.split('\n');
 			const images = [];
@@ -135,7 +165,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 		await vscode.window.showQuickPick(quickPickItems,{
 			placeHolder: 'Select an image to scan'
-		});		
+		});
 
 		vscode.window.showInformationMessage(`DevSecOps Image Scanning: ${imageName}`);
 
