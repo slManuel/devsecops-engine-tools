@@ -131,10 +131,9 @@ export function activate(context: vscode.ExtensionContext) {
 				const imageInfo = output[i].split(/\s+/);
 				const imageName = imageInfo[0];
 				const imageTag = imageInfo[1];
-				const imageSize = imageInfo[6];
 	
-				if (imageName && imageTag && imageSize) {
-					const imageLabel = `${imageName}:${imageTag} (${imageSize})`;
+				if (imageName && imageTag) {
+					const imageLabel = `${imageName}:${imageTag}`;
 					const imageItem = new vscode.TreeItem(imageLabel, vscode.TreeItemCollapsibleState.None);
 					imageItem.command = {
 						command: 'devsecops.imageScan',
@@ -155,7 +154,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const imageScanDisposable = vscode.commands.registerCommand('devsecops.imageScan', async () => {
 		const images = await getDockerImages();
 		images.map((image) => console.log(image));
-		const imageName = "defectdojo/defectdojo-django";
+		let  imageName = "";
 		const imageOptions = images.map(image => image.label);
 		const quickPickItems: vscode.QuickPickItem[] = images.map(i => {
 			return {
@@ -163,9 +162,16 @@ export function activate(context: vscode.ExtensionContext) {
 			};
 		});
 
-		await vscode.window.showQuickPick(quickPickItems,{
+		const pickedImage = await vscode.window.showQuickPick(quickPickItems,{
 			placeHolder: 'Select an image to scan'
 		});
+
+		if (!pickedImage) {
+			vscode.window.showErrorMessage('No image selected');
+			return;
+		} else {
+			imageName = pickedImage.label;
+		}
 
 		vscode.window.showInformationMessage(`DevSecOps Image Scanning: ${imageName}`);
 
