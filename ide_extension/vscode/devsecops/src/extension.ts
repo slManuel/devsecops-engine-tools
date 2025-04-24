@@ -70,7 +70,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 			vscode.window.showInformationMessage(`DevSecOps Iac Scanning: ${folderPath}`);
 
-			const scanner = iacScanRequest();
+			const scanner = await iacScanRequest();
 			const outputChannel = vscode.window.createOutputChannel('IaC Scan Results');
 			scanner.makeScan(folderPath,
 				organizationName,

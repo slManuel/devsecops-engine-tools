@@ -17,7 +17,8 @@ export class IacScanUseCase implements IIacScanUseCase {
 
     constructor(
         private iacScanner: IacScanner,
-        private restClient: IRestClientGateway
+        private restClient: IRestClientGateway,
+        private toolVersion: string
     ){}
 
     public async scan(folderToScan: string,
@@ -30,35 +31,41 @@ export class IacScanUseCase implements IIacScanUseCase {
         outputChannel: OutputChannel
     ): Promise<void> {
 
-        const releaseIdData = await this.restClient.get(VARIABLE_GROUPS_AD_BY_RELEASE_DEFINITION_ID
-            .replace("{organization}", organizationName)
-            .replace("{project}", projectName)
-            .replace("{definitionId}", definitionId),
-            AuthEncoder.encode(adUserName, adPersonalAccessToken)
-        );
+        let releaseIdData: any;
+        let variablesFromLibrary: { [key: string]: VariableData } = {};
+        let releaseEnvironments: number[] = [];
+        let variableGroupsIds: number[] = [];
+        let variableGroupsData: any;
+        let variableReplace: boolean = false;
 
-        const variablesFromLibrary = releaseIdData.variables;
-
-        const releaseEnvironments = releaseIdData.environments.map( (environment: { variableGroups: number[]; }) => {
-            return environment.variableGroups;
-        });
-
-        releaseEnvironments.push(releaseIdData.variableGroups);
-
-        const variableGroupsIds = [...new Set(releaseEnvironments.flat())];
-
-        const variableGroupsData = await this.restClient.get(VARIABLE_GROUPS_AD_BY_ID
-            .replace("{organization}", organizationName)
-            .replace("{project}", projectName)
-            .replace("{groupIds}", variableGroupsIds.join(",")),
-            AuthEncoder.encode(adUserName, adPersonalAccessToken)
-        );
-
-        variableGroupsData.value.forEach((variableGroup: { variables: { [x: string]: VariableData; }; }) => {
-            Object.keys(variableGroup.variables).forEach((variableName: string) => {
-                variablesFromLibrary[variableName] = variableGroup.variables[variableName];
+        if (organizationName === "" || projectName === "" || definitionId === "" || adUserName === "" || adPersonalAccessToken === "") {
+            console.log("Configuration values are missing≤ avoiding variable replace");
+        } else {
+            variableReplace = true;
+            releaseIdData = await this.restClient.get(VARIABLE_GROUPS_AD_BY_RELEASE_DEFINITION_ID
+                .replace("{organization}", organizationName)
+                .replace("{project}", projectName)
+                .replace("{definitionId}", definitionId),
+                AuthEncoder.encode(adUserName, adPersonalAccessToken)
+            );
+            variablesFromLibrary = releaseIdData.variables;
+            releaseEnvironments = releaseIdData.environments.map( (environment: { variableGroups: number[]; }) => {
+                return environment.variableGroups;
             });
-        });
+            releaseEnvironments.push(releaseIdData.variableGroups);
+            variableGroupsIds = [...new Set(releaseEnvironments.flat())];
+            variableGroupsData = await this.restClient.get(VARIABLE_GROUPS_AD_BY_ID
+                .replace("{organization}", organizationName)
+                .replace("{project}", projectName)
+                .replace("{groupIds}", variableGroupsIds.join(",")),
+                AuthEncoder.encode(adUserName, adPersonalAccessToken)
+            );
+            variableGroupsData.value.forEach((variableGroup: { variables: { [x: string]: VariableData; }; }) => {
+                Object.keys(variableGroup.variables).forEach((variableName: string) => {
+                    variablesFromLibrary[variableName] = variableGroup.variables[variableName];
+                });
+            });
+        }
 
         this.files = await fs.readdir(folderToScan);
         const regex = /#{|}#/g;
@@ -81,7 +88,7 @@ export class IacScanUseCase implements IIacScanUseCase {
             lines.forEach((line, _) => {
                 if(regex.test(line)){
                     const variableName = line.split("#{")[1].split("}#")[0];
-                    if(variablesFromLibrary[variableName]){
+                    if(variablesFromLibrary[variableName] && variableReplace){
                         replacedFile = replacedFile + "\n" + line.replace(`#{${variableName}}#`, variablesFromLibrary[variableName].value);
                     }
                 }else{
@@ -94,7 +101,7 @@ export class IacScanUseCase implements IIacScanUseCase {
             this.files = this.files.filter((value) => value !== file);
             i++;
         }
-        this.iacScanner.scan(folderToScan, outputChannel);
+        this.iacScanner.scan(folderToScan, outputChannel, this.toolVersion);
         await this.cleanFolder(folderToScan);
 
     }

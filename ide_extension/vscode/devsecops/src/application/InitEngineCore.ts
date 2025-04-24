@@ -6,8 +6,9 @@ import { ImageScanRequest } from "../infraestructure/entryPoint/ImageScanRequest
 import { ImageScanner } from "../infraestructure/drivenAdapter/ImageScanner";
 import { ImageScanUseCase } from "../domain/usecase/ImageScanUseCase";
 
-export function iacScanRequest(): IacScanRequest {
-    const iacScanUseCase = new IacScanUseCase(new IacScanner(), new RestClient());
+export async function iacScanRequest(): Promise<IacScanRequest> {
+    const dockerImageVersion = await getLatestDockerImageVersion();
+    const iacScanUseCase = new IacScanUseCase(new IacScanner(), new RestClient(), dockerImageVersion);
     return new IacScanRequest(iacScanUseCase);
 }
 
