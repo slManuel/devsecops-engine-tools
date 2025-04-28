@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { iacScanRequest, imageScanRequest } from './application/InitEngineCore';
 import { Docker, IOptions } from 'docker-cli-js';
 
-class DevSecOpsTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
+export class DevSecOpsTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<vscode.TreeItem | undefined | null | void> = new vscode.EventEmitter<vscode.TreeItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
