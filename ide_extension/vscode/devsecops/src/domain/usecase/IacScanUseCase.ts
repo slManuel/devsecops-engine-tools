@@ -79,8 +79,6 @@ export class IacScanUseCase implements IIacScanUseCase {
             const filePath = path.join(folderToScan, file);
             const fileStats = await fs.stat(filePath);
             if (fileStats.isDirectory()) {
-                this.files = this.files.filter((value) => value !== file);
-                await this.scanSubFolder(filePath, folderToScan);
                 continue;
             }
             const fileContent = await fs.readFile(filePath, 'utf-8');
@@ -118,20 +116,5 @@ export class IacScanUseCase implements IIacScanUseCase {
             }
         }
     }
-
-    private async scanSubFolder(folderPath: string, folderToScan: string): Promise<void> {
-        const subFolderFiles = await fs.readdir(folderPath);
-        for (const subFile of subFolderFiles) {
-            const subFilePath = path.join(folderPath, subFile);
-            const subFileStats = await fs.stat(subFilePath);
-            if (subFileStats.isFile()) {
-                const newFilePath = path.join(folderToScan, subFile);
-                await fs.copyFile(subFilePath, newFilePath);
-                this.files.push(subFile);
-            } else if (subFileStats.isDirectory()) {
-                await this.scanSubFolder(subFilePath, folderToScan);
-            }
-        }
-    };
 
 }
