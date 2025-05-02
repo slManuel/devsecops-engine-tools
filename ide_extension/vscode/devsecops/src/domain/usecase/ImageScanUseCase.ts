@@ -9,8 +9,8 @@ export class ImageScanUseCase implements IImageScanUseCase {
         private dockerImageVersion: string
     ){}
     
-    scan(imageToScan: string, outputChannel: OutputChannel): void {
-        this.imageScanner.scan(imageToScan, outputChannel, this.dockerImageVersion);
+    async scan(imageToScan: string, outputChannel: OutputChannel): Promise<boolean> {
+        return await this.imageScanner.scan(imageToScan, outputChannel, this.dockerImageVersion);
     }
     
 }

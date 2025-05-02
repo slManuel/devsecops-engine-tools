@@ -5,8 +5,8 @@ export class ImageScanRequest {
 
     constructor(private imageScanUseCase: IImageScanUseCase){}
 
-    makeScan(elementToScan: string, outputChannel: OutputChannel): any {
-        this.imageScanUseCase.scan(
+    makeScan(elementToScan: string, outputChannel: OutputChannel): Promise<boolean> {
+        return this.imageScanUseCase.scan(
             elementToScan,
             outputChannel
         );

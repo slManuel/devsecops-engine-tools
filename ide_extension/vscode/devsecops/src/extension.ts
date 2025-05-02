@@ -72,7 +72,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 			const scanner = await iacScanRequest();
 			const outputChannel = vscode.window.createOutputChannel('IaC Scan Results');
-			scanner.makeScan(folderPath,
+			let scanResult = await scanner.makeScan(folderPath,
 				organizationName,
 				projectName,
 				definitionId,
@@ -81,6 +81,11 @@ export function activate(context: vscode.ExtensionContext) {
 				environment,
 				outputChannel
 			);
+			if(scanResult) {
+				vscode.window.showInformationMessage('Iac Scan completed successfully');
+			}else{
+				vscode.window.showErrorMessage('Iac Scan failed');
+			}
 		}
 	});
 
@@ -176,10 +181,18 @@ export function activate(context: vscode.ExtensionContext) {
 
 		const scanner = await imageScanRequest();
 		const outputChannel = vscode.window.createOutputChannel('IaC Scan Results');
-		scanner.makeScan(
+		
+		let scanResult = await scanner.makeScan(
 			imageName,
 			outputChannel
 		);
+
+		if(scanResult) {
+			vscode.window.showInformationMessage('Image Scan completed successfully');
+		}else{
+			vscode.window.showErrorMessage('Image Scan failed');
+		}
+
 	});
 
 	context.subscriptions.push(disposable);

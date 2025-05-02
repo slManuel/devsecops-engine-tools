@@ -29,7 +29,7 @@ export class IacScanUseCase implements IIacScanUseCase {
         adPersonalAccessToken: string,
         environment: string,
         outputChannel: OutputChannel
-    ): Promise<void> {
+    ): Promise<boolean> {
 
         let releaseIdData: any;
         let variablesFromLibrary: { [key: string]: VariableData } = {};
@@ -93,15 +93,13 @@ export class IacScanUseCase implements IIacScanUseCase {
                     replacedFile = replacedFile + "\n" + line;
                 }
             });
-            console.log(replacedFile);
             const newFilePath = path.join(folderToScan, `modified_${file}`);
             await fs.writeFile(newFilePath, replacedFile, 'utf-8');
             this.files = this.files.filter((value) => value !== file);
             i++;
         }
-        this.iacScanner.scan(folderToScan, outputChannel, this.toolVersion);
         await this.cleanFolder(folderToScan);
-
+        return await this.iacScanner.scan(folderToScan, outputChannel, this.toolVersion);
     }
 
     private async cleanFolder(folderToScan: string): Promise<void> {
