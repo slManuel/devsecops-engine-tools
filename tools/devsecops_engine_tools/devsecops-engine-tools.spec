@@ -42,7 +42,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name=f"devsecops-engine-tools-{os.getenv('VERSION', 'latest')}",
+    name=f"devsecops-engine-tools",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
