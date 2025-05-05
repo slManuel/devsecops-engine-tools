@@ -2,16 +2,24 @@
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 # Collect non-code files from dependencies (e.g., JSON, YAML, etc.)
-datas = collect_data_files('devsecops_engine_tools')
+datas = collect_data_files('tools')
+hidden_imports = []
+# Initialize hidden_imports as an empty list
+hidden_imports += [
+    'urllib3',
+    'github',
+    'github.MainClass',
+    'github.GithubRetry',
+]
 
 # Collect hidden imports
-hidden_imports = collect_submodules('devsecops_engine_tools')
+hidden_imports += collect_submodules('devsecops_engine_tools')
 
 block_cipher = None
 
 a = Analysis(
     ['engine_core/src/applications/runner_engine_core.py'],
-    pathex=['tools/devsecops_engine_tools'],
+    pathex=['tools'],  
     binaries=[],
     datas=datas,
     hiddenimports=hidden_imports,
@@ -34,14 +42,14 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='devsecops-engine-tools',
+    name=f"devsecops-engine-tools-{os.getenv('VERSION', 'latest')}",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=True,
+    console=True,  
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
