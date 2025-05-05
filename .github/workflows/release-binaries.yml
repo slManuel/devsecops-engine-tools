@@ -64,12 +64,8 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: zip devsecops-engine-tools.zip dist/devsecops-engine-tools${{ matrix.suffix }}
 
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: devsecops-engine-tools.zip
-          asset_name: devsecops-engine-tools_${{ matrix.name }}_x86_64.zip
-          asset_content_type: application/zip
+          name: devsecops-engine-tools-${{ matrix.os }}
+          path: dist/devsecops-engine-tools*
