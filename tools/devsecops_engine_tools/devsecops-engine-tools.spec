@@ -11,7 +11,7 @@ block_cipher = None
 
 a = Analysis(
     ['engine_core/src/applications/runner_engine_core.py'],
-    pathex=[],
+    pathex=['tools/devsecops_engine_tools'],
     binaries=[],
     datas=datas,
     hiddenimports=hidden_imports,
