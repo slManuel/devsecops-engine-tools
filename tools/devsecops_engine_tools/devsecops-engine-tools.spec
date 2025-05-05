@@ -10,7 +10,7 @@ hidden_imports = collect_submodules('devsecops_engine_tools')
 block_cipher = None
 
 a = Analysis(
-    ['tools/devsecops_engine_tools/engine_core/src/applications/runner_engine_core.py'],
+    ['engine_core/src/applications/runner_engine_core.py'],
     pathex=[],
     binaries=[],
     datas=datas,
