@@ -3,8 +3,7 @@ name: Build and Release Binaries
 on:
   push:
     branches:
-      - feature/*
-  pull_request:
+      - 'feature/**'
 
 jobs:
   build-release-artifacts:
