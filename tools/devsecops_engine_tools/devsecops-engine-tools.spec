@@ -3,6 +3,7 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 # Collect non-code files from dependencies (e.g., JSON, YAML, etc.)
 datas = collect_data_files('tools')
+datas += collect_data_files('azure.devops')
 hidden_imports = []
 # Initialize hidden_imports as an empty list
 hidden_imports += [
@@ -10,6 +11,7 @@ hidden_imports += [
     'github',
     'github.MainClass',
     'github.GithubRetry',
+    'azure.devops.v7_0.git'
 ]
 
 # Collect hidden imports
