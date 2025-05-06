@@ -4,6 +4,8 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 # Collect non-code files from dependencies (e.g., JSON, YAML, etc.)
 datas = collect_data_files('tools')
 datas += collect_data_files('azure.devops')
+datas += collect_data_files('pyfiglet', include_py_files=False)  
+
 hidden_imports = []
 # Initialize hidden_imports as an empty list
 hidden_imports += [
@@ -29,6 +31,19 @@ hidden_imports += [
     'python-decouple',
     'prettytable',
     'pyfiglet',
+    'paramiko',  
+    'dateutil.tz.tzfile',
+    'awscrt',
+    'aiohttp',
+    'multidict',
+    'opentelemetry',
+    'opentelemetry.trace',
+    'opentelemetry.context',
+    'opentelemetry.propagate',
+    'azure.core.pipeline.transport.AioHttpTransportResponse',
+    'azure.core.tracing.opentelemetry',
+    'azure.core.tracing.ext.opentelemetry_span',
+    'azure.core.tracing.ext.opencensus_span',
 ]
 
 # Collect hidden imports
