@@ -11,7 +11,24 @@ hidden_imports += [
     'github',
     'github.MainClass',
     'github.GithubRetry',
-    'azure.devops.v7_0.git'
+    'azure.devops.v7_0.git',
+    'pyfiglet.fonts',  # Agregado explícitamente
+    'requests',
+    'boto3',
+    'docker',
+    'rich',
+    'marshmallow',
+    'ruamel.yaml',
+    'Authlib',
+    'PyJWT',
+    'sympy',
+    'packageurl',
+    'distro',
+    'pexpect',
+    'requests_toolbelt',
+    'python-decouple',
+    'prettytable',
+    'pyfiglet',
 ]
 
 # Collect hidden imports
