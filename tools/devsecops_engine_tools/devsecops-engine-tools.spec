@@ -12,7 +12,7 @@ hidden_imports += [
     'github.MainClass',
     'github.GithubRetry',
     'azure.devops.v7_0.git',
-    'pyfiglet.fonts',  # Agregado explícitamente
+    'pyfiglet.fonts',  
     'requests',
     'boto3',
     'docker',
