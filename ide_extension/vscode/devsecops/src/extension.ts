@@ -1,46 +1,84 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { iacScanRequest, imageScanRequest } from './application/InitEngineCore';
 import { Docker, IOptions } from 'docker-cli-js';
+
+class CategoryTreeItem extends vscode.TreeItem {
+	constructor(
+	  public readonly label: string,
+	  public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+	  public readonly children: vscode.TreeItem[]
+	) {
+	  super(label, collapsibleState);
+	}
+  }
 
 export class DevSecOpsTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<vscode.TreeItem | undefined | null | void> = new vscode.EventEmitter<vscode.TreeItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
+	private categories: CategoryTreeItem[] = [];
+	private extensionPath: string;
 
-    getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
+	constructor(private context: vscode.ExtensionContext) {
+        this.extensionPath = context.extensionPath;
+        this.getItems();
+    }
+	
+	getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
         return element;
     }
 
-    getChildren(element?: vscode.TreeItem): Thenable<vscode.TreeItem[]> {
-        return Promise.resolve(this.getItems());
+	getChildren(element?: vscode.TreeItem): Thenable<vscode.TreeItem[]> {
+        if (!element) {
+            return Promise.resolve(this.categories);
+        }
+
+        if (element instanceof CategoryTreeItem) {
+            return Promise.resolve(element.children);
+        }
+        return Promise.resolve([]);
     }
 
-	private getItems(): vscode.TreeItem[] {
-		const items: vscode.TreeItem[] = [];
+	private getItems(): void {
+		const iacScanItems: vscode.TreeItem[] = [];
+		const imageScanItems: vscode.TreeItem[] = [];
 
-		const helloWorldItem = new vscode.TreeItem('Hello world', vscode.TreeItemCollapsibleState.None);
-		helloWorldItem.command = {
-			command: 'devsecops.helloWorld',
-			title: 'Hello World',
-			arguments: [helloWorldItem]
+		const imageScanItem = new vscode.TreeItem('Image Scan', vscode.TreeItemCollapsibleState.None);
+		imageScanItem.command = {
+			command: 'devsecops.imageScan',
+			title: 'IMAGE_SCAN',
+			arguments: [imageScanItem],
 		};
-		items.push(helloWorldItem);
+		imageScanItem.iconPath = new vscode.ThemeIcon('breakpoints-view-icon');
+		imageScanItem.tooltip = 'Scan a docker image';
+		imageScanItems.push(imageScanItem);
 
-		const iacScanItem = new vscode.TreeItem('Iac Scan', vscode.TreeItemCollapsibleState.None);
+		const iacScanItem = new vscode.TreeItem('Infrastructure as Code Scan', vscode.TreeItemCollapsibleState.None);
 		iacScanItem.command = {
 			command: 'devsecops.iacScan',
-			title: 'IAC SCAN',
+			title: 'IAC_SCAN',
 			arguments: [iacScanItem]
 		};
-		items.push(iacScanItem);
+		iacScanItem.iconPath = new vscode.ThemeIcon('breakpoints-view-icon');
+		iacScanItem.tooltip = 'Scan a folder for IaC vulnerabilities like k8s or dockerfiles';
+		iacScanItems.push(iacScanItem);
 
-		return items;
+		this.categories = [
+            new CategoryTreeItem('Infrastructure as code scans', vscode.TreeItemCollapsibleState.Expanded, iacScanItems),
+            new CategoryTreeItem('Containers scans', vscode.TreeItemCollapsibleState.Collapsed, imageScanItems),
+        ];
 	}
 }
 
 export function activate(context: vscode.ExtensionContext) {
 
-	const treeDataProvider = new DevSecOpsTreeDataProvider();
+	const treeDataProvider = new DevSecOpsTreeDataProvider(context);
 	vscode.window.registerTreeDataProvider('devsecops', treeDataProvider);
+	vscode.window.createTreeView('devsecops', {
+		treeDataProvider: treeDataProvider,
+		showCollapseAll: false,
+		canSelectMany: false,
+	});
 
 	console.log('DevSecOpse IDE Extension active');
 

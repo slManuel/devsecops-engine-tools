@@ -108,7 +108,7 @@
     "menus": {
       "view/title": [
         {
-          "command": "devsecops.helloWorld",
+          "command": "devsecops.imageScan",
           "when": "view == devsecopsView",
           "group": "navigation"
         },
