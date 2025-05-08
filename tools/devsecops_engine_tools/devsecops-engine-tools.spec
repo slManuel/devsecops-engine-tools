@@ -5,6 +5,10 @@ datas = collect_data_files('tools')
 datas += collect_data_files('azure.devops')
 datas += collect_data_files('pyfiglet', include_py_files=False)
 
+# Include _ssl.pyd explicitly to avoid missing DLL issues
+ssl_pyd_path = os.path.join(os.path.dirname(ssl.__file__), '_ssl.pyd')
+binaries = [(ssl_pyd_path, 'lib')]
+
 hidden_imports = [
     'urllib3',
     'github',
@@ -50,7 +54,7 @@ block_cipher = None
 a = Analysis(
     ['engine_core/src/applications/runner_engine_core.py'],
     pathex=['tools'],
-    binaries=[],
+    binaries=binaries,
     datas=datas,
     hiddenimports=hidden_imports,
     hookspath=[],
