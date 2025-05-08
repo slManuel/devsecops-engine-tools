@@ -1,9 +1,11 @@
 name: Build and Release Binaries
 
 on:
-  push:
+  pull_request:
+    types:
+      - closed
     branches:
-      - feature/*
+      - trunk
 
 jobs:
   build-release-artifacts:

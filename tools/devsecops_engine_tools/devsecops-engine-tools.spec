@@ -6,10 +6,7 @@ datas = collect_data_files('tools')
 datas += collect_data_files('azure.devops')
 datas += collect_data_files('pyfiglet', include_py_files=False)
 
-# Initialize hidden_imports as an empty list
 hidden_imports = []
-
-# Add hidden imports manually
 hidden_imports += [
     'urllib3',
     'github',
