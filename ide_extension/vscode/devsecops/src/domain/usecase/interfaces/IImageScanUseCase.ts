@@ -1,5 +1,5 @@
 import { OutputChannel } from "vscode";
 
 export interface IImageScanUseCase {
-    scan(imageToScan: string, outputChannel: OutputChannel): void;
+    scan(imageToScan: string, outputChannel: OutputChannel): Promise<boolean>;
 }

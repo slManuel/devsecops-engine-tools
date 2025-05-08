@@ -9,5 +9,5 @@ export interface IIacScanUseCase {
         adPersonalAccessToken: string,
         environment: string,
         outputChannel: OutputChannel
-    ): void;
+    ): Promise<boolean>;
 }

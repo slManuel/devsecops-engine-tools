@@ -1,46 +1,84 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { iacScanRequest, imageScanRequest } from './application/InitEngineCore';
 import { Docker, IOptions } from 'docker-cli-js';
 
-class DevSecOpsTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
+class CategoryTreeItem extends vscode.TreeItem {
+	constructor(
+	  public readonly label: string,
+	  public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+	  public readonly children: vscode.TreeItem[]
+	) {
+	  super(label, collapsibleState);
+	}
+  }
+
+export class DevSecOpsTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<vscode.TreeItem | undefined | null | void> = new vscode.EventEmitter<vscode.TreeItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
+	private categories: CategoryTreeItem[] = [];
+	private extensionPath: string;
 
-    getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
+	constructor(private context: vscode.ExtensionContext) {
+        this.extensionPath = context.extensionPath;
+        this.getItems();
+    }
+	
+	getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
         return element;
     }
 
-    getChildren(element?: vscode.TreeItem): Thenable<vscode.TreeItem[]> {
-        return Promise.resolve(this.getItems());
+	getChildren(element?: vscode.TreeItem): Thenable<vscode.TreeItem[]> {
+        if (!element) {
+            return Promise.resolve(this.categories);
+        }
+
+        if (element instanceof CategoryTreeItem) {
+            return Promise.resolve(element.children);
+        }
+        return Promise.resolve([]);
     }
 
-	private getItems(): vscode.TreeItem[] {
-		const items: vscode.TreeItem[] = [];
+	private getItems(): void {
+		const iacScanItems: vscode.TreeItem[] = [];
+		const imageScanItems: vscode.TreeItem[] = [];
 
-		const helloWorldItem = new vscode.TreeItem('Hello world', vscode.TreeItemCollapsibleState.None);
-		helloWorldItem.command = {
-			command: 'devsecops.helloWorld',
-			title: 'Hello World',
-			arguments: [helloWorldItem]
+		const imageScanItem = new vscode.TreeItem('Image Scan', vscode.TreeItemCollapsibleState.None);
+		imageScanItem.command = {
+			command: 'devsecops.imageScan',
+			title: 'IMAGE_SCAN',
+			arguments: [imageScanItem],
 		};
-		items.push(helloWorldItem);
+		imageScanItem.iconPath = new vscode.ThemeIcon('breakpoints-view-icon');
+		imageScanItem.tooltip = 'Scan a docker image';
+		imageScanItems.push(imageScanItem);
 
-		const iacScanItem = new vscode.TreeItem('Iac Scan', vscode.TreeItemCollapsibleState.None);
+		const iacScanItem = new vscode.TreeItem('Infrastructure as Code Scan', vscode.TreeItemCollapsibleState.None);
 		iacScanItem.command = {
 			command: 'devsecops.iacScan',
-			title: 'IAC SCAN',
+			title: 'IAC_SCAN',
 			arguments: [iacScanItem]
 		};
-		items.push(iacScanItem);
+		iacScanItem.iconPath = new vscode.ThemeIcon('breakpoints-view-icon');
+		iacScanItem.tooltip = 'Scan a folder for IaC vulnerabilities like k8s or dockerfiles';
+		iacScanItems.push(iacScanItem);
 
-		return items;
+		this.categories = [
+            new CategoryTreeItem('Infrastructure as code scans', vscode.TreeItemCollapsibleState.Expanded, iacScanItems),
+            new CategoryTreeItem('Containers scans', vscode.TreeItemCollapsibleState.Collapsed, imageScanItems),
+        ];
 	}
 }
 
 export function activate(context: vscode.ExtensionContext) {
 
-	const treeDataProvider = new DevSecOpsTreeDataProvider();
+	const treeDataProvider = new DevSecOpsTreeDataProvider(context);
 	vscode.window.registerTreeDataProvider('devsecops', treeDataProvider);
+	vscode.window.createTreeView('devsecops', {
+		treeDataProvider: treeDataProvider,
+		showCollapseAll: false,
+		canSelectMany: false,
+	});
 
 	console.log('DevSecOpse IDE Extension active');
 
@@ -70,9 +108,9 @@ export function activate(context: vscode.ExtensionContext) {
 
 			vscode.window.showInformationMessage(`DevSecOps Iac Scanning: ${folderPath}`);
 
-			const scanner = iacScanRequest();
+			const scanner = await iacScanRequest();
 			const outputChannel = vscode.window.createOutputChannel('IaC Scan Results');
-			scanner.makeScan(folderPath,
+			let scanResult = await scanner.makeScan(folderPath,
 				organizationName,
 				projectName,
 				definitionId,
@@ -81,8 +119,36 @@ export function activate(context: vscode.ExtensionContext) {
 				environment,
 				outputChannel
 			);
+			if(scanResult) {
+				vscode.window.showInformationMessage('Iac Scan completed successfully');
+			}else{
+				vscode.window.showErrorMessage('Iac Scan failed');
+			}
 		}
 	});
+
+	const isInstalledDocker = async () => {
+
+		const options: IOptions = {
+			env: {
+				...process.env,
+				PATH: process.env.PATH + ':/usr/local/bin'
+			}
+		};
+
+		const dockerCli = new Docker(options);
+		return dockerCli.command('version').then(function (data) {
+				const output = data.raw.split('\n');
+				const version = output[1].split(':')[1].trim();
+				return version;
+			}
+		).catch(function (err) {
+				console.error(err);
+				return false;
+			}
+		);
+
+	};
 
 	const getDockerImages = async () => {
 		const options: IOptions = {
@@ -92,7 +158,14 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		};
 		const dockerCli = new Docker(options);
-	
+
+		const isDockerInstalled = await isInstalledDocker();
+
+		if(!isDockerInstalled) {
+			vscode.window.showErrorMessage('Docker is not installed or not found in the PATH.');
+			return [];
+		}
+
 		return dockerCli.command('images').then(function (data) {
 			const output = data.raw.split('\n');
 			const images = [];
@@ -101,10 +174,9 @@ export function activate(context: vscode.ExtensionContext) {
 				const imageInfo = output[i].split(/\s+/);
 				const imageName = imageInfo[0];
 				const imageTag = imageInfo[1];
-				const imageSize = imageInfo[6];
 	
-				if (imageName && imageTag && imageSize) {
-					const imageLabel = `${imageName}:${imageTag} (${imageSize})`;
+				if (imageName && imageTag) {
+					const imageLabel = `${imageName}:${imageTag}`;
 					const imageItem = new vscode.TreeItem(imageLabel, vscode.TreeItemCollapsibleState.None);
 					imageItem.command = {
 						command: 'devsecops.imageScan',
@@ -124,8 +196,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const imageScanDisposable = vscode.commands.registerCommand('devsecops.imageScan', async () => {
 		const images = await getDockerImages();
-		images.map((image) => console.log(image));
-		const imageName = "defectdojo/defectdojo-django";
+		let  imageName = "";
 		const imageOptions = images.map(image => image.label);
 		const quickPickItems: vscode.QuickPickItem[] = images.map(i => {
 			return {
@@ -133,18 +204,33 @@ export function activate(context: vscode.ExtensionContext) {
 			};
 		});
 
-		await vscode.window.showQuickPick(quickPickItems,{
+		const pickedImage = await vscode.window.showQuickPick(quickPickItems,{
 			placeHolder: 'Select an image to scan'
-		});		
+		});
+
+		if (!pickedImage) {
+			vscode.window.showErrorMessage('No image selected');
+			return;
+		} else {
+			imageName = pickedImage.label;
+		}
 
 		vscode.window.showInformationMessage(`DevSecOps Image Scanning: ${imageName}`);
 
-		const scanner = imageScanRequest();
+		const scanner = await imageScanRequest();
 		const outputChannel = vscode.window.createOutputChannel('IaC Scan Results');
-		scanner.makeScan(
+		
+		let scanResult = await scanner.makeScan(
 			imageName,
 			outputChannel
 		);
+
+		if(scanResult) {
+			vscode.window.showInformationMessage('Image Scan completed successfully');
+		}else{
+			vscode.window.showErrorMessage('Image Scan failed');
+		}
+
 	});
 
 	context.subscriptions.push(disposable);
