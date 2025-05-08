@@ -6,7 +6,11 @@ on:
       - closed
     branches:
       - trunk
-
+  push:
+    branches:
+      - trunk
+      - feature/*
+      
 jobs:
   build-release-artifacts:
     strategy:
@@ -67,6 +71,7 @@ jobs:
         run: zip devsecops-engine-tools.zip dist/devsecops-engine-tools${{ matrix.suffix }}
 
       - name: Upload Artifact
+        if: startsWith(github.ref, 'refs/heads/trunk')
         uses: actions/upload-artifact@v4
         with:
           name: devsecops-engine-tools-${{ matrix.os }}
