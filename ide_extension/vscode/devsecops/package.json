@@ -46,6 +46,11 @@
           "default": true,
           "description": "Enable/Disable DevSecOps IDE Extension"
         },
+        "devsecops.imageToUse": {
+          "type": "string",
+          "default": "bancolombia/devsecops-engine-tools",
+          "description": "Docker image to use for scanning"
+        },
         "devsecops.organizationName": {
           "type": "string",
           "description": "Organization Name"

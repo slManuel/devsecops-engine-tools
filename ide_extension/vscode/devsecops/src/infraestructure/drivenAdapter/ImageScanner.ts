@@ -1,30 +1,36 @@
 import { OutputChannel } from "vscode";
 import OutputManager from "../helper/OutputManager";
-import {exec} from 'child_process';
+import { exec } from "child_process";
 
 import IScannerGateway from "../../domain/model/gateways/IScannerGateway";
 
-export class ImageScanner implements IScannerGateway{
+export class ImageScanner implements IScannerGateway {
+  scan(
+    elementToScan: string,
+    outputChannel: OutputChannel,
+    dockerImageName: string,
+    toolVersion: string
+  ): Promise<boolean> {
+    let scanResult: boolean = false;
+    exec(
+      `/usr/local/bin/docker run --rm -v /var/run/docker.sock:/var/run/docker.sock ${dockerImageName}:${toolVersion} devsecops-engine-tools --platform_devops local --remote_config_repo docker_default_remote_config --module engine_container --tool trivy --image_to_scan ${elementToScan}`,
+      (error, stdout, stderr) => {
+        if (error) {
+          console.error(`exec error: ${error}`);
+          console.error(`stderr: ${stderr}`);
+        }
 
-    scan(elementToScan: string, outputChannel: OutputChannel, toolVersion: string): Promise<boolean> {
-        let scanResult: boolean = false;
-        exec(`/usr/local/bin/docker run --rm -v /var/run/docker.sock:/var/run/docker.sock bancolombia/devsecops-engine-tools:${toolVersion} devsecops-engine-tools --platform_devops local --remote_config_repo docker_default_remote_config --module engine_container --tool trivy --image_to_scan ${elementToScan}`, (error, stdout, stderr) => {
-            if (error) {
-                console.error(`exec error: ${error}`);
-                console.error(`stderr: ${stderr}`);
-            }
-
-            const cleanedOutput = OutputManager.removeAnsiEscapeCodes(stdout);
-            outputChannel.appendLine('IMAGE SCAN OUTPUT:');
-            outputChannel.appendLine(cleanedOutput);
-            outputChannel.show();
-            scanResult = true;
-        });
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve(scanResult);
-            }, 1000000);
-        });
-    }
-
+        const cleanedOutput = OutputManager.removeAnsiEscapeCodes(stdout);
+        outputChannel.appendLine("IMAGE SCAN OUTPUT:");
+        outputChannel.appendLine(cleanedOutput);
+        outputChannel.show();
+        scanResult = true;
+      }
+    );
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(scanResult);
+      }, 1000000);
+    });
+  }
 }

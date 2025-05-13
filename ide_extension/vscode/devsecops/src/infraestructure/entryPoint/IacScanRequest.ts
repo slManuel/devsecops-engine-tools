@@ -6,6 +6,7 @@ export class IacScanRequest {
 
   async makeScan(
     folderToScan: string,
+    dockerImageName: string,
     organizationName: string,
     projectName: string,
     groupName: string,
@@ -16,6 +17,7 @@ export class IacScanRequest {
   ): Promise<boolean> {
     return await this.iacScannerUseCase.scan(
       folderToScan,
+      dockerImageName,
       organizationName,
       projectName,
       groupName,
