@@ -12,6 +12,46 @@ class CategoryTreeItem extends vscode.TreeItem {
     super(label, collapsibleState);
   }
 }
+class ScanResultItem extends vscode.TreeItem {
+  constructor(
+    public readonly label: string,
+    public readonly description: string,
+    public readonly timestamp: Date,
+    public readonly findings: FindingItem[]
+  ) {
+    super(label, vscode.TreeItemCollapsibleState.Collapsed);
+    this.tooltip = `${label} - ${findings.length} findings`;
+    this.description = `${findings.length} findings - ${timestamp.toLocaleString()}`;
+    this.iconPath = findings.length > 0 
+      ? new vscode.ThemeIcon("warning") 
+      : new vscode.ThemeIcon("pass");
+  }
+}
+class FindingItem extends vscode.TreeItem {
+  constructor(
+    public readonly finding: any // Using any for now, replace with proper type from your ScannerRes
+  ) {
+    super(finding.description || "Unknown Issue", vscode.TreeItemCollapsibleState.None);
+    this.description = finding.severity || "Unknown";
+    this.tooltip = `${finding.description}\nSeverity: ${finding.severity}\nResource: ${finding.resource || "Unknown"}`;
+    
+    // Set icon based on severity
+    switch (finding.severity?.toLowerCase()) {
+      case "critical":
+      case "high":
+        this.iconPath = new vscode.ThemeIcon("error");
+        break;
+      case "medium":
+        this.iconPath = new vscode.ThemeIcon("warning");
+        break;
+      case "low":
+        this.iconPath = new vscode.ThemeIcon("info");
+        break;
+      default:
+        this.iconPath = new vscode.ThemeIcon("question");
+    }
+  }
+}
 
 export class DevSecOpsTreeDataProvider
   implements vscode.TreeDataProvider<vscode.TreeItem>
@@ -24,14 +64,39 @@ export class DevSecOpsTreeDataProvider
   > = this._onDidChangeTreeData.event;
   private categories: CategoryTreeItem[] = [];
   private extensionPath: string;
+  private scanResults: ScanResultItem[] = [];
 
   constructor(private context: vscode.ExtensionContext) {
     this.extensionPath = context.extensionPath;
     this.getItems();
   }
 
+  public refresh(): void {
+    this.getItems();
+    this._onDidChangeTreeData.fire();
+  }
+
   getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
     return element;
+  }
+
+  public addScanResult(label: string, findings: any[], sourceType: 'iac' | 'image'): void {
+    const timestamp = new Date();
+    const findingItems = findings.map(f => new FindingItem(f));
+    
+    this.scanResults.unshift(new ScanResultItem(
+      `${sourceType === 'iac' ? 'IaC' : 'Image'}: ${label}`,
+      sourceType === 'iac' ? 'Infrastructure as Code' : 'Container Image',
+      timestamp,
+      findingItems
+    ));
+    
+    // Keep only the last 5 scan results
+    if (this.scanResults.length > 5) {
+      this.scanResults = this.scanResults.slice(0, 5);
+    }
+    
+    this.refresh();
   }
 
   getChildren(element?: vscode.TreeItem): Thenable<vscode.TreeItem[]> {
@@ -87,6 +152,11 @@ export class DevSecOpsTreeDataProvider
         vscode.TreeItemCollapsibleState.Collapsed,
         imageScanItems
       ),
+      new CategoryTreeItem(
+        "Scan results",
+        vscode.TreeItemCollapsibleState.Expanded,
+        this.scanResults
+      ),
     ];
   }
 }
@@ -102,13 +172,6 @@ export function activate(context: vscode.ExtensionContext) {
 
   console.log("DevSecOpse IDE Extension active");
 
-  const disposable = vscode.commands.registerCommand(
-    "devsecops.helloWorld",
-    () => {
-      vscode.window.showInformationMessage("Hello World");
-    }
-  );
-
   const iacScanDisposable = vscode.commands.registerCommand(
     "devsecops.iacScan",
     async () => {
@@ -116,6 +179,13 @@ export function activate(context: vscode.ExtensionContext) {
         canSelectFolders: true,
         canSelectFiles: false,
         canSelectMany: false,
+        defaultUri:
+          vscode.workspace.workspaceFolders &&
+          vscode.workspace.workspaceFolders.length > 0
+            ? vscode.Uri.file(
+                path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, "")
+              )
+            : vscode.Uri.file(require("os").homedir()),
         openLabel: "Select Folder",
       });
 
@@ -161,9 +231,15 @@ export function activate(context: vscode.ExtensionContext) {
           environment,
           outputChannel
         );
+        console.log("Scan result: ", scanResult);
         if (scanResult) {
           vscode.window.showInformationMessage(
             "Iac Scan completed successfully"
+          );
+          treeDataProvider.addScanResult(
+            folderPath,
+            scanResult.getFindings(),
+            'iac'
           );
         } else {
           vscode.window.showErrorMessage("Iac Scan failed");
@@ -295,7 +371,6 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  context.subscriptions.push(disposable);
   context.subscriptions.push(iacScanDisposable);
   context.subscriptions.push(imageScanDisposable);
 }

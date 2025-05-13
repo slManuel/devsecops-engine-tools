@@ -1,6 +1,7 @@
 import { OutputChannel } from "vscode";
 import { IImageScanUseCase } from "./interfaces/IImageScanUseCase";
 import IScannerGateway from "../model/gateways/IScannerGateway";
+import { ScannerRes } from "../model/ScannerRes";
 
 export class ImageScanUseCase implements IImageScanUseCase {
   constructor(
@@ -13,7 +14,7 @@ export class ImageScanUseCase implements IImageScanUseCase {
     imageToScan: string,
     outputChannel: OutputChannel,
     dockerImageName: string
-  ): Promise<boolean> {
+  ): Promise<ScannerRes> {
     return await this.imageScanner.scan(
       imageToScan,
       outputChannel,

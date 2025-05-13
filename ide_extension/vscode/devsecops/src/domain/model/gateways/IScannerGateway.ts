@@ -1,4 +1,5 @@
 import { OutputChannel } from "vscode";
+import { ScannerRes } from "../ScannerRes";
 
 export default interface IScannerGateway {
   scan(
@@ -7,5 +8,5 @@ export default interface IScannerGateway {
     dockerImageName: string,
     toolVersion?: string,
     dockerPath?: string
-  ): Promise<boolean>;
+  ): Promise<ScannerRes>;
 }

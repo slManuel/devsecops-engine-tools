@@ -9,6 +9,7 @@ import {
 import { AuthEncoder } from "../../infraestructure/helper/AuthEncoder";
 import { promises as fs } from "fs";
 import * as path from "path";
+import { ScannerRes } from "../model/ScannerRes";
 
 interface VariableData {
   value: string;
@@ -34,7 +35,7 @@ export class IacScanUseCase implements IIacScanUseCase {
     adPersonalAccessToken: string,
     environment: string,
     outputChannel: OutputChannel
-  ): Promise<boolean> {
+  ): Promise<ScannerRes> {
     let releaseIdData: any;
     let variablesFromLibrary: { [key: string]: VariableData } = {};
     let releaseEnvironments: number[] = [];
