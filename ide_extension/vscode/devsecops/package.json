@@ -132,7 +132,13 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./run-tests.js",
-    "deploy": "vsce publish --yarn"
+    "deploy": "vsce publish --yarn",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,js,json,md,html,css}": [
+      "prettier --write"
+    ]
   },
   "devDependencies": {
     "@types/mocha": "^10.0.9",
@@ -144,7 +150,10 @@
     "@vscode/test-cli": "^0.0.9",
     "@vscode/test-electron": "^2.4.1",
     "eslint": "^8.57.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.0.0",
     "mocha": "^11.1.0",
+    "prettier": "^3.5.3",
     "sinon": "^20.0.0",
     "typescript": "^5.4.5"
   },
