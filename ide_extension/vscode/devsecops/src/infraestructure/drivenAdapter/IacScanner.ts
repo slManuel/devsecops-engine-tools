@@ -8,11 +8,12 @@ export class IacScanner implements IScannerGateway {
     elementToScan: string,
     outputChannel: OutputChannel,
     dockerImageName: string,
-    toolVersion: string
+    toolVersion: string,
+    dockerPath: string
   ): Promise<boolean> {
     let scanResult: boolean = false;
     exec(
-      `/usr/local/bin/docker run --rm -v ${elementToScan}:/ms_artifact ${dockerImageName}:${toolVersion}  devsecops-engine-tools --platform_devops local --remote_config_repo docker_default_remote_config --module engine_iac --tool checkov --folder_path /ms_artifact`,
+      `${dockerPath} run --rm -v ${elementToScan}:/ms_artifact ${dockerImageName}:${toolVersion}  devsecops-engine-tools --platform_devops local --remote_config_repo docker_default_remote_config --module engine_iac --tool checkov --folder_path /ms_artifact`,
       (error, stdout, stderr) => {
         if (error) {
           if (stderr.includes("Unable to find image")) {
@@ -39,7 +40,7 @@ export class IacScanner implements IScannerGateway {
                 outputChannel.appendLine(
                   "Docker image downloaded successfully"
                 );
-                this.scan(elementToScan, outputChannel, dockerImageName, toolVersion);
+                this.scan(elementToScan, outputChannel, dockerImageName, toolVersion, dockerPath);
               }
             );
           }

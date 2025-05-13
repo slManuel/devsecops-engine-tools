@@ -5,6 +5,7 @@ export default interface IScannerGateway {
     elementToScan: string,
     outputChannel: OutputChannel,
     dockerImageName: string,
-    toolVersion?: string
+    toolVersion?: string,
+    dockerPath?: string
   ): Promise<boolean>;
 }

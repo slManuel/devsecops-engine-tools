@@ -5,16 +5,20 @@ import { RestClient } from "../infraestructure/drivenAdapter/RestClient";
 import { ImageScanRequest } from "../infraestructure/entryPoint/ImageScanRequest";
 import { ImageScanner } from "../infraestructure/drivenAdapter/ImageScanner";
 import { ImageScanUseCase } from "../domain/usecase/ImageScanUseCase";
+import { Docker } from "docker-cli-js";
+import DockerPathDetector from "../infraestructure/helper/DockerPathDetector";
 
 export async function iacScanRequest(): Promise<IacScanRequest> {
+    const dockerPath = DockerPathDetector.getDockerPath();
     const dockerImageVersion = await getLatestDockerImageVersion();
-    const iacScanUseCase = new IacScanUseCase(new IacScanner(), new RestClient(), dockerImageVersion);
+    const iacScanUseCase = new IacScanUseCase(new IacScanner(), new RestClient(), dockerImageVersion, dockerPath);
     return new IacScanRequest(iacScanUseCase);
 }
 
 export async function imageScanRequest(): Promise<ImageScanRequest>{
+    const dockerPath = DockerPathDetector.getDockerPath();
     const dockerImageVersion = await getLatestDockerImageVersion();
-    const imageScanUseCase = new ImageScanUseCase(new ImageScanner(), dockerImageVersion);
+    const imageScanUseCase = new ImageScanUseCase(new ImageScanner(), dockerImageVersion, dockerPath);
     return new ImageScanRequest(imageScanUseCase);
 }
 

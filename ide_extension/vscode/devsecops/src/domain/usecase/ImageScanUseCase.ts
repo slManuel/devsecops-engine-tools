@@ -5,7 +5,8 @@ import IScannerGateway from "../model/gateways/IScannerGateway";
 export class ImageScanUseCase implements IImageScanUseCase {
   constructor(
     private imageScanner: IScannerGateway,
-    private dockerImageVersion: string
+    private dockerImageVersion: string,
+    private dockerPath: string
   ) {}
 
   async scan(
@@ -17,7 +18,8 @@ export class ImageScanUseCase implements IImageScanUseCase {
       imageToScan,
       outputChannel,
       dockerImageName,
-      this.dockerImageVersion
+      this.dockerImageVersion,
+      this.dockerPath
     );
   }
 }

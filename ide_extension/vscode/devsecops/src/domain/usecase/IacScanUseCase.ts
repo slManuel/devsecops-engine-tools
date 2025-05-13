@@ -20,7 +20,8 @@ export class IacScanUseCase implements IIacScanUseCase {
   constructor(
     private iacScanner: IacScanner,
     private restClient: IRestClientGateway,
-    private toolVersion: string
+    private toolVersion: string,
+    private dockerPath: string
   ) {}
 
   public async scan(
@@ -130,7 +131,8 @@ export class IacScanUseCase implements IIacScanUseCase {
       folderToScan,
       outputChannel,
       dockerImageName,
-      this.toolVersion
+      this.toolVersion,
+      this.dockerPath
     );
   }
 
