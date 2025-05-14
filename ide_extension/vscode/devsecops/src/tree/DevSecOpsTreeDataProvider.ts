@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { ScanResultItem } from "./results/ScanResultItem";
 import { CategoryTreeItem } from "./CategoryTreeItem";
 import { FindingItem } from "./results/finding/FindingItem";
+import { Finding } from "../domain/model/Finding";
 
 export class DevSecOpsTreeDataProvider
   implements vscode.TreeDataProvider<vscode.TreeItem>
@@ -30,7 +31,7 @@ export class DevSecOpsTreeDataProvider
     return element;
   }
 
-  public addScanResult(label: string, findings: any[], sourceType: 'iac' | 'image'): void {
+  public addScanResult(label: string, findings: Finding[], sourceType: 'iac' | 'image'): void {
     const timestamp = new Date();
     const findingItems = findings.map(f => new FindingItem(f));
     
@@ -53,10 +54,15 @@ export class DevSecOpsTreeDataProvider
     if (!element) {
       return Promise.resolve(this.categories);
     }
-
+  
     if (element instanceof CategoryTreeItem) {
       return Promise.resolve(element.children);
     }
+    
+    if (element instanceof ScanResultItem) {
+      return Promise.resolve(element.children);
+    }
+    
     return Promise.resolve([]);
   }
 

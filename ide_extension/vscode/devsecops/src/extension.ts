@@ -80,7 +80,7 @@ export function activate(context: vscode.ExtensionContext) {
             "Iac Scan completed successfully"
           );
           treeDataProvider.addScanResult(
-            folderPath,
+            "IAC SCAN RESULT",
             scanResult.getFindings(),
             'iac'
           );
