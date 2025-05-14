@@ -14,26 +14,21 @@ export class ImageScanner implements IScannerGateway {
     toolVersion: string,
     dockerPath: string = "/usr/local/bin/docker"
   ): Promise<ScannerRes> {
-    // Clear the output channel and show it immediately
+
     outputChannel.clear();
-    outputChannel.appendLine(`Starting Image scan of ${elementToScan}`);
     outputChannel.show();
     
     return new Promise((resolve, reject) => {
       let scanResult: boolean = false;
       let findings: Finding[] = [];
       
-      // Set a reasonable timeout
       const timeout = setTimeout(() => {
         outputChannel.appendLine("Scan timed out after 2 minutes");
         outputChannel.appendLine("Docker command may be hanging. Check Docker configuration.");
         resolve(new ScannerRes(false, []));
-      }, 120000); // 2 minute timeout
-      
-      outputChannel.appendLine(`Using docker image: ${dockerImageName}:${toolVersion}`);
-      
+      }, 120000);
+          
       const dockerCommand = `${dockerPath} run --rm -v /var/run/docker.sock:/var/run/docker.sock ${dockerImageName}:${toolVersion} devsecops-engine-tools --platform_devops local --remote_config_repo docker_default_remote_config --module engine_container --tool trivy --image_to_scan ${elementToScan}`;
-      outputChannel.appendLine(`Executing: ${dockerCommand}`);
       
       const childProcess = exec(
         dockerCommand,
@@ -45,12 +40,10 @@ export class ImageScanner implements IScannerGateway {
               outputChannel.appendLine("Docker image not found. Attempting to download...");
             } else {
               outputChannel.appendLine(`Standard Error: ${stderr}`);
-              outputChannel.appendLine("Attempting to process partial results...");
             }
           }
   
           if (stdout) {
-            outputChannel.appendLine("Docker command completed. Processing results...");
             const cleanedOutput = OutputManager.removeAnsiEscapeCodes(stdout);
             outputChannel.appendLine(cleanedOutput);
             scanResult = true;
@@ -81,8 +74,6 @@ export class ImageScanner implements IScannerGateway {
             outputChannel.appendLine("Docker command completed with no output");
           }
           
-          outputChannel.appendLine("Scan completed - resolving promise");
-          // Resolve the promise immediately after processing is done
           resolve(new ScannerRes(scanResult, findings));
         }
       );

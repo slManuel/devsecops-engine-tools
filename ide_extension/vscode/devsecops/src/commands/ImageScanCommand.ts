@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { DevSecOpsTreeDataProvider } from "../tree/DevSecOpsTreeDataProvider";
 import { imageScanRequest } from "../application/InitEngineCore";
 import { Docker, IOptions } from "docker-cli-js";
+import DockerPathDetector from "../infraestructure/helper/DockerPathDetector";
 
 export function registerImageScanCommand(
   context: vscode.ExtensionContext,
@@ -67,7 +68,7 @@ const getDockerImages = async () => {
   const options: IOptions = {
     env: {
       ...process.env,
-      PATH: process.env.PATH + ":/usr/local/bin",
+      PATH: DockerPathDetector.getDockerPath(),
     },
   };
   const dockerCli = new Docker(options);

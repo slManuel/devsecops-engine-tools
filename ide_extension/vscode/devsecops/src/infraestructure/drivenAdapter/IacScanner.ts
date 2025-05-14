@@ -15,7 +15,6 @@ export class IacScanner implements IScannerGateway {
     dockerPath: string
   ): Promise<ScannerRes> {
     outputChannel.clear();
-    outputChannel.appendLine(`Starting Iac scan of ${elementToScan}`);
     outputChannel.show();
     return new Promise((resolve, reject) => {
       let scanResult: boolean = false;
@@ -25,12 +24,9 @@ export class IacScanner implements IScannerGateway {
         outputChannel.appendLine("Scan timed out after 2 minutes");
         outputChannel.appendLine("Docker command may be hanging. Check Docker configuration.");
         resolve(new ScannerRes(false, []));
-      }, 120000); // 2 minute timeout
-      
-      outputChannel.appendLine(`Using docker image: ${dockerImageName}:${toolVersion}`);
+      }, 120000);
       
       const dockerCommand = `${dockerPath} run --rm -v ${elementToScan}:/ms_artifact ${dockerImageName}:${toolVersion} devsecops-engine-tools --platform_devops local --remote_config_repo docker_default_remote_config --module engine_iac --tool checkov --folder_path /ms_artifact`;
-      outputChannel.appendLine(`Executing: ${dockerCommand}`);
       
       const childProcess = exec(
         dockerCommand,
@@ -47,7 +43,6 @@ export class IacScanner implements IScannerGateway {
           }
   
           if (stdout) {
-            outputChannel.appendLine("Docker command completed. Processing results...");
             const cleanedOutput = OutputManager.removeAnsiEscapeCodes(stdout);
             outputChannel.appendLine(cleanedOutput);
             outputChannel.show();
@@ -79,7 +74,6 @@ export class IacScanner implements IScannerGateway {
             outputChannel.appendLine("Docker command completed with no output");
           }
           
-          outputChannel.appendLine("Scan completed - resolving promise");
           resolve(new ScannerRes(scanResult, findings));
         }
       );
