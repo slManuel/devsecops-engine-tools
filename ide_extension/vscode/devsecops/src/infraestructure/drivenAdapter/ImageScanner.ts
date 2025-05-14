@@ -12,7 +12,7 @@ export class ImageScanner implements IScannerGateway {
     outputChannel: OutputChannel,
     dockerImageName: string,
     toolVersion: string,
-    dockerPath: string = "/usr/local/bin/docker"
+    dockerPath: string
   ): Promise<ScannerRes> {
 
     outputChannel.clear();
