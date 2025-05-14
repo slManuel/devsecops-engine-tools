@@ -53,11 +53,14 @@ export function registerIacScanCommand(
         );
 
         const scanner = await iacScanRequest();
-        const outputChannel = vscode.window.createOutputChannel("IaC Scan Results");
-        
-        outputChannel.appendLine(`Starting Infrastructure as Code scan for: ${folderPath}`);
+        const outputChannel =
+          vscode.window.createOutputChannel("IaC Scan Results");
+
+        outputChannel.appendLine(
+          `Starting Infrastructure as Code scan for: ${folderPath}`
+        );
         outputChannel.show();
-        
+
         let scanResult = await scanner.makeScan(
           folderPath,
           dockerImageName,
@@ -69,9 +72,9 @@ export function registerIacScanCommand(
           environment,
           outputChannel
         );
-        
+
         console.log("Scan result: ", scanResult);
-        
+
         if (scanResult) {
           vscode.window.showInformationMessage(
             "Iac Scan completed successfully"
@@ -80,7 +83,7 @@ export function registerIacScanCommand(
           treeDataProvider.addScanResult(
             "IAC SCAN RESULT",
             scanResult.getFindings(),
-            'iac'
+            "iac"
           );
         } else {
           vscode.window.showErrorMessage("Iac Scan failed");
