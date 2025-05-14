@@ -9,6 +9,6 @@ export class FindingItem extends vscode.TreeItem {
     this.label = finding.getId() || "Unknown Issue";
     this.description = finding.getSeverity() || "Unknown";
     this.tooltip = `${finding.getDescription()}\nSeverity: ${finding.getSeverity()}\nResource: ${finding.getResource() || "Unknown"}`;
-    this.iconPath = new vscode.ThemeIcon("error");
+    this.iconPath = new vscode.ThemeIcon("error", new vscode.ThemeColor("errorForeground"));
   }
 }

@@ -12,7 +12,7 @@ export class ScanResultItem extends vscode.TreeItem {
     this.tooltip = `${label} - ${children.length} findings`;
     this.description = `${children.length} findings - ${timestamp.toLocaleString()}`;
     this.iconPath = children.length > 0 
-      ? new vscode.ThemeIcon("warning") 
-      : new vscode.ThemeIcon("pass");
+      ? new vscode.ThemeIcon("warning", new vscode.ThemeColor("errorForeground")) 
+      : new vscode.ThemeIcon("pass", new vscode.ThemeColor("terminal.ansiGreen"));
   }
 }
