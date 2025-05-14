@@ -208,6 +208,11 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage(
           "Image Scan completed successfully"
         );
+        treeDataProvider.addScanResult(
+          "IMAGE SCAN RESULT",
+          scanResult.getFindings(),
+          'image'
+        );
       } else {
         vscode.window.showErrorMessage("Image Scan failed");
       }

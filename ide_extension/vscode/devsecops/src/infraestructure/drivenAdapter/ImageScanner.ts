@@ -11,44 +11,87 @@ export class ImageScanner implements IScannerGateway {
     elementToScan: string,
     outputChannel: OutputChannel,
     dockerImageName: string,
-    toolVersion: string
+    toolVersion: string,
+    dockerPath: string = "/usr/local/bin/docker"
   ): Promise<ScannerRes> {
-    let scanResult: boolean = false;
-    let findings: Finding[] = [];
-    exec(
-      `/usr/local/bin/docker run --rm -v /var/run/docker.sock:/var/run/docker.sock ${dockerImageName}:${toolVersion} devsecops-engine-tools --platform_devops local --remote_config_repo docker_default_remote_config --module engine_container --tool trivy --image_to_scan ${elementToScan}`,
-      (error, stdout, stderr) => {
-        if (error) {
-          console.error(`exec error: ${error}`);
-          console.error(`stderr: ${stderr}`);
+    // Clear the output channel and show it immediately
+    outputChannel.clear();
+    outputChannel.appendLine(`Starting Image scan of ${elementToScan}`);
+    outputChannel.show();
+    
+    return new Promise((resolve, reject) => {
+      let scanResult: boolean = false;
+      let findings: Finding[] = [];
+      
+      // Set a reasonable timeout
+      const timeout = setTimeout(() => {
+        outputChannel.appendLine("Scan timed out after 2 minutes");
+        outputChannel.appendLine("Docker command may be hanging. Check Docker configuration.");
+        resolve(new ScannerRes(false, []));
+      }, 120000); // 2 minute timeout
+      
+      outputChannel.appendLine(`Using docker image: ${dockerImageName}:${toolVersion}`);
+      
+      const dockerCommand = `${dockerPath} run --rm -v /var/run/docker.sock:/var/run/docker.sock ${dockerImageName}:${toolVersion} devsecops-engine-tools --platform_devops local --remote_config_repo docker_default_remote_config --module engine_container --tool trivy --image_to_scan ${elementToScan}`;
+      outputChannel.appendLine(`Executing: ${dockerCommand}`);
+      
+      const childProcess = exec(
+        dockerCommand,
+        (error, stdout, stderr) => {
+          clearTimeout(timeout);
+          if (error) {
+            outputChannel.appendLine(`Error executing Docker command: ${error.message}`);
+            if (stderr.includes("Unable to find image")) {
+              outputChannel.appendLine("Docker image not found. Attempting to download...");
+            } else {
+              outputChannel.appendLine(`Standard Error: ${stderr}`);
+              outputChannel.appendLine("Attempting to process partial results...");
+            }
+          }
+  
+          if (stdout) {
+            outputChannel.appendLine("Docker command completed. Processing results...");
+            const cleanedOutput = OutputManager.removeAnsiEscapeCodes(stdout);
+            outputChannel.appendLine(cleanedOutput);
+            scanResult = true;
+            
+            try {
+              const scanDataResult = JSON.parse(iacScannerDummyContext);
+              findings = scanDataResult.iac_context.map((finding: any) => {
+                return new Finding(
+                  finding.id,
+                  finding.custom_vuln_id,
+                  finding.check_name,
+                  finding.check_class,
+                  finding.severity,
+                  finding.where,
+                  finding.resource,
+                  finding.description,
+                  finding.module,
+                  finding.tool
+                );
+              });
+              
+              outputChannel.appendLine(`Found ${findings.length} issues in scan`);
+            } catch (parseError) {
+              outputChannel.appendLine(`Error parsing scan results: ${parseError}`);
+              scanResult = false;
+            }
+          } else {
+            outputChannel.appendLine("Docker command completed with no output");
+          }
+          
+          outputChannel.appendLine("Scan completed - resolving promise");
+          // Resolve the promise immediately after processing is done
+          resolve(new ScannerRes(scanResult, findings));
         }
-
-        const cleanedOutput = OutputManager.removeAnsiEscapeCodes(stdout);
-        outputChannel.appendLine("IMAGE SCAN OUTPUT:");
-        outputChannel.appendLine(cleanedOutput);
-        outputChannel.show();
-        scanResult = true;
-        const scanDataResult = JSON.parse(iacScannerDummyContext);
-        findings = scanDataResult.iac_context.map((finding: Finding) => {
-          return new Finding(
-            finding.getId(),
-            finding.getCustomVulnId(),
-            finding.getCheckName(),
-            finding.getCheckClass(),
-            finding.getSeverity(),
-            finding.getWhere(),
-            finding.getResource(),
-            finding.getDescription(),
-            finding.getModule(),
-            finding.getTool()
-          );
-        });
-      }
-    );
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(new ScannerRes(scanResult, findings));
-      }, 1000000);
+      );
+      
+      childProcess.on('exit', (code) => {
+        if (code !== 0 && code !== null) {
+          outputChannel.appendLine(`Docker process exited with code ${code}`);
+        }
+      });
     });
   }
 }
