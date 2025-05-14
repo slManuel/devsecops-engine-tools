@@ -4,7 +4,6 @@ import * as vscode from 'vscode';
 import * as sinon from 'sinon';
 import { Docker } from 'docker-cli-js';
 import * as myExtension from '../../extension';
-import { DevSecOpsTreeDataProvider } from '../../extension';
 import * as InitEngineCore from '../../application/InitEngineCore';
 import { IacScanRequest } from '../../infraestructure/entryPoint/IacScanRequest';
 import { IIacScanUseCase } from '../../domain/usecase/interfaces/IIacScanUseCase';

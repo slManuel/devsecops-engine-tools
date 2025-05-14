@@ -1,9 +1,10 @@
 import { OutputChannel } from "vscode";
 import IScannerGateway from "../../domain/model/gateways/IScannerGateway";
-import { exec } from "child_process";
 import OutputManager from "../helper/OutputManager";
 import { ScannerRes } from "../../domain/model/ScannerRes";
 import { Finding } from "../../domain/model/Finding";
+
+import { exec } from "child_process";
 
 export class IacScanner implements IScannerGateway {
   async scan(
@@ -13,18 +14,19 @@ export class IacScanner implements IScannerGateway {
     toolVersion: string,
     dockerPath: string
   ): Promise<ScannerRes> {
+    outputChannel.clear();
+    outputChannel.appendLine(`Starting Iac scan of ${elementToScan}`);
+    outputChannel.show();
     return new Promise((resolve, reject) => {
       let scanResult: boolean = false;
       let findings: Finding[] = [];
       
-      // Add timeout handling to prevent hanging
       const timeout = setTimeout(() => {
         outputChannel.appendLine("Scan timed out after 2 minutes");
         outputChannel.appendLine("Docker command may be hanging. Check Docker configuration.");
         resolve(new ScannerRes(false, []));
       }, 120000); // 2 minute timeout
       
-      outputChannel.appendLine(`Starting scan of ${elementToScan}`);
       outputChannel.appendLine(`Using docker image: ${dockerImageName}:${toolVersion}`);
       
       const dockerCommand = `${dockerPath} run --rm -v ${elementToScan}:/ms_artifact ${dockerImageName}:${toolVersion} devsecops-engine-tools --platform_devops local --remote_config_repo docker_default_remote_config --module engine_iac --tool checkov --folder_path /ms_artifact`;
@@ -33,18 +35,13 @@ export class IacScanner implements IScannerGateway {
       const childProcess = exec(
         dockerCommand,
         (error, stdout, stderr) => {
-          // Clear the timeout since the command completed
           clearTimeout(timeout);
-          
           if (error) {
             outputChannel.appendLine(`Error executing Docker command: ${error.message}`);
-            
             if (stderr.includes("Unable to find image")) {
               outputChannel.appendLine("Docker image not found. Attempting to download...");
-              // Image pull code remains the same...
             } else {
               outputChannel.appendLine(`Standard Error: ${stderr}`);
-              // Still attempt to process output even with error
               outputChannel.appendLine("Attempting to process partial results...");
             }
           }
@@ -82,13 +79,11 @@ export class IacScanner implements IScannerGateway {
             outputChannel.appendLine("Docker command completed with no output");
           }
           
-          // Resolve the promise with scan results
           outputChannel.appendLine("Scan completed - resolving promise");
           resolve(new ScannerRes(scanResult, findings));
         }
       );
       
-      // Handle early termination of the Docker process
       childProcess.on('exit', (code) => {
         if (code !== 0 && code !== null) {
           outputChannel.appendLine(`Docker process exited with code ${code}`);
