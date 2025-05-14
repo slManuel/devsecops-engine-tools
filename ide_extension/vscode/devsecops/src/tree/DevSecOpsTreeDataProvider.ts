@@ -36,16 +36,11 @@ export class DevSecOpsTreeDataProvider
     const findingItems = findings.map(f => new FindingItem(f));
     
     this.scanResults.unshift(new ScanResultItem(
-      `${sourceType === 'iac' ? 'IaC' : 'Image'}: ${label}`,
-      sourceType === 'iac' ? 'Infrastructure as Code' : 'Container Image',
+      label,
+      sourceType,
       timestamp,
       findingItems
     ));
-    
-    // Keep only the last 5 scan results
-    if (this.scanResults.length > 5) {
-      this.scanResults = this.scanResults.slice(0, 5);
-    }
     
     this.refresh();
   }
