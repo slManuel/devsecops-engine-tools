@@ -43,23 +43,18 @@ export class IacScanner implements IScannerGateway {
           }
   
           if (stdout) {
-            // Extract the context JSON from the output
             let contextJson = null;
             let normalOutput = stdout;
             
-            // Use regex to extract everything between BEGIN CONTEXT OUTPUT and END CONTEXT OUTPUT markers
             const contextRegex = /===== BEGIN CONTEXT OUTPUT =====\s*([\s\S]*?)\s*===== END CONTEXT OUTPUT =====/;
             const match = stdout.match(contextRegex);
             
             if (match && match[1]) {
-              // We have context JSON data
               try {
                 contextJson = JSON.parse(match[1].trim());
                 
-                // Remove the context block from normal output
                 normalOutput = stdout.replace(contextRegex, "");
                 
-                // Process the findings from the extracted JSON
                 findings = contextJson.iac_context.map((finding: any) => {
                   return new Finding(
                     finding.id || "",
@@ -87,7 +82,6 @@ export class IacScanner implements IScannerGateway {
               scanResult = false;
             }
             
-            // Display the normal output (with context section removed)
             const cleanedOutput = OutputManager.removeAnsiEscapeCodes(normalOutput);
             outputChannel.appendLine("SCAN OUTPUT:");
             outputChannel.appendLine(cleanedOutput);
