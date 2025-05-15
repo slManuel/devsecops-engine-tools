@@ -5,7 +5,7 @@ export class RestClient implements IRestClientGateway {
 
     constructor(){}
 
-    async get(url: string, token: string): Promise<any> {
+    async get(url: string, token?: string): Promise<any> {
         try{
             const response = await fetch(url, {
                 method: 'GET',
