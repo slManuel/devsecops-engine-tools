@@ -115,8 +115,8 @@ class CmdbRestConsumer:
             logger.warning(response)
             raise ApiError(f"Error querying cmdb: {response.reason}")
 
-        if response.json() == []:
-            logger.warning(f"Engagement: {code_app} not found")
+        if response.json() == [] or '[]' in response.text:
+            logger.warning(f"Code app: {code_app} not found in CMDB")
             return cmdb_object  # Producto es Orphan
 
         data = self.get_nested_data(response, response_format)
