@@ -108,6 +108,18 @@
       {
         "command": "devsecops.imageScan",
         "title": "DevSecOps Image Scan"
+      },
+      {
+        "command": "devsecops.openWithDiagnostic",
+        "title": "Open File with Security Diagnostic Highlighting"
+      },
+      {
+        "command": "devsecops.fixWithCopilot",
+        "title": "Fix Security Issue with GitHub Copilot"
+      },
+      {
+        "command": "devsecops.explainWithCopilot",
+        "title": "Explain Security Issue with GitHub Copilot"
       }
     ],
     "menus": {
