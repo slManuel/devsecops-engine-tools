@@ -11,18 +11,20 @@ export class DiagnosticService {
     }
   }
 
-  public static showFindingInFile(finding: Finding, filePath: string, lineNumber: number) {
+  public static showFindingInFile(finding: Finding, filePath: string, lineNumberStart: number, lineNumberEnd: number = lineNumberStart) {
     this.initialize();
     
     const fileUri = vscode.Uri.file(filePath);
     
+    // Create a range that spans from the first character of the start line
+    // to the last character of the end line
     const diagnostic = new vscode.Diagnostic(
       new vscode.Range(
-        new vscode.Position(lineNumber - 1, 0),
-        new vscode.Position(lineNumber - 1, 100)
+        new vscode.Position(lineNumberStart - 1, 0),
+        new vscode.Position(lineNumberEnd - 1, 100) // Assuming max line length of 100
       ),
       finding.getDescription(),
-      this.getSeverity(finding.getSeverity())
+      vscode.DiagnosticSeverity.Error
     );
     
     diagnostic.source = "devsecops";
@@ -33,8 +35,9 @@ export class DiagnosticService {
     
     this.diagnosticCollection?.set(fileUri, [diagnostic]);
     
+    // Open the file and position at the start of the range
     vscode.window.showTextDocument(fileUri, {
-      selection: new vscode.Range(lineNumber - 1, 0, lineNumber - 1, 0),
+      selection: new vscode.Range(lineNumberStart - 1, 0, lineNumberStart - 1, 0),
       preview: true
     });
   }
@@ -42,10 +45,6 @@ export class DiagnosticService {
   public static getFindingForDiagnostic(fileUri: vscode.Uri, diagnosticCode: string): Finding | undefined {
     const key = `${fileUri.toString()}:${diagnosticCode}`;
     return this.findingMap.get(key);
-  }
-
-  private static getSeverity(severity: string): vscode.DiagnosticSeverity {
-    return vscode.DiagnosticSeverity.Error;
   }
 
   public static clearDiagnostics() {

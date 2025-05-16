@@ -24,26 +24,40 @@ export class FindingItem extends vscode.TreeItem {
     const fileInfo = this.extractFileInfo(finding.getWhere());
     
     if (fileInfo.filePath) {
-      // Use the new command instead of directly opening the file
       this.command = {
         title: "Open File",
         command: "devsecops.openWithDiagnostic",
         arguments: [
           finding,
           fileInfo.filePath,
-          fileInfo.lineNumber || 1
+          fileInfo.lineNumber || 1,
+          fileInfo.lineNumberEnd || fileInfo.lineNumber || 1
         ]
       };
     }
   }
-  private extractFileInfo(where: string): { filePath: string | null; lineNumber: number | null } {
+
+  private extractFileInfo(where: string): { filePath: string | null; lineNumber: number | null; lineNumberEnd: number | null } {
     if (!where) {
-      return { filePath: null, lineNumber: null };
+      return { filePath: null, lineNumber: null, lineNumberEnd: null };
     }
     
-    // Try to extract line number
-    const lineMatch = where.match(/\(line\s+(\d+)\)/);
-    const lineNumber = lineMatch ? parseInt(lineMatch[1], 10) : null;
+    let lineNumber: number | null = null;
+    let lineNumberEnd: number | null = null;
+    
+    // Check for line range pattern (line 10-15)
+    const lineRangeMatch = where.match(/\(line\s+(\d+)-(\d+)\)/);
+    if (lineRangeMatch) {
+      lineNumber = parseInt(lineRangeMatch[1], 10);
+      lineNumberEnd = parseInt(lineRangeMatch[2], 10);
+    } else {
+      // Fall back to trying single line pattern (line 181)
+      const singleLineMatch = where.match(/\(line\s+(\d+)\)/);
+      if (singleLineMatch) {
+        lineNumber = parseInt(singleLineMatch[1], 10);
+        lineNumberEnd = lineNumber; // Same as start for single line
+      }
+    }
     
     let filePath: string | null = null;
     
@@ -57,6 +71,6 @@ export class FindingItem extends vscode.TreeItem {
       }
     }
     
-    return { filePath, lineNumber };
+    return { filePath, lineNumber, lineNumberEnd };
   }
 }

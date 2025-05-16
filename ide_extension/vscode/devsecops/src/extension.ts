@@ -36,8 +36,8 @@ export function activate(context: vscode.ExtensionContext) {
   
   const openWithDiagnosticDisposable = vscode.commands.registerCommand(
     "devsecops.openWithDiagnostic", 
-    (finding: Finding, filePath: string, lineNumber: number) => {
-      DiagnosticService.showFindingInFile(finding, filePath, lineNumber);
+    (finding: Finding, filePath: string, lineNumberStart: number, lineNumberEnd: number) => {
+      DiagnosticService.showFindingInFile(finding, filePath, lineNumberStart);
     }
   );
   
