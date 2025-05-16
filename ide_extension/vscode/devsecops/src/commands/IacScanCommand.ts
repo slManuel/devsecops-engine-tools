@@ -9,64 +9,47 @@ export function registerIacScanCommand(
   context: vscode.ExtensionContext,
   treeDataProvider: DevSecOpsTreeDataProvider
 ): vscode.Disposable {
-  const iacScanDisposable = vscode.commands.registerCommand(
-    "devsecops.iacScan",
-    async () => {
-      const selectedFolder = await vscode.window.showOpenDialog({
-        canSelectFolders: true,
-        canSelectFiles: false,
-        canSelectMany: false,
-        defaultUri:
-          vscode.workspace.workspaceFolders &&
-          vscode.workspace.workspaceFolders.length > 0
-            ? vscode.Uri.file(
-                path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, "")
-              )
-            : vscode.Uri.file(os.homedir()),
-        openLabel: "Select Folder",
-      });
+  const iacScanDisposable = vscode.commands.registerCommand("devsecops.iacScan", async () => {
+    const selectedFolder = await vscode.window.showOpenDialog({
+      canSelectFolders: true,
+      canSelectFiles: false,
+      canSelectMany: false,
+      defaultUri:
+        vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
+          ? vscode.Uri.file(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, ""))
+          : vscode.Uri.file(os.homedir()),
+      openLabel: "Select Folder",
+    });
 
-      if (selectedFolder && selectedFolder.length > 0) {
-        let folderPath = selectedFolder[0].fsPath;
-        folderPath = folderPath.replace(/^file:\/\//, "");
+    if (selectedFolder && selectedFolder.length > 0) {
+      let folderPath = selectedFolder[0].fsPath;
+      folderPath = folderPath.replace(/^file:\/\//, "");
 
-        vscode.window.showInformationMessage(
-          `DevSecOps Iac Scanning: ${folderPath}`
+      vscode.window.showInformationMessage(`DevSecOps Iac Scanning: ${folderPath}`);
+
+      const scanner = await iacScanRequest();
+      const outputChannel = vscode.window.createOutputChannel("IaC Scan Results");
+
+      outputChannel.appendLine(`Starting Infrastructure as Code scan for: ${folderPath}`);
+      outputChannel.show();
+
+      let scanResult = await scanner.makeScan(folderPath, outputChannel, new ScanConfiguration());
+
+      console.log("Scan result: ", scanResult);
+
+      if (scanResult) {
+        vscode.window.showInformationMessage("Iac Scan completed successfully");
+        treeDataProvider.addScanResult(
+          "IAC SCAN RESULT",
+          scanResult.getFindings(),
+          "iac",
+          folderPath
         );
-
-        const scanner = await iacScanRequest();
-        const outputChannel =
-          vscode.window.createOutputChannel("IaC Scan Results");
-
-        outputChannel.appendLine(
-          `Starting Infrastructure as Code scan for: ${folderPath}`
-        );
-        outputChannel.show();
-
-        let scanResult = await scanner.makeScan(
-          folderPath,
-          outputChannel,
-          new ScanConfiguration()
-        );
-
-        console.log("Scan result: ", scanResult);
-
-        if (scanResult) {
-          vscode.window.showInformationMessage(
-            "Iac Scan completed successfully"
-          );
-          treeDataProvider.addScanResult(
-            "IAC SCAN RESULT",
-            scanResult.getFindings(),
-            "iac",
-            folderPath
-          );
-        } else {
-          vscode.window.showErrorMessage("Iac Scan failed");
-        }
+      } else {
+        vscode.window.showErrorMessage("Iac Scan failed");
       }
     }
-  );
+  });
 
   return iacScanDisposable;
 }
