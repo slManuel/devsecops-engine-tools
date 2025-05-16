@@ -83,7 +83,8 @@ export function registerIacScanCommand(
           treeDataProvider.addScanResult(
             "IAC SCAN RESULT",
             scanResult.getFindings(),
-            "iac"
+            "iac",
+            folderPath
           );
         } else {
           vscode.window.showErrorMessage("Iac Scan failed");

@@ -31,17 +31,20 @@ export class DevSecOpsTreeDataProvider
     return element;
   }
 
-  public addScanResult(label: string, findings: Finding[], sourceType: 'iac' | 'image'): void {
+  // In your addScanResult method
+  public addScanResult(
+    label: string,
+    findings: Finding[],
+    sourceType: "iac" | "image",
+    scanPath?: string
+  ): void {
     const timestamp = new Date();
-    const findingItems = findings.map(f => new FindingItem(f));
-    
-    this.scanResults.unshift(new ScanResultItem(
-      label,
-      sourceType,
-      timestamp,
-      findingItems
-    ));
-    
+    const findingItems = findings.map((f) => new FindingItem(f, scanPath));
+
+    this.scanResults.unshift(
+      new ScanResultItem(label, sourceType, timestamp, findingItems)
+    );
+
     this.refresh();
   }
 
@@ -49,15 +52,15 @@ export class DevSecOpsTreeDataProvider
     if (!element) {
       return Promise.resolve(this.categories);
     }
-  
+
     if (element instanceof CategoryTreeItem) {
       return Promise.resolve(element.children);
     }
-    
+
     if (element instanceof ScanResultItem) {
       return Promise.resolve(element.children);
     }
-    
+
     return Promise.resolve([]);
   }
 

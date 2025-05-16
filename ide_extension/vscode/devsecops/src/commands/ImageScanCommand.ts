@@ -54,7 +54,9 @@ export function registerImageScanCommand(
         treeDataProvider.addScanResult(
           "IMAGE SCAN RESULT",
           scanResult.getFindings(),
-          "image"
+          "image",
+          // For image scans, no specific path is needed as vulnerabilities aren't related to local files
+          undefined
         );
       } else {
         vscode.window.showErrorMessage("Image Scan failed");
@@ -68,7 +70,7 @@ const getDockerImages = async () => {
   const options: IOptions = {
     env: {
       ...process.env,
-      PATH: DockerPathDetector.getDockerPath(),
+      PATH: process.env.PATH + ":/usr/local/bin",
     },
   };
   const dockerCli = new Docker(options);
