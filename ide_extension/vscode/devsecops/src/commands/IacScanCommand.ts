@@ -26,25 +26,6 @@ export function registerIacScanCommand(
         openLabel: "Select Folder",
       });
 
-      const dockerImageName: string =
-        vscode.workspace.getConfiguration("devsecops").get("imageToUse") || "";
-      const organizationName: string =
-        vscode.workspace
-          .getConfiguration("devsecops")
-          .get("organizationName") || "";
-      const projectName: string =
-        vscode.workspace.getConfiguration("devsecops").get("projectName") || "";
-      const definitionId: string =
-        vscode.workspace.getConfiguration("devsecops").get("releaseId") || "";
-      const environment: string =
-        vscode.workspace.getConfiguration("devsecops").get("environment") || "";
-      const adUserName: string =
-        vscode.workspace.getConfiguration("devsecops").get("username") || "";
-      const adPersonalAccessToken: string =
-        vscode.workspace
-          .getConfiguration("devsecops")
-          .get("personalAccessToken") || "";
-
       if (selectedFolder && selectedFolder.length > 0) {
         let folderPath = selectedFolder[0].fsPath;
         folderPath = folderPath.replace(/^file:\/\//, "");
@@ -74,7 +55,6 @@ export function registerIacScanCommand(
           vscode.window.showInformationMessage(
             "Iac Scan completed successfully"
           );
-          // Still keeping the addScanResult in this command
           treeDataProvider.addScanResult(
             "IAC SCAN RESULT",
             scanResult.getFindings(),

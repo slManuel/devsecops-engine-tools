@@ -2,7 +2,6 @@ import * as vscode from "vscode";
 import { DevSecOpsTreeDataProvider } from "../tree/DevSecOpsTreeDataProvider";
 import { imageScanRequest } from "../application/InitEngineCore";
 import { Docker, IOptions } from "docker-cli-js";
-import DockerPathDetector from "../infraestructure/helper/DockerPathDetector";
 import { ScanConfiguration } from "../domain/model/ScanConfiguration";
 
 export function registerImageScanCommand(
@@ -12,11 +11,8 @@ export function registerImageScanCommand(
   const imageScanDisposable = vscode.commands.registerCommand(
     "devsecops.imageScan",
     async () => {
-      const dockerImageName: string =
-        vscode.workspace.getConfiguration("devsecops").get("imageToUse") || "";
       const images = await getDockerImages();
       let imageName = "";
-      const imageOptions = images.map((image) => image.label);
       const quickPickItems: vscode.QuickPickItem[] = images.map((i) => {
         return {
           label: i.label?.toString() ?? "",
@@ -56,7 +52,6 @@ export function registerImageScanCommand(
           "IMAGE SCAN RESULT",
           scanResult.getFindings(),
           "image",
-          // For image scans, no specific path is needed as vulnerabilities aren't related to local files
           undefined
         );
       } else {
