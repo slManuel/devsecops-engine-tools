@@ -9,7 +9,7 @@ import { registerCopilotCommands } from "./commands/copilotCommands";
 
 
 export function activate(context: vscode.ExtensionContext) {
-  // Initialize the diagnostic service
+
   DiagnosticService.initialize();
   
   const treeDataProvider = new DevSecOpsTreeDataProvider(context);
@@ -23,9 +23,8 @@ export function activate(context: vscode.ExtensionContext) {
   const iacScanDisposable = registerIacScanCommand(context, treeDataProvider);
   const imageScanDisposable = registerImageScanCommand(context, treeDataProvider);
   
-  // Register the code action provider for quick fixes
   const codeActionProvider = vscode.languages.registerCodeActionsProvider(
-    { scheme: 'file' }, // Apply to all file types
+    { scheme: 'file' },
     new SecurityCodeActionProvider(),
     {
       providedCodeActionKinds: SecurityCodeActionProvider.providedCodeActionKinds
