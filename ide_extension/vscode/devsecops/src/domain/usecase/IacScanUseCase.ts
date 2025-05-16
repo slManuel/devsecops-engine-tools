@@ -39,7 +39,7 @@ export class IacScanUseCase implements IIacScanUseCase {
     let variableReplace: boolean = false;
 
     if (
-      scanConfiguration.isValidAdReplace()
+      !scanConfiguration.isValidAdReplace()
     ) {
       console.log(
         "Configuration values are missing≤ avoiding variable replace"

@@ -3,6 +3,7 @@ import * as path from "path";
 import * as os from "os";
 import { iacScanRequest } from "../application/InitEngineCore";
 import { DevSecOpsTreeDataProvider } from "../tree/DevSecOpsTreeDataProvider";
+import { ScanConfiguration } from "../domain/model/ScanConfiguration";
 
 export function registerIacScanCommand(
   context: vscode.ExtensionContext,
@@ -63,14 +64,8 @@ export function registerIacScanCommand(
 
         let scanResult = await scanner.makeScan(
           folderPath,
-          dockerImageName,
-          organizationName,
-          projectName,
-          definitionId,
-          adUserName,
-          adPersonalAccessToken,
-          environment,
-          outputChannel
+          outputChannel,
+          new ScanConfiguration()
         );
 
         console.log("Scan result: ", scanResult);

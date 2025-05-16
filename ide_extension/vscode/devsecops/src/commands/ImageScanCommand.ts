@@ -3,6 +3,7 @@ import { DevSecOpsTreeDataProvider } from "../tree/DevSecOpsTreeDataProvider";
 import { imageScanRequest } from "../application/InitEngineCore";
 import { Docker, IOptions } from "docker-cli-js";
 import DockerPathDetector from "../infraestructure/helper/DockerPathDetector";
+import { ScanConfiguration } from "../domain/model/ScanConfiguration";
 
 export function registerImageScanCommand(
   context: vscode.ExtensionContext,
@@ -44,7 +45,7 @@ export function registerImageScanCommand(
       let scanResult = await scanner.makeScan(
         imageName,
         outputChannel,
-        dockerImageName
+        new ScanConfiguration()
       );
 
       if (scanResult) {
