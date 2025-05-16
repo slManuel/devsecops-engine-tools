@@ -8,7 +8,7 @@ import { registerImageScanCommand } from "./commands/ImageScanCommand";
 import { registerCopilotCommands } from "./commands/copilotCommands";
 
 
-export function activate(context: vscode.ExtensionContext) {
+export function activate(context: vscode.ExtensionContext): void {
 
   DiagnosticService.initialize();
   
@@ -35,7 +35,7 @@ export function activate(context: vscode.ExtensionContext) {
   
   const openWithDiagnosticDisposable = vscode.commands.registerCommand(
     "devsecops.openWithDiagnostic", 
-    (finding: Finding, filePath: string, lineNumberStart: number, lineNumberEnd: number) => {
+    (finding: Finding, filePath: string, lineNumberStart: number, _lineNumberEnd: number) => {
       DiagnosticService.showFindingInFile(finding, filePath, lineNumberStart);
     }
   );
@@ -52,6 +52,6 @@ export function activate(context: vscode.ExtensionContext) {
   });
 }
 
-export function deactivate() {
+export function deactivate(): void {
   DiagnosticService.dispose();
 }
