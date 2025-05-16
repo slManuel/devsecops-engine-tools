@@ -62,7 +62,7 @@ export function registerImageScanCommand(
   return imageScanDisposable;
 }
 
-const getDockerImages = async () => {
+const getDockerImages = async (): Promise<vscode.TreeItem[]> => {
   const options: IOptions = {
     env: {
       ...process.env,
@@ -118,7 +118,7 @@ const getDockerImages = async () => {
     });
 };
 
-const isInstalledDocker = async () => {
+const isInstalledDocker = async (): Promise<string | boolean> => {
   const options: IOptions = {
     env: {
       ...process.env,
