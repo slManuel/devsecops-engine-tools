@@ -67,7 +67,8 @@ export class ImageScanner implements IScannerGateway {
                     finding.resource || "",
                     finding.description || "",
                     finding.module || "engine_container",
-                    finding.source_tool || "Trivy"
+                    finding.source_tool || "Trivy",
+                    finding.references || []
                   );
                 });
                 

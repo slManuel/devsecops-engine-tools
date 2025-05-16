@@ -10,6 +10,7 @@ export class Finding {
     private description: string;
     private module: string;
     private tool: string;
+    private references: string[];
 
     constructor(
         id: string,
@@ -21,7 +22,8 @@ export class Finding {
         resource: string,
         description: string,
         module: string,
-        tool: string
+        tool: string,
+        references: string[] = []
     ) {
         this.id = id;
         this.customVulnId = customVulnId;
@@ -33,6 +35,7 @@ export class Finding {
         this.description = description;
         this.module = module;
         this.tool = tool;
+        this.references = references;
     }
 
     public getId(): string {
@@ -73,6 +76,10 @@ export class Finding {
 
     public getTool(): string {
         return this.tool;
+    }
+
+    public getReferences(): string[] {
+        return this.references;
     }
 
 }
