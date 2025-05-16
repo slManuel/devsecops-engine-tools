@@ -1,11 +1,13 @@
 import { OutputChannel } from "vscode";
 import { IIacScanUseCase } from "../../domain/usecase/interfaces/IIacScanUseCase";
+import { ScannerRes } from "../../domain/model/ScannerRes";
 
 export class IacScanRequest {
   constructor(private iacScannerUseCase: IIacScanUseCase) {}
 
   async makeScan(
     folderToScan: string,
+    dockerImageName: string,
     organizationName: string,
     projectName: string,
     groupName: string,
@@ -13,9 +15,10 @@ export class IacScanRequest {
     adPersonalAccessToken: string,
     environment: string,
     outputChannel: OutputChannel
-  ): Promise<boolean> {
+  ): Promise<ScannerRes> {
     return await this.iacScannerUseCase.scan(
       folderToScan,
+      dockerImageName,
       organizationName,
       projectName,
       groupName,
