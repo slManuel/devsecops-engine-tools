@@ -24,13 +24,13 @@ export function registerImageScanCommand(
       });
 
       if (!pickedImage) {
-        vscode.window.showErrorMessage("No image selected");
+        void vscode.window.showErrorMessage("No image selected");
         return;
       } else {
         imageName = pickedImage.label;
       }
 
-      vscode.window.showInformationMessage(
+      void vscode.window.showInformationMessage(
         `DevSecOps Image Scanning: ${imageName}`
       );
 
@@ -38,14 +38,14 @@ export function registerImageScanCommand(
       const outputChannel =
         vscode.window.createOutputChannel("IaC Scan Results");
 
-      let scanResult = await scanner.makeScan(
+      const scanResult = await scanner.makeScan(
         imageName,
         outputChannel,
         new ScanConfiguration()
       );
 
       if (scanResult) {
-        vscode.window.showInformationMessage(
+        void vscode.window.showInformationMessage(
           "Image Scan completed successfully"
         );
         treeDataProvider.addScanResult(
@@ -55,7 +55,7 @@ export function registerImageScanCommand(
           undefined
         );
       } else {
-        vscode.window.showErrorMessage("Image Scan failed");
+        void vscode.window.showErrorMessage("Image Scan failed");
       }
     }
   );
@@ -74,7 +74,7 @@ const getDockerImages = async () => {
   const isDockerInstalled = await isInstalledDocker();
 
   if (!isDockerInstalled) {
-    vscode.window.showErrorMessage(
+    void vscode.window.showErrorMessage(
       "Docker is not installed or not found in the PATH."
     );
     return [];
@@ -82,12 +82,16 @@ const getDockerImages = async () => {
 
   return dockerCli
     .command("images")
-    .then(function (data) {
-      const output = data.raw.split("\n");
-      const images = [];
+    .then(function (data: { raw?: string }) {
+      const output: string[] = typeof data.raw === "string" ? data.raw.split("\n") : [];
+      const images: vscode.TreeItem[] = [];
 
       for (let i = 1; i < output.length; i++) {
-        const imageInfo = output[i].split(/\s+/);
+        const line = output[i];
+        if (typeof line !== "string") {
+          continue;
+        }
+        const imageInfo: string[] = line.split(/\s+/);
         const imageName = imageInfo[0];
         const imageTag = imageInfo[1];
 
@@ -125,9 +129,9 @@ const isInstalledDocker = async () => {
   const dockerCli = new Docker(options);
   return dockerCli
     .command("version")
-    .then(function (data) {
-      const output = data.raw.split("\n");
-      const version = output[1].split(":")[1].trim();
+    .then(function (data: { raw?: string }) {
+      const output = typeof data.raw === "string" ? data.raw.split("\n") : [];
+      const version = output[1]?.split(":")[1]?.trim() ?? "";
       return version;
     })
     .catch(function (err) {
