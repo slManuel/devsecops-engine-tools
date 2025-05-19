@@ -10,15 +10,15 @@ import DockerPathDetector from "../infraestructure/helper/DockerPathDetector";
 
 export async function iacScanRequest(): Promise<IacScanRequest> {
     const dockerPath = DockerPathDetector.getDockerPath();
-    const dockerImageVersion = await getLatestDockerImageVersion();
-    const iacScanUseCase = new IacScanUseCase(new IacScanner(), new RestClient(), dockerImageVersion, dockerPath);
+    // const dockerImageVersion = await getLatestDockerImageVersion();
+    const iacScanUseCase = new IacScanUseCase(new IacScanner(), new RestClient(), '1.59.0', dockerPath);
     return new IacScanRequest(iacScanUseCase);
 }
 
 export async function imageScanRequest(): Promise<ImageScanRequest>{
     const dockerPath = DockerPathDetector.getDockerPath();
-    const dockerImageVersion = await getLatestDockerImageVersion();
-    const imageScanUseCase = new ImageScanUseCase(new ImageScanner(), dockerImageVersion, dockerPath);
+    // const dockerImageVersion = await getLatestDockerImageVersion();
+    const imageScanUseCase = new ImageScanUseCase(new ImageScanner(), '1.59.0', dockerPath);
     return new ImageScanRequest(imageScanUseCase);
 }
 

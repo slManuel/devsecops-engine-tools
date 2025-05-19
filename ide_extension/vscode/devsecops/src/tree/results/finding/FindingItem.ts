@@ -20,6 +20,12 @@ export class FindingItem extends vscode.TreeItem {
     
     this.iconPath = severityIcons[finding.getSeverity().toLowerCase()] || 
       new vscode.ThemeIcon("error", new vscode.ThemeColor("errorForeground"));
+      
+    this.command = {
+      command: "devsecops.showVulnContext",
+      title: "Show Vulnerability Context",
+      arguments: [finding] // Pass the full finding/context object
+    };
     
     const fileInfo = this.extractFileInfo(finding.getWhere());
     
