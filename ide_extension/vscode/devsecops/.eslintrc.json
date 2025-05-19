@@ -61,6 +61,8 @@
     "out",
     "dist",
     "**/*.d.ts",
+    "**/*.test.*",
+    "**/test/**",
     "node_modules"
   ]
 }
