@@ -71,7 +71,7 @@ export class FindingItem extends vscode.TreeItem {
     if (pathMatch && pathMatch[1] && this.scanPath) {
       filePath = path.join(this.scanPath, pathMatch[1].substring(1));
     } else {
-      const genericPathMatch = where.match(/\/([\/\w\.-]+)(?::|$|\s)/);
+      const genericPathMatch = where.match(/\/([/\w.-]+)(?::|$|\s)/);
       if (genericPathMatch && this.scanPath) {
         filePath = path.join(this.scanPath, genericPathMatch[1]);
       }

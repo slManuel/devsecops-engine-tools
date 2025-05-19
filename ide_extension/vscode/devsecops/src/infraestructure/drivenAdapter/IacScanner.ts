@@ -5,7 +5,7 @@ import { ScannerRes } from "../../domain/model/ScannerRes";
 import { Finding } from "../../domain/model/Finding";
 
 import { exec } from "child_process";
-import { IacContextCheckov, Mappers } from "../../domain/model/mappers/Mappers";
+import { IIacContextCheckov, Mappers } from "../../domain/model/mappers/Mappers";
 
 export class IacScanner implements IScannerGateway {
   async scan(
@@ -50,7 +50,7 @@ export class IacScanner implements IScannerGateway {
         }
 
         if (stdout) {
-          let contextJson = null;
+          let contextJson: { iac_context: IIacContextCheckov[] } | null = null;
           let normalOutput = stdout;
 
           const contextRegex =
@@ -59,12 +59,12 @@ export class IacScanner implements IScannerGateway {
 
           if (match && match[1]) {
             try {
-              contextJson = JSON.parse(match[1].trim());
+              contextJson = JSON.parse(match[1].trim()) as { iac_context: IIacContextCheckov[] };
 
               normalOutput = stdout.replace(contextRegex, "");
 
               findings = contextJson.iac_context.map(
-                (finding: IacContextCheckov) =>
+                (finding: IIacContextCheckov) =>
                   Mappers.mapIacContextCheckovToFinding(finding)
               );
 
@@ -72,9 +72,15 @@ export class IacScanner implements IScannerGateway {
               outputChannel.appendLine(
                 `Successfully extracted context data with ${findings.length} findings`
               );
-            } catch (jsonError) {
+            } catch (jsonError: unknown) {
+              let errorMsg = "Unknown error";
+              if (jsonError instanceof Error) {
+                errorMsg = jsonError.message;
+              } else if (typeof jsonError === "string") {
+                errorMsg = jsonError;
+              }
               outputChannel.appendLine(
-                `Error parsing context JSON: ${jsonError}`
+                `Error parsing context JSON: ${errorMsg}`
               );
               outputChannel.appendLine("Raw context data:");
               outputChannel.appendLine(match[1]);
