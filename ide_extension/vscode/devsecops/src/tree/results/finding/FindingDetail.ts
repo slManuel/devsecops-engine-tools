@@ -1,4 +1,4 @@
-export function FindingDetailWebview(contextInfo: any): string {
+export function findingDetailWebview(contextInfo: any): string {
     const severity = (contextInfo.severity || "unknown").toLowerCase();
     let codicon = "codicon-warning";
     let color = "#cca700";
@@ -120,12 +120,12 @@ export function FindingDetailWebview(contextInfo: any): string {
     <div class="section" id="scanSection">
         <h3>Scan Info</h3>
         ${scanInfoRow("Severity", contextInfo.severity)}
-        ${scanInfoRow("Vulnerability Status", contextInfo.vulnerability_status)}
-        ${scanInfoRow("Installed Version", contextInfo.installed_version)}
-        ${scanInfoRow("Fixed Version", contextInfo.fixed_version)}
-        ${scanInfoRow("Target Image", contextInfo.target_image)}
-        ${scanInfoRow("Package Name", contextInfo.package_name)}
-        ${scanInfoRow("CVSS 3", contextInfo.cvss_score)}
+        ${scanInfoRow("Vulnerability Status", contextInfo.vulnerabilityStatus)}
+        ${scanInfoRow("Installed Version", contextInfo.installedVersion)}
+        ${scanInfoRow("Fixed Version", contextInfo.fixedVersion)}
+        ${scanInfoRow("Target Image", contextInfo.targetImage)}
+        ${scanInfoRow("Package Name", contextInfo.packageName)}
+        ${scanInfoRow("CVSS 3", contextInfo.cvssScore)}
     </div>
     <div class="section" id="remSection">
         <h3>Remediation Info</h3>

@@ -10,12 +10,12 @@ export class Finding {
     private description: string;
     private module: string;
     private tool: string;
-    private vulnerability_status?: string;
-    private target_image?: string;
-    private installed_version?: string;
-    private fixed_version?: string;
-    private package_name?: string;
-    private cvss_score?: string;
+    private vulnerabilityStatus?: string;
+    private targetImage?: string;
+    private installedVersion?: string;
+    private fixedVersion?: string;
+    private packageName?: string;
+    private cvssScore?: string;
     private references: string[];
 
     constructor(
@@ -29,12 +29,12 @@ export class Finding {
         description: string,
         module: string,
         tool: string,
-        vulnerability_status?: string,
-        target_image?: string,
-        installed_version?: string,
-        fixed_version?: string,
-        package_name?: string,
-        cvss_score?: string,
+        vulnerabilityStatus?: string,
+        targetImage?: string,
+        installedVersion?: string,
+        fixedVersion?: string,
+        packageName?: string,
+        cvssScore?: string,
         references: string[] = []
     ) {
         this.id = id;
@@ -47,12 +47,12 @@ export class Finding {
         this.description = description;
         this.module = module;
         this.tool = tool;
-        this.vulnerability_status = vulnerability_status;
-        this.target_image = target_image;
-        this.installed_version = installed_version;
-        this.fixed_version = fixed_version;
-        this.package_name = package_name;
-        this.cvss_score = cvss_score;
+        this.vulnerabilityStatus = vulnerabilityStatus;
+        this.targetImage = targetImage;
+        this.installedVersion = installedVersion;
+        this.fixedVersion = fixedVersion;
+        this.packageName = packageName;
+        this.cvssScore = cvssScore;
         this.references = references;
     }
 
@@ -97,26 +97,26 @@ export class Finding {
     }
 
     public getVulnerabilityStatus(): string | undefined {
-        return this.vulnerability_status;
+        return this.vulnerabilityStatus;
     }
     public getTargetImage(): string | undefined {
-        return this.target_image;
+        return this.targetImage;
     }
 
     public getInstalledVersion(): string | undefined {
-        return this.installed_version;
+        return this.installedVersion;
     }
 
     public getFixedVersion(): string | undefined {
-        return this.fixed_version;
+        return this.fixedVersion;
     }
 
     public getPackageName(): string | undefined {
-        return this.package_name;
+        return this.packageName;
     }
 
     public getCvssScore(): string | undefined {
-        return this.cvss_score;
+        return this.cvssScore;
     }
 
     public getReferences(): string[] {

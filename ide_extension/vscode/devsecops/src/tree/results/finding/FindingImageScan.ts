@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { FindingDetailWebview } from './FindingDetail';
+import { findingDetailWebview } from './FindingDetail';
 
 let vulnPanel: vscode.WebviewPanel | undefined;
 let editorListener: vscode.Disposable | undefined;
@@ -8,7 +8,7 @@ let workspaceListener: vscode.Disposable | undefined;
 export function showVulnContextWebview(contextInfo: any) {
 
     if (vulnPanel) {
-        vulnPanel.webview.html = FindingDetailWebview(contextInfo);
+        vulnPanel.webview.html = findingDetailWebview(contextInfo);
         vulnPanel.reveal(vscode.ViewColumn.Beside);
     } else {
         vulnPanel = vscode.window.createWebviewPanel(
@@ -17,7 +17,7 @@ export function showVulnContextWebview(contextInfo: any) {
             vscode.ViewColumn.Beside,
             { enableScripts: true }
         );
-         vulnPanel.webview.html = FindingDetailWebview(contextInfo);
+         vulnPanel.webview.html = findingDetailWebview(contextInfo);
 ;
 
         vulnPanel.onDidDispose(() => {
