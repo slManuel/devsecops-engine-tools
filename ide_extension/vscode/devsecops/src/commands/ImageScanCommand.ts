@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { DevSecOpsTreeDataProvider } from "../tree/DevSecOpsTreeDataProvider";
 import { imageScanRequest } from "../application/InitEngineCore";
 import { Docker, IOptions } from "docker-cli-js";
-import DockerPathDetector from "../infraestructure/helper/DockerPathDetector";
+import { ScanConfiguration } from "../domain/model/ScanConfiguration";
 
 export function registerImageScanCommand(
   context: vscode.ExtensionContext,
@@ -11,11 +11,8 @@ export function registerImageScanCommand(
   const imageScanDisposable = vscode.commands.registerCommand(
     "devsecops.imageScan",
     async () => {
-      const dockerImageName: string =
-        vscode.workspace.getConfiguration("devsecops").get("imageToUse") || "";
       const images = await getDockerImages();
       let imageName = "";
-      const imageOptions = images.map((image) => image.label);
       const quickPickItems: vscode.QuickPickItem[] = images.map((i) => {
         return {
           label: i.label?.toString() ?? "",
@@ -27,13 +24,13 @@ export function registerImageScanCommand(
       });
 
       if (!pickedImage) {
-        vscode.window.showErrorMessage("No image selected");
+        void vscode.window.showErrorMessage("No image selected");
         return;
       } else {
         imageName = pickedImage.label;
       }
 
-      vscode.window.showInformationMessage(
+      void vscode.window.showInformationMessage(
         `DevSecOps Image Scanning: ${imageName}`
       );
 
@@ -41,32 +38,31 @@ export function registerImageScanCommand(
       const outputChannel =
         vscode.window.createOutputChannel("IaC Scan Results");
 
-      let scanResult = await scanner.makeScan(
+      const scanResult = await scanner.makeScan(
         imageName,
         outputChannel,
-        dockerImageName
+        new ScanConfiguration()
       );
 
       if (scanResult) {
-        vscode.window.showInformationMessage(
+        void vscode.window.showInformationMessage(
           "Image Scan completed successfully"
         );
         treeDataProvider.addScanResult(
           "IMAGE SCAN RESULT",
           scanResult.getFindings(),
           "image",
-          // For image scans, no specific path is needed as vulnerabilities aren't related to local files
           undefined
         );
       } else {
-        vscode.window.showErrorMessage("Image Scan failed");
+        void vscode.window.showErrorMessage("Image Scan failed");
       }
     }
   );
   return imageScanDisposable;
 }
 
-const getDockerImages = async () => {
+const getDockerImages = async (): Promise<vscode.TreeItem[]> => {
   const options: IOptions = {
     env: {
       ...process.env,
@@ -78,7 +74,7 @@ const getDockerImages = async () => {
   const isDockerInstalled = await isInstalledDocker();
 
   if (!isDockerInstalled) {
-    vscode.window.showErrorMessage(
+    void vscode.window.showErrorMessage(
       "Docker is not installed or not found in the PATH."
     );
     return [];
@@ -86,12 +82,16 @@ const getDockerImages = async () => {
 
   return dockerCli
     .command("images")
-    .then(function (data) {
-      const output = data.raw.split("\n");
-      const images = [];
+    .then(function (data: { raw?: string }) {
+      const output: string[] = typeof data.raw === "string" ? data.raw.split("\n") : [];
+      const images: vscode.TreeItem[] = [];
 
       for (let i = 1; i < output.length; i++) {
-        const imageInfo = output[i].split(/\s+/);
+        const line = output[i];
+        if (typeof line !== "string") {
+          continue;
+        }
+        const imageInfo: string[] = line.split(/\s+/);
         const imageName = imageInfo[0];
         const imageTag = imageInfo[1];
 
@@ -118,7 +118,7 @@ const getDockerImages = async () => {
     });
 };
 
-const isInstalledDocker = async () => {
+const isInstalledDocker = async (): Promise<string | boolean> => {
   const options: IOptions = {
     env: {
       ...process.env,
@@ -129,9 +129,9 @@ const isInstalledDocker = async () => {
   const dockerCli = new Docker(options);
   return dockerCli
     .command("version")
-    .then(function (data) {
-      const output = data.raw.split("\n");
-      const version = output[1].split(":")[1].trim();
+    .then(function (data: { raw?: string }) {
+      const output = typeof data.raw === "string" ? data.raw.split("\n") : [];
+      const version = output[1]?.split(":")[1]?.trim() ?? "";
       return version;
     })
     .catch(function (err) {

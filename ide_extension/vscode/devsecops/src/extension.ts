@@ -9,8 +9,8 @@ import { registerCopilotCommands } from "./commands/copilotCommands";
 import { showVulnContextWebview,disposeVulnPanel } from './commands/ImageScanWebview';
 
 
-export function activate(context: vscode.ExtensionContext) {
-  // Initialize the diagnostic service
+export function activate(context: vscode.ExtensionContext): void {
+
   DiagnosticService.initialize();
   
   const treeDataProvider = new DevSecOpsTreeDataProvider(context);
@@ -24,9 +24,8 @@ export function activate(context: vscode.ExtensionContext) {
   const iacScanDisposable = registerIacScanCommand(context, treeDataProvider);
   const imageScanDisposable = registerImageScanCommand(context, treeDataProvider);
   
-  // Register the code action provider for quick fixes
   const codeActionProvider = vscode.languages.registerCodeActionsProvider(
-    { scheme: 'file' }, // Apply to all file types
+    { scheme: 'file' },
     new SecurityCodeActionProvider(),
     {
       providedCodeActionKinds: SecurityCodeActionProvider.providedCodeActionKinds
@@ -37,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
   
   const openWithDiagnosticDisposable = vscode.commands.registerCommand(
     "devsecops.openWithDiagnostic", 
-    (finding: Finding, filePath: string, lineNumberStart: number, lineNumberEnd: number) => {
+    (finding: Finding, filePath: string, lineNumberStart: number, _lineNumberEnd: number) => {
       DiagnosticService.showFindingInFile(finding, filePath, lineNumberStart);
     }
   );
