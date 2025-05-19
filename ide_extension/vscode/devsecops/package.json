@@ -108,6 +108,18 @@
       {
         "command": "devsecops.imageScan",
         "title": "DevSecOps Image Scan"
+      },
+      {
+        "command": "devsecops.openWithDiagnostic",
+        "title": "Open File with Security Diagnostic Highlighting"
+      },
+      {
+        "command": "devsecops.fixWithCopilot",
+        "title": "Fix Security Issue with GitHub Copilot"
+      },
+      {
+        "command": "devsecops.explainWithCopilot",
+        "title": "Explain Security Issue with GitHub Copilot"
       }
     ],
     "menus": {
@@ -130,13 +142,20 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
     "test": "node ./run-tests.js",
     "deploy": "vsce publish --yarn",
+    "lint": "eslint 'src/**/*.{ts,js}'",
+    "lint:fix": "eslint 'src/**/*.{ts,js}' --fix",
+    "format": "prettier --write 'src/**/*.{ts,js,json,md,html,css,yml,yaml}'",
+    "format:check": "prettier --check 'src/**/*.{ts,js,json,md,html,css,yml,yaml}'",
     "prepare": "husky"
   },
   "lint-staged": {
-    "*.{ts,js,json,md,html,css}": [
+    "*.{ts,js}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,html,css,yml,yaml}": [
       "prettier --write"
     ]
   },
@@ -145,11 +164,12 @@
     "@types/node": "20.x",
     "@types/sinon": "^17.0.4",
     "@types/vscode": "^1.91.0",
-    "@typescript-eslint/eslint-plugin": "^7.14.1",
-    "@typescript-eslint/parser": "^7.11.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
     "@vscode/test-cli": "^0.0.9",
     "@vscode/test-electron": "^2.4.1",
-    "eslint": "^8.57.0",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.5",
     "husky": "^9.1.7",
     "lint-staged": "^16.0.0",
     "mocha": "^11.1.0",
