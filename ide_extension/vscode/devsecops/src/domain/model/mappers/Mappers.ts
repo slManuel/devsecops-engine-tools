@@ -1,6 +1,6 @@
 import { Finding } from "../Finding";
 
-export interface IacContextCheckov {
+export interface IIacContextCheckov {
   id: string;
   custom_vuln_id: string;
   check_name: string;
@@ -13,7 +13,7 @@ export interface IacContextCheckov {
   tool: string;
 }
 
-export interface ImageScanContextTrivy {
+export interface IImageScanContextTrivy {
   id: string;
   cve_id: string;
   custom_vuln_id: string;
@@ -32,7 +32,7 @@ export interface ImageScanContextTrivy {
 
 export class Mappers {
   public static mapIacContextCheckovToFinding(
-    iacContextCheckov: IacContextCheckov
+    iacContextCheckov: IIacContextCheckov
   ): Finding {
     return new Finding(
       iacContextCheckov.id || "",
@@ -49,7 +49,7 @@ export class Mappers {
   }
 
   public static mapImageScanContextTrivyToFinding(
-    imageScanContextTrivy: ImageScanContextTrivy
+    imageScanContextTrivy: IImageScanContextTrivy
   ): Finding {
     return new Finding(
       imageScanContextTrivy.id || imageScanContextTrivy.cve_id || "",

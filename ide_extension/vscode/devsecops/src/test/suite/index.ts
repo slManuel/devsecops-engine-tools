@@ -1,6 +1,5 @@
 import * as path from 'path';
 import Mocha from 'mocha';
-import * as fs from 'fs';
 
 export function run(): Promise<void> {
   // Create the mocha test

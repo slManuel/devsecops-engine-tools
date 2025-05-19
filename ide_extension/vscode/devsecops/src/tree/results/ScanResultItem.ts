@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-import { FindingItem } from "./finding/FindingItem";
 
 export class ScanResultItem extends vscode.TreeItem {
   constructor(
