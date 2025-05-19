@@ -17,7 +17,7 @@ export class IacScanner implements IScannerGateway {
   ): Promise<ScannerRes> {
     outputChannel.clear();
     outputChannel.show();
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
       let scanResult: boolean = false;
       let findings: Finding[] = [];
 
