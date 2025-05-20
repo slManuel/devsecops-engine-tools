@@ -62,6 +62,24 @@ jobs:
           python -m coverage report -m
           python -m coverage xml
 
+      - name: tmp devsecops-engine-tools engine_iac
+        run: |
+          set -e
+          # Install devsecops-engine-tools
+          pip3 install devsecops-engine-tools
+
+          # Configure variables for devsecops-engine-tools
+          set -a
+          source .envdetlocal
+          set +a
+
+          # Execute devsecops-engine-tools and handle the output
+          output=$(devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo DevSecOps_Remote_Config --module engine_iac --tool checkov --folder docker)
+          echo "$output"
+          if [[ $output == *"✘Failed"* ]]; then
+            exit 1
+          fi
+
       - name: Run analysis on SonarQube
         if: ${{ github.event.pull_request.head.repo.fork == false }}
         uses: SonarSource/sonarqube-scan-action@v2
