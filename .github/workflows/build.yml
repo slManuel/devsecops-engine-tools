@@ -62,7 +62,7 @@ jobs:
           python -m coverage report -m
           python -m coverage xml
 
-      - name: tmp devsecops-engine-tools engine_iac
+      - name: devsecops-engine-tools
         run: |
           set -e
           # Install devsecops-engine-tools
@@ -73,8 +73,33 @@ jobs:
           source .envdetlocal
           set +a
 
-          # Execute devsecops-engine-tools and handle the output
-          output=$(devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo example_remote_config_local --module engine_iac --tool checkov --folder docker)
+          # Execute devsecops-engine-tools engine_code module
+          echo "Running devsecops-engine-tools engine_code module..."
+          output=$(devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo example_remote_config_local --module engine_code --tool bearer --folder .)
+          echo "$output"
+          if [[ $output == *"✘Failed"* ]]; then
+            exit 1
+          fi
+
+          # Execute devsecops-engine-tools engine_iac module
+          echo "Running devsecops-engine-tools engine_iac module..."
+          output=$(devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo example_remote_config_local --module engine_iac --tool checkov --folder .)
+          echo "$output"
+          if [[ $output == *"✘Failed"* ]]; then
+            exit 1
+          fi
+
+          # Execute devsecops-engine-tools engine_secret module
+          echo "Running devsecops-engine-tools engine_secret module..."
+          output=$(devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo example_remote_config_local --module engine_secret --tool gitleaks --folder .)
+          echo "$output"
+          if [[ $output == *"✘Failed"* ]]; then
+            exit 1
+          fi
+
+          # Execute devsecops-engine-tools engine_dependencies module
+          echo "Running devsecops-engine-tools engine_dependencies module..."
+          output=$(devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo example_remote_config_local --module engine_dependencies --tool dependency_check --folder .)
           echo "$output"
           if [[ $output == *"✘Failed"* ]]; then
             exit 1
