@@ -4,6 +4,7 @@
     ],
     "IGNORE_SEARCH_PATTERN": "(.*_test)",
     "UPDATE_SERVICE_WITH_FILE_NAME_CFT": "True",
+    "REGEX_CLEAN_END_PIPELINE_NAME": "",
     "MESSAGE_INFO_ENGINE_IAC": "",
     "THRESHOLD": {
         "VULNERABILITY": {
@@ -16,7 +17,6 @@
             "Critical": 1
         }
     },
-    "UPDATE_SERVICE_WITH_FILE_NAME_CFT": false,
     "CHECKOV": {
         "VERSION": "2.3.296",
         "INSTALL_TYPE": "remote-binary",

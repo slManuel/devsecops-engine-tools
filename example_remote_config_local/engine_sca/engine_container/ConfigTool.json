@@ -23,6 +23,7 @@
     },
     "MESSAGE_INFO_ENGINE_CONTAINER": "message custom",
     "IGNORE_SEARCH_PATTERN":"(.*_demo0|.*_cer)",
+    "REGEX_CLEAN_END_PIPELINE_NAME": "",
     "THRESHOLD": {
         "VULNERABILITY": {
             "Critical": 4,

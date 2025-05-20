@@ -94,9 +94,13 @@ class IacScan:
         config_tool = ConfigTool(json_data=data_file_tool)
 
         config_tool.exclusions = exclusions
-        config_tool.scope_pipeline = self.devops_platform_gateway.get_variable(
-            "pipeline_name"
-        )
+        regex_clean = data_file_tool.get("REGEX_CLEAN_END_PIPELINE_NAME")
+        config_tool.scope_pipeline = self.devops_platform_gateway.get_variable("pipeline_name")
+        if regex_clean:
+            pattern = re.compile(regex_clean)
+            match = pattern.match(config_tool.scope_pipeline)
+            if match:
+                config_tool.scope_pipeline = match.group(1)
 
         skip_tool = bool(
             re.match(
