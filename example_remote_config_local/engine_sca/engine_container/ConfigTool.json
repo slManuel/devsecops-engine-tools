@@ -6,7 +6,7 @@
         "SBOM_FORMAT": "cyclonedx_json"
     },
     "TRIVY": {
-        "TRIVY_VERSION": "0.51.4",
+        "TRIVY_VERSION": "0.62.1",
         "SBOM_FORMAT": "cyclonedx"
     },
     "SBOM": {

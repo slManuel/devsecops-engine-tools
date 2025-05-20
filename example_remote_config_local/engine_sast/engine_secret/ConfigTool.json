@@ -14,7 +14,7 @@
     },
     "TARGET_BRANCHES": ["trunk", "develop"],
     "trufflehog": {
-        "VERSION": "3.83.6",
+        "VERSION": "3.88.31",
         "EXCLUDE_PATH": [".git", "_venv"],
         "NUMBER_THREADS": 4,
         "ENABLE_CUSTOM_RULES" : false,
