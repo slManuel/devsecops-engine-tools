@@ -78,6 +78,7 @@ def test_process_response_success():
     response = Mock()
     response.status_code = 200
     response.json.return_value = [{"name_cmdb": "NU1245_Test", "product_type_name_cmdb": "software"}]
+    response.text = '[{"name_cmdb": "NU1245_Test", "product_type_name_cmdb": "software"}]'
     consumer = CmdbRestConsumer(
         "token12345",
         "http://hosttest.com",
@@ -232,6 +233,7 @@ def test_make_request_get_success():
     
     consumer._CmdbRestConsumer__session.get.return_value.status_code = 200
     consumer._CmdbRestConsumer__session.get.return_value.json.return_value = {"data": {"name_cmdb": "Test", "type_cmdb": "Software"}}
+    consumer._CmdbRestConsumer__session.get.return_value.text = '{"data": {"name_cmdb": "Test", "type_cmdb": "Software"}}'
     
     with patch.object(Utils, "retries_requests", side_effect=lambda func, *_: func()):
         cmdb_object = consumer.handle_request("GET", request, ["data"])
@@ -259,6 +261,7 @@ def test_make_request_post_success():
     
     consumer._CmdbRestConsumer__session.post.return_value.status_code = 200
     consumer._CmdbRestConsumer__session.post.return_value.json.return_value = {"data": {"name_cmdb": "Test", "type_cmdb": "Software"}}
+    consumer._CmdbRestConsumer__session.post.return_value.text = '{"data": {"name_cmdb": "Test", "type_cmdb": "Software"}}'
     
     with patch.object(Utils, "retries_requests", side_effect=lambda func, *_: func()):
         cmdb_object = consumer.handle_request("POST", request, ["data"])

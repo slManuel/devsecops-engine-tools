@@ -3,6 +3,45 @@ from devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.entry
 )
 from unittest.mock import patch, Mock
 
+remote_config = {
+    "PRISMA_CLOUD": {
+        "TWISTCLI_PATH": "twistcli",
+        "PRISMA_CONSOLE_URL": "",
+        "PRISMA_API_VERSION":"",
+        "SBOM_FORMAT": "cyclonedx_json"
+    },
+    "TRIVY": {
+        "TRIVY_VERSION": "0.51.4",
+        "SBOM_FORMAT": "cyclonedx"
+    },
+    "SBOM": {
+        "ENABLED": False,
+        "BRANCH_FILTER": [
+            "trunk",
+            "main"
+        ]
+    },
+    "GET_IMAGE_BASE": False,
+    "VALIDATE_BASE_IMAGE_DATE": {
+        "ENABLED": False,
+        "REFERENCE_IMAGE_DATE": "20250206"
+    },
+    "MESSAGE_INFO_ENGINE_CONTAINER": "message custom",
+    "IGNORE_SEARCH_PATTERN":"(.*_demo0|.*_cer)",
+    "REGEX_CLEAN_END_PIPELINE_NAME": "",
+    "THRESHOLD": {
+        "VULNERABILITY": {
+            "Critical": 4,
+            "High": 10,
+            "Medium": 20,
+            "Low": 999
+        },
+        "COMPLIANCE": {
+            "Critical": 1
+        }
+    }
+}
+
 
 def test_init_engine_sca_rm():
     with patch(
@@ -11,7 +50,9 @@ def test_init_engine_sca_rm():
         "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.entry_points.entry_point_tool.SetInputCore"
     ) as mock_set_input_core, patch(
         "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.entry_points.entry_point_tool.HandleRemoteConfigPatterns"
-    ) as mock_handle_remote_config_patterns:
+    ) as mock_handle_remote_config_patterns, patch(
+        "devsecops_engine_tools.engine_core.src.domain.model.gateway.devops_platform_gateway"
+    ) as mock_devops_platform_gateway:
         dict_args = {"remote_config_repo": "remote_repo", "image_to_scan":"image", "remote_config_branch": ""}
         token = "token"
         tool = "tool"
@@ -24,9 +65,11 @@ def test_init_engine_sca_rm():
         )
         mock_container_sca_scan.process.return_value = ("scan_result.json", None)
 
+        mock_devops_platform_gateway.get_remote_config.return_value = remote_config
+
         deserialized, core_input, sbom_components = init_engine_sca_rm(
             Mock(),
-            Mock(),
+            mock_devops_platform_gateway,
             Mock(),
             Mock(),
             dict_args,
@@ -42,7 +85,9 @@ def test_init_engine_sca_rm_skip_tool():
         "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.entry_points.entry_point_tool.SetInputCore"
     ) as mock_set_input_core, patch(
         "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.entry_points.entry_point_tool.HandleRemoteConfigPatterns"
-    ) as mock_handle_remote_config_patterns:
+    ) as mock_handle_remote_config_patterns, patch(
+        "devsecops_engine_tools.engine_core.src.domain.model.gateway.devops_platform_gateway"
+    ) as mock_devops_platform_gateway:
         dict_args = {"remote_config_repo": "remote_repo", "image_to_scan":"image", "remote_config_branch": ""}
         token = "token"
         tool = "tool"
@@ -54,9 +99,11 @@ def test_init_engine_sca_rm_skip_tool():
             True
         )
 
+        mock_devops_platform_gateway.get_remote_config.return_value = remote_config
+
         deserialized, core_input, sbom_components = init_engine_sca_rm(
             Mock(),
-            Mock(),
+            mock_devops_platform_gateway,
             Mock(),
             Mock(),
             dict_args,
@@ -74,7 +121,9 @@ def test_init_engine_sca_rm_no_exclusions():
         "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.entry_points.entry_point_tool.SetInputCore"
     ) as mock_set_input_core, patch(
         "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.entry_points.entry_point_tool.HandleRemoteConfigPatterns"
-    ) as mock_handle_remote_config_patterns:
+    ) as mock_handle_remote_config_patterns, patch(
+        "devsecops_engine_tools.engine_core.src.domain.model.gateway.devops_platform_gateway"
+    ) as mock_devops_platform_gateway:
         dict_args = {"remote_config_repo": "remote_repo", "image_to_scan":"image", "remote_config_branch": ""}
         token = "token"
         tool = "tool"
@@ -87,9 +136,11 @@ def test_init_engine_sca_rm_no_exclusions():
         )
         mock_container_sca_scan.process.return_value = "scan_result.json"
 
+        mock_devops_platform_gateway.get_remote_config.return_value = remote_config
+
         deserialized, core_input, sbom_components = init_engine_sca_rm(
             Mock(),
-            Mock(),
+            mock_devops_platform_gateway,
             Mock(),
             Mock(),
             dict_args,
@@ -107,7 +158,9 @@ def test_init_engine_sca_rm_empty_remote_config():
         "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.entry_points.entry_point_tool.SetInputCore"
     ) as mock_set_input_core, patch(
         "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.entry_points.entry_point_tool.HandleRemoteConfigPatterns"
-    ) as mock_handle_remote_config_patterns:
+    ) as mock_handle_remote_config_patterns, patch(
+        "devsecops_engine_tools.engine_core.src.domain.model.gateway.devops_platform_gateway"
+    ) as mock_devops_platform_gateway:
         dict_args = {"remote_config_repo": "remote_repo", "image_to_scan":"image", "remote_config_branch": ""}
         token = "token"
         tool = "tool"
@@ -119,10 +172,12 @@ def test_init_engine_sca_rm_empty_remote_config():
             True
         )
         mock_container_sca_scan.process.return_value = "scan_result.json"
+        
+        mock_devops_platform_gateway.get_remote_config.return_value = {}
 
         deserialized, core_input, sbom_components = init_engine_sca_rm(
             Mock(),
-            Mock(),
+            mock_devops_platform_gateway,
             Mock(),
             Mock(),
             dict_args,
