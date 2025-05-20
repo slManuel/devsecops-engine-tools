@@ -1,6 +1,5 @@
 import * as path from 'path';
 import Mocha from 'mocha';
-import * as fs from 'fs';
 
 export function run(): Promise<void> {
   // Create the mocha test
@@ -13,6 +12,7 @@ export function run(): Promise<void> {
   
   // Manually add test files
   mocha.addFile(path.resolve(testsRoot, './extension.test.js'));
+  mocha.addFile(path.resolve(testsRoot, './tree/DevSecOpsTreeDataProvider.test.js'));
   
   return new Promise((resolve, reject) => {
     try {

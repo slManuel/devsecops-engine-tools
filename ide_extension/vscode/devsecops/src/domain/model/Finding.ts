@@ -10,6 +10,12 @@ export class Finding {
     private description: string;
     private module: string;
     private tool: string;
+    private vulnerabilityStatus?: string;
+    private targetImage?: string;
+    private installedVersion?: string;
+    private fixedVersion?: string;
+    private packageName?: string;
+    private cvssScore?: string;
     private references: string[];
 
     constructor(
@@ -23,6 +29,12 @@ export class Finding {
         description: string,
         module: string,
         tool: string,
+        vulnerabilityStatus?: string,
+        targetImage?: string,
+        installedVersion?: string,
+        fixedVersion?: string,
+        packageName?: string,
+        cvssScore?: string,
         references: string[] = []
     ) {
         this.id = id;
@@ -35,6 +47,12 @@ export class Finding {
         this.description = description;
         this.module = module;
         this.tool = tool;
+        this.vulnerabilityStatus = vulnerabilityStatus;
+        this.targetImage = targetImage;
+        this.installedVersion = installedVersion;
+        this.fixedVersion = fixedVersion;
+        this.packageName = packageName;
+        this.cvssScore = cvssScore;
         this.references = references;
     }
 
@@ -76,6 +94,29 @@ export class Finding {
 
     public getTool(): string {
         return this.tool;
+    }
+
+    public getVulnerabilityStatus(): string | undefined {
+        return this.vulnerabilityStatus;
+    }
+    public getTargetImage(): string | undefined {
+        return this.targetImage;
+    }
+
+    public getInstalledVersion(): string | undefined {
+        return this.installedVersion;
+    }
+
+    public getFixedVersion(): string | undefined {
+        return this.fixedVersion;
+    }
+
+    public getPackageName(): string | undefined {
+        return this.packageName;
+    }
+
+    public getCvssScore(): string | undefined {
+        return this.cvssScore;
     }
 
     public getReferences(): string[] {

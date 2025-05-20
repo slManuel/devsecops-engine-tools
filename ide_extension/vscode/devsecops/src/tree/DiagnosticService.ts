@@ -5,13 +5,13 @@ export class DiagnosticService {
   private static diagnosticCollection: vscode.DiagnosticCollection | undefined;
   private static findingMap: Map<string, Finding> = new Map();
 
-  public static initialize() {
+  public static initialize(): void {
     if (!this.diagnosticCollection) {
       this.diagnosticCollection = vscode.languages.createDiagnosticCollection("devsecops");
     }
   }
 
-  public static showFindingInFile(finding: Finding, filePath: string, lineNumberStart: number, lineNumberEnd: number = lineNumberStart) {
+  public static showFindingInFile(finding: Finding, filePath: string, lineNumberStart: number, lineNumberEnd: number = lineNumberStart): void {
     this.initialize();
     
     const fileUri = vscode.Uri.file(filePath);
@@ -35,8 +35,7 @@ export class DiagnosticService {
     
     this.diagnosticCollection?.set(fileUri, [diagnostic]);
     
-    // Open the file and position at the start of the range
-    vscode.window.showTextDocument(fileUri, {
+    void vscode.window.showTextDocument(fileUri, {
       selection: new vscode.Range(lineNumberStart - 1, 0, lineNumberStart - 1, 0),
       preview: true
     });
@@ -47,12 +46,12 @@ export class DiagnosticService {
     return this.findingMap.get(key);
   }
 
-  public static clearDiagnostics() {
+  public static clearDiagnostics(): void {
     this.diagnosticCollection?.clear();
     this.findingMap.clear();
   }
 
-  public static dispose() {
+  public static dispose(): void {
     this.diagnosticCollection?.dispose();
     this.findingMap.clear();
   }

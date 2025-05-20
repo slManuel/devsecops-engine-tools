@@ -6,7 +6,7 @@ import IScannerGateway from "../../domain/model/gateways/IScannerGateway";
 import { Finding } from "../../domain/model/Finding";
 import { ScannerRes } from "../../domain/model/ScannerRes";
 import {
-  ImageScanContextTrivy,
+  IImageScanContextTrivy,
   Mappers,
 } from "../../domain/model/mappers/Mappers";
 
@@ -21,7 +21,7 @@ export class ImageScanner implements IScannerGateway {
     outputChannel.clear();
     outputChannel.show();
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
       let scanResult: boolean = false;
       let findings: Finding[] = [];
 
@@ -51,7 +51,7 @@ export class ImageScanner implements IScannerGateway {
         }
 
         if (stdout) {
-          let contextJson = null;
+          let contextJson: { container_context: IImageScanContextTrivy[] } | null = null;
           let normalOutput = stdout;
 
           const contextRegex =
@@ -60,12 +60,12 @@ export class ImageScanner implements IScannerGateway {
 
           if (match && match[1]) {
             try {
-              contextJson = JSON.parse(match[1].trim());
+              contextJson = JSON.parse(match[1].trim()) as { container_context: IImageScanContextTrivy[] };
 
               normalOutput = stdout.replace(contextRegex, "");
 
               findings = contextJson.container_context.map(
-                (finding: ImageScanContextTrivy) =>
+                (finding: IImageScanContextTrivy) =>
                   Mappers.mapImageScanContextTrivyToFinding(finding)
               );
 
@@ -73,9 +73,15 @@ export class ImageScanner implements IScannerGateway {
               outputChannel.appendLine(
                 `Successfully extracted context data with ${findings.length} findings`
               );
-            } catch (jsonError) {
+            } catch (jsonError: unknown) {
+              let errorMsg = "Unknown error";
+              if (jsonError instanceof Error) {
+                errorMsg = jsonError.message;
+              } else if (typeof jsonError === "string") {
+                errorMsg = jsonError;
+              }
               outputChannel.appendLine(
-                `Error parsing context JSON: ${jsonError}`
+                `Error parsing context JSON: ${errorMsg}`
               );
               outputChannel.appendLine("Raw context data:");
               outputChannel.appendLine(match[1]);

@@ -20,6 +20,12 @@ export class FindingItem extends vscode.TreeItem {
     
     this.iconPath = severityIcons[finding.getSeverity().toLowerCase()] || 
       new vscode.ThemeIcon("error", new vscode.ThemeColor("errorForeground"));
+      
+    this.command = {
+      command: "devsecops.showVulnContext",
+      title: "Show Vulnerability Context",
+      arguments: [finding] // Pass the full finding/context object
+    };
     
     const fileInfo = this.extractFileInfo(finding.getWhere());
     
@@ -65,7 +71,7 @@ export class FindingItem extends vscode.TreeItem {
     if (pathMatch && pathMatch[1] && this.scanPath) {
       filePath = path.join(this.scanPath, pathMatch[1].substring(1));
     } else {
-      const genericPathMatch = where.match(/\/([\/\w\.-]+)(?::|$|\s)/);
+      const genericPathMatch = where.match(/\/([/\w.-]+)(?::|$|\s)/);
       if (genericPathMatch && this.scanPath) {
         filePath = path.join(this.scanPath, genericPathMatch[1]);
       }
