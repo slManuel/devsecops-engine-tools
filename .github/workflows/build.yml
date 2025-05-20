@@ -74,7 +74,7 @@ jobs:
           set +a
 
           # Execute devsecops-engine-tools and handle the output
-          output=$(devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo DevSecOps_Remote_Config --module engine_iac --tool checkov --folder docker)
+          output=$(devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo example_remote_config_local --module engine_iac --tool checkov --folder docker)
           echo "$output"
           if [[ $output == *"✘Failed"* ]]; then
             exit 1
