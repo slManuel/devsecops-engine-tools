@@ -83,7 +83,7 @@ jobs:
         run: |
           set -e
           # Install devsecops-engine-tools
-          pip3 install devsecops-engine-tools
+          pip3 install devsecops-engine-tools -q
 
           # Configure variables for devsecops-engine-tools
           set -a
@@ -91,7 +91,7 @@ jobs:
           set +a
 
           # Execute devsecops-engine-tools and handle the output
-          output=$(devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo DevSecOps_Remote_Config --module engine_container --tool trivy --image bancolombia/devsecops-engine-tools:${{ env.RELEASE_VERSION }})
+          output=$(devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo example_remote_config_local --module engine_container --tool trivy --image bancolombia/devsecops-engine-tools:${{ env.RELEASE_VERSION }})
           echo "$output"
           if [[ $output == *"✘Failed"* ]]; then
             exit 1
