@@ -30,6 +30,7 @@ def test_application_core(mock_get_inputs_from_cli, mock_entry_point_tool):
         "token_engine_dependencies": None,
         "xray_mode": "scan",
         "dast_file_path": "dast_file_path",
+        "context": "false",
     }
 
     # Mock the dependencies
@@ -94,6 +95,7 @@ def test_get_inputs_from_cli(mock_parse_args):
     mock_args.module = "engine_iac"
     mock_args.tool = None
     mock_args.folder_path = "/path/to/folder"
+    mock_args.terraform_repo_root = "/path/to/terraform/repo/root"
     mock_args.platform = "k8s,docker"
     mock_args.use_secrets_manager = "true"
     mock_args.use_vulnerability_management = "false"
@@ -106,7 +108,8 @@ def test_get_inputs_from_cli(mock_parse_args):
     mock_args.xray_mode = "scan"
     mock_args.image_to_scan = "image"
     mock_args.dast_file_path = "dast_file_path"
-
+    mock_args.context = "false"
+    
     # Mock the parse_args method
     mock_parse_args.return_value = mock_args
 
@@ -121,6 +124,7 @@ def test_get_inputs_from_cli(mock_parse_args):
         "tool": None,
         "module": "engine_iac",
         "folder_path": "/path/to/folder",
+        "terraform_repo_root": "/path/to/terraform/repo/root",
         "platform": "k8s,docker",
         "use_secrets_manager": "true",
         "use_vulnerability_management": "false",
@@ -133,7 +137,7 @@ def test_get_inputs_from_cli(mock_parse_args):
         "xray_mode": "scan",
         "image_to_scan": "image",
         "dast_file_path": "dast_file_path",
-
+        "context": "false",
     }
 
 

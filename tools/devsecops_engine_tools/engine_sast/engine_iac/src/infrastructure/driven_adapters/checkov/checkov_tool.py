@@ -9,6 +9,7 @@ import threading
 import json
 import shutil
 import platform
+from devsecops_engine_tools.engine_sast.engine_iac.src.domain.model.context_iac import ContextIac
 from devsecops_engine_tools.engine_sast.engine_iac.src.domain.model.gateways.tool_gateway import (
     ToolGateway,
 )
@@ -57,25 +58,46 @@ class CheckovTool(ToolGateway):
             yaml.dump(checkov_config.dict_confg_file, file)
             file.close()
 
-
     def retryable_install_package(self, package: str, version: str) -> bool:
         MAX_RETRIES = 3
         RETRY_DELAY = 1  # in seconds
         INSTALL_SUCCESS_MSG = f"Installation of {package} successful"
-        INSTALL_RETRY_MSG = (
-            f"Retrying installation of {package} in {RETRY_DELAY} seconds..."
-        )
+        INSTALL_RETRY_MSG = f"Retrying installation of {package} in {RETRY_DELAY} seconds..."
 
         installed = shutil.which(package)
         if installed:
             return "checkov"
 
         python_command = "python3" if platform.system() != "Windows" else "python"
-
         python_path = shutil.which(python_command)
         if python_path is None:
-            logger.error("Python3 not found on the system.")
+            logger.error("Python not found on the system.")
             return None
+
+        # Detect Python version
+        try:
+            result = subprocess.run(
+                [python_path, "--version"],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            version_str = result.stdout.strip().split()[1]
+            major, minor, *_ = map(int, version_str.split("."))
+        except Exception as e:
+            logger.error(f"Failed to detect Python version: {e}")
+            return None
+
+        # Prepare install command parts
+        install_cmd_base = [
+            python_path, "-m", "pip", "install", "-q",
+            f"{package}=={version}",
+            "--retries", str(MAX_RETRIES),
+            "--timeout", str(RETRY_DELAY),
+        ]
+
+        if (major, minor) >= (3, 11):
+            install_cmd_base.append("--break-system-packages")
 
         def retry(attempt):
             if attempt < MAX_RETRIES:
@@ -83,31 +105,20 @@ class CheckovTool(ToolGateway):
                 time.sleep(RETRY_DELAY)
 
         for attempt in range(1, MAX_RETRIES + 1):
-            install_cmd = [
-                python_path,
-                "-m",
-                "pip",
-                "install",
-                "-q",
-                f"{package}=={version}",
-                "--retries",
-                str(MAX_RETRIES),
-                "--timeout",
-                str(RETRY_DELAY),
-            ]
-
             try:
-                result = subprocess.run(install_cmd, capture_output=True)
+                result = subprocess.run(install_cmd_base, capture_output=True)
                 if result.returncode == 0:
                     logger.debug(INSTALL_SUCCESS_MSG)
                     return "checkov"
+                else:
+                    logger.error(f"Installation failed (attempt {attempt}): {result.stderr.decode().strip()}")
             except Exception as e:
-                logger.error(f"Error during installation: {e}")
+                logger.error(f"Error during installation (attempt {attempt}): {e}")
 
             retry(attempt)
 
         return None
-
+   
     def execute(self, checkov_config: CheckovConfig, command_prefix):
         command = (
             f"{command_prefix} --config-file "
@@ -138,7 +149,8 @@ class CheckovTool(ToolGateway):
         agent_env,
         environment,
         platform_to_scan,
-        command_prefix
+        command_prefix,
+        dict_args
     ):
         output_queue = queue.Queue()
         # Crea una lista para almacenar los hilos
@@ -150,8 +162,10 @@ class CheckovTool(ToolGateway):
                     elem.upper() in rule for elem in platform_to_scan
                 ):
                     framework = [self.framework_mapping[rule]]
+                    repo_root = None
                     if "terraform" in platform_to_scan or ("all" in platform_to_scan and self.framework_mapping[rule] == "terraform"): 
                         framework.append("terraform_plan")
+                        repo_root = dict_args.get("terraform_repo_root", None)
 
                     checkov_config = CheckovConfig(
                         path_config_file="",
@@ -182,6 +196,12 @@ class CheckovTool(ToolGateway):
                             and rule in self.framework_external_checks
                             else []
                         ),
+                        repo_root_for_plan_enrichment=repo_root,
+                        deep_analysis=(
+                            True
+                            if repo_root
+                            else None
+                        )
                     )
 
                     checkov_config.create_config_dict()
@@ -230,7 +250,7 @@ class CheckovTool(ToolGateway):
         
         if command_prefix is not None:
             result_scans, rules_run = self.scan_folders(
-                folders_to_scan, config_tool, agent_env, environment, platform_to_scan, command_prefix
+                folders_to_scan, config_tool, agent_env, environment, platform_to_scan, command_prefix, kwargs.get("dict_args")
             )
 
             checkov_deserealizator = CheckovDeserealizator()
@@ -253,6 +273,37 @@ class CheckovTool(ToolGateway):
             )
         else:
             return [], None
+        
+    def get_iac_context_from_results(
+        self, path_file_results: str
+    ):
+        with open(path_file_results, "r") as file:
+            context_results_scan_list = json.load(file)
+            context_iac_list = []
+            failed_checks = context_results_scan_list.get("results", {}).get("failed_checks", [])
+            for check in failed_checks:
+                file_line_range = check.get("file_line_range", ["unknown", "unknown"])
+                start_line = file_line_range[0] if len(file_line_range) > 0 else "unknown"
+                end_line = file_line_range[1] if len(file_line_range) > 1 else "unknown"
+                line_range_str = f"{start_line}-{end_line}" if start_line != end_line else str(start_line)
+
+                context_iac = ContextIac(
+                    id=check.get("check_id", "unknown"),
+                    check_name=check.get("check_name", "unknown"),
+                    check_class=check.get("check_class", "unknown"),
+                    severity=check.get("severity").lower(),
+                    where=f"{check.get('repo_file_path', 'unknown')}: {check.get('resource', 'unknown')} (line {line_range_str})",
+                    resource=check.get("resource", "unknown"),
+                    description=check.get("check_name", "unknown"),
+                    module="engine_iac",
+                    tool="Checkov"
+                )
+
+                context_iac_list.append(context_iac)
+                        
+            print("===== BEGIN CONTEXT OUTPUT =====")
+            print(json.dumps({"iac_context": [obj.__dict__ for obj in context_iac_list]}, indent=4))
+            print("===== END CONTEXT OUTPUT =====")
         
 
     def install_binary(self,config_tool):

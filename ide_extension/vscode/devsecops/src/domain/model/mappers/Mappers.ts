@@ -10,6 +10,7 @@ export interface IIacContextCheckov {
   resource: string;
   description: string;
   module: string;
+  vulnerability_status: string;
   tool: string;
 }
 
@@ -27,6 +28,11 @@ export interface IImageScanContextTrivy {
   description: string;
   module: string;
   source_tool: string;
+  vulnerability_status: string;
+  target_image: string;
+  installed_version: string;
+  fixed_version: string;
+  cvss_score: string;
   references: string[];
 }
 
@@ -44,13 +50,15 @@ export class Mappers {
       iacContextCheckov.resource || "",
       iacContextCheckov.description || "",
       iacContextCheckov.module || "engine_iac",
-      iacContextCheckov.tool || "Checkov"
+      iacContextCheckov.tool || "Checkov",
+      iacContextCheckov.vulnerability_status || "unknown",
+
     );
   }
 
   public static mapImageScanContextTrivyToFinding(
     imageScanContextTrivy: IImageScanContextTrivy
-  ): Finding {
+  ):  Finding {
     return new Finding(
       imageScanContextTrivy.id || imageScanContextTrivy.cve_id || "",
       imageScanContextTrivy.custom_vuln_id ||
@@ -69,6 +77,12 @@ export class Mappers {
       imageScanContextTrivy.description || "",
       imageScanContextTrivy.module || "engine_container",
       imageScanContextTrivy.source_tool || "Trivy",
+      imageScanContextTrivy.vulnerability_status || "unknown",
+      imageScanContextTrivy.target_image || "",
+      imageScanContextTrivy.installed_version || "",
+      imageScanContextTrivy.fixed_version || "",
+      imageScanContextTrivy.package_name || "",
+      imageScanContextTrivy.cvss_score || "",
       imageScanContextTrivy.references || []
     );
   }

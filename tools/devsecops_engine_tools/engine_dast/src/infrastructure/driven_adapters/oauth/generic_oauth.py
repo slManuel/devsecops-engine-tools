@@ -11,7 +11,7 @@ logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 class GenericOauth(AuthenticationGateway):
     def __init__(self, data, endpoint):
         self.data: dict = data
-        self.endpoint = endpoint
+        self.endpoint: str = endpoint
         self.config = {}
 
     def process_data(self):
@@ -52,7 +52,9 @@ class GenericOauth(AuthenticationGateway):
                 "scope": self.config["scope"]
             }
 
-            url = self.endpoint + self.config["path"]
+            if self.config["path"].startswith("http"): url = self.config["path"]
+            else: url = self.endpoint + self.config["path"]
+            
             headers = self.config["headers"]
             response = requests.request(
                 self.config["method"], url, headers=headers, data=data, timeout=5
