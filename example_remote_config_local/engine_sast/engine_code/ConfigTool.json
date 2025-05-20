@@ -3,7 +3,7 @@
       ".git"
     ],
     "EXCLUDE_FOLDER": [],
-    "MESSAGE_INFO_ENGINE_CODE": "Engine code",
+    "MESSAGE_INFO_ENGINE_CODE": "engine_code run successfully",
     "THRESHOLD": {
         "VULNERABILITY": {
             "Critical": 99,
