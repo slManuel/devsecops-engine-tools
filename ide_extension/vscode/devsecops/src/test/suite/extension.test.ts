@@ -56,7 +56,7 @@ suite('Extension Test Suite', () => {
     assert.strictEqual(registerProviderStub.calledOnce, true, 'Code action provider should be registered');
     
     // Check subscriptions
-    assert.strictEqual(context.subscriptions.length, 5, 'All disposables should be added to subscriptions');
+    assert.strictEqual(context.subscriptions.length, 6, 'All disposables should be added to subscriptions');
   });
 
   test('Extension should deactivate correctly', () => {

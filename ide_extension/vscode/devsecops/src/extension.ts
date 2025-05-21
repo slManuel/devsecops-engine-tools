@@ -7,6 +7,7 @@ import { SecurityCodeActionProvider } from "./actions/SecurityCodeActionProvider
 import { registerImageScanCommand } from "./commands/ImageScanCommand";
 import { registerCopilotCommands } from "./commands/copilotCommands";
 import { showVulnContextWebview,disposeVulnPanel } from './tree/results/finding/FindingImageScan';
+import { IContextInfo } from "./tree/results/finding/FindingDetail";
 
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -43,7 +44,7 @@ export function activate(context: vscode.ExtensionContext): void {
   
   const showVulnContextDisposable = vscode.commands.registerCommand(
     "devsecops.showVulnContext",
-    (contextInfo: any) => {
+    (contextInfo: IContextInfo) => {
       showVulnContextWebview(contextInfo);
     }
   );
@@ -61,7 +62,7 @@ export function activate(context: vscode.ExtensionContext): void {
   });
 }
 
-export function deactivate() {
+export function deactivate(): void {
   disposeVulnPanel();
   DiagnosticService.dispose();
 }

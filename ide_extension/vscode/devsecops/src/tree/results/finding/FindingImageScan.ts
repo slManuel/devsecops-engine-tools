@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
-import { findingDetailWebview } from './FindingDetail';
+import { findingDetailWebview, IContextInfo } from './FindingDetail';
 
 let vulnPanel: vscode.WebviewPanel | undefined;
 let editorListener: vscode.Disposable | undefined;
 let workspaceListener: vscode.Disposable | undefined;
 
-export function showVulnContextWebview(contextInfo: any) {
+export function showVulnContextWebview(contextInfo: IContextInfo): void {
 
     if (vulnPanel) {
         vulnPanel.webview.html = findingDetailWebview(contextInfo);
@@ -18,7 +18,6 @@ export function showVulnContextWebview(contextInfo: any) {
             { enableScripts: true }
         );
          vulnPanel.webview.html = findingDetailWebview(contextInfo);
-;
 
         vulnPanel.onDidDispose(() => {
             disposeVulnPanel();
@@ -40,7 +39,7 @@ export function showVulnContextWebview(contextInfo: any) {
     }
 }
 
-export function disposeVulnPanel() {
+export function disposeVulnPanel(): void {
     [vulnPanel, editorListener, workspaceListener].forEach(listener => {
         listener?.dispose?.();
     });
