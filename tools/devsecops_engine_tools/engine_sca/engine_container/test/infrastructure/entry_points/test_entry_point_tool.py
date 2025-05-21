@@ -69,8 +69,8 @@ def test_init_engine_sca_rm():
 
         deserialized, core_input, sbom_components = init_engine_sca_rm(
             Mock(),
-            mock_devops_platform_gateway,
             Mock(),
+            mock_devops_platform_gateway,
             Mock(),
             Mock(),
             dict_args,
@@ -104,8 +104,8 @@ def test_init_engine_sca_rm_skip_tool():
 
         deserialized, core_input, sbom_components = init_engine_sca_rm(
             Mock(),
-            mock_devops_platform_gateway,
             Mock(),
+            mock_devops_platform_gateway,
             Mock(),
             Mock(),
             dict_args,
@@ -142,8 +142,8 @@ def test_init_engine_sca_rm_no_exclusions():
 
         deserialized, core_input, sbom_components = init_engine_sca_rm(
             Mock(),
-            mock_devops_platform_gateway,
             Mock(),
+            mock_devops_platform_gateway,
             Mock(),
             Mock(),
             dict_args,
@@ -180,8 +180,8 @@ def test_init_engine_sca_rm_empty_remote_config():
 
         deserialized, core_input, sbom_components = init_engine_sca_rm(
             Mock(),
-            mock_devops_platform_gateway,
             Mock(),
+            mock_devops_platform_gateway,
             Mock(),
             Mock(),
             dict_args,
