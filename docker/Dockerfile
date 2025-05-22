@@ -1,4 +1,4 @@
-FROM debian:stable-20250520-slim as remote_config
+FROM debian:stable-20250520-slim AS remote_config
 
 WORKDIR /app
 
