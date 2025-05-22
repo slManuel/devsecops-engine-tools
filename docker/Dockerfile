@@ -1,4 +1,4 @@
-FROM debian:stable-20250520-slim as remote_config
+FROM debian:stable-20250520-slim AS remote_config
 
 WORKDIR /app
 
@@ -97,6 +97,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     docker-ce \
     docker-ce-cli \
+    containerd.io && \
     containerd.io && \
     rm -rf /var/lib/apt/lists/*
 
