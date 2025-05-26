@@ -1,4 +1,17 @@
-export function findingDetailWebview(contextInfo: any): string {
+export interface IContextInfo {
+    severity?: string;
+    id?: string;
+    description?: string;
+    vulnerabilityStatus?: string;
+    installedVersion?: string;
+    fixedVersion?: string;
+    targetImage?: string;
+    packageName?: string;
+    cvssScore?: string;
+    references?: string[];
+}
+
+export function findingDetailWebview(contextInfo: IContextInfo): string {
     const severity = (contextInfo.severity || "unknown").toLowerCase();
     let codicon = "codicon-warning";
     let color = "#cca700";
@@ -22,7 +35,7 @@ export function findingDetailWebview(contextInfo: any): string {
             color = "#e51400";
     }
 
-    function scanInfoRow(label: string, value: string | undefined) {
+    function scanInfoRow(label: string, value: string | undefined): string {
         return `<div class="scan-row"><span class="scan-label">${label}:</span> <span class="scan-value">${value || "-"}</span></div>`;
     }
 
@@ -40,22 +53,6 @@ export function findingDetailWebview(contextInfo: any): string {
             align-items: center;
             font-size: 1.5em;
             margin-bottom: 0.5em;
-        }
-        .codicon {
-            font-size: 2em;
-            margin-right: 0.5em;
-            vertical-align: middle;
-            color: ${color};
-        }
-        .vuln-underline {
-            position: absolute;
-            left: 0;
-            bottom: -4px;
-            width: 100%;
-            height: 4px;
-            background: ${color};
-            border-radius: 2px;
-            content: "";
         }
         .vuln-icon {
             font-size: 10rem; 
@@ -106,7 +103,6 @@ export function findingDetailWebview(contextInfo: any): string {
     <div class="title-bar">
         <span class="codicon ${codicon} vuln-icon"></span>
         <span>${contextInfo.id || "Unknown Vulnerability"}</span>
-        <div class="vuln-underline"></div>
     </div>
     <div class="tabs">
         <button class="tab selected" id="descTab">Description</button>
@@ -128,8 +124,13 @@ export function findingDetailWebview(contextInfo: any): string {
         ${scanInfoRow("CVSS 3", contextInfo.cvssScore)}
     </div>
     <div class="section" id="remSection">
-        <h3>Remediation Info</h3>
-        <p>${contextInfo.description || "No remediation info available."}</p>
+        <h3>References</h3>
+${
+            contextInfo.references && contextInfo.references.length > 0
+                ? `<ul>${contextInfo.references.map((ref: string) => `<li><a href="${ref}" target="_blank">${ref}</a></li>`).join("")}</ul>`
+                : "<p>No remediation info available.</p>"
+        }
+ 
     </div>
     <script>
         const descTab = document.getElementById('descTab');

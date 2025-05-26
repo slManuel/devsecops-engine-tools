@@ -20,15 +20,15 @@ interface IDockerApiResponse {
 
 export async function iacScanRequest(): Promise<IacScanRequest> {
     const dockerPath = DockerPathDetector.getDockerPath();
-    // const dockerImageVersion = await getLatestDockerImageVersion();
-    const iacScanUseCase = new IacScanUseCase(new IacScanner(), new RestClient(), '1.59.0', dockerPath);
+    const dockerImageVersion = await getLatestDockerImageVersion();
+    const iacScanUseCase = new IacScanUseCase(new IacScanner(), new RestClient(), dockerImageVersion, dockerPath);
     return new IacScanRequest(iacScanUseCase);
 }
 
 export async function imageScanRequest(): Promise<ImageScanRequest>{
     const dockerPath = DockerPathDetector.getDockerPath();
-    // const dockerImageVersion = await getLatestDockerImageVersion();
-    const imageScanUseCase = new ImageScanUseCase(new ImageScanner(), '1.59.0', dockerPath);
+    const dockerImageVersion = await getLatestDockerImageVersion();
+    const imageScanUseCase = new ImageScanUseCase(new ImageScanner(), dockerImageVersion, dockerPath);
     return new ImageScanRequest(imageScanUseCase);
 }
 
