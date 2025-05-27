@@ -1,12 +1,20 @@
 from devsecops_engine_tools.engine_sca.engine_dependencies.src.domain.model.gateways.tool_gateway import (
     ToolGateway,
 )
+from devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.driven_adapters.dependency_check.dependency_check_deserialize import (
+    DependencyCheckDeserialize,
+)
+from devsecops_engine_tools.engine_sca.engine_dependencies.src.domain.model.ContextDependencies import (
+    ContextDependencies,
+)
 
 import requests
 import subprocess
 import os
 import platform
 import shutil
+from dataclasses import asdict
+import json
 
 from devsecops_engine_tools.engine_utilities.utils.utils import Utils
 from devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.helpers.get_artifacts import (
@@ -144,3 +152,61 @@ class DependencyCheckTool(ToolGateway):
         command_prefix = self.select_operative_system(cli_version)
         self.scan_dependencies(command_prefix, to_scan, token_engine_dependencies)
         return self.search_result()
+
+    def get_dependencies_context_from_results(self, path_file_results, remote_config):
+        deserializer = DependencyCheckDeserialize()
+        dependencies, namespace = deserializer.filter_vulnerabilities_by_confidence(path_file_results, remote_config)
+
+        context_dependencies_list = []
+
+        for dependency in dependencies:
+            vulnerabilities_node = dependency.find('ns:vulnerabilities', namespace)
+            if vulnerabilities_node:
+                vulnerabilities = vulnerabilities_node.findall('ns:vulnerability', namespace)
+                for vulnerability in vulnerabilities:
+                    fix = "Not found"
+                    vulnerable_software = vulnerability.find('ns:vulnerableSoftware', namespace)
+                    if vulnerable_software:
+                        software = vulnerable_software.findall('ns:software', namespace)
+                        if len(software) > 0:
+                            fix = software[0].get("versionEndExcluding", "Not found").lower()
+                    
+                    id = vulnerability.find('ns:name', namespace).text[:28]
+                    where = deserializer.get_where(dependency, namespace)
+                    description = vulnerability.find('ns:description', namespace).text if vulnerability.find('ns:description', namespace).text else ""
+                    severity = vulnerability.find('ns:severity', namespace).text.lower()
+                    references_list = []
+                    references_node = vulnerability.find('ns:references', namespace)
+                    if references_node:
+                        references = references_node.findall('ns:reference', namespace)
+                        for ref in references:
+                            url = ref.find('ns:url', namespace).text
+                            if url: references_list.append(url)
+
+                    context = ContextDependencies(
+                        cve_id=id,
+                        severity=severity,
+                        component=where,
+                        package_name=where.split(":")[0] if where else "",
+                        installed_version=where.split(":")[2].lower() if len(where.split(":")) == 3 else where.split(":")[1].lower(),
+                        fixed_version=[fix] if fix and fix != "Not found" else [],
+                        description=description,
+                        references=references_list,
+                        source_tool="Dependency Check"
+                    )
+
+            context_dependencies_list.append(context)
+
+        print("===== BEGIN CONTEXT OUTPUT =====")
+        print(
+            json.dumps(
+                {
+                    "dependencies_context": [
+                        asdict(context) for context in context_dependencies_list
+                    ]
+                },
+                indent=4,
+            )
+        )
+        print("===== END CONTEXT OUTPUT =====")
+        return context_dependencies_list

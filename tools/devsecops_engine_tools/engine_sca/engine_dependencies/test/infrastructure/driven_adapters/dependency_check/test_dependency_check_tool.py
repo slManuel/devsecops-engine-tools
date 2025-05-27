@@ -444,3 +444,5 @@ class TestDependencyCheckTool(unittest.TestCase):
         )
 
         self.assertEqual(result, {"key": "value"})
+
+    
