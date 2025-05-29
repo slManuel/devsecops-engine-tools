@@ -23,14 +23,18 @@ class CheckovDeserealizator:
                         severity = default_severity.lower()
                         category = default_category.lower()
                     else:
-                        description = rules[check_id].get("checkID", scan.get("check_name"))
+                        description = rules[check_id].get(
+                            "checkID", scan.get("check_name")
+                        )
                         severity = rules[check_id].get("severity").lower()
                         category = rules[check_id].get("category").lower()
 
                     finding_open = Finding(
                         id=check_id,
                         cvss=None,
-                        where=scan.get("repo_file_path") + ": " + str(scan.get("resource")),
+                        where=scan.get("repo_file_path")
+                        + ": "
+                        + str(scan.get("resource")),
                         description=description,
                         severity=severity,
                         identification_date=datetime.now().strftime("%d%m%Y"),
@@ -38,7 +42,7 @@ class CheckovDeserealizator:
                         module="engine_iac",
                         category=Category(category),
                         requirements=scan.get("guideline"),
-                        tool="Checkov"
+                        tool="Checkov",
                     )
                     list_open_findings.append(finding_open)
 
