@@ -35,7 +35,7 @@ export class DevSecOpsTreeDataProvider
   public addScanResult(
     label: string,
     findings: Finding[],
-    sourceType: "iac" | "image",
+    sourceType: "iac" | "image" | "dependencies",
     scanPath?: string
   ): void {
     const timestamp = new Date();
@@ -67,6 +67,7 @@ export class DevSecOpsTreeDataProvider
   private getItems(): void {
     const iacScanItems: vscode.TreeItem[] = [];
     const imageScanItems: vscode.TreeItem[] = [];
+    const dependenciesScanItems: vscode.TreeItem[] = [];
 
     const imageScanItem = new vscode.TreeItem(
       "Image Scan",
@@ -95,6 +96,20 @@ export class DevSecOpsTreeDataProvider
       "Scan a folder for IaC vulnerabilities like k8s or dockerfiles";
     iacScanItems.push(iacScanItem);
 
+    const dependenciesScanItem = new vscode.TreeItem(
+      "Dependencies Scan",
+      vscode.TreeItemCollapsibleState.None
+    );
+    dependenciesScanItem.command = {
+      command: "devsecops.dependenciesScan",
+      title: "DEPENDENCIES_SCAN",
+      arguments: [dependenciesScanItem],
+    };
+    dependenciesScanItem.iconPath = new vscode.ThemeIcon("breakpoints-view-icon");
+    dependenciesScanItem.tooltip =
+      "Scan a folder for dependencies vulnerabilities like npm, pip, gradle, maven, yarn, etc.";
+    dependenciesScanItems.push(dependenciesScanItem);
+
     this.categories = [
       new CategoryTreeItem(
         "Infrastructure as code scans",
@@ -105,6 +120,11 @@ export class DevSecOpsTreeDataProvider
         "Containers scans",
         vscode.TreeItemCollapsibleState.Collapsed,
         imageScanItems
+      ),
+      new CategoryTreeItem(
+        "Dependencies scans",
+        vscode.TreeItemCollapsibleState.Collapsed,
+        dependenciesScanItems
       ),
       new CategoryTreeItem(
         "Scan results",
