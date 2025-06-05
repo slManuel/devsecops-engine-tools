@@ -77,6 +77,8 @@ dependency-check-report*
 
 # Extensions
 out
+.nyc_output/
+coverage/
 
 # Binarios
 checkov
