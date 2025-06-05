@@ -252,20 +252,21 @@ class XrayScan(ToolGateway):
                     component_list = list(components.keys()) if components else []
                     for pkg_id, comp_data in components.items():
                         fixed_version = comp_data.get("fixed_versions", [])
+                        impact_paths = comp_data.get("impact_paths", [])
                         package_name = ""
                         installed_version = ""
                         if ":" in pkg_id:
                             parts = pkg_id.split(":")
-                            if len(parts) >= 4:
-                                package_name = f"{parts[1]}:{parts[2]}"[2:]
-                                installed_version = parts[3]
+                            package_name = parts[-2].replace("//", "")
+                            installed_version = parts[-1]
                         context = ContextDependencies(
                             cve_id=cve_ids,
                             severity=severity,
-                            component=component_list,
+                            component=pkg_id,
                             package_name=package_name,
                             installed_version=installed_version,
                             fixed_version=fixed_version,
+                            impact_paths=impact_paths,
                             description=description,
                             references=references,
                             source_tool="Jfrog Xray"

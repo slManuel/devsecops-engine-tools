@@ -173,6 +173,7 @@ class DependencyCheckTool(ToolGateway):
                         package_name=data["where"].split(":")[0] if data["where"] else "",
                         installed_version=data["where"].split(":")[2].lower() if len(data["where"].split(":")) == 3 else data["where"].split(":")[1].lower(),
                         fixed_version=[data["fix"]] if data["fix"] else [],
+                        impact_paths=[],
                         description=data["description"],
                         references=references,
                         source_tool="Dependency Check"

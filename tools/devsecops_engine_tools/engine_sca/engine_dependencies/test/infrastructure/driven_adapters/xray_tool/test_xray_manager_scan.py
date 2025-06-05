@@ -421,7 +421,12 @@ def test_get_dependencies_context_from_results(monkeypatch):
                     "severity": "High",
                     "components": {
                         "pkg:generic/testpkg:1.0.0": {
-                            "fixed_versions": ["1.0.1"]
+                            "fixed_versions": ["1.0.1"],
+                            "impact_paths": [
+                                [
+                                    {"component_id": "npm://example:1.0.0"}
+                                ]
+                            ],
                         }
                     },
                     "references": ["https://vuln.com/CVE-2024-0001"]
