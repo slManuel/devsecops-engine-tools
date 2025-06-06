@@ -104,11 +104,19 @@ class NucleiTool(ToolGateway):
             + (f" -ud {target_config.custom_templates_dir}" if target_config.custom_templates_dir else "")
             + " -ni "  # disable interactsh server
             + "-dc "  # disable clustering of requests
+            + "-sr " # use system DNS resolving as error fallback
+            + "-or " #  omit request/response pairs in the output
+            + "-stats " # enable statistics about current scan
+            + "-profile-mem ./nuclei_profile.proj "  # enable memory profiling
             + "-tags " # Excute only templates with the especified tag
             + target_config.target_type
+            + (f" -c {target_config.concurrency}" if target_config.concurrency else "") # concurrency
+            + (f" -rl {target_config.rate_limit}" if target_config.rate_limit else "") # rate limit
+            + (f" -rss {target_config.response_size}" if target_config.response_size else "") # max response size to save in bytes
+            + (f" -bs {target_config.bulk_size}" if target_config.bulk_size else "") # bulk size
+            + (f" -timeout {target_config.timeout}" if target_config.timeout else "") # timeout for each request
             + " -je "  # file to export results in JSON format
             + str(target_config.output_file)
-            + " -sr"
         )
 
         if command is not None:
