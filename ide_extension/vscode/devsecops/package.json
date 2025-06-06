@@ -136,7 +136,7 @@
     "url": "https://github.com/bancolombia/devsecops-engine-tools"
   },
   "scripts": {
-    "vscode:prepublish": "rm -rfv ./out && npm run compile",
+    "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
