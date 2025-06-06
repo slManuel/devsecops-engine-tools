@@ -81,6 +81,7 @@ dependency-check-report*
 out
 .nyc_output/
 coverage/
+.vscode-test
 
 # Binarios
 checkov
