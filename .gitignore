@@ -79,8 +79,9 @@ dependency-check-report*
 
 # Extensions
 out
-.nyc_output/
-coverage/
+.nyc_output
+coverage
+.vscode-test
 
 # Binarios
 checkov
