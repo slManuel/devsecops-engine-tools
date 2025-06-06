@@ -1,25 +1,23 @@
 {
   "name": "devsecops",
-  "icon": "resources/icon.png",
-  "displayName": "devsecops",
+  "icon": "resources/logo.png",
+  "displayName": "DevSecOps Engine Tools",
+  "publisher": "GrupoBancolombiaOSPO",
   "description": "",
-  "version": "0.0.1",
+  "version": "0.0.7",
   "engines": {
-    "vscode": "^1.91.0"
+    "vscode": "^1.95.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onView:devsecops",
+    "onCommand:devsecops.iacScan",
+    "onCommand:devsecops.imageScan"
+  ],
   "main": "./out/extension.js",
   "contributes": {
-    "viewsWelcome": [
-      {
-        "view": "scm",
-        "contents": "Test",
-        "when": "devsecops.enabled"
-      }
-    ],
     "viewsContainers": {
       "activitybar": [
         {
@@ -98,10 +96,6 @@
     },
     "commands": [
       {
-        "command": "devsecops.helloWorld",
-        "title": "HELLO WORLD"
-      },
-      {
         "command": "devsecops.iacScan",
         "title": "DevSecOps Iac Scan"
       },
@@ -130,12 +124,16 @@
           "group": "navigation"
         },
         {
-          "command": "devsecops.iacScan",
-          "when": "view == devsecopsView",
+          "command": "devsecops.imageScan",
+          "when": "view == devsecops",
           "group": "navigation"
         }
       ]
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bancolombia/devsecops-engine-tools"
   },
   "scripts": {
     "vscode:prepublish": "rm -rfv ./out && npm run compile",
@@ -145,7 +143,7 @@
     "test": "node ./run-tests.js",
     "test:coverage": "nyc npm run test",
     "report:coverage": "nyc report --reporter=lcov --reporter=text",
-    "deploy": "vsce publish --yarn",
+    "deploy": "vsce publish",
     "lint": "eslint 'src/**/*.{ts,js}'",
     "lint:fix": "eslint 'src/**/*.{ts,js}' --fix",
     "format": "prettier --write 'src/**/*.{ts,js,json,md,html,css,yml,yaml}'",
@@ -177,6 +175,12 @@
     ]
   },
   "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.2",
+    "@semantic-release/release-notes-generator": "^14.0.3",
+    "@types/lodash": "^4.17.16",
     "@types/mocha": "^10.0.9",
     "@types/node": "20.x",
     "@types/sinon": "^17.0.4",
@@ -194,10 +198,13 @@
     "nyc": "^17.1.0",
     "prettier": "^3.5.3",
     "sinon": "^20.0.0",
+    "semantic-release": "^24.2.4",
     "typescript": "^5.4.5"
   },
   "dependencies": {
     "docker-cli-js": "^2.10.0",
-    "keytar": "^7.9.0"
+    "generator-code": "^1.11.9",
+    "keytar": "^7.9.0",
+    "lodash": "^4.17.21"
   }
 }
