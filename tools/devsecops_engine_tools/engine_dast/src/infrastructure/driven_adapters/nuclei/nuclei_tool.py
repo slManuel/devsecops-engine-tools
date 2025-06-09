@@ -31,7 +31,7 @@ class NucleiTool(ToolGateway):
         self.data_config_cli = data_config_cli
         self.TOOL: str = "NUCLEI"
 
-    def download_tool(self, version):
+    def download_tool(self, version, agent_work_folder):
         try:
             base_url = f"https://github.com/projectdiscovery/nuclei/releases/download/v{version}/"
             os_type = platform.system().lower()
@@ -49,35 +49,33 @@ class NucleiTool(ToolGateway):
             if response.status_code != 200:
                 raise Exception(f"Error [102]: Failed to download Nuclei version {version}. HTTP status code: {response.status_code}")
 
-            home_directory = os.path.expanduser("~")
-            zip_name = os.path.join(home_directory, file_name)
+            zip_name = os.path.join(agent_work_folder, file_name)
             with open(zip_name, "wb") as f:
                 f.write(response.content)
 
-            Utils().unzip_file(zip_name, home_directory)
+            Utils().unzip_file(zip_name, agent_work_folder)
             return 0
         except Exception as e:
             logger.error(f"Error [103]: An exception occurred during download: {e}")
             return e
 
-    def install_tool(self, version):
+    def install_tool(self, version, agent_work_folder):
         try:
             nuclei_path = shutil.which("nuclei")
 
             if not nuclei_path:
-                download_result = self.download_tool(version)
+                download_result = self.download_tool(version, agent_work_folder)
                 if download_result != 0:
                     raise Exception(f"Error [104]: Download failed with error: {download_result}")
 
             os_type = platform.system().lower()
-            home_directory = os.path.expanduser("~")
 
             if nuclei_path:
                 executable_path = nuclei_path
             elif os_type == "windows":
-                executable_path = os.path.join(home_directory, "nuclei.exe")
+                executable_path = os.path.join(agent_work_folder, "nuclei.exe")
             else:
-                executable_path = os.path.join(home_directory, "nuclei")
+                executable_path = os.path.join(agent_work_folder, "nuclei")
 
             if os_type == "darwin" or os_type == "linux":
                 subprocess.run(["chmod", "+x", executable_path], check=True)
@@ -137,7 +135,7 @@ class NucleiTool(ToolGateway):
         secret_external_checks,
         agent_work_folder
     ):
-        result_install = self.install_tool(config_tool[self.TOOL]["VERSION"])
+        result_install = self.install_tool(config_tool[self.TOOL]["VERSION"], agent_work_folder)
         if result_install["status"] < 200:
             return [], None
         
