@@ -7,7 +7,7 @@ DevSecOps_Remote_Config
 # Virtual Enviroment python
 .venv
 .venv_win
-*.vscode*
+*.vscode
 .pytest*
 *pycache*
 *_pycache_*
@@ -73,11 +73,15 @@ result_dast_scan.json
 test_file/*
 pytest.ini
 kics-devsecops/
+dependency-check-report*
+*.vsix
+**-lock.json
 
 # Extensions
 out
-.nyc_output/
-coverage/
+.nyc_output
+coverage
+.vscode-test
 
 # Binarios
 checkov
