@@ -40,6 +40,8 @@ jobs:
         if: matrix.name == 'linux'
         run: |
           docker run --rm -v ${{ github.workspace }}:/app -w /app ubuntu:20.04 bash -c "
+            export DEBIAN_FRONTEND=noninteractive && \
+            ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime && \
             apt-get update && \
             apt-get install -y software-properties-common curl zip build-essential && \
             add-apt-repository ppa:deadsnakes/ppa -y && \
@@ -49,7 +51,7 @@ jobs:
             python3.10 -m pip install --no-cache-dir --upgrade pip && \
             python3.10 -m pip install --no-cache-dir pyinstaller -r tools/requirements.txt && \
             python3.10 -m pyinstaller tools/devsecops_engine_tools/devsecops-engine-tools.spec"
-            
+
       #macOS and Windows setup
       - name: Set up Python (macOS/Windows)
         if: matrix.name != 'linux'
