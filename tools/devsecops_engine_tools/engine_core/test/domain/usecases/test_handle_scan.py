@@ -154,7 +154,7 @@ class TestHandleScan(unittest.TestCase):
             "remote_config_branch": "",
             "use_vulnerability_management": "true",
         }
-        config_tool = {"VULNERABILITY_MANAGER": {"ENABLED": False}, "ENGINE_CONTAINER": {"ENABLED": "true", "TOOL": "tool"}}
+        config_tool = {"ENGINE_CONTAINER": {"ENABLED": "true", "TOOL": "tool"}}
         secret_tool = {"token_prisma_cloud": "test"}
         self.secrets_manager_gateway.get_secret.return_value = secret_tool
 
@@ -275,7 +275,7 @@ class TestHandleScan(unittest.TestCase):
             "remote_config_branch": "",
             "use_vulnerability_management": "true",
         }
-        config_tool = {"VULNERABILITY_MANAGER": {"ENABLED": False}, "ENGINE_SECRET": {"ENABLED": "true", "TOOL": "trufflehog"}}
+        config_tool = {"ENGINE_SECRET": {"ENABLED": "true", "TOOL": "trufflehog"}}
         secret_tool = {"token_github_external_rules": "test"}
         self.secrets_manager_gateway.get_secret.return_value = secret_tool
 
@@ -313,7 +313,7 @@ class TestHandleScan(unittest.TestCase):
             "remote_config_branch": "",
             "use_vulnerability_management": "true",
         }
-        config_tool = {"VULNERABILITY_MANAGER": {"ENABLED": False}, "ENGINE_SECRET": {"ENABLED": "true", "TOOL": "trufflehog"}}
+        config_tool = {"ENGINE_SECRET": {"ENABLED": "true", "TOOL": "trufflehog"}}
         secret_tool = None
         self.secrets_manager_gateway.get_secret.return_value = secret_tool
 
@@ -351,7 +351,7 @@ class TestHandleScan(unittest.TestCase):
             "remote_config_branch": "",
             "use_vulnerability_management": "true",
         }
-        config_tool = {"VULNERABILITY_MANAGER": {"ENABLED": False}, "ENGINE_SECRET": {"ENABLED": "true", "TOOL": "trufflehog"}}
+        config_tool = {"ENGINE_SECRET": {"ENABLED": "true", "TOOL": "trufflehog"}}
         secret_tool = None
         self.secrets_manager_gateway.get_secret.return_value = secret_tool
 
