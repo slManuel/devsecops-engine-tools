@@ -31,8 +31,17 @@ jobs:
         working-directory: ide_extension/vscode/devsecops/
 
     steps:
+      - name: Generate a token of Github APP
+        id: generate_token
+        uses: tibdex/github-app-token@v2.1.0
+        with:
+          app_id: ${{ secrets.APP_ID_ADMIN_GITHUB }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY_ADMIN_GITHUB }}
+          
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
 
       - name: Set up Node.js
         uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # v4.0.4
@@ -48,7 +57,10 @@ jobs:
       - name: Package extension
         run: npx @vscode/vsce package
 
+      - name: Set up Semantic Release
+        run: npm -g install @semantic-release/git semantic-release@23.0.0
+
       - name: Semantic Release
+        run: npx semantic-release@23.0.0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
