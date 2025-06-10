@@ -8,7 +8,7 @@ class ApiConfig():
             self.endpoint: str = api_data["endpoint"]
             self.operations: "List[ApiOperation]" = api_data["operations"]
             self.concurrency: Optional[int] = None
-            self.rate_limit: Optional[int] = None
+            self.rate_limit: Optional[int] = api_data.get("rate_limit", 150)
             self.response_size: Optional[int] = None
             self.bulk_size: Optional[int] = None
             self.timeout: Optional[int] = None

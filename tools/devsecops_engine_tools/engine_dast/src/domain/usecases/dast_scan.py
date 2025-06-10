@@ -53,7 +53,6 @@ class DastScan:
             ).get(tool)
 
         self.data_target.concurrency = config_tool.get(tool, {}).get("CONCURRENCY", 25)
-        self.data_target.rate_limit = config_tool.get(tool, {}).get("RATE_LIMIT", 150)
         self.data_target.response_size = config_tool.get(tool, {}).get("RESPONSE_SIZE", 1048576)
         self.data_target.bulk_size = config_tool.get(tool, {}).get("BULK_SIZE", 25)
         self.data_target.timeout = config_tool.get(tool, {}).get("TIMEOUT", 10)
