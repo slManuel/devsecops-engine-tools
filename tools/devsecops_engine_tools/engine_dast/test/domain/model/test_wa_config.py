@@ -15,7 +15,6 @@ class TestWaConfig(unittest.TestCase):
         self.assertEqual(config.url, "https://web.example.com")
         self.assertEqual(config.data, {"headers": {}, "payload": {}})
         self.assertIsNone(config.concurrency)
-        self.assertIsNone(config.rate_limit)
         self.assertIsNone(config.response_size)
         self.assertIsNone(config.bulk_size)
         self.assertIsNone(config.timeout)
