@@ -27,7 +27,7 @@ jobs:
     permissions:
       contents: write
     env:
-      PYTHON_VERSION: "3.12"
+      PYTHON_VERSION: "3.10"
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -41,14 +41,16 @@ jobs:
         run: |
           docker run --rm -v ${{ github.workspace }}:/app -w /app ubuntu:20.04 bash -c "
             apt-get update && \
+            apt-get install -y software-properties-common && \
+            add-apt-repository ppa:deadsnakes/ppa -y && \
+            apt-get update && \
             DEBIAN_FRONTEND=noninteractive apt-get install -y \
-              python3.12 python3.12-venv python3.12-dev python3-pip \
+              python3.10 python3.10-venv python3.10-dev python3-pip \
               build-essential zip curl && \
-            python3.12 -m pip install --upgrade pip && \
-            python3.12 -m pip install pyinstaller -r tools/requirements.txt && \
-            python3.12 -m pyinstaller tools/devsecops_engine_tools/devsecops-engine-tools.spec
+            python3.10 -m pip install --upgrade pip && \
+            python3.10 -m pip install pyinstaller -r tools/requirements.txt && \
+            python3.10 -m pyinstaller tools/devsecops_engine_tools/devsecops-engine-tools.spec
           "
-
       # macOS and Windows setup
       - name: Set up Python (macOS/Windows)
         if: matrix.name != 'linux'
