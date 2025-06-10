@@ -50,7 +50,7 @@ jobs:
             curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10 && \
             python3.10 -m pip install --no-cache-dir --upgrade pip && \
             python3.10 -m pip install --no-cache-dir pyinstaller -r tools/requirements.txt && \
-            python3.10 -m pyinstaller tools/devsecops_engine_tools/devsecops-engine-tools.spec"
+            pyinstaller tools/devsecops_engine_tools/devsecops-engine-tools.spec"
 
       #macOS and Windows setup
       - name: Set up Python (macOS/Windows)
