@@ -17,10 +17,22 @@ jobs:
         working-directory: ide_extension/vscode/devsecops/
 
     steps:
-      - name: ⬇️ Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      # Generate a token of Github APP
+      - name: Generate a token
+        id: generate_token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2.1.0
+        with:
+          app_id: ${{ secrets.APP_ID_ADMIN_GITHUB }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY_ADMIN_GITHUB }}
 
-      - name: ⚙️ Setup Node.js
+      # Check out the current repository
+      - name: Fetch Sources
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Setup Node.js
         uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # v4.0.4
         with:
           node-version: '22'
@@ -30,6 +42,9 @@ jobs:
 
       - name: Compile extension
         run: npm run compile
+
+      - name: Package extension
+        run: npx @vscode/vsce package
 
       - name: Publish to VSCode Marketplace
         env:
