@@ -49,6 +49,7 @@ log/
 twistcli
 trivy*
 trivy_*
+nuclei
 *scan_result.json
 jf
 jf.exe

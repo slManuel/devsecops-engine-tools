@@ -16,7 +16,6 @@
         "VERSION": "3.3.5",
         "DOWNLOAD_URL": "https://github.com/projectdiscovery/nuclei/releases/download/",
         "CONCURRENCY": 1,
-        "RATE_LIMIT": 1,
         "RESPONSE_SIZE": 256,
         "BULK_SIZE": 1,
         "TIMEOUT": 10,

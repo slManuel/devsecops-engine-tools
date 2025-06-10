@@ -6,7 +6,7 @@ class WaConfig:
         self.url: str = data["endpoint"]
         self.data: dict = data["data"]
         self.concurrency: Optional[int] = None
-        self.rate_limit: Optional[int] = None
+        self.rate_limit: Optional[int] = data.get("rate_limit", 150)
         self.response_size: Optional[int] = None
         self.bulk_size: Optional[int] = None
         self.timeout: Optional[int] = None

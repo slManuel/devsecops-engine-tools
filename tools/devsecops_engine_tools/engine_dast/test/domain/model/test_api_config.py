@@ -13,7 +13,6 @@ class TestApiConfig(unittest.TestCase):
         self.assertEqual(config.endpoint, "https://api.example.com")
         self.assertEqual(config.operations, ["GET /users", "POST /users"])
         self.assertIsNone(config.concurrency)
-        self.assertIsNone(config.rate_limit)
         self.assertIsNone(config.response_size)
         self.assertIsNone(config.bulk_size)
         self.assertIsNone(config.timeout)
