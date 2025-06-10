@@ -66,9 +66,28 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: ./dist/devsecops-engine-tools${{ matrix.suffix }} --help
 
+      # 🆕 Static build for Linux
+      - name: Install staticx and dependencies (Linux only)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y upx patchelf
+          python -m pip install --no-cache-dir staticx
+
+      - name: Make Static Binary (Linux only)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          staticx dist/devsecops-engine-tools dist/devsecops-engine-tools.static
+          chmod +x dist/devsecops-engine-tools.static
+
       - name: Zip Artifact (Linux/Mac)
         if: matrix.os != 'windows-latest'
-        run: zip devsecops-engine-tools.zip dist/devsecops-engine-tools${{ matrix.suffix }}
+        run: |
+          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+            zip devsecops-engine-tools.zip dist/devsecops-engine-tools.static
+          else
+            zip devsecops-engine-tools.zip dist/devsecops-engine-tools
+          fi
 
       - name: Upload Artifact
         #if: startsWith(github.ref, 'refs/heads/trunk')
