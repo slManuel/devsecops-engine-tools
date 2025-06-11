@@ -10,7 +10,6 @@
         }
     },
     "VULNERABILITY_MANAGER": {
-        "ENABLED": false,
         "BRANCH_FILTER": [
             "trunk",
             "main"
