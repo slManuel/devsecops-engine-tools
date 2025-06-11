@@ -38,6 +38,7 @@ class TestIacScan(unittest.TestCase):
             "EXCLUSIONS_PATH": "Exclusions.json",
             "MESSAGE_INFO_ENGINE_IAC": "message test",
             "UPDATE_SERVICE_WITH_FILE_NAME_CFT": "True",
+            "REGEX_CLEAN_END_PIPELINE_NAME": "^(.*?)(?:_(DEV|CER|PDN))$",
             "THRESHOLD": {
                 "VULNERABILITY": {
                     "Critical": 10,

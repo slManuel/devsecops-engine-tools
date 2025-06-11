@@ -1,12 +1,12 @@
 {
     "IGNORE_SEARCH_PATTERN": "(.*test.*)",
-    "MESSAGE_INFO_ENGINE_SECRET": "message custom",
+    "MESSAGE_INFO_ENGINE_SECRET": "engine_secret run successfully",
     "THRESHOLD": {
         "VULNERABILITY": {
-            "Critical": 1,
-            "High": 0,
-            "Medium": 0,
-            "Low": 0
+            "Critical": 99,
+            "High": 99,
+            "Medium": 99,
+            "Low": 99
         },
         "COMPLIANCE": {
             "Critical": 0
@@ -14,16 +14,16 @@
     },
     "TARGET_BRANCHES": ["trunk", "develop"],
     "trufflehog": {
-        "VERSION": "1.2.3",
-        "EXCLUDE_PATH": [".git"],
+        "VERSION": "3.88.31",
+        "EXCLUDE_PATH": [".git", "_venv"],
         "NUMBER_THREADS": 4,
-        "ENABLE_CUSTOM_RULES" : true,
+        "ENABLE_CUSTOM_RULES" : false,
         "EXTERNAL_DIR_OWNER": "ExternalOrg",
         "EXTERNAL_DIR_REPOSITORY": "DevSecOps_Checks",
         "APP_ID_GITHUB":"",
         "INSTALLATION_ID_GITHUB":"",
         "USE_EXTERNAL_CHECKS_GIT": false,
-        "USE_EXTERNAL_CHECKS_DIR": true,
+        "USE_EXTERNAL_CHECKS_DIR": false,
         "RULES": {
             "MISCONFIGURATION_SCANNING": {
                 "References": "https://reference.url/",
@@ -36,12 +36,12 @@
         "EXCLUDE_PATH": [".git"],
         "NUMBER_THREADS": 4,
         "ALLOW_IGNORE_LEAKS": false,
-        "ENABLE_CUSTOM_RULES" : true,
+        "ENABLE_CUSTOM_RULES" : false,
         "EXTERNAL_DIR_OWNER": "ExternalOrg",
         "EXTERNAL_DIR_REPOSITORY": "DevSecOps_Checks",
         "APP_ID_GITHUB":"",
         "INSTALLATION_ID_GITHUB":"",
         "USE_EXTERNAL_CHECKS_GIT": false,
-        "USE_EXTERNAL_CHECKS_DIR": true
+        "USE_EXTERNAL_CHECKS_DIR": false
     }
 }
