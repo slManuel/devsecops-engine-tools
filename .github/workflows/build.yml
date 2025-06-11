@@ -5,11 +5,14 @@ on:
     branches:
       - trunk
       - feature/*
+      - fix/*
     paths-ignore:
       - 'ide_extension/**'
       - '.github/workflows/intellij-build.yml'
       - '.github/workflows/intellij-release.yml'
       - '.github/workflows/intellij-updater.yml'
+      - '.github/workflows/vscode-build.yml'
+      - '.github/workflows/vscode-release.yml'
 
   pull_request:
     branches:
@@ -19,6 +22,8 @@ on:
       - '.github/workflows/intellij-build.yml'
       - '.github/workflows/intellij-release.yml'
       - '.github/workflows/intellij-updater.yml'
+      - '.github/workflows/vscode-build.yml'
+      - '.github/workflows/vscode-release.yml'
 
 jobs:
   build:

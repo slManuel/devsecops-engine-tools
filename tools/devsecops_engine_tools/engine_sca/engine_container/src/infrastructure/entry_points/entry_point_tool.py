@@ -25,10 +25,14 @@ def init_engine_sca_rm(
     tool,
 ):
     remote_config = remote_config_source_gateway.get_remote_config(
-        dict_args["remote_config_repo"], "engine_sca/engine_container/ConfigTool.json", dict_args["remote_config_branch"]
+        dict_args["remote_config_repo"],
+        "engine_sca/engine_container/ConfigTool.json",
+        dict_args["remote_config_branch"],
     )
     exclusions = remote_config_source_gateway.get_remote_config(
-        dict_args["remote_config_repo"], "engine_sca/engine_container/Exclusions.json", dict_args["remote_config_branch"]
+        dict_args["remote_config_repo"],
+        "engine_sca/engine_container/Exclusions.json",
+        dict_args["remote_config_branch"],
     )
     pipeline_name = tool_remote.get_variable("pipeline_name")
     regex_clean = remote_config.get("REGEX_CLEAN_END_PIPELINE_NAME")
@@ -63,7 +67,7 @@ def init_engine_sca_rm(
             image_to_scan,
             exclusions,
             pipeline_name,
-            context = dict_args["context"]
+            context=dict_args["context"],
         )
         image_scanned, base_image, sbom_components = container_sca_scan.process()
         if image_scanned:
@@ -72,7 +76,7 @@ def init_engine_sca_rm(
         print("Tool skipped by DevSecOps policy")
         dict_args["send_metrics"] = "false"
         dict_args["use_vulnerability_management"] = "false"
-        
-    core_input = input_core.set_input_core(image_scanned,base_image)
+
+    core_input = input_core.set_input_core(image_scanned, base_image)
 
     return deseralized, core_input, sbom_components

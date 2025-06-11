@@ -28,7 +28,7 @@ remote_config = {
     },
     "MESSAGE_INFO_ENGINE_CONTAINER": "message custom",
     "IGNORE_SEARCH_PATTERN":"(.*_demo0|.*_cer)",
-    "REGEX_CLEAN_END_PIPELINE_NAME": "",
+    "REGEX_CLEAN_END_PIPELINE_NAME": "^(.*?)(?:_(DEV|CER|PDN))$",
     "THRESHOLD": {
         "VULNERABILITY": {
             "Critical": 4,
@@ -65,11 +65,12 @@ def test_init_engine_sca_rm():
         )
         mock_container_sca_scan.process.return_value = ("scan_result.json", None)
 
+        mock_devops_platform_gateway.get_variable.return_value = "example_pipeline"
         mock_devops_platform_gateway.get_remote_config.return_value = remote_config
 
         deserialized, core_input, sbom_components = init_engine_sca_rm(
             Mock(),
-            Mock(),
+            mock_devops_platform_gateway,
             mock_devops_platform_gateway,
             Mock(),
             Mock(),
@@ -100,11 +101,12 @@ def test_init_engine_sca_rm_skip_tool():
             True
         )
 
+        mock_devops_platform_gateway.get_variable.return_value = "example_pipeline"
         mock_devops_platform_gateway.get_remote_config.return_value = remote_config
 
         deserialized, core_input, sbom_components = init_engine_sca_rm(
             Mock(),
-            Mock(),
+            mock_devops_platform_gateway,
             mock_devops_platform_gateway,
             Mock(),
             Mock(),
@@ -138,11 +140,12 @@ def test_init_engine_sca_rm_no_exclusions():
         )
         mock_container_sca_scan.process.return_value = "scan_result.json"
 
+        mock_devops_platform_gateway.get_variable.return_value = "example_pipeline_DEV"
         mock_devops_platform_gateway.get_remote_config.return_value = remote_config
 
         deserialized, core_input, sbom_components = init_engine_sca_rm(
             Mock(),
-            Mock(),
+            mock_devops_platform_gateway,
             mock_devops_platform_gateway,
             Mock(),
             Mock(),
