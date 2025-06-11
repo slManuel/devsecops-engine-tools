@@ -1,1 +1,1 @@
-version = '1.70.0'
+version = 'scode-v1.0.0'
