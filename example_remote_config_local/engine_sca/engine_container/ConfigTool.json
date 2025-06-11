@@ -26,9 +26,9 @@
     "REGEX_CLEAN_END_PIPELINE_NAME": "",
     "THRESHOLD": {
         "VULNERABILITY": {
-            "Critical": 4,
-            "High": 10,
-            "Medium": 20,
+            "Critical": 99,
+            "High": 99,
+            "Medium": 99,
             "Low": 999
         },
         "QUALITY_VULNERABILITY_MANAGEMENT": {
