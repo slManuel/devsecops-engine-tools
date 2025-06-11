@@ -67,6 +67,36 @@ jobs:
           python -m coverage report -m
           python -m coverage xml
 
+      - name: devsecops-engine-tools
+        run: |
+          set -e
+          # Install devsecops-engine-tools
+          pip3 install devsecops-engine-tools -q
+
+          # Execute devsecops-engine-tools engine_code module
+          echo -e "\nRunning devsecops-engine-tools engine_code module..."
+          output=$(devsecops-engine-tools --platform_devops github --remote_config_source local --remote_config_repo example_remote_config_local --module engine_code --tool bearer --folder .)
+          echo "$output"
+          if [[ $output == *"✘Failed"* ]]; then
+            exit 1
+          fi
+
+          # Execute devsecops-engine-tools engine_iac module
+          echo -e "\nRunning devsecops-engine-tools engine_iac module..."
+          output=$(devsecops-engine-tools --platform_devops github --remote_config_source local --remote_config_repo example_remote_config_local --module engine_iac --tool checkov --folder .)
+          echo "$output"
+          if [[ $output == *"✘Failed"* ]]; then
+            exit 1
+          fi
+
+          # Execute devsecops-engine-tools engine_secret module
+          echo -e "\nRunning devsecops-engine-tools engine_secret module..."
+          output=$(devsecops-engine-tools --platform_devops github --remote_config_source local --remote_config_repo example_remote_config_local --module engine_secret --tool trufflehog --folder .)
+          echo "$output"
+          if [[ $output == *"✘Failed"* ]]; then
+            exit 1
+          fi
+
       - name: Run analysis on SonarQube
         if: ${{ github.event.pull_request.head.repo.fork == false }}
         uses: SonarSource/sonarqube-scan-action@v2

@@ -79,6 +79,19 @@ jobs:
           docker build --build-arg VERSION=${{ env.RELEASE_VERSION }} -t bancolombia/devsecops-engine-tools:${{ env.RELEASE_VERSION }} -f docker/Dockerfile .
           docker tag bancolombia/devsecops-engine-tools:${{ env.RELEASE_VERSION }} bancolombia/devsecops-engine-tools:${{ env.RELEASE_VERSION }}
 
+      - name: devsecops-engine-tools engine_container
+        run: |
+          set -e
+          # Install devsecops-engine-tools
+          pip3 install devsecops-engine-tools -q
+
+          # Execute devsecops-engine-tools and handle the output
+          output=$(devsecops-engine-tools --platform_devops github --remote_config_source local --remote_config_repo example_remote_config_local --module engine_container --tool trivy --image bancolombia/devsecops-engine-tools:${{ env.RELEASE_VERSION }})
+          echo "$output"
+          if [[ $output == *"✘Failed"* ]]; then
+            exit 1
+          fi
+
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:

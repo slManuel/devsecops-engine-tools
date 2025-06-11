@@ -29,6 +29,10 @@
                 "SONAR_INSTANCE_ONE": 4,
                 "SONAR_INSTANCE_TWO": 5
             },
+            "TOOL_SLA_MAPPING": {
+                "DEFAULT": 1,
+                "ORPHAN": 4
+            },
             "REIMPORT_SCAN": false,
             "CMDB": {
                 "USE_CMDB": false,

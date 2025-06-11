@@ -9,6 +9,7 @@ from devsecops_engine_tools.engine_sca.engine_container.src.domain.usecases.set_
 )
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
 from devsecops_engine_tools.engine_utilities import settings
+import re
 
 logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
@@ -34,6 +35,13 @@ def init_engine_sca_rm(
         dict_args["remote_config_branch"],
     )
     pipeline_name = tool_remote.get_variable("pipeline_name")
+    regex_clean = remote_config.get("REGEX_CLEAN_END_PIPELINE_NAME")
+    if regex_clean:
+        pattern = re.compile(regex_clean)
+        match = pattern.match(pipeline_name)
+        if match:
+            pipeline_name= match.group(1)
+            
     handle_remote_config_patterns = HandleRemoteConfigPatterns(
         remote_config, exclusions, pipeline_name
     )
