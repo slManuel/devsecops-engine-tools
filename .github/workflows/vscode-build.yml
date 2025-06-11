@@ -76,11 +76,8 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Set up Semantic Release
-        run: npm -g install @semantic-release/git semantic-release@23.0.0
-
       - name: Semantic Release
-        run: npx semantic-release@23.0.0
+        run: npx semantic-release
         working-directory: ./ide_extension/vscode/devsecops/
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
