@@ -12,6 +12,8 @@ RUN apt-get update && apt-get install -y dos2unix
 
 COPY $REMOTE_CONFIG /app/example_remote_config_local
 COPY ./docker/remoteConfigGeneration.sh /app/remoteConfigGeneration.sh
+COPY ./rules* /tmp/rules
+COPY ./docs* /tmp/docs
 
 RUN dos2unix /app/remoteConfigGeneration.sh
 
@@ -60,12 +62,11 @@ ENV DET_PIPELINE_NAME="" \
     DET_PROJECT_NAME="" \
     DET_REPOSITORY=""
 
-COPY ./rules* /tmp/rules
-COPY ./docs* /tmp/docs
 COPY ./docker/rules_context_extract.py /app/rules_context_extract.py
 COPY --from=remote_config /app/docker_default_remote_config /app/docker_default_remote_config
 COPY --from=remote_config /opt/venv /opt/venv
 COPY --from=remote_config /tmp/rules* /tmp/rules
+COPY --from=remote_config /tmp/docs* /tmp/docs
 
 COPY .envdetlocal /app/.env
 
