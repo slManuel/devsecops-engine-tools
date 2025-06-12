@@ -28,6 +28,9 @@ steps:
 - script: python3 docker/get_files_gh.py $(repo-owner) $(project) rules $(gh-at) rules
   displayName: 'Get Custom IAC Rules'
 
+- script: python3 docker/get_files_gh.py $(repo-owner) $(project) docs $(gh-at) docs
+  displayName: 'Get Custom IAC Rules Registry'
+
 - script: docker build --build-arg VERSION=$(RELEASE_VERSION) -t $(artifactory-url)/devops/devsecops-engine-tools:$(RELEASE_VERSION) -f docker/Dockerfile . && docker tag artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION) artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)
   displayName: 'Build Docker Image'
 
