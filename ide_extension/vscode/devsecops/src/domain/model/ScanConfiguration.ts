@@ -8,6 +8,9 @@ export class ScanConfiguration {
   private environment: string;
   private adUserName: string;
   private adPersonalAccessToken: string;
+  private dependenciesToken: string;
+  private xrayMode: string;
+  private dependenciesTool: string;
 
   constructor() {
     this.dockerImageName = "";
@@ -17,20 +20,30 @@ export class ScanConfiguration {
     this.environment = "dev";
     this.adUserName = "";
     this.adPersonalAccessToken = "";
-    
+    this.dependenciesToken = "";
+    this.xrayMode = "";
+    this.dependenciesTool = "";
+
     this.loadFromVSCodeConfig();
   }
 
   private loadFromVSCodeConfig(): void {
-    const config = vscode.workspace.getConfiguration("devsecops");
+    const generalConfig = vscode.workspace.getConfiguration("devsecops.general");
+    const azureDevopsConfig = vscode.workspace.getConfiguration("devsecops.azuredevops");
+    const dependenciesConfig = vscode.workspace.getConfiguration("devsecops.dependencies");
     
-    this.dockerImageName = config.get("imageToUse") || "bancolombia/devsecops-engine-tools";
-    this.organizationName = config.get("organizationName") || "";
-    this.projectName = config.get("projectName") || "";
-    this.definitionId = config.get("releaseId") || "";
-    this.environment = config.get("environment") || "dev";
-    this.adUserName = config.get("username") || "";
-    this.adPersonalAccessToken = config.get("personalAccessToken") || "";
+    this.dockerImageName = generalConfig.get("imageToUse") || "bancolombia/devsecops-engine-tools";
+    this.organizationName = azureDevopsConfig.get("organizationName") || "";
+    this.projectName = azureDevopsConfig.get("projectName") || "";
+    this.definitionId = azureDevopsConfig.get("releaseId") || "";
+    this.environment = azureDevopsConfig.get("environment") || "dev";
+    this.adUserName = azureDevopsConfig.get("username") || "";
+    this.adPersonalAccessToken = azureDevopsConfig.get("personalAccessToken") || "";
+    this.dependenciesToken = dependenciesConfig.get("dependenciesToken") || "";
+    this.xrayMode = dependenciesConfig.get("xrayMode") || "audit";
+    this.dependenciesTool = dependenciesConfig.get("dependenciesTool") || "xray";
+
+    null
   }
 
   public refresh(): void {
@@ -77,6 +90,18 @@ export class ScanConfiguration {
 
   public getAdPersonalAccessToken(): string {
     return this.adPersonalAccessToken;
+  }
+
+  public getDependenciesToken(): string {
+    return this.dependenciesToken;
+  }
+
+  public getXrayMode(): string {
+    return this.xrayMode;
+  }
+
+  public getDependenciesTool(): string {
+    return this.dependenciesTool;
   }
 
 }

@@ -21,7 +21,10 @@ export class DependenciesScanUseCase implements IDependenciesScanUseCase {
       outputChannel,
       scanConfiguration.getDockerImageName(),
       this.dockerImageVersion,
-      this.dockerPath
+      this.dockerPath,
+      scanConfiguration.getDependenciesToken(),
+      scanConfiguration.getXrayMode(),
+      scanConfiguration.getDependenciesTool()
     );
   }
 }

@@ -12,10 +12,15 @@ export class DependenciesScanner implements IScannerGateway {
     outputChannel: OutputChannel,
     dockerImageName: string,
     toolVersion: string,
-    dockerPath: string
+    dockerPath: string,
+    dependenciesToken: string,
+    xrayMode: string,
+    dependenciesTool: string
   ): Promise<ScannerRes> {
     outputChannel.clear();
     outputChannel.show();
+
+
     return new Promise((resolve, _reject) => {
       let scanResult: boolean = false;
       let findings: Finding[] = [];
@@ -28,8 +33,7 @@ export class DependenciesScanner implements IScannerGateway {
         resolve(new ScannerRes(false, []));
       }, 12000000);
 
-      // Comando para instalar el certificado en el entorno virtual del contenedor
-      const dockerCommand = `${dockerPath} run -v /home/jucmolin/jf:/root/jf -v ${elementToScan}:/ms_artifact ${dockerImageName}:1.59.0 sh -c "devsecops-engine-tools --platform_devops local --xray_mode audit --remote_config_repo docker_default_remote_config --module engine_dependencies --tool xray --token_engine_dependencies  --folder_path /ms_artifact --context true && tail -f /dev/null"`;
+      const dockerCommand = `${dockerPath} run -v /home/jucmolin/jf:/root/jf -v ${elementToScan}:/ms_artifact juanca/devsecops-engine-tools:1.69.0 sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --xray_mode ${xrayMode} --remote_config_repo docker_default_remote_config --module engine_dependencies --tool ${dependenciesTool} --token_engine_dependencies ${dependenciesToken} --folder_path /ms_artifact --context true"`;// && tail -f /dev/null"`;
 
       const childProcess = exec(dockerCommand, (error, stdout, stderr) => {
         clearTimeout(timeout);
@@ -111,4 +115,5 @@ export class DependenciesScanner implements IScannerGateway {
       });
     });
   }
+
 }
