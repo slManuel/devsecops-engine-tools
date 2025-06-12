@@ -41,4 +41,4 @@ steps:
     repository: 'devops/devsecops-engine-tools'
     artifactoryService: 'Artifactory'
     targetRepo: 'devops/devsecops-engine-tools'
-    imageName: 'artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)'
+    imageName: 'artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG)'
