@@ -4,7 +4,7 @@
   "displayName": "DevSecOps Engine Tools",
   "publisher": "GrupoBancolombiaOSPO",
   "description": "",
-  "version": "0.0.7",
+  "version": "1.0.0",
   "engines": {
     "vscode": "^1.95.0"
   },
@@ -14,7 +14,8 @@
   "activationEvents": [
     "onView:devsecops",
     "onCommand:devsecops.iacScan",
-    "onCommand:devsecops.imageScan"
+    "onCommand:devsecops.imageScan",
+    "onCommand:devsecops.dependenciesScan"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -36,64 +37,88 @@
         }
       ]
     },
-    "configuration": {
-      "title": "DevSecOps",
-      "properties": {
-        "devsecops.enabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable/Disable DevSecOps IDE Extension"
-        },
-        "devsecops.imageToUse": {
-          "type": "string",
-          "default": "bancolombia/devsecops-engine-tools",
-          "description": "Docker image to use for scanning"
-        },
-        "devsecops.organizationName": {
-          "type": "string",
-          "description": "Organization Name"
-        },
-        "devsecops.projectName": {
-          "type": "string",
-          "description": "Project Name"
-        },
-        "devsecops.variablePlaceholder": {
-          "type": "string",
-          "default": "#{ ... }#",
-          "description": "Characters to identify variables"
-        },
-        "devsecops.groupName": {
-          "type": "string",
-          "description": "Variables group name"
-        },
-        "devsecops.releaseId": {
-          "type": "string",
-          "description": "Azure Release Definition ID"
-        },
-        "devsecops.environment": {
-          "type": "string",
-          "default": "dev",
-          "enum": [
-            "pdn",
-            "cer",
-            "qa",
-            "dev"
-          ],
-          "description": "Environment to evaluate"
-        },
-        "devsecops.username": {
-          "type": "string",
-          "default": "",
-          "description": "Set your azure devops username"
-        },
-        "devsecops.personalAccessToken": {
-          "type": "string",
-          "default": "",
-          "description": "Set your user personal access token generated at azure devops",
-          "format": "password"
+    "configuration": [
+      {
+        "title": "General Settings",
+        "properties": {
+          "devsecops.general.enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable/Disable DevSecOps IDE Extension"
+          },
+          "devsecops.general.imageToUse": {
+            "type": "string",
+            "default": "bancolombia/devsecops-engine-tools",
+            "description": "Docker image to use for scanning"
+          }
+        }
+      },
+      {
+        "title": "Azure DevOps Settings",
+        "properties": {
+          "devsecops.azuredevops.organizationName": {
+            "type": "string",
+            "description": "Organization Name"
+          },
+          "devsecops.azuredevops.projectName": {
+            "type": "string",
+            "description": "Project Name"
+          },
+          "devsecops.azuredevops.variablePlaceholder": {
+            "type": "string",
+            "default": "#{ ... }#",
+            "description": "Characters to identify variables"
+          },
+          "devsecops.azuredevops.groupName": {
+            "type": "string",
+            "description": "Variables group name"
+          },
+          "devsecops.azuredevops.releaseId": {
+            "type": "string",
+            "description": "Azure Release Definition ID"
+          },
+          "devsecops.azuredevops.environment": {
+            "type": "string",
+            "default": "dev",
+            "enum": ["pdn", "cer", "qa", "dev"],
+            "description": "Environment to evaluate"
+          },
+          "devsecops.azuredevops.username": {
+            "type": "string",
+            "default": "",
+            "description": "Set your Azure DevOps username"
+          },
+          "devsecops.azuredevops.personalAccessToken": {
+            "type": "string",
+            "default": "",
+            "description": "Set your user personal access token generated at Azure DevOps",
+            "format": "password"
+          }
+        }
+      },
+      {
+        "title": "Dependencies Scan Settings",
+        "properties": {
+          "devsecops.dependencies.dependenciesToken": {
+            "type": "string",
+            "description": "Token for dependencies scan (Jfrog Token for Xray or NVD Api Key for Dependency Check)",
+            "format": "password"
+          },
+          "devsecops.dependencies.XrayMode": {
+            "type": "string",
+            "default": "audit",
+            "enum": ["audit", "scan"],
+            "description": "Dependency scan mode with JFrog Xray (audit = dependency tree scanning, scan = compiled file scan)"
+          },
+          "devsecops.dependencies.DependenciesTool": {
+            "type": "string",
+            "default": "xray",
+            "enum": ["xray", "dependency_check"],
+            "description": "Dependency Scan Tool to use"
+          }
         }
       }
-    },
+    ],
     "commands": [
       {
         "command": "devsecops.iacScan",
@@ -102,6 +127,10 @@
       {
         "command": "devsecops.imageScan",
         "title": "DevSecOps Image Scan"
+      },
+      {
+        "command": "devsecops.dependenciesScan",
+        "title": "DevSecOps Dependencies Scan"
       },
       {
         "command": "devsecops.openWithDiagnostic",
@@ -126,6 +155,11 @@
         {
           "command": "devsecops.imageScan",
           "when": "view == devsecops",
+          "group": "navigation"
+        },
+        {
+          "command": "devsecops.dependenciesScan",
+          "when": "view == devsecopsView",
           "group": "navigation"
         }
       ]
