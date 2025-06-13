@@ -3,6 +3,7 @@ import { DevSecOpsTreeDataProvider } from "../tree/DevSecOpsTreeDataProvider";
 import { imageScanRequest } from "../application/InitEngineCore";
 import { Docker, IOptions } from "docker-cli-js";
 import { ScanConfiguration } from "../domain/model/ScanConfiguration";
+import DockerPathDetector from "../infraestructure/helper/DockerPathDetector";
 
 export function registerImageScanCommand(
   context: vscode.ExtensionContext,
@@ -63,10 +64,12 @@ export function registerImageScanCommand(
 }
 
 const getDockerImages = async (): Promise<vscode.TreeItem[]> => {
+  const dockerPath = DockerPathDetector.getDockerPath();
+  dockerPath;
   const options: IOptions = {
     env: {
       ...process.env,
-      PATH: process.env.PATH + ":/usr/local/bin",
+      PATH: process.env.PATH + dockerPath.replace(/\/(docker|podman)$/, ""),
     },
   };
   const dockerCli = new Docker(options);
@@ -119,10 +122,12 @@ const getDockerImages = async (): Promise<vscode.TreeItem[]> => {
 };
 
 const isInstalledDocker = async (): Promise<string | boolean> => {
+  const dockerPath = DockerPathDetector.getDockerPath();
+  dockerPath;
   const options: IOptions = {
     env: {
       ...process.env,
-      PATH: process.env.PATH + ":/usr/local/bin",
+      PATH: process.env.PATH + dockerPath.replace(/\/(docker|podman)$/, ""),
     },
   };
 

@@ -42,8 +42,6 @@ export class ScanConfiguration {
     this.dependenciesToken = dependenciesConfig.get("dependenciesToken") || "";
     this.xrayMode = dependenciesConfig.get("xrayMode") || "audit";
     this.dependenciesTool = dependenciesConfig.get("dependenciesTool") || "xray";
-
-    null
   }
 
   public refresh(): void {
