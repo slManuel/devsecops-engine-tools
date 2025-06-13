@@ -14,7 +14,7 @@
   "activationEvents": [
     "onView:devsecops",
     "onCommand:devsecops.iacScan",
-    "onCommand:devsecops.imageScan",
+    "onCommand:devsecops.imageScan"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -79,7 +79,12 @@
           "devsecops.azuredevops.environment": {
             "type": "string",
             "default": "dev",
-            "enum": ["pdn", "cer", "qa", "dev"],
+            "enum": [
+              "pdn",
+              "cer",
+              "qa",
+              "dev"
+            ],
             "description": "Environment to evaluate"
           },
           "devsecops.azuredevops.username": {
@@ -161,7 +166,7 @@
       "**/test/**",
       ".vscode-test/**"
     ],
-    "all": true,  
+    "all": true,
     "reporter": [
       "html",
       "text"
