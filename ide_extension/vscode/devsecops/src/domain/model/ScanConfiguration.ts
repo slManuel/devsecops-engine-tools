@@ -22,15 +22,16 @@ export class ScanConfiguration {
   }
 
   private loadFromVSCodeConfig(): void {
-    const config = vscode.workspace.getConfiguration("devsecops");
+    const generalConfig = vscode.workspace.getConfiguration("devsecops.general");
+    const azureDevopsConfig = vscode.workspace.getConfiguration("devsecops.azuredevops");
     
-    this.dockerImageName = config.get("imageToUse") || "bancolombia/devsecops-engine-tools";
-    this.organizationName = config.get("organizationName") || "";
-    this.projectName = config.get("projectName") || "";
-    this.definitionId = config.get("releaseId") || "";
-    this.environment = config.get("environment") || "dev";
-    this.adUserName = config.get("username") || "";
-    this.adPersonalAccessToken = config.get("personalAccessToken") || "";
+    this.dockerImageName = generalConfig.get("imageToUse") || "bancolombia/devsecops-engine-tools";
+    this.organizationName = azureDevopsConfig.get("organizationName") || "";
+    this.projectName = azureDevopsConfig.get("projectName") || "";
+    this.definitionId = azureDevopsConfig.get("releaseId") || "";
+    this.environment = azureDevopsConfig.get("environment") || "dev";
+    this.adUserName = azureDevopsConfig.get("username") || "";
+    this.adPersonalAccessToken = azureDevopsConfig.get("personalAccessToken") || "";
   }
 
   public refresh(): void {
