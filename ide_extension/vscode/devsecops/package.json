@@ -15,7 +15,6 @@
     "onView:devsecops",
     "onCommand:devsecops.iacScan",
     "onCommand:devsecops.imageScan",
-    "onCommand:devsecops.dependenciesScan"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -193,7 +192,7 @@
       "**/test/**",
       ".vscode-test/**"
     ],
-    "all": true,
+    "all": true,  
     "reporter": [
       "html",
       "text"
