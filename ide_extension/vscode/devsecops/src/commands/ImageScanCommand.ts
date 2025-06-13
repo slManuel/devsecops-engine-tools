@@ -65,7 +65,6 @@ export function registerImageScanCommand(
 
 const getDockerImages = async (): Promise<vscode.TreeItem[]> => {
   const dockerPath = DockerPathDetector.getDockerPath();
-  dockerPath;
   const options: IOptions = {
     env: {
       ...process.env,
@@ -123,7 +122,6 @@ const getDockerImages = async (): Promise<vscode.TreeItem[]> => {
 
 const isInstalledDocker = async (): Promise<string | boolean> => {
   const dockerPath = DockerPathDetector.getDockerPath();
-  dockerPath;
   const options: IOptions = {
     env: {
       ...process.env,
