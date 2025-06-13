@@ -16,19 +16,30 @@ export class DiagnosticService {
     
     const fileUri = vscode.Uri.file(filePath);
     
-    // Create a range that spans from the first character of the start line
-    // to the last character of the end line
     const diagnostic = new vscode.Diagnostic(
       new vscode.Range(
         new vscode.Position(lineNumberStart - 1, 0),
         new vscode.Position(lineNumberEnd - 1, 100) // Assuming max line length of 100
       ),
-      finding.getDescription(),
+      finding.getDescription() + finding.getValidationRuleCode() ? `\nValidation Rule: ${finding.getValidationRuleCode()}` : '',
       vscode.DiagnosticSeverity.Error
     );
     
     diagnostic.source = "devsecops";
     diagnostic.code = finding.getId();
+    
+    // Add validation rule information if available
+    if (finding.getValidationRuleCode()) {
+      diagnostic.relatedInformation = [
+        new vscode.DiagnosticRelatedInformation(
+          new vscode.Location(fileUri, diagnostic.range),
+          `Validation Rule: ${finding.getValidationRuleCode()}`
+        )
+      ];
+      
+      // Also add validation rule as a tag for better organization
+      diagnostic.tags = [vscode.DiagnosticTag.Unnecessary];
+    }
     
     const key = `${fileUri.toString()}:${finding.getId()}`;
     this.findingMap.set(key, finding);
@@ -44,6 +55,16 @@ export class DiagnosticService {
   public static getFindingForDiagnostic(fileUri: vscode.Uri, diagnosticCode: string): Finding | undefined {
     const key = `${fileUri.toString()}:${diagnosticCode}`;
     return this.findingMap.get(key);
+  }
+
+  public static getValidationRuleForDiagnostic(diagnostic: vscode.Diagnostic): string | undefined {
+    if (diagnostic.source === 'devsecops' && diagnostic.relatedInformation?.length) {
+      const relatedInfo = diagnostic.relatedInformation[0]?.message;
+      if (relatedInfo?.startsWith('Validation Rule: ')) {
+        return relatedInfo.replace('Validation Rule: ', '');
+      }
+    }
+    return undefined;
   }
 
   public static clearDiagnostics(): void {

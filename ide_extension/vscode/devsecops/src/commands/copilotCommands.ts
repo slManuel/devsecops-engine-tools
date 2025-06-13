@@ -13,7 +13,17 @@ export function registerCopilotCommands(context: vscode.ExtensionContext): void 
       editor.revealRange(diagnostic.range);
 
       const issueId = diagnostic.code?.toString() || '';
-      const issueDescription = diagnostic.message;
+      let issueDescription = diagnostic.message;
+      
+      // Extract validation rule from diagnostic data if available
+      const validationRule = diagnostic.source === 'devsecops' && diagnostic.relatedInformation?.length 
+        ? diagnostic.relatedInformation[0]?.message 
+        : '';
+
+      if(validationRule) {
+        issueDescription += validationRule;
+      }
+      
       const copilotExtension = vscode.extensions.getExtension('GitHub.copilot');
       const copilotChatExtension = vscode.extensions.getExtension('GitHub.copilot-chat');
       
@@ -22,18 +32,25 @@ export function registerCopilotCommands(context: vscode.ExtensionContext): void 
           await vscode.commands
             .executeCommand("github.copilot.chat.fix +when:!editorReadonly && !github.copilot.interactiveSession.disabled");
           setTimeout(() => {
-            const prompt = `Fix this security issue: ${issueId} - ${issueDescription}`;
+            // Enhanced prompt with validation rule information
+            const prompt = validationRule 
+              ? `Fix this security issue: ${issueId} - ${issueDescription}. Validation Rule: ${validationRule}. Please provide a secure solution that addresses the specific validation rule violation.`
+              : `Fix this security issue: ${issueId} - ${issueDescription}`;
+            
             void vscode.env.clipboard.writeText(prompt);
             void vscode.commands.executeCommand('editor.action.clipboardPasteAction');
           }, 500);
         } catch (error) {
           if (copilotChatExtension && copilotChatExtension.isActive) {
-            await vscode.commands.executeCommand('github.copilot.chat.explain.palette');
             setTimeout(() => {
-              const chatInput = `/fix This code has a security issue: ${issueId} - ${issueDescription}`;
+              const chatInput = validationRule
+              ? `/fix This code has a security issue: ${issueId} - ${issueDescription}. Validation Rule: ${validationRule}`
+              : `/fix This code has a security issue: ${issueId} - ${issueDescription}`;
+              
               void vscode.env.clipboard.writeText(chatInput);
               void vscode.commands.executeCommand('editor.action.clipboardPasteAction');
             }, 500);
+            await vscode.commands.executeCommand('github.copilot.chat.explain.palette');
           } else {
             void vscode.window.showInformationMessage('Please install GitHub Copilot and GitHub Copilot Chat extensions to use this feature');
           }
@@ -55,7 +72,16 @@ export function registerCopilotCommands(context: vscode.ExtensionContext): void 
       editor.revealRange(diagnostic.range);
     
       const issueId = diagnostic.code?.toString() || '';
-      const issueDescription = diagnostic.message;
+      let issueDescription = diagnostic.message;
+      
+      // Extract validation rule from diagnostic data if available
+      const validationRule = diagnostic.source === 'devsecops' && diagnostic.relatedInformation?.length 
+        ? diagnostic.relatedInformation[0]?.message 
+        : '';
+
+      if(validationRule) {
+        issueDescription += validationRule;
+      }
       
       const copilotChatExtension = vscode.extensions.getExtension('GitHub.copilot-chat');
       
@@ -64,9 +90,13 @@ export function registerCopilotCommands(context: vscode.ExtensionContext): void 
           await vscode.commands.executeCommand('github.copilot.chat.focus');
           
           setTimeout(() => {
-            const chatInput = '/explain This code has a security issue: ' + 
-              `${issueId} - ${issueDescription}. Can you explain why this is a problem ` +
-              'and how to fix it securely?';
+            const chatInput = validationRule
+              ? '/explain This code has a security issue: ' + 
+                `${issueId} - ${issueDescription}. Validation Rule: ${validationRule}. Can you explain why this is a problem ` +
+                'and how to fix it securely according to this validation rule?'
+              : '/explain This code has a security issue: ' + 
+                `${issueId} - ${issueDescription}. Can you explain why this is a problem ` +
+                'and how to fix it securely?';
             
             void vscode.env.clipboard.writeText(chatInput);
             void vscode.commands.executeCommand('editor.action.clipboardPasteAction');
