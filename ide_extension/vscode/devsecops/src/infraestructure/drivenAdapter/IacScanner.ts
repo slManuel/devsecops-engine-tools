@@ -27,7 +27,7 @@ export class IacScanner implements IScannerGateway {
         resolve(new ScannerRes(false, []));
       }, 120000);
 
-      const dockerCommand = `${dockerPath} run --rm -v ${elementToScan}:/ms_artifact ${dockerImageName}:1.68.0-1 devsecops-engine-tools --platform_devops local --remote_config_repo docker_default_remote_config -rcs local --module engine_iac --tool checkov --folder_path /ms_artifact --context true`;
+      const dockerCommand = `${dockerPath} run --rm -v ${elementToScan}:/ms_artifact ${dockerImageName}:${toolVersion} devsecops-engine-tools --platform_devops local --remote_config_repo docker_default_remote_config -rcs local --module engine_iac --tool checkov --folder_path /ms_artifact --context true`;
 
       const childProcess = exec(dockerCommand, (error, stdout, stderr) => {
         clearTimeout(timeout);
@@ -101,7 +101,7 @@ export class IacScanner implements IScannerGateway {
     ruleId: string,
     finding: Finding
   ): Finding {
-    const dockerCommand = `${dockerPath} run --rm ${dockerImageName}:1.68.0-1  python3 rules_context_extract.py ${ruleId}`;
+    const dockerCommand = `${dockerPath} run --rm ${dockerImageName}:${toolVersion}  python3 rules_context_extract.py ${ruleId}`;
     const rulePrint = execSync(dockerCommand, { encoding: "utf-8" }).trim();
     finding.setValidationRuleCode(rulePrint);
     return finding;
