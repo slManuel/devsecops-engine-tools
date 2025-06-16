@@ -5,7 +5,7 @@ import { ScannerRes } from "../../domain/model/ScannerRes";
 import { Finding } from "../../domain/model/Finding";
 
 import { exec } from "child_process";
-import { IIacContextCheckov, Mappers } from "../../domain/model/mappers/Mappers";
+import { IIacContext, Mappers } from "../../domain/model/mappers/Mappers";
 
 export class IacScanner implements IScannerGateway {
   async scan(
@@ -50,7 +50,7 @@ export class IacScanner implements IScannerGateway {
         }
 
         if (stdout) {
-          let contextJson: { iac_context: IIacContextCheckov[] } | null = null;
+          let contextJson: { iac_context: IIacContext[] } | null = null;
           let normalOutput = stdout;
 
           const contextRegex =
@@ -59,13 +59,13 @@ export class IacScanner implements IScannerGateway {
 
           if (match && match[1]) {
             try {
-              contextJson = JSON.parse(match[1].trim()) as { iac_context: IIacContextCheckov[] };
+              contextJson = JSON.parse(match[1].trim()) as { iac_context: IIacContext[] };
 
               normalOutput = stdout.replace(contextRegex, "");
 
               findings = contextJson.iac_context.map(
-                (finding: IIacContextCheckov) =>
-                  Mappers.mapIacContextCheckovToFinding(finding)
+                (finding: IIacContext) =>
+                  Mappers.mapIacContextToFinding(finding)
               );
 
               scanResult = true;

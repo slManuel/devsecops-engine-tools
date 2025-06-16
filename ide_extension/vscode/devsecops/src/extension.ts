@@ -5,11 +5,9 @@ import { registerIacScanCommand } from "./commands/IacScanCommand";
 import { Finding } from "./domain/model/Finding";
 import { SecurityCodeActionProvider } from "./actions/SecurityCodeActionProvider";
 import { registerImageScanCommand } from "./commands/ImageScanCommand";
+import { registerDependenciesScanCommand } from "./commands/DependenciesScanCommand";
 import { registerCopilotCommands } from "./commands/copilotCommands";
 import { showVulnContextWebview,disposeVulnPanel } from './tree/results/finding/FindingImageScan';
-import { IContextInfo } from "./tree/results/finding/FindingDetail";
-import { registerDependenciesScanCommand } from "./commands/DependenciesScanCommand";
-
 
 export function activate(context: vscode.ExtensionContext): void {
 
@@ -46,8 +44,8 @@ export function activate(context: vscode.ExtensionContext): void {
   
   const showVulnContextDisposable = vscode.commands.registerCommand(
     "devsecops.showVulnContext",
-    (contextInfo: IContextInfo) => {
-      showVulnContextWebview(contextInfo);
+    (finding: Finding) => {
+      showVulnContextWebview(finding);
     }
   );
   context.subscriptions.push(iacScanDisposable);

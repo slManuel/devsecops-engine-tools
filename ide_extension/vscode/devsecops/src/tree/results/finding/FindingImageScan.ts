@@ -1,23 +1,24 @@
 import * as vscode from 'vscode';
-import { findingDetailWebview, IContextInfo } from './FindingDetail';
+import { findingDetailWebview } from './FindingDetail';
+import { Finding } from "../../../domain/model/Finding";
 
 let vulnPanel: vscode.WebviewPanel | undefined;
 let editorListener: vscode.Disposable | undefined;
 let workspaceListener: vscode.Disposable | undefined;
 
-export function showVulnContextWebview(contextInfo: IContextInfo): void {
+export function showVulnContextWebview(finding: Finding): void {
 
     if (vulnPanel) {
-        vulnPanel.webview.html = findingDetailWebview(contextInfo);
+        vulnPanel.webview.html = findingDetailWebview(finding);
         vulnPanel.reveal(vscode.ViewColumn.Beside);
     } else {
         vulnPanel = vscode.window.createWebviewPanel(
             'vulnContext',
-            `Vulnerability: ${contextInfo.id}`,
+            `Vulnerability: ${finding.getId()}`,
             vscode.ViewColumn.Beside,
             { enableScripts: true }
         );
-         vulnPanel.webview.html = findingDetailWebview(contextInfo);
+         vulnPanel.webview.html = findingDetailWebview(finding);
 
         vulnPanel.onDidDispose(() => {
             disposeVulnPanel();

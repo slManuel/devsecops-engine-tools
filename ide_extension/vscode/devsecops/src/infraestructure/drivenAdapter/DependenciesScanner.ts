@@ -4,7 +4,7 @@ import OutputManager from "../helper/OutputManager";
 import { ScannerRes } from "../../domain/model/ScannerRes";
 import { Finding } from "../../domain/model/Finding";
 import { exec } from "child_process";
-import { IIacContextCheckov, Mappers } from "../../domain/model/mappers/Mappers";
+import { IDependenciesScanContext, Mappers } from "../../domain/model/mappers/Mappers";
 
 export class DependenciesScanner implements IScannerGateway {
   async scan(
@@ -33,7 +33,13 @@ export class DependenciesScanner implements IScannerGateway {
         resolve(new ScannerRes(false, []));
       }, 12000000);
 
-      const dockerCommand = `${dockerPath} run -v /home/jucmolin/jf:/root/jf -v ${elementToScan}:/ms_artifact juanca/devsecops-engine-tools:1.69.0 sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --xray_mode ${xrayMode} --remote_config_repo docker_default_remote_config --module engine_dependencies --tool ${dependenciesTool} --token_engine_dependencies ${dependenciesToken} --folder_path /ms_artifact --context true"`;// && tail -f /dev/null"`;
+      if (!dependenciesToken) {
+        outputChannel.appendLine("No Dependencies Token to scan provided\n Go to Settings to configure it!");
+        resolve(new ScannerRes(false, []));
+        return;
+      }
+
+      const dockerCommand = `${dockerPath} run --rm -v /home/jucmolin/jf:/root/jf -v ${elementToScan}:/ms_artifact juanca/devsecops-engine-tools:1.69.0 sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --xray_mode ${xrayMode} --remote_config_repo docker_default_remote_config --module engine_dependencies --tool ${dependenciesTool} --token_engine_dependencies ${dependenciesToken} --folder_path /ms_artifact --context true"`;
 
       const childProcess = exec(dockerCommand, (error, stdout, stderr) => {
         clearTimeout(timeout);
@@ -54,7 +60,7 @@ export class DependenciesScanner implements IScannerGateway {
         }
 
         if (stdout) {
-          let contextJson: { iac_context: IIacContextCheckov[] } | null = null;
+          let contextJson: { dependencies_context: IDependenciesScanContext[] } | null = null;
           let normalOutput = stdout;
 
           const contextRegex =
@@ -63,13 +69,13 @@ export class DependenciesScanner implements IScannerGateway {
 
           if (match && match[1]) {
             try {
-              contextJson = JSON.parse(match[1].trim()) as { iac_context: IIacContextCheckov[] };
+              contextJson = JSON.parse(match[1].trim()) as { dependencies_context: IDependenciesScanContext[] };
 
               normalOutput = stdout.replace(contextRegex, "");
 
-              findings = contextJson.iac_context.map(
-                (finding: IIacContextCheckov) =>
-                  Mappers.mapIacContextCheckovToFinding(finding)
+              findings = contextJson.dependencies_context.map(
+                (finding: IDependenciesScanContext) =>
+                  Mappers.mapDependenciesScanContextToFinding(finding)
               );
 
               scanResult = true;

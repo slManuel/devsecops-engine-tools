@@ -1,6 +1,7 @@
+import { List } from "lodash";
 import { Finding } from "../Finding";
 
-export interface IIacContextCheckov {
+export interface IIacContext {
   id: string;
   custom_vuln_id: string;
   check_name: string;
@@ -8,82 +9,117 @@ export interface IIacContextCheckov {
   severity: string;
   where: string;
   resource: string;
+  references: string[];
   description: string;
   module: string;
   vulnerability_status: string;
   tool: string;
 }
 
-export interface IImageScanContextTrivy {
-  id: string;
+export interface IImageScanContext {
   cve_id: string;
-  custom_vuln_id: string;
-  check_name: string;
-  check_class: string;
+  cwe_id: string;
+  vendor_id: string;
   severity: string;
-  package_name: string;
-  os_type: string;
-  layer_digest: string;
-  resource: string;
-  description: string;
-  module: string;
-  source_tool: string;
   vulnerability_status: string;
   target_image: string;
+  package_name: string;
   installed_version: string;
   fixed_version: string;
   cvss_score: string;
+  cvss_vector: string;
+  description: string;
+  os_type: string;
+  layer_digest: string;
+  published_date: string;
+  last_modified_date: string;
   references: string[];
+  module: string;
+  source_tool: string;
+}
+
+export interface IDependenciesScanContext {
+  cve_id: string[];
+  severity: string;
+  component: string;
+  package_name: string;
+  installed_version: string;
+  fixed_version: string[];
+  impact_paths: List<List<any>>;
+  description: string;
+  references: string[];
+  source_tool: string;
 }
 
 export class Mappers {
-  public static mapIacContextCheckovToFinding(
-    iacContextCheckov: IIacContextCheckov
+  public static mapIacContextToFinding(
+    iacContext: IIacContext
   ): Finding {
     return new Finding(
-      iacContextCheckov.id || "",
-      iacContextCheckov.custom_vuln_id || iacContextCheckov.id || "",
-      iacContextCheckov.check_name || "",
-      iacContextCheckov.check_class || "",
-      iacContextCheckov.severity || "unknown",
-      iacContextCheckov.where || "",
-      iacContextCheckov.resource || "",
-      iacContextCheckov.description || "",
-      iacContextCheckov.module || "engine_iac",
-      iacContextCheckov.tool || "Checkov",
-      iacContextCheckov.vulnerability_status || "unknown",
-
+      iacContext.id || "",
+      iacContext.severity || "unknown",
+      iacContext.where || "",
+      iacContext.description || "",
+      iacContext.module || "engine_iac",
+      iacContext.tool || "",
+      iacContext.references || [],
+      {
+        custom_vuln_id: iacContext.custom_vuln_id || "",
+        check_name: iacContext.check_name || "",
+        check_class: iacContext.check_class || "",
+        resource: iacContext.resource || "",
+        vulnerability_status: iacContext.vulnerability_status || "unknown"
+      }
     );
   }
 
-  public static mapImageScanContextTrivyToFinding(
-    imageScanContextTrivy: IImageScanContextTrivy
+  public static mapImageScanContextToFinding(
+    imageScanContext: IImageScanContext
   ):  Finding {
     return new Finding(
-      imageScanContextTrivy.id || imageScanContextTrivy.cve_id || "",
-      imageScanContextTrivy.custom_vuln_id ||
-        imageScanContextTrivy.id ||
-        imageScanContextTrivy.cve_id ||
-        "",
-      imageScanContextTrivy.check_name || "",
-      imageScanContextTrivy.check_class || "",
-      imageScanContextTrivy.severity || "unknown",
-      imageScanContextTrivy.package_name +
+      imageScanContext.cve_id || "",
+      imageScanContext.severity || "unknown",
+      imageScanContext.package_name +
         " " +
-        imageScanContextTrivy.os_type +
+        imageScanContext.os_type +
         ":" +
-        imageScanContextTrivy.layer_digest || "",
-      imageScanContextTrivy.resource || "",
-      imageScanContextTrivy.description || "",
-      imageScanContextTrivy.module || "engine_container",
-      imageScanContextTrivy.source_tool || "Trivy",
-      imageScanContextTrivy.vulnerability_status || "unknown",
-      imageScanContextTrivy.target_image || "",
-      imageScanContextTrivy.installed_version || "",
-      imageScanContextTrivy.fixed_version || "",
-      imageScanContextTrivy.package_name || "",
-      imageScanContextTrivy.cvss_score || "",
-      imageScanContextTrivy.references || []
+        imageScanContext.layer_digest || "",
+      imageScanContext.description || "",
+      imageScanContext.module || "engine_container",
+      imageScanContext.source_tool || "",
+      imageScanContext.references || [],
+      {
+        cwe_id: imageScanContext.cwe_id || "",
+        vendor_id: imageScanContext.vendor_id || "",
+        vulnerability_status: imageScanContext.vulnerability_status || "unknown",
+        target_image: imageScanContext.target_image || "",
+        installed_version: imageScanContext.installed_version || "",
+        fixed_version: imageScanContext.fixed_version || "",
+        cvss_score: imageScanContext.cvss_score || "",
+        cvss_vector: imageScanContext.cvss_vector || "",
+        published_date: imageScanContext.published_date || "",
+        last_modified_date: imageScanContext.last_modified_date || "",
+        layer_digest: imageScanContext.layer_digest || ""
+      }
+    );
+  }
+
+  public static mapDependenciesScanContextToFinding(
+    dependenciesScanContext: IDependenciesScanContext
+  ): Finding {
+    return new Finding(
+      dependenciesScanContext.cve_id.join(",") || "",
+      dependenciesScanContext.severity || "unknown",
+      dependenciesScanContext.component || "",
+      dependenciesScanContext.description || "",
+      "engine_dependencies",
+      dependenciesScanContext.source_tool || "",
+      dependenciesScanContext.references || [],
+      {
+        package_name: dependenciesScanContext.package_name || "",
+        installed_version: dependenciesScanContext.installed_version || "",
+        fixed_version: dependenciesScanContext.fixed_version.join(",") || ""
+      }
     );
   }
 }

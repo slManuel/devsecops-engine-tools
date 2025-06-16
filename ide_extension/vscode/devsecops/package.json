@@ -104,13 +104,13 @@
             "description": "Token for dependencies scan (Jfrog Token for Xray or NVD Api Key for Dependency Check)",
             "format": "password"
           },
-          "devsecops.dependencies.XrayMode": {
+          "devsecops.dependencies.xrayMode": {
             "type": "string",
             "default": "audit",
             "enum": ["audit", "scan"],
             "description": "Dependency scan mode with JFrog Xray (audit = dependency tree scanning, scan = compiled file scan)"
           },
-          "devsecops.dependencies.DependenciesTool": {
+          "devsecops.dependencies.dependenciesTool": {
             "type": "string",
             "default": "xray",
             "enum": ["xray", "dependency_check"],

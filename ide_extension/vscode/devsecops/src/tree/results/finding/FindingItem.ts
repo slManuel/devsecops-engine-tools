@@ -10,7 +10,7 @@ export class FindingItem extends vscode.TreeItem {
     super(finding.getDescription() || "Unknown Issue", vscode.TreeItemCollapsibleState.None);
     this.label = finding.getId() || "Unknown Issue";
     this.description = finding.getSeverity() || "Unknown";
-    this.tooltip = `${finding.getDescription()}\nSeverity: ${finding.getSeverity()}\nResource: ${finding.getResource() || "Unknown"}\nLocation: ${finding.getWhere() || "Unknown"}`;
+    this.tooltip = `${finding.getDescription()}\nSeverity: ${finding.getSeverity()}\nLocation: ${finding.getWhere() || "Unknown"}`;
     
     const severityIcons: Record<string, vscode.ThemeIcon> = {
       "high": new vscode.ThemeIcon("error", new vscode.ThemeColor("errorForeground")),

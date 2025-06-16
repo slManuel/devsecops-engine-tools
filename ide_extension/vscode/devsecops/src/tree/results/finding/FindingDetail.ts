@@ -1,18 +1,7 @@
-export interface IContextInfo {
-    severity?: string;
-    id?: string;
-    description?: string;
-    vulnerabilityStatus?: string;
-    installedVersion?: string;
-    fixedVersion?: string;
-    targetImage?: string;
-    packageName?: string;
-    cvssScore?: string;
-    references?: string[];
-}
+import { Finding } from "../../../domain/model/Finding";
 
-export function findingDetailWebview(contextInfo: IContextInfo): string {
-    const severity = (contextInfo.severity || "unknown").toLowerCase();
+export function findingDetailWebview(finding: Finding): string {
+    const severity = (finding.getSeverity() || "unknown").toLowerCase();
     let codicon = "codicon-warning";
     let color = "#cca700";
 
@@ -102,7 +91,7 @@ export function findingDetailWebview(contextInfo: IContextInfo): string {
 <body>
     <div class="title-bar">
         <span class="codicon ${codicon} vuln-icon"></span>
-        <span>${contextInfo.id || "Unknown Vulnerability"}</span>
+        <span>${finding.getId() || "Unknown Vulnerability"}</span>
     </div>
     <div class="tabs">
         <button class="tab selected" id="descTab">Description</button>
@@ -111,23 +100,25 @@ export function findingDetailWebview(contextInfo: IContextInfo): string {
     </div>
     <div class="section active" id="descSection">
         <h3>Description</h3>
-        <p>${contextInfo.description || "No description available."}</p>
+        <p>${finding.getDescription() || "No description available."}</p>
     </div>
     <div class="section" id="scanSection">
         <h3>Scan Info</h3>
-        ${scanInfoRow("Severity", contextInfo.severity)}
-        ${scanInfoRow("Vulnerability Status", contextInfo.vulnerabilityStatus)}
-        ${scanInfoRow("Installed Version", contextInfo.installedVersion)}
-        ${scanInfoRow("Fixed Version", contextInfo.fixedVersion)}
-        ${scanInfoRow("Target Image", contextInfo.targetImage)}
-        ${scanInfoRow("Package Name", contextInfo.packageName)}
-        ${scanInfoRow("CVSS 3", contextInfo.cvssScore)}
+        ${scanInfoRow("Severity", finding.getSeverity())}
+        ${scanInfoRow("Where", finding.getWhere())}
+        ${scanInfoRow("Module", finding.getModule())}
+        ${scanInfoRow("Tool", finding.getTool())}
+        ${
+            finding.getAllAdditionalFields() && Object.keys(finding.getAllAdditionalFields()).length > 0
+            ? `${Object.entries(finding.getAllAdditionalFields() || {}).map(([key, value]) => scanInfoRow(key, value)).join("")}`
+            : "<p>No additional fields available.</p>"
+        }
     </div>
     <div class="section" id="remSection">
         <h3>References</h3>
 ${
-            contextInfo.references && contextInfo.references.length > 0
-                ? `<ul>${contextInfo.references.map((ref: string) => `<li><a href="${ref}" target="_blank">${ref}</a></li>`).join("")}</ul>`
+            finding.getReferences() && finding.getReferences().length > 0
+                ? `<ul>${finding.getReferences().map((ref: string) => `<li><a href="${ref}" target="_blank">${ref}</a></li>`).join("")}</ul>`
                 : "<p>No remediation info available.</p>"
         }
  
