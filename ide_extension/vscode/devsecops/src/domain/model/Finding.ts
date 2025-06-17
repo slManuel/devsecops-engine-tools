@@ -16,6 +16,7 @@ export class Finding {
     private fixedVersion?: string;
     private packageName?: string;
     private cvssScore?: string;
+    private validationRuleCode?: string;
     private references: string[];
 
     constructor(
@@ -35,6 +36,7 @@ export class Finding {
         fixedVersion?: string,
         packageName?: string,
         cvssScore?: string,
+        validationRuleCode?: string,
         references: string[] = []
     ) {
         this.id = id;
@@ -53,6 +55,7 @@ export class Finding {
         this.fixedVersion = fixedVersion;
         this.packageName = packageName;
         this.cvssScore = cvssScore;
+        this.validationRuleCode = validationRuleCode;
         this.references = references;
     }
 
@@ -121,6 +124,14 @@ export class Finding {
 
     public getReferences(): string[] {
         return this.references;
+    }
+
+    public getValidationRuleCode(): string | undefined {
+        return this.validationRuleCode;
+    }
+
+    public setValidationRuleCode(validationRuleCode: string): void {
+        this.validationRuleCode = validationRuleCode;
     }
 
 }

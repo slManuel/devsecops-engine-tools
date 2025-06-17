@@ -11,6 +11,7 @@ import { promises as fs } from "fs";
 import * as path from "path";
 import { ScannerRes } from "../model/ScannerRes";
 import { ScanConfiguration } from "../model/ScanConfiguration";
+import { Finding } from "../model/Finding";
 
 interface IVariableData {
   value: string;
@@ -33,7 +34,7 @@ export class IacScanUseCase implements IIacScanUseCase {
     private restClient: IRestClientGateway,
     private toolVersion: string,
     private dockerPath: string
-  ) { }
+  ) {}
 
   public async scan(
     folderToScan: string,
@@ -47,40 +48,41 @@ export class IacScanUseCase implements IIacScanUseCase {
     let variableGroupsData: IVariableGroupData;
     let variableReplace: boolean = false;
 
-    if (
-      !scanConfiguration.isValidAdReplace()
-    ) {
+    if (!scanConfiguration.isValidAdReplace()) {
       outputChannel.append("Configuration values are missing≤ avoiding variable replace");
     } else {
       variableReplace = true;
-      releaseIdData = await this.restClient.get(
+      releaseIdData = (await this.restClient.get(
         VARIABLE_GROUPS_AD_BY_RELEASE_DEFINITION_ID.replace(
           "{organization}",
           scanConfiguration.getOrganizationName()
         )
           .replace("{project}", scanConfiguration.getProjectName())
           .replace("{definitionId}", scanConfiguration.getDefinitionId()),
-        AuthEncoder.encode(scanConfiguration.getAdUserName(), scanConfiguration.getAdPersonalAccessToken())
-      ) as IReleaseIdData;
+        AuthEncoder.encode(
+          scanConfiguration.getAdUserName(),
+          scanConfiguration.getAdPersonalAccessToken()
+        )
+      )) as IReleaseIdData;
       variablesFromLibrary = releaseIdData.variables;
       releaseEnvironments = releaseIdData.environments
         .map((environment: { variableGroups: number[] }) => environment.variableGroups)
         .flat();
       variableGroupsIds = [...new Set(releaseEnvironments)];
-      variableGroupsData = await this.restClient.get(
+      variableGroupsData = (await this.restClient.get(
         VARIABLE_GROUPS_AD_BY_ID.replace("{organization}", scanConfiguration.getOrganizationName())
           .replace("{project}", scanConfiguration.getProjectName())
           .replace("{groupIds}", variableGroupsIds.join(",")),
-        AuthEncoder.encode(scanConfiguration.getAdUserName(), scanConfiguration.getAdPersonalAccessToken())
-      ) as IVariableGroupData;
+        AuthEncoder.encode(
+          scanConfiguration.getAdUserName(),
+          scanConfiguration.getAdPersonalAccessToken()
+        )
+      )) as IVariableGroupData;
       variableGroupsData.value.forEach(
         (variableGroup: { variables: { [x: string]: IVariableData } }) => {
-          Object.keys(variableGroup.variables).forEach(
-            (variableName: string) => {
-              variablesFromLibrary[variableName] =
-                variableGroup.variables[variableName];
-            }
-          );
+          Object.keys(variableGroup.variables).forEach((variableName: string) => {
+            variablesFromLibrary[variableName] = variableGroup.variables[variableName];
+          });
         }
       );
     }
@@ -107,10 +109,7 @@ export class IacScanUseCase implements IIacScanUseCase {
             replacedFile =
               replacedFile +
               "\n" +
-              line.replace(
-                `#{${variableName}}#`,
-                variablesFromLibrary[variableName].value
-              );
+              line.replace(`#{${variableName}}#`, variablesFromLibrary[variableName].value);
           }
         } else {
           replacedFile = replacedFile + "\n" + line;
@@ -122,7 +121,8 @@ export class IacScanUseCase implements IIacScanUseCase {
     }
 
     await this.cleanFolder(folderToScan);
-    return await this.iacScanner.scan(
+
+    const scannerRes: ScannerRes = await this.iacScanner.scan(
       folderToScan,
       outputChannel,
       scanConfiguration.getDockerImageName(),
@@ -130,6 +130,17 @@ export class IacScanUseCase implements IIacScanUseCase {
       this.dockerPath
     );
 
+    const findingsWithRuleCode: Finding[] = scannerRes.getFindings().map((finding: Finding) => {
+      return this.iacScanner.getRuleCode(
+        this.dockerPath,
+        scanConfiguration.getDockerImageName(),
+        this.toolVersion,
+        finding.getCustomVulnId(),
+        finding
+      );
+    });
+    scannerRes.setFindings(await Promise.all(findingsWithRuleCode));
+    return scannerRes;
   }
 
   private async cleanFolder(folderToScan: string): Promise<void> {
@@ -144,5 +155,4 @@ export class IacScanUseCase implements IIacScanUseCase {
       }
     }
   }
-
 }

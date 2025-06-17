@@ -83,6 +83,7 @@ export class Mappers {
       imageScanContextTrivy.fixed_version || "",
       imageScanContextTrivy.package_name || "",
       imageScanContextTrivy.cvss_score || "",
+      "", //Trivy does not have validationRuleCode
       imageScanContextTrivy.references || []
     );
   }

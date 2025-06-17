@@ -18,4 +18,8 @@ export class ScannerRes {
         return this.findings;
     }
 
+    public setFindings(findings: Finding[]): void {
+        this.findings = findings;
+    }
+
 }
