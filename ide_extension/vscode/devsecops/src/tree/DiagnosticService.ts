@@ -58,7 +58,6 @@ export class DiagnosticService {
     let message = `Rule ID: ${finding.getId()}`;
     message += `\nSeverity: ${finding.getSeverity()}`;
     message += `\nWhere: ${finding.getWhere()}`;
-    message += `\nResource: ${finding.getResource()}`;
     message += `\nDescription: ${finding.getDescription()}`;
     message += `\nModule: ${finding.getModule()}`;
     message += `\nTool: ${finding.getTool()}`;

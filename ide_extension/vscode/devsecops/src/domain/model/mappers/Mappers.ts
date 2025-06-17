@@ -56,7 +56,7 @@ export class Mappers {
     iacContext: IIacContext
   ): Finding {
     return new Finding(
-      iacContext.id || "",
+      iacContext.custom_vuln_id || iacContext.id || "",
       iacContext.severity || "unknown",
       iacContext.where || "",
       iacContext.description || "",
