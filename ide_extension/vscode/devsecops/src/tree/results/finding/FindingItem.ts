@@ -29,7 +29,7 @@ export class FindingItem extends vscode.TreeItem {
     
     const fileInfo = this.extractFileInfo(finding.getWhere());
     
-    if (fileInfo.filePath) {
+    if (fileInfo.filePath && ["engine_iac"].includes(finding.getModule())) {
       this.command = {
         title: "Open File",
         command: "devsecops.openWithDiagnostic",

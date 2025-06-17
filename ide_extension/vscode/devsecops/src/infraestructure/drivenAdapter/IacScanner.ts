@@ -29,7 +29,7 @@ export class IacScanner implements IScannerGateway {
         resolve(new ScannerRes(false, []));
       }, 120000);
 
-      const dockerCommand = `${dockerPath} run --rm -v ${elementToScan}:/ms_artifact ${dockerImageName}:1.59.0 devsecops-engine-tools --platform_devops local --remote_config_repo docker_default_remote_config --module engine_iac --tool checkov --folder_path /ms_artifact --context true`;
+      const dockerCommand = `${dockerPath} run --rm -v ${elementToScan}:/ms_artifact ${dockerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo docker_default_remote_config --module engine_iac --tool checkov --folder_path /ms_artifact --context true"`;
 
       const childProcess = exec(dockerCommand, (error, stdout, stderr) => {
         clearTimeout(timeout);

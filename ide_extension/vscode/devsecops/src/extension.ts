@@ -7,7 +7,7 @@ import { SecurityCodeActionProvider } from "./actions/SecurityCodeActionProvider
 import { registerImageScanCommand } from "./commands/ImageScanCommand";
 import { registerDependenciesScanCommand } from "./commands/DependenciesScanCommand";
 import { registerCopilotCommands } from "./commands/copilotCommands";
-import { showVulnContextWebview,disposeVulnPanel } from './tree/results/finding/FindingImageScan';
+import { showVulnContextWebview, disposeVulnPanel } from './tree/results/finding/FindingImageScan';
 
 export function activate(context: vscode.ExtensionContext): void {
 
