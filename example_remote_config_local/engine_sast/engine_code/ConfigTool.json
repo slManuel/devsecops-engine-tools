@@ -3,13 +3,13 @@
       ".git"
     ],
     "EXCLUDE_FOLDER": [],
-    "MESSAGE_INFO_ENGINE_CODE": "test message",
+    "MESSAGE_INFO_ENGINE_CODE": "engine_code run successfully",
     "THRESHOLD": {
         "VULNERABILITY": {
-            "Critical": 10,
-            "High": 8,
-            "Medium": 10,
-            "Low": 15
+            "Critical": 99,
+            "High": 99,
+            "Medium": 99,
+            "Low": 99
         },
         "COMPLIANCE": {
             "Critical": 0

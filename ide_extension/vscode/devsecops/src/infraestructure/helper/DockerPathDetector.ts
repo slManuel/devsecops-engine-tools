@@ -12,13 +12,17 @@ export default class DockerPathDetector {
             if (whichResult) {
                 return whichResult;
             }
-        } catch (e) {}
+        } catch (e) {
+            // Ignore error if docker command is not found
+        }
         try {
             const whichResult = execSync("which podman", { encoding: "utf-8" }).trim();
             if (whichResult) {
                 return whichResult;
             }
-        } catch (e) {}
+        } catch (e) {
+            // Ignore error if podman command is not found
+        }
 
         return "/usr/local/bin/docker";
     }

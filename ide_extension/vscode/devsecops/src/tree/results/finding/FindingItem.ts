@@ -10,23 +10,28 @@ export class FindingItem extends vscode.TreeItem {
     super(finding.getDescription() || "Unknown Issue", vscode.TreeItemCollapsibleState.None);
     this.label = finding.getId() || "Unknown Issue";
     this.description = finding.getSeverity() || "Unknown";
-    this.tooltip = `${finding.getDescription()}\nSeverity: ${finding.getSeverity()}\nLocation: ${finding.getWhere() || "Unknown"}`;
-    
+    this.tooltip = `
+    ${finding.getDescription()}\n
+    Severity: ${finding.getSeverity()}\n
+    Location: ${finding.getWhere() || "N/A"}
+    Validation Rule Code: ${finding.getValidationRuleCode() || "N/A"}`;
+
     const severityIcons: Record<string, vscode.ThemeIcon> = {
-      "high": new vscode.ThemeIcon("error", new vscode.ThemeColor("errorForeground")),
-      "medium": new vscode.ThemeIcon("warning", new vscode.ThemeColor("editorWarning.foreground")),
-      "low": new vscode.ThemeIcon("info", new vscode.ThemeColor("editorInfo.foreground")),
+      high: new vscode.ThemeIcon("error", new vscode.ThemeColor("errorForeground")),
+      medium: new vscode.ThemeIcon("warning", new vscode.ThemeColor("editorWarning.foreground")),
+      low: new vscode.ThemeIcon("info", new vscode.ThemeColor("editorInfo.foreground")),
     };
-    
-    this.iconPath = severityIcons[finding.getSeverity().toLowerCase()] || 
+
+    this.iconPath =
+      severityIcons[finding.getSeverity().toLowerCase()] ||
       new vscode.ThemeIcon("error", new vscode.ThemeColor("errorForeground"));
-      
+
     this.command = {
       command: "devsecops.showVulnContext",
       title: "Show Vulnerability Context",
-      arguments: [finding] // Pass the full finding/context object
+      arguments: [finding], // Pass the full finding/context object
     };
-    
+
     const fileInfo = this.extractFileInfo(finding.getWhere());
     
     if (fileInfo.filePath && ["engine_iac"].includes(finding.getModule())) {
@@ -37,20 +42,24 @@ export class FindingItem extends vscode.TreeItem {
           finding,
           fileInfo.filePath,
           fileInfo.lineNumber || 1,
-          fileInfo.lineNumberEnd || fileInfo.lineNumber || 1
-        ]
+          fileInfo.lineNumberEnd || fileInfo.lineNumber || 1,
+        ],
       };
     }
   }
 
-  private extractFileInfo(where: string): { filePath: string | null; lineNumber: number | null; lineNumberEnd: number | null } {
+  private extractFileInfo(where: string): {
+    filePath: string | null;
+    lineNumber: number | null;
+    lineNumberEnd: number | null;
+  } {
     if (!where) {
       return { filePath: null, lineNumber: null, lineNumberEnd: null };
     }
-    
+
     let lineNumber: number | null = null;
     let lineNumberEnd: number | null = null;
-    
+
     // Check for line range pattern (line 10-15)
     const lineRangeMatch = where.match(/\(line\s+(\d+)-(\d+)\)/);
     if (lineRangeMatch) {
@@ -64,9 +73,9 @@ export class FindingItem extends vscode.TreeItem {
         lineNumberEnd = lineNumber; // Same as start for single line
       }
     }
-    
+
     let filePath: string | null = null;
-    
+
     const pathMatch = where.match(/\/ms_artifact(\/.+?)(?::|$|\s)/);
     if (pathMatch && pathMatch[1] && this.scanPath) {
       filePath = path.join(this.scanPath, pathMatch[1].substring(1));
@@ -76,7 +85,7 @@ export class FindingItem extends vscode.TreeItem {
         filePath = path.join(this.scanPath, genericPathMatch[1]);
       }
     }
-    
+
     return { filePath, lineNumber, lineNumberEnd };
   }
 }

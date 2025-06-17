@@ -4,7 +4,8 @@
     ],
     "IGNORE_SEARCH_PATTERN": "(.*_test)",
     "UPDATE_SERVICE_WITH_FILE_NAME_CFT": "True",
-    "MESSAGE_INFO_ENGINE_IAC": "",
+    "REGEX_CLEAN_END_PIPELINE_NAME": "",
+    "MESSAGE_INFO_ENGINE_IAC": "engine_iac run successfully",
     "THRESHOLD": {
         "VULNERABILITY": {
             "Critical": 1,
@@ -16,9 +17,8 @@
             "Critical": 1
         }
     },
-    "UPDATE_SERVICE_WITH_FILE_NAME_CFT": false,
     "CHECKOV": {
-        "VERSION": "2.3.296",
+        "VERSION": "3.2.427",
         "INSTALL_TYPE": "remote-binary",
         "URL_FILE_LINUX": "https://github.com/bridgecrewio/checkov/releases/download/2.3.321/checkov_linux_X86_64_2.3.321.zip",
         "URL_FILE_LINUX_ARM64": "https://github.com/bridgecrewio/checkov/releases/download/2.3.321/checkov_linux_arm64_2.3.321.zip",

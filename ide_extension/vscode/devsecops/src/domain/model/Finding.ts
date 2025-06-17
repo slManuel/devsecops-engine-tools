@@ -8,6 +8,7 @@ export class Finding {
     private tool: string;
     private references: string[];
     private additionalFields: { [key: string]: string | undefined } = {};
+    private validationRuleCode?: string;
     
     constructor(
         id: string,
@@ -17,7 +18,8 @@ export class Finding {
         module: string,
         tool: string,
         references: string[] = [],
-        additionalFields: { [key: string]: string | undefined } = {}
+        additionalFields: { [key: string]: string | undefined } = {},
+        validationRuleCode?: string
     ) {
         this.id = id;
         this.severity = severity;
@@ -27,6 +29,7 @@ export class Finding {
         this.tool = tool;
         this.references = references;
         this.additionalFields = additionalFields;
+        this.validationRuleCode = validationRuleCode;
     }
 
     public getId(): string {
@@ -64,4 +67,13 @@ export class Finding {
     public getAllAdditionalFields(): { [key: string]: string | undefined } {
         return this.additionalFields;
     }
+
+    public getValidationRuleCode(): string | undefined {
+        return this.validationRuleCode;
+    }
+
+    public setValidationRuleCode(validationRuleCode: string): void {
+        this.validationRuleCode = validationRuleCode;
+    }
+
 }

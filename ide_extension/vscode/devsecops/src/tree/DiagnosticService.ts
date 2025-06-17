@@ -16,14 +16,12 @@ export class DiagnosticService {
     
     const fileUri = vscode.Uri.file(filePath);
     
-    // Create a range that spans from the first character of the start line
-    // to the last character of the end line
     const diagnostic = new vscode.Diagnostic(
       new vscode.Range(
         new vscode.Position(lineNumberStart - 1, 0),
-        new vscode.Position(lineNumberEnd - 1, 100) // Assuming max line length of 100
+        new vscode.Position(lineNumberEnd - 1, 100)
       ),
-      finding.getDescription(),
+      this.formatDiagnosticMessage(finding),
       vscode.DiagnosticSeverity.Error
     );
     
@@ -55,4 +53,19 @@ export class DiagnosticService {
     this.diagnosticCollection?.dispose();
     this.findingMap.clear();
   }
+
+  private static formatDiagnosticMessage(finding: Finding): string {
+    let message = `Rule ID: ${finding.getId()}`;
+    message += `\nSeverity: ${finding.getSeverity()}`;
+    message += `\nWhere: ${finding.getWhere()}`;
+    message += `\nResource: ${finding.getResource()}`;
+    message += `\nDescription: ${finding.getDescription()}`;
+    message += `\nModule: ${finding.getModule()}`;
+    message += `\nTool: ${finding.getTool()}`;
+    if (finding.getValidationRuleCode()) {
+      message += `\nValidation Rule: ${finding.getValidationRuleCode()}`;
+    }
+    return message;
+  }
+
 }

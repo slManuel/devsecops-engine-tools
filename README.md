@@ -40,7 +40,7 @@ pip3 install devsecops-engine-tools
 ### Scan running - flags (CLI)
 
 ```bash
-devsecops-engine-tools --platform_devops ["local","azure","github"] --remote_config_source ["local","azure","github"] --remote_config_repo ["remote_config_repo"] --remote_config_branch ["remote_config_branch"] --module ["engine_iac", "engine_dast", "engine_secret", "engine_dependencies", "engine_container", "engine_risk", "engine_code"] --tool ["nuclei", "bearer", "checkov", "kics", "kubescape", "trufflehog", "gitleaks", "prisma", "trivy", "xray", "dependency_check"] --folder_path ["Folder path scan engine_iac, engine_code, engine_dependencies and engine_secret"] --platform ["k8s","cloudformation","docker", "openapi", "terraform"] --use_secrets_manager ["false", "true"] --use_vulnerability_management ["false", "true"] --send_metrics ["false", "true"] --token_cmdb ["token_cmdb"] --token_vulnerability_management ["token_vulnerability_management"] --token_engine_container ["token_engine_container"] --token_engine_dependencies ["token_engine_dependencies"] --token_external_checks ["token_external_checks"] --xray_mode ["scan", "audit","build-scan"] --image_to_scan ["image_to_scan"] --dast_file_path ["dast_file_path"] --terraform_repo_root ["terraform_files_repo"]
+devsecops-engine-tools --platform_devops ["local","azure","github"] --remote_config_source ["local","azure","github"] --remote_config_repo ["remote_config_repo"] --remote_config_branch ["remote_config_branch"] --module ["engine_iac", "engine_dast", "engine_secret", "engine_dependencies", "engine_container", "engine_risk", "engine_code"] --tool ["nuclei", "bearer", "checkov", "kics", "kubescape", "trufflehog", "gitleaks", "prisma", "trivy", "xray", "dependency_check"] --folder_path ["Folder path scan engine_iac, engine_code, engine_dependencies and engine_secret"] --platform ["k8s","cloudformation","docker", "openapi", "terraform"] --use_secrets_manager ["false", "true"] --use_vulnerability_management ["false", "true"] --send_metrics ["false", "true"] --token_cmdb ["token_cmdb"] --token_vulnerability_management ["token_vulnerability_management"] --token_engine_container ["token_engine_container"] --token_engine_dependencies ["token_engine_dependencies"] --token_external_checks ["token_external_checks"] --xray_mode ["scan", "audit","build-scan"] --image_to_scan ["image_to_scan"] --dast_file_path ["dast_file_path"] --context ["false", "true"] --terraform_repo_root ["terraform_files_repo"]
 ```
 
 ### Structure Remote Config
@@ -176,9 +176,7 @@ docker run --rm -v ./folder_to_analyze:/folder_to_analyze -v ./custom_remote_con
 
 ### Scan running sample - Azure Pipelines
 
-The remote config should be in a Azure Devops repository.
-
-Note: By default the tool gets the token from the SYSTEM_ACCESSTOKEN variable to get the remote configuration repository. You must ensure that this token has permission to access this resource.
+Note: If the remote configuration is in an Azure Devops repository. the tool gets the token from the SYSTEM_ACCESSTOKEN variable to get the remote configuration repository. You must ensure that this token has permission to access this resource.
 
 ```yaml
 name: $(Build.SourceBranchName).$(date:yyyyMMdd)$(rev:.r)
@@ -209,7 +207,7 @@ stages:
 
 ### Scan running sample - Github Actions
 
-The remote config should be in a GitHub repository, either public or private.
+If remote config is in a GitHub repository, either public or private.
 
 **If the repository is public:** 
 
