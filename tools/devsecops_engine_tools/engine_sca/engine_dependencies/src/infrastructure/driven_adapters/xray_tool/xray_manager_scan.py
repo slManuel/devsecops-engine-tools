@@ -38,7 +38,7 @@ class XrayScan(ToolGateway):
                     url = f"https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/{version}/jfrog-cli-linux-arm64/jf"
                 else:
                     url = f"https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/{version}/jfrog-cli-linux-amd64/jf"
-                response = requests.get(url, allow_redirects=True, verify=False)
+                response = requests.get(url, allow_redirects=True)
                 with open(prefix, "wb") as archivo:
                     archivo.write(response.content)
                 subprocess.run(
@@ -57,7 +57,7 @@ class XrayScan(ToolGateway):
         except:
             try:
                 url = f"https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/{version}/jfrog-cli-windows-amd64/jf.exe"
-                response = requests.get(url, allow_redirects=True, verify=False)
+                response = requests.get(url, allow_redirects=True)
                 with open(prefix, "wb") as archivo:
                     archivo.write(response.content)
             except subprocess.CalledProcessError as error:
@@ -73,7 +73,7 @@ class XrayScan(ToolGateway):
             command = ["chmod", "+x", prefix]
             try:
                 url = f"https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/{version}/jfrog-cli-mac-386/jf"
-                response = requests.get(url, allow_redirects=True, verify=False)
+                response = requests.get(url, allow_redirects=True)
                 with open(prefix, "wb") as archivo:
                     archivo.write(response.content)
                 subprocess.run(
