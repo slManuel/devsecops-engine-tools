@@ -122,6 +122,6 @@ RUN apt-get update && \
 
 RUN CERT_FILE=$(python3 -m certifi) \
     && cat /tmp/certificates/* >> $CERT_FILE \
-    $$ echo "Certificates added to $CERT_FILE"
+    && echo "Certificates added to $CERT_FILE"
 
 CMD ["sh", "-c", "dockerd & while ! docker info > /dev/null 2>&1; do sleep 1; done; sh"]
