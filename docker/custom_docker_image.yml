@@ -22,7 +22,10 @@ steps:
 - script: echo "Release version is $(RELEASE_VERSION)"
   displayName: 'Use the release version'
 
-- script: python3 docker/get_files_ad.py $(repo-owner-ad) "$(project-ad)" $(remote-config-repo) /engine_sast/engine_iac/ConfigTool.json $(ad-at) path
+- script: | 
+    python3 docker/get_files_ad.py $(repo-owner-ad) "$(project-ad)" $(remote-config-repo) /engine_sast/engine_iac/ConfigTool.json $(ad-at) path
+    python3 docker/get_files_ad.py $(repo-owner-ad) "$(project-ad)" $(remote-config-repo) /engine_sca/engine_container/ConfigTool.json $(ad-at) path
+    python3 docker/get_files_ad.py $(repo-owner-ad) "$(project-ad)" $(remote-config-repo) /engine_sca/engine_dependencies/ConfigTool.json $(ad-at) path
   displayName: 'Get Custom Remote Config'
 
 - script: python3 docker/get_files_gh.py $(repo-owner) $(project) rules $(gh-at) rules
@@ -30,6 +33,9 @@ steps:
 
 - script: python3 docker/get_files_gh.py $(repo-owner) $(project) docs $(gh-at) docs
   displayName: 'Get Custom IAC Rules Registry'
+
+- script: python3 docker/get_certificates.py $(certificate-url)
+  displayName: 'Get Custom Certificates'
 
 - script: docker build --build-arg VERSION=$(RELEASE_VERSION) -t $(artifactory-url)/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG) -f docker/Dockerfile . && docker tag artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG) artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG)
   displayName: 'Build Docker Image'
