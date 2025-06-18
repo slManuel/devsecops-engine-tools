@@ -1,5 +1,6 @@
 import sys
 import requests
+import os
 
 def download_crt(url):
     response = requests.get(url)
@@ -7,7 +8,8 @@ def download_crt(url):
         filename = url.split('/')[-1]
         if not filename.endswith('.crt'):
             filename += '.crt'
-        with open(filename, 'wb') as f:
+        os.makedirs("./certificates", exist_ok=True)
+        with open(f"./certificates/{filename}", 'wb') as f:
             f.write(response.content)
         print(f"File {filename} downloaded successfully")
     else:
