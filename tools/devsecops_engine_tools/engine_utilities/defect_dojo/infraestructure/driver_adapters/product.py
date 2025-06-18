@@ -37,8 +37,12 @@ class ProductRestConsumer:
             "name": request.product_name,
             "description": "AREA RESPONSABLE TI: " + request.product_description.upper(),
             "enable_full_risk_acceptance": True,
-            "prod_type": product_type_id,
+            "prod_type": product_type_id
         }
+
+        if "Orphan Product" in request.product_description:
+            data["sla_configuration"] = request.sla_configuration["ORPHAN"]
+        
         headers = {"Authorization": f"Token {self.__token}"}
         try:
             response = self.__session.post(url, headers=headers, data=data, verify=VERIFY_CERTIFICATE)

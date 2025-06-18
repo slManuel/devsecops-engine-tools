@@ -197,6 +197,7 @@ class ImportScanSerializer(Schema):
     branch_tag = fields.Str(required=False)
     commit_hash = fields.Str(required=False)
     api_scan_configuration = fields.Int(required=False)
+    sla_configuration = fields.Dict(required=False)
     service = fields.Str(required=False)
     group_by = fields.Str(required=False)
     test_title = fields.Str(required=False)

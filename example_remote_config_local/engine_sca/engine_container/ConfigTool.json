@@ -6,7 +6,7 @@
         "SBOM_FORMAT": "cyclonedx_json"
     },
     "TRIVY": {
-        "TRIVY_VERSION": "0.51.4",
+        "TRIVY_VERSION": "0.62.1",
         "SBOM_FORMAT": "cyclonedx"
     },
     "SBOM": {
@@ -21,13 +21,14 @@
         "ENABLED": false,
         "REFERENCE_IMAGE_DATE": "20250206"
     },
-    "MESSAGE_INFO_ENGINE_CONTAINER": "message custom",
+    "MESSAGE_INFO_ENGINE_CONTAINER": "engine_container run successfully",
     "IGNORE_SEARCH_PATTERN":"(.*_demo0|.*_cer)",
+    "REGEX_CLEAN_END_PIPELINE_NAME": "",
     "THRESHOLD": {
         "VULNERABILITY": {
-            "Critical": 4,
-            "High": 10,
-            "Medium": 20,
+            "Critical": 99,
+            "High": 99,
+            "Medium": 99,
             "Low": 999
         },
         "QUALITY_VULNERABILITY_MANAGEMENT": {

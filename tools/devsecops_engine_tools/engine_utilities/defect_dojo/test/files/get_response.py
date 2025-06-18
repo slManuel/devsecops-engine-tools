@@ -36,6 +36,7 @@ def session_manager_post(status_code, mock_response):
         response_mock_post.json.return_value = get_response(mock_response)
     else:
         response_mock_post.json.return_value = mock_response
+    response_mock_post.text = mock_response
     # mock method post
     session_mock.post.return_value = response_mock_post
     # instance session mock in atribute

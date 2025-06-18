@@ -479,6 +479,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                 in tool_scm_conf_mapping
                 else tool_scm_conf_mapping["DEFAULT"]
             ),
+            "sla_configuration": vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["TOOL_SLA_MAPPING"],
             "tags": tags,
             "version": vulnerability_management.version,
             "build_id": vulnerability_management.build_id,

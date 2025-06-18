@@ -56,6 +56,10 @@ class TestDefectDojoPlatform(unittest.TestCase):
                         "SONAR_INSTANCE_ONE": 4,
                         "SONAR_INSTANCE_TWO": 5
                     },
+                    "TOOL_SLA_MAPPING": {
+                        "DEFAULT": 1,
+                        "ORPHAN": 4
+                    },
                     "CMDB": {
                         "USE_CMDB": True,
                         "HOST_CMDB": "cmdb_host",
@@ -159,6 +163,10 @@ class TestDefectDojoPlatform(unittest.TestCase):
                 source_code_management_uri="source_code_uri",
                 tool_scm_configuration=2,
                 tool_sonarqube_configuration=4,
+                sla_configuration={
+                    "DEFAULT": 1,
+                    "ORPHAN": 4
+                },
                 branch_tag="trunk",
                 commit_hash="commit_hash",
                 environment="Development",
@@ -218,6 +226,10 @@ class TestDefectDojoPlatform(unittest.TestCase):
                         "DEFAULT": 4,
                         "SONAR_INSTANCE_ONE": 4,
                         "SONAR_INSTANCE_TWO": 5
+                    },
+                    "TOOL_SLA_MAPPING": {
+                        "DEFAULT": 1,
+                        "ORPHAN": 4
                     },                    
                     "CMDB": {
                         "USE_CMDB": True,
@@ -303,6 +315,10 @@ class TestDefectDojoPlatform(unittest.TestCase):
                 engagement_name="engagement_name",
                 source_code_management_uri="source_code_uri",
                 tool_scm_configuration=3,
+                sla_configuration= {
+                    "DEFAULT": 1,
+                    "ORPHAN": 4
+                },
                 tool_sonarqube_configuration=4,
                 tags=tags,
                 version="1.0",
@@ -355,7 +371,11 @@ class TestDefectDojoPlatform(unittest.TestCase):
                         "DEFAULT": 4,
                         "SONAR_INSTANCE_ONE": 4,
                         "SONAR_INSTANCE_TWO": 5
-                    }, 
+                    },
+                    "TOOL_SLA_MAPPING": {
+                        "DEFAULT": 1,
+                        "ORPHAN": 4
+                    },          
                     "REIMPORT_SCAN": True,
                     "CMDB": {"USE_CMDB": True, "REGEX_EXPRESSION_CMDB": "regex"},
                 },
@@ -402,6 +422,10 @@ class TestDefectDojoPlatform(unittest.TestCase):
                     "source_code_management_uri": "source_code_uri",
                     "tool_scm_configuration": 2,
                     "tool_sonarqube_configuration": 4,
+                    "sla_configuration": {
+                        "DEFAULT": 1,
+                        "ORPHAN": 4
+                    },
                     "tags": tags,
                     "version": "1.0",
                     "build_id": "build_id",

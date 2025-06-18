@@ -20,10 +20,10 @@ on:
       - ".github/workflows/vscode-release.yml"
 
 jobs:
+  # Prepare environment and build the plugin
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
       issues: write
       pull-requests: write
     defaults:
@@ -45,10 +45,39 @@ jobs:
       - name: Compile extension
         run: npm run compile
 
-      - name: Package extension
-        run: npx @vscode/vsce package
+  releaseDraft:
+    name: Release draft
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/trunk'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    defaults:
+      run:
+        working-directory: ide_extension/vscode/devsecops/
+
+    steps:
+      - name: Generate a token of Github APP
+        id: generate_token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2.1.0
+        with:
+          app_id: ${{ secrets.APP_ID_ADMIN_GITHUB }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY_ADMIN_GITHUB }}
+
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        with:
+          node-version: '22'
 
       - name: Semantic Release
+        run: npx -p semantic-release -p @semantic-release/git -p @semantic-release/changelog -p @semantic-release/exec semantic-release
+        working-directory: ./ide_extension/vscode/devsecops/
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}

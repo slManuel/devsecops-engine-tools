@@ -49,6 +49,7 @@ log/
 twistcli
 trivy*
 trivy_*
+nuclei
 *scan_result.json
 jf
 jf.exe
@@ -86,3 +87,4 @@ coverage/
 # Binarios
 checkov
 checkov.exe
+build/** 
