@@ -120,8 +120,12 @@ RUN apt-get update && \
     temurin-21-jdk && \
     rm -rf /var/lib/apt/lists/*
 
-RUN CERT_FILE=$(python3 -m certifi) \
-    && cat /tmp/certificates/* >> $CERT_FILE \
-    && echo "Certificates added to $CERT_FILE"
+RUN if [ -d /tmp/certificates ]; then \
+    CERT_FILE=$(python3 -m certifi) && \
+    cat /tmp/certificates/* >> "$CERT_FILE" && \
+    echo "Certificates added to $CERT_FILE"; \
+    else \
+    echo "/tmp/certificates does not exist, skipping certificate addition."; \
+    fi
 
 CMD ["sh", "-c", "dockerd & while ! docker info > /dev/null 2>&1; do sleep 1; done; sh"]
