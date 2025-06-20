@@ -4,11 +4,14 @@ from devsecops_engine_tools.engine_dast.src.domain.model.api_operation import Ap
 class ApiConfig():
     def __init__(self, api_data: dict):
         try:
+            try: rl = int(api_data.get("rate_limit"))
+            except: rl = 150
+
             self.target_type: str = "API"
             self.endpoint: str = api_data["endpoint"]
             self.operations: "List[ApiOperation]" = api_data["operations"]
             self.concurrency: Optional[int] = None
-            self.rate_limit: Optional[int] = api_data.get("rate_limit", 150)
+            self.rate_limit: Optional[int] = rl
             self.response_size: Optional[int] = None
             self.bulk_size: Optional[int] = None
             self.timeout: Optional[int] = None
