@@ -57,6 +57,8 @@ class JwtObject(AuthenticationGateway):
             self.private_key.replace(" ", "\n")
             .replace("-----BEGIN\nPRIVATE\nKEY-----", "-----BEGIN PRIVATE KEY-----")
             .replace("-----END\nPRIVATE\nKEY-----", "-----END PRIVATE KEY-----")
+            .replace("-----BEGIN\nRSA\nPRIVATE\nKEY-----", "-----BEGIN RSA PRIVATE KEY-----")
+            .replace("-----END\nRSA\nPRIVATE\nKEY-----", "-----END RSA PRIVATE KEY-----")
         )
         self.jwt_token = jwt.encode(self.header, self.payload, self.private_key).decode(
             "utf-8"
