@@ -68,7 +68,8 @@ COPY --from=remote_config /app/docker_default_remote_config /app/docker_default_
 COPY --from=remote_config /opt/venv /opt/venv
 COPY --from=remote_config /tmp/rules* /tmp/rules
 COPY --from=remote_config /tmp/docs* /tmp/docs
-COPY --from=remote_config /tmp/certificate* /tmp/certificates
+COPY --from=remote_config /tmp/certificates* /tmp/certificates
+COPY --from=remote_config /tmp/certificates* /usr/local/share/ca-certificates
 
 COPY .envdetlocal /app/.env
 
