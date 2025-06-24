@@ -7,6 +7,9 @@ export default interface IScannerGateway {
     outputChannel: OutputChannel,
     dockerImageName: string,
     toolVersion?: string,
-    dockerPath?: string
+    dockerPath?: string,
+    dependenciesToken?: string,
+    xrayMode?: string,
+    dependenciesTool?: string
   ): Promise<ScannerRes>;
 }

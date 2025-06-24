@@ -3,40 +3,64 @@ import IScannerGateway from "../../domain/model/gateways/IScannerGateway";
 import OutputManager from "../helper/OutputManager";
 import { ScannerRes } from "../../domain/model/ScannerRes";
 import { Finding } from "../../domain/model/Finding";
+import { exec } from "child_process";
+import { IDependenciesScanContext, Mappers } from "../../domain/model/mappers/Mappers";
 
-import { exec, execSync } from "child_process";
-import { IIacContext, Mappers } from "../../domain/model/mappers/Mappers";
-
-export class IacScanner implements IScannerGateway {
+export class DependenciesScanner implements IScannerGateway {
   async scan(
     elementToScan: string,
     outputChannel: OutputChannel,
     dockerImageName: string,
     toolVersion: string,
-    dockerPath: string
+    dockerPath: string,
+    dependenciesToken: string,
+    xrayMode: string,
+    dependenciesTool: string
   ): Promise<ScannerRes> {
     outputChannel.clear();
     outputChannel.show();
+
+
     return new Promise((resolve, _reject) => {
       let scanResult: boolean = false;
       let findings: Finding[] = [];
 
       const timeout = setTimeout(() => {
         outputChannel.appendLine("Scan timed out after 2 minutes");
-        outputChannel.appendLine("Docker command may be hanging. Check Docker configuration.");
+        outputChannel.appendLine(
+          "Docker command may be hanging. Check Docker configuration."
+        );
         resolve(new ScannerRes(false, []));
-      }, 120000);
+      }, 12000000);
 
-      const dockerCommand = `${dockerPath} run --rm -v ${elementToScan}:/ms_artifact ${dockerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo docker_default_remote_config --module engine_iac --tool checkov --folder_path /ms_artifact --context true"`;
+      if (!dependenciesToken) {
+        outputChannel.appendLine("No Dependencies Token to scan provided\n Go to Settings to configure it!");
+        resolve(new ScannerRes(false, []));
+        return;
+      }
+
+      const dockerCommand = `${dockerPath} run --rm -v ${elementToScan}:/ms_artifact ${dockerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --xray_mode ${xrayMode} --remote_config_repo docker_default_remote_config --module engine_dependencies --tool ${dependenciesTool} --token_engine_dependencies ${dependenciesToken} --folder_path /ms_artifact --context true"`;
 
       const childProcess = exec(dockerCommand, (error, stdout, stderr) => {
         clearTimeout(timeout);
         if (error) {
-          this.errorHandler(outputChannel, error, stderr);
+          outputChannel.appendLine(
+            `Error executing Docker command: ${error.message}`
+          );
+          if (stderr.includes("Unable to find image")) {
+            outputChannel.appendLine(
+              "Docker image not found. Attempting to download..."
+            );
+          } else {
+            outputChannel.appendLine(`Standard Error: ${stderr}`);
+            outputChannel.appendLine(
+              "Attempting to process partial results..."
+            );
+          }
         }
 
         if (stdout) {
-          let contextJson: { iac_context: IIacContext[] } | null = null;
+          let contextJson: { dependencies_context: IDependenciesScanContext[] } | null = null;
           let normalOutput = stdout;
 
           const contextRegex =
@@ -45,13 +69,13 @@ export class IacScanner implements IScannerGateway {
 
           if (match && match[1]) {
             try {
-              contextJson = JSON.parse(match[1].trim()) as { iac_context: IIacContext[] };
+              contextJson = JSON.parse(match[1].trim()) as { dependencies_context: IDependenciesScanContext[] };
 
               normalOutput = stdout.replace(contextRegex, "");
 
-              findings = contextJson.iac_context.map(
-                (finding: IIacContext) =>
-                  Mappers.mapIacContextToFinding(finding)
+              findings = contextJson.dependencies_context.map(
+                (finding: IDependenciesScanContext) =>
+                  Mappers.mapDependenciesScanContextToFinding(finding)
               );
 
               scanResult = true;
@@ -65,7 +89,9 @@ export class IacScanner implements IScannerGateway {
               } else if (typeof jsonError === "string") {
                 errorMsg = jsonError;
               }
-              outputChannel.appendLine(`Error parsing context JSON: ${errorMsg}`);
+              outputChannel.appendLine(
+                `Error parsing context JSON: ${errorMsg}`
+              );
               outputChannel.appendLine("Raw context data:");
               outputChannel.appendLine(match[1]);
             }
@@ -76,7 +102,8 @@ export class IacScanner implements IScannerGateway {
             scanResult = false;
           }
 
-          const cleanedOutput = OutputManager.removeAnsiEscapeCodes(normalOutput);
+          const cleanedOutput =
+            OutputManager.removeAnsiEscapeCodes(normalOutput);
           outputChannel.appendLine("SCAN OUTPUT:");
           outputChannel.appendLine(cleanedOutput);
           outputChannel.appendLine(`Found ${findings.length} issues in scan`);
@@ -95,27 +122,4 @@ export class IacScanner implements IScannerGateway {
     });
   }
 
-  getRuleCode(
-    dockerPath: string,
-    dockerImageName: string,
-    toolVersion: string,
-    ruleId: string,
-    finding: Finding
-  ): Finding {
-    const dockerCommand = `${dockerPath} run --rm ${dockerImageName}:${toolVersion}  python3 rules_context_extract.py ${ruleId}`;
-    const rulePrint = execSync(dockerCommand, { encoding: "utf-8" }).trim();
-    finding.setValidationRuleCode(rulePrint);
-    return finding;
-  }
-
-  private errorHandler(outputChannel: OutputChannel, error: Error, stderr: string): void {
-    outputChannel.appendLine(`Error: ${error.message}`);
-    outputChannel.appendLine("Please check your Docker configuration and try again.");
-    if (stderr.includes("Unable to find image")) {
-      outputChannel.appendLine("Docker image not found. Attempting to download...");
-    } else {
-      outputChannel.appendLine(`Standard Error: ${stderr}`);
-      outputChannel.appendLine("Attempting to process partial results...");
-    }
-  }
 }

@@ -4,7 +4,7 @@
   "displayName": "DevSecOps Engine Tools",
   "publisher": "GrupoBancolombiaOSPO",
   "description": "",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "engines": {
     "vscode": "^1.95.0"
   },
@@ -14,7 +14,8 @@
   "activationEvents": [
     "onView:devsecops",
     "onCommand:devsecops.iacScan",
-    "onCommand:devsecops.imageScan"
+    "onCommand:devsecops.imageScan",
+    "onCommand:devsecops.dependenciesScan"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -99,6 +100,28 @@
             "format": "password"
           }
         }
+      },
+      {
+        "title": "Dependencies Scan Settings",
+        "properties": {
+          "devsecops.dependencies.dependenciesToken": {
+            "type": "string",
+            "description": "Token for dependencies scan (Jfrog Token for Xray or NVD Api Key for Dependency Check)",
+            "format": "password"
+          },
+          "devsecops.dependencies.xrayMode": {
+            "type": "string",
+            "default": "audit",
+            "enum": ["audit", "scan"],
+            "description": "Dependency scan mode with JFrog Xray (audit = dependency tree scanning, scan = compiled file scan)"
+          },
+          "devsecops.dependencies.dependenciesTool": {
+            "type": "string",
+            "default": "xray",
+            "enum": ["xray", "dependency_check"],
+            "description": "Dependency Scan Tool to use"
+          }
+        }
       }
     ],
     "commands": [
@@ -109,6 +132,10 @@
       {
         "command": "devsecops.imageScan",
         "title": "DevSecOps Image Scan"
+      },
+      {
+        "command": "devsecops.dependenciesScan",
+        "title": "DevSecOps Dependencies Scan"
       },
       {
         "command": "devsecops.openWithDiagnostic",
@@ -133,6 +160,11 @@
         {
           "command": "devsecops.imageScan",
           "when": "view == devsecops",
+          "group": "navigation"
+        },
+        {
+          "command": "devsecops.dependenciesScan",
+          "when": "view == devsecopsView",
           "group": "navigation"
         }
       ]

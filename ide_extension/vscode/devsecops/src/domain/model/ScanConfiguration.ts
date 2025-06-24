@@ -8,6 +8,9 @@ export class ScanConfiguration {
   private environment: string;
   private adUserName: string;
   private adPersonalAccessToken: string;
+  private dependenciesToken: string;
+  private xrayMode: string;
+  private dependenciesTool: string;
 
   constructor() {
     this.dockerImageName = "";
@@ -17,13 +20,17 @@ export class ScanConfiguration {
     this.environment = "dev";
     this.adUserName = "";
     this.adPersonalAccessToken = "";
-    
+    this.dependenciesToken = "";
+    this.xrayMode = "";
+    this.dependenciesTool = "";
+
     this.loadFromVSCodeConfig();
   }
 
   private loadFromVSCodeConfig(): void {
     const generalConfig = vscode.workspace.getConfiguration("devsecops.general");
     const azureDevopsConfig = vscode.workspace.getConfiguration("devsecops.azuredevops");
+    const dependenciesConfig = vscode.workspace.getConfiguration("devsecops.dependencies");
     
     this.dockerImageName = generalConfig.get("imageToUse") || "bancolombia/devsecops-engine-tools";
     this.organizationName = azureDevopsConfig.get("organizationName") || "";
@@ -32,6 +39,9 @@ export class ScanConfiguration {
     this.environment = azureDevopsConfig.get("environment") || "dev";
     this.adUserName = azureDevopsConfig.get("username") || "";
     this.adPersonalAccessToken = azureDevopsConfig.get("personalAccessToken") || "";
+    this.dependenciesToken = dependenciesConfig.get("dependenciesToken") || "";
+    this.xrayMode = dependenciesConfig.get("xrayMode") || "audit";
+    this.dependenciesTool = dependenciesConfig.get("dependenciesTool") || "xray";
   }
 
   public refresh(): void {
@@ -78,6 +88,18 @@ export class ScanConfiguration {
 
   public getAdPersonalAccessToken(): string {
     return this.adPersonalAccessToken;
+  }
+
+  public getDependenciesToken(): string {
+    return this.dependenciesToken;
+  }
+
+  public getXrayMode(): string {
+    return this.xrayMode;
+  }
+
+  public getDependenciesTool(): string {
+    return this.dependenciesTool;
   }
 
 }

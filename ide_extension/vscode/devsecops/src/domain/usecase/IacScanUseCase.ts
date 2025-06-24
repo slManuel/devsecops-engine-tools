@@ -135,7 +135,7 @@ export class IacScanUseCase implements IIacScanUseCase {
         this.dockerPath,
         scanConfiguration.getDockerImageName(),
         this.toolVersion,
-        finding.getCustomVulnId(),
+        finding.getId(),
         finding
       );
     });

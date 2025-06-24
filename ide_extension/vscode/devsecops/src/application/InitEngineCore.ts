@@ -5,6 +5,9 @@ import { RestClient } from "../infraestructure/drivenAdapter/RestClient";
 import { ImageScanRequest } from "../infraestructure/entryPoint/ImageScanRequest";
 import { ImageScanner } from "../infraestructure/drivenAdapter/ImageScanner";
 import { ImageScanUseCase } from "../domain/usecase/ImageScanUseCase";
+import { DependenciesScanUseCase } from "../domain/usecase/DependenciesScanUseCase";
+import { DependenciesScanRequest } from "../infraestructure/entryPoint/DependenciesScanRequest";
+import { DependenciesScanner } from "../infraestructure/drivenAdapter/DependenciesScanner";
 import DockerPathDetector from "../infraestructure/helper/DockerPathDetector";
 
 interface IResult {
@@ -30,6 +33,13 @@ export async function imageScanRequest(): Promise<ImageScanRequest>{
     const dockerImageVersion = await getLatestDockerImageVersion();
     const imageScanUseCase = new ImageScanUseCase(new ImageScanner(), dockerImageVersion, dockerPath);
     return new ImageScanRequest(imageScanUseCase);
+}
+
+export async function dependenciesScanRequest(): Promise<DependenciesScanRequest> {
+    const dockerPath = DockerPathDetector.getDockerPath();
+    const dockerImageVersion = await getLatestDockerImageVersion();
+    const dependenciesScanUseCase = new DependenciesScanUseCase(new DependenciesScanner(), dockerImageVersion, dockerPath);
+    return new DependenciesScanRequest(dependenciesScanUseCase);
 }
 
 async function getLatestDockerImageVersion(repository: string = 'bancolombia/devsecops-engine-tools'): Promise<string> {

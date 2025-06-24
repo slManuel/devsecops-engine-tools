@@ -13,7 +13,6 @@ export class FindingItem extends vscode.TreeItem {
     this.tooltip = `
     ${finding.getDescription()}\n
     Severity: ${finding.getSeverity()}\n
-    Resource: ${finding.getResource() || "N/A"}\n
     Location: ${finding.getWhere() || "N/A"}
     Validation Rule Code: ${finding.getValidationRuleCode() || "N/A"}`;
 
@@ -34,8 +33,8 @@ export class FindingItem extends vscode.TreeItem {
     };
 
     const fileInfo = this.extractFileInfo(finding.getWhere());
-
-    if (fileInfo.filePath) {
+    
+    if (fileInfo.filePath && ["engine_iac"].includes(finding.getModule())) {
       this.command = {
         title: "Open File",
         command: "devsecops.openWithDiagnostic",

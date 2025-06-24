@@ -6,7 +6,7 @@ import IScannerGateway from "../../domain/model/gateways/IScannerGateway";
 import { Finding } from "../../domain/model/Finding";
 import { ScannerRes } from "../../domain/model/ScannerRes";
 import {
-  IImageScanContextTrivy,
+  IImageScanContext,
   Mappers,
 } from "../../domain/model/mappers/Mappers";
 
@@ -33,7 +33,7 @@ export class ImageScanner implements IScannerGateway {
         resolve(new ScannerRes(false, []));
       }, 360000);
 
-      const dockerCommand = `${dockerPath} run --rm -v /var/run/docker.sock:/var/run/docker.sock ${dockerImageName}:${toolVersion} devsecops-engine-tools --platform_devops local --remote_config_repo docker_default_remote_config -rcs local --module engine_container --tool trivy --image_to_scan ${elementToScan} --context true`;
+      const dockerCommand = `${dockerPath} run --rm -v /var/run/docker.sock:/var/run/docker.sock ${dockerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo docker_default_remote_config --module engine_container --tool trivy --image_to_scan ${elementToScan} --context true"`;
 
       const childProcess = exec(dockerCommand, (error, stdout, stderr) => {
         clearTimeout(timeout);
@@ -51,7 +51,7 @@ export class ImageScanner implements IScannerGateway {
         }
 
         if (stdout) {
-          let contextJson: { container_context: IImageScanContextTrivy[] } | null = null;
+          let contextJson: { container_context: IImageScanContext[] } | null = null;
           let normalOutput = stdout;
 
           const contextRegex =
@@ -60,13 +60,13 @@ export class ImageScanner implements IScannerGateway {
 
           if (match && match[1]) {
             try {
-              contextJson = JSON.parse(match[1].trim()) as { container_context: IImageScanContextTrivy[] };
+              contextJson = JSON.parse(match[1].trim()) as { container_context: IImageScanContext[] };
 
               normalOutput = stdout.replace(contextRegex, "");
 
               findings = contextJson.container_context.map(
-                (finding: IImageScanContextTrivy) =>
-                  Mappers.mapImageScanContextTrivyToFinding(finding)
+                (finding: IImageScanContext) =>
+                  Mappers.mapImageScanContextToFinding(finding)
               );
 
               scanResult = true;
