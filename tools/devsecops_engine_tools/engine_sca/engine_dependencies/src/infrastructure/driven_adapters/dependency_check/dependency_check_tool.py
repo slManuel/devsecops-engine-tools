@@ -167,7 +167,7 @@ class DependencyCheckTool(ToolGateway):
                     references = deserializer.extract_references(vulnerability, namespace)
 
                     context = ContextDependencies(
-                        cve_id=data["id"],
+                        cve_id=[data["id"]],
                         severity=data["severity"],
                         component=data["where"],
                         package_name=data["where"].split(":")[0] if data["where"] else "",

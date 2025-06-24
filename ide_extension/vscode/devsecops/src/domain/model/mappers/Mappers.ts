@@ -118,7 +118,8 @@ export class Mappers {
       {
         package_name: dependenciesScanContext.package_name || "",
         installed_version: dependenciesScanContext.installed_version || "",
-        fixed_version: dependenciesScanContext.fixed_version.join(",") || ""
+        fixed_version: dependenciesScanContext.fixed_version.join(",") || "",
+        impact_paths: JSON.stringify(dependenciesScanContext.impact_paths || []),
       }
     );
   }
