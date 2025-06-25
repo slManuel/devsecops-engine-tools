@@ -34,6 +34,7 @@ from devsecops_engine_tools.engine_core.src.domain.model.input_core import (
 )
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
 from devsecops_engine_tools.engine_utilities import settings
+import subprocess
 
 logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
@@ -108,6 +109,9 @@ def runner_engine_dast(dict_args, config_tool, secret_tool, devops_platform_gate
         config_tool_dast = remote_config_source_gateway.get_remote_config(
             dict_args["remote_config_repo"], "engine_dast/ConfigTool.json", dict_args["remote_config_branch"]
         )
+        if config_tool_dast["PRINT_API_CONFIG"]:
+            result = subprocess.run(["cat", dict_args["dast_file_path"]], check=True, stdout=subprocess.PIPE)
+            print(result.stdout.decode('utf-8'))
         if config_tool_dast["IGNORE_ERRORS"]:
             input_core = InputCore(
                 totalized_exclusions=[],
