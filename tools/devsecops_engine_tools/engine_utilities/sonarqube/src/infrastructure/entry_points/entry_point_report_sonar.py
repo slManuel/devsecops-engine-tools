@@ -44,7 +44,7 @@ def init_report_sonar(
     ) and pipeline_name not in excluded_pipelines
     
     is_valid_branch = any(
-        target_branch in str(branch)
+        target_branch in str(branch).split("/")
         for target_branch in report_config_tool["TARGET_BRANCHES"]
     )
 
