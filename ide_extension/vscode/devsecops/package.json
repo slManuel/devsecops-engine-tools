@@ -53,7 +53,7 @@
           },
           "devsecops.general.imageVersion": {
             "type": "string",
-            "default": "bancolombia/devsecops-engine-tools",
+            "default": "1.75.3",
             "description": "Docker image version to use for scanning"
           }
         }
