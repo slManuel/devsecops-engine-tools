@@ -50,6 +50,11 @@
             "type": "string",
             "default": "bancolombia/devsecops-engine-tools",
             "description": "Docker image to use for scanning"
+          },
+          "devsecops.general.imageVersion": {
+            "type": "string",
+            "default": "bancolombia/devsecops-engine-tools",
+            "description": "Docker image version to use for scanning"
           }
         }
       },

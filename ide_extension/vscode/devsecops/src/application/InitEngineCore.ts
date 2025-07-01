@@ -9,6 +9,7 @@ import { DependenciesScanUseCase } from "../domain/usecase/DependenciesScanUseCa
 import { DependenciesScanRequest } from "../infraestructure/entryPoint/DependenciesScanRequest";
 import { DependenciesScanner } from "../infraestructure/drivenAdapter/DependenciesScanner";
 import DockerPathDetector from "../infraestructure/helper/DockerPathDetector";
+import { ScanConfiguration } from "../domain/model/ScanConfiguration";
 
 interface IResult {
     name: string;
@@ -43,6 +44,7 @@ export async function dependenciesScanRequest(): Promise<DependenciesScanRequest
 }
 
 async function getLatestDockerImageVersion(repository: string = 'bancolombia/devsecops-engine-tools'): Promise<string> {
+    const config = new ScanConfiguration();
     const restClient = new RestClient();
     const apiUrl = `https://hub.docker.com/v2/repositories/${repository}/tags?page_size=100`;
     
@@ -58,7 +60,7 @@ async function getLatestDockerImageVersion(repository: string = 'bancolombia/dev
         
         throw new Error('No tags found for the repository');
     } catch (error) {
-        console.error('Error fetching Docker image version:', error);
-        throw error;
+        console.error('Error fetching Docker image version, using default one:', error);
+        return config.getDockerImageVersion();
     }
 }
