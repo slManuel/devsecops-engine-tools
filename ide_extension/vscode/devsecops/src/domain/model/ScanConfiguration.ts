@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 
 export class ScanConfiguration {
   private dockerImageName: string;
+  private dockerImageVersion: string;
   private organizationName: string;
   private projectName: string;
   private definitionId: string;
@@ -14,6 +15,7 @@ export class ScanConfiguration {
 
   constructor() {
     this.dockerImageName = "";
+    this.dockerImageVersion = "";
     this.organizationName = "";
     this.projectName = "";
     this.definitionId = "";
@@ -33,6 +35,7 @@ export class ScanConfiguration {
     const dependenciesConfig = vscode.workspace.getConfiguration("devsecops.dependencies");
     
     this.dockerImageName = generalConfig.get("imageToUse") || "bancolombia/devsecops-engine-tools";
+    this.dockerImageVersion = generalConfig.get("imageVersion") || "1.75.3";
     this.organizationName = azureDevopsConfig.get("organizationName") || "";
     this.projectName = azureDevopsConfig.get("projectName") || "";
     this.definitionId = azureDevopsConfig.get("releaseId") || "";
@@ -64,6 +67,10 @@ export class ScanConfiguration {
 
   public getDockerImageName(): string {
     return this.dockerImageName;
+  }
+
+  public getDockerImageVersion(): string {
+    return this.dockerImageVersion;
   }
 
   public getOrganizationName(): string {
