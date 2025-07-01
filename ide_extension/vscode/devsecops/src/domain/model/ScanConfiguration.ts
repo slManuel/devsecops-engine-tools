@@ -35,7 +35,7 @@ export class ScanConfiguration {
     const dependenciesConfig = vscode.workspace.getConfiguration("devsecops.dependencies");
     
     this.dockerImageName = generalConfig.get("imageToUse") || "bancolombia/devsecops-engine-tools";
-    this.dockerImageVersion = generalConfig.get("imageVersion") || "1.72.0";
+    this.dockerImageVersion = generalConfig.get("imageVersion") || "1.75.3";
     this.organizationName = azureDevopsConfig.get("organizationName") || "";
     this.projectName = azureDevopsConfig.get("projectName") || "";
     this.definitionId = azureDevopsConfig.get("releaseId") || "";
