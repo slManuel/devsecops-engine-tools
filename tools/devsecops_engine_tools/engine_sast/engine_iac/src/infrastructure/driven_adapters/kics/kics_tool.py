@@ -15,7 +15,6 @@ from devsecops_engine_tools.engine_utilities.utils.utils import Utils
 
 logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
-
 class KicsTool(ToolGateway):
     TOOL_KICS = "KICS"
     scan_type_platform_mapping = {
@@ -52,13 +51,11 @@ class KicsTool(ToolGateway):
         work_folder = (
             work_folder.replace("/", "\\") if os_platform == "Windows" else work_folder
         )
-
         command_prefix = (
             f"{work_folder}\\{path_kics}.exe"
             if os_platform == "Windows"
             else f"{work_folder}/{path_kics}"
         )
-
         if not self._validate_kics(command_prefix):
             logger.info("KICS binary not found or invalid, downloading assets...")
 
@@ -153,9 +150,13 @@ class KicsTool(ToolGateway):
         queries,
     ):
         folders = ','.join(folders_to_scan)
-        queries = ','.join(
-            uuid for query in queries for uuid in list(query.values())[0]
-            ) if queries else ""
+        queries_flat = [
+            uuid
+            for query in queries
+            for uuid in list(query.values())[0]
+            if uuid
+        ] if queries else []
+        queries = ','.join(queries_flat)
         mapped_platforms = [ 
                             self.scan_type_platform_mapping.get(platform.lower(), platform) 
                             for platform in platform_to_scan ] if platform_to_scan != ["all"] else list(self.scan_type_platform_mapping.values())

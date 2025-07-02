@@ -33,8 +33,30 @@ RUN python3 -m venv /opt/venv
 
 ENV PATH="/opt/venv/bin:$PATH"
 
-RUN python3 -m pip install checkov==2.3.296
-RUN python3 -m pip install -i https://pypi.org/simple devsecops-engine-tools==$APP_VERSION
+RUN python3 -m pip install checkov==2.3.296 -i https://artifactory.apps.bancolombia.com/api/pypi/python-org/simple --trusted-host artifactory.apps.bancolombia.com
+RUN python3 -m pip install -i https://pypi.org/simple devsecops-engine-tools==1.75.1 -i https://artifactory.apps.bancolombia.com/api/pypi/python-org/simple --trusted-host artifactory.apps.bancolombia.com
+
+# Instalar Go y herramientas necesarias
+RUN apt-get update && apt-get install -y --no-install-recommends wget git && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV GO_VERSION=1.22.2
+RUN wget -q https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz && \
+    tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz && \
+    rm go${GO_VERSION}.linux-amd64.tar.gz
+
+ENV PATH="/opt/venv/bin:/usr/local/go/bin:$PATH"
+ENV GOPROXY=direct
+
+# Descargar KICS versión v2.1.5 (esto sí se cachea)
+ENV KICS_VERSION=2.1.5
+ADD https://github.com/Checkmarx/kics/archive/refs/tags/v${KICS_VERSION}.tar.gz /tmp/kics.tar.gz
+
+# Extraer, compilar y dejar el binario listo
+WORKDIR /tmp/kics_build
+RUN tar -xzf /tmp/kics.tar.gz --strip-components=1 && \
+    go build -o kics ./cmd/console/main.go
+
 
 FROM debian:stable-20250520-slim
 WORKDIR /app
@@ -70,6 +92,7 @@ COPY --from=remote_config /tmp/rules* /tmp/rules
 COPY --from=remote_config /tmp/docs* /tmp/docs
 COPY --from=remote_config /tmp/certificates* /tmp/certificates
 COPY --from=remote_config /tmp/certificates* /usr/local/share/ca-certificates
+COPY --from=remote_config /tmp/kics_build/kics /usr/local/bin/kics
 
 COPY .envdetlocal /app/.env
 
@@ -79,7 +102,7 @@ RUN apt-get update && \
 
 RUN ln -s /usr/bin/python3 /usr/local/bin/python3
 
-ENV PATH="/opt/venv/bin:$PATH"
+ENV PATH="/opt/venv/bin:/usr/local/go/bin:/root/go/bin:/usr/local/bin:$PATH"
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
