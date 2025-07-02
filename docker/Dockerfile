@@ -33,8 +33,8 @@ RUN python3 -m venv /opt/venv
 
 ENV PATH="/opt/venv/bin:$PATH"
 
-RUN python3 -m pip install checkov==2.3.296 -i https://artifactory.apps.bancolombia.com/api/pypi/python-org/simple --trusted-host artifactory.apps.bancolombia.com
-RUN python3 -m pip install -i https://pypi.org/simple devsecops-engine-tools==1.75.1 -i https://artifactory.apps.bancolombia.com/api/pypi/python-org/simple --trusted-host artifactory.apps.bancolombia.com
+RUN python3 -m pip install checkov==2.3.296
+RUN python3 -m pip install -i https://pypi.org/simple devsecops-engine-tools==$APP_VERSION
 
 # Instalar Go y herramientas necesarias
 RUN apt-get update && apt-get install -y --no-install-recommends wget git && \
