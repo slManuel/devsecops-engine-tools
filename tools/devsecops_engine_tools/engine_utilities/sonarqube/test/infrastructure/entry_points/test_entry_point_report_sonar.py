@@ -12,9 +12,10 @@ class TestInitReportSonar(unittest.TestCase):
         mock_vulnerability_management_gateway = MagicMock()
         mock_secrets_manager_gateway = MagicMock()
         mock_devops_platform_gateway = MagicMock()
+        mock_remote_config_source_gateway = MagicMock()
         mock_metrics_manager_gateway = MagicMock()
         mock_sonar_gateway = MagicMock()
-        mock_devops_platform_gateway.get_remote_config.side_effect = [
+        mock_remote_config_source_gateway.get_remote_config.side_effect = [
             {
                 "REPORT_SONAR" : {
                     "ENABLED": True
@@ -39,6 +40,7 @@ class TestInitReportSonar(unittest.TestCase):
             vulnerability_management_gateway=mock_vulnerability_management_gateway,
             secrets_manager_gateway=mock_secrets_manager_gateway,
             devops_platform_gateway=mock_devops_platform_gateway,
+            remote_config_source_gateway=mock_remote_config_source_gateway,
             sonar_gateway=mock_sonar_gateway,
             metrics_manager_gateway=mock_metrics_manager_gateway,
             args=args,
@@ -49,6 +51,7 @@ class TestInitReportSonar(unittest.TestCase):
             mock_vulnerability_management_gateway,
             mock_secrets_manager_gateway,
             mock_devops_platform_gateway,
+            mock_remote_config_source_gateway,
             mock_sonar_gateway
         )
         mock_report_sonar.return_value.process.assert_called_once_with(args)
@@ -59,8 +62,9 @@ class TestInitReportSonar(unittest.TestCase):
     def test_init_report_sonar_disabled(self, mock_report_sonar):
         # Arrange
         mock_devops_platform_gateway = MagicMock()
+        mock_remote_config_source_gateway = MagicMock()
         mock_metrics_manager_gateway = MagicMock()
-        mock_devops_platform_gateway.get_remote_config.side_effect = [
+        mock_remote_config_source_gateway.get_remote_config.side_effect = [
             {
                 "REPORT_SONAR" : {
                     "ENABLED": False
@@ -84,6 +88,7 @@ class TestInitReportSonar(unittest.TestCase):
             vulnerability_management_gateway=MagicMock(),
             secrets_manager_gateway=MagicMock(),
             devops_platform_gateway=mock_devops_platform_gateway,
+            remote_config_source_gateway=mock_remote_config_source_gateway,
             sonar_gateway=MagicMock(),
             metrics_manager_gateway=mock_metrics_manager_gateway,
             args=args,
@@ -98,8 +103,9 @@ class TestInitReportSonar(unittest.TestCase):
     def test_init_report_sonar_excluded_pipeline(self, mock_report_sonar):
         # Arrange
         mock_devops_platform_gateway = MagicMock()
+        mock_remote_config_source_gateway = MagicMock()
         mock_metrics_manager_gateway = MagicMock()
-        mock_devops_platform_gateway.get_remote_config.side_effect = [
+        mock_remote_config_source_gateway.get_remote_config.side_effect = [
             {
                 "REPORT_SONAR" : {
                     "ENABLED": True
@@ -129,6 +135,7 @@ class TestInitReportSonar(unittest.TestCase):
             vulnerability_management_gateway=MagicMock(),
             secrets_manager_gateway=MagicMock(),
             devops_platform_gateway=mock_devops_platform_gateway,
+            remote_config_source_gateway=mock_remote_config_source_gateway,
             sonar_gateway=MagicMock(),
             metrics_manager_gateway=mock_metrics_manager_gateway,
             args=args,

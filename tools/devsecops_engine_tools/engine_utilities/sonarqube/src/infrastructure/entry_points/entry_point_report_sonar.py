@@ -18,17 +18,18 @@ def init_report_sonar(
     vulnerability_management_gateway,
     secrets_manager_gateway,
     devops_platform_gateway,
+    remote_config_source_gateway,
     sonar_gateway,
     metrics_manager_gateway,
     args,
 ):
-    config_tool = devops_platform_gateway.get_remote_config(
+    config_tool = remote_config_source_gateway.get_remote_config(
         args["remote_config_repo"], "/engine_core/ConfigTool.json", args["remote_config_branch"]
     )
-    report_config_tool = devops_platform_gateway.get_remote_config(
+    report_config_tool = remote_config_source_gateway.get_remote_config(
         args["remote_config_repo"], "/report_sonar/ConfigTool.json", args["remote_config_branch"]
     )
-    excluded_pipelines = devops_platform_gateway.get_remote_config(
+    excluded_pipelines = remote_config_source_gateway.get_remote_config(
         args["remote_config_repo"], "/report_sonar/Exclusions.json", args["remote_config_branch"]
     )
     
@@ -61,6 +62,7 @@ def init_report_sonar(
             vulnerability_management_gateway,
             secrets_manager_gateway,
             devops_platform_gateway,
+            remote_config_source_gateway,
             sonar_gateway,
         ).process(args)
 

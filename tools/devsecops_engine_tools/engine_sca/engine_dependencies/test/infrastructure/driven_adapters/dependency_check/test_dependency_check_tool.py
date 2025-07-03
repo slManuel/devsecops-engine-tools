@@ -4,9 +4,6 @@ import subprocess
 from devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.driven_adapters.dependency_check.dependency_check_tool import (
     DependencyCheckTool,
 )
-from devsecops_engine_tools.engine_sca.engine_dependencies.src.domain.model.ContextDependencies import (
-    ContextDependencies,
-)
 
 class TestDependencyCheckTool(unittest.TestCase):
 
