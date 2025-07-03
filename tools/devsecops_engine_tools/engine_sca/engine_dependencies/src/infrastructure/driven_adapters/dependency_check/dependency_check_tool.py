@@ -4,7 +4,7 @@ from devsecops_engine_tools.engine_sca.engine_dependencies.src.domain.model.gate
 from devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.driven_adapters.dependency_check.dependency_check_deserialize import (
     DependencyCheckDeserialize,
 )
-from devsecops_engine_tools.engine_sca.engine_dependencies.src.domain.model.ContextDependencies import (
+from devsecops_engine_tools.engine_sca.engine_dependencies.src.domain.model.context_dependencies import (
     ContextDependencies,
 )
 
