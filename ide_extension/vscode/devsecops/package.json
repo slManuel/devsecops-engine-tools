@@ -125,6 +125,10 @@
             "default": "xray",
             "enum": ["xray", "dependency_check"],
             "description": "Dependency Scan Tool to use"
+          },
+          "devsecops.dependencies.dependencyCheckDatabase": {
+            "type": "string",
+            "description": "Dependency Check Database path (if using dependency_check tool, will increase performance)"
           }
         }
       }
