@@ -13,3 +13,7 @@ class ImagesGateway(metaclass=ABCMeta):
     @abstractmethod
     def validate_base_image_date(self, image_to_scan, referenced_date) -> str:
         "validate base image date"
+    
+    @abstractmethod
+    def validate_black_list_base_image(self, base_image, black_list) -> str:
+        "validate base image date"
