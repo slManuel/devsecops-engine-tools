@@ -177,3 +177,48 @@ def test_validate_base_image_date_older_than_referenced_date(mock_docker_client)
         docker_images.validate_base_image_date(matching_image, referenced_date)
     
     mock_client.api.inspect_image.assert_called_once_with("image_id")
+    
+def test_validate_black_list_base_image_valid_not_blacklisted():
+    docker_images = DockerImages()
+    base_image = "my_image:latest"
+    black_list = ["forbidden", "banned"]
+    result = docker_images.validate_black_list_base_image(base_image, black_list)
+    assert result is True
+
+def test_validate_black_list_base_image_valid_blacklisted():
+    docker_images = DockerImages()
+    base_image = "forbidden_image:latest"
+    black_list = ["forbidden", "banned"]
+    with pytest.raises(ValueError, match="Compliance issue: the image: forbidden_image:latest is blacklisted for forbidden"):
+        docker_images.validate_black_list_base_image(base_image, black_list)
+
+def test_validate_black_list_base_image_blacklisted_partial_match():
+    docker_images = DockerImages()
+    base_image = "my_image:banned"
+    black_list = ["forbidden", "banned"]
+    with pytest.raises(ValueError, match="Compliance issue: the image: my_image:banned is blacklisted for banned"):
+        docker_images.validate_black_list_base_image(base_image, black_list)
+
+def test_validate_black_list_base_image_invalid_base_image_type():
+    docker_images = DockerImages()
+    base_image = 12345  # Not a string
+    black_list = ["forbidden"]
+    result = docker_images.validate_black_list_base_image(base_image, black_list)
+    assert result is True
+
+def test_validate_black_list_base_image_invalid_black_list_type():
+    docker_images = DockerImages()
+    base_image = "my_image:latest"
+    black_list = "not_a_list"  # Not a list
+    result = docker_images.validate_black_list_base_image(base_image, black_list)
+    assert result is True
+
+def test_validate_black_list_base_image_empty_black_list():
+    docker_images = DockerImages()
+    base_image = "my_image:latest"
+    black_list = []
+    result = docker_images.validate_black_list_base_image(base_image, black_list)
+    assert result is True
+
+
+
