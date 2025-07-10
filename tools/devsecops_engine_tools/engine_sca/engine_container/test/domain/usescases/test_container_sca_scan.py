@@ -164,4 +164,3 @@ def test_validate_black_list_base_image_blacklisted(container_sca_scan):
    
     container_sca_scan.tool_images.validate_black_list_base_image.assert_called_once_with(base_image, black_list)
     assert result == "blacklisted"
-

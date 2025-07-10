@@ -22,10 +22,9 @@
         "REFERENCE_IMAGE_DATE": "20250206"
     },
     "BLACK_LIST_BASE_IMAGE": {
-        "ENABLED": true,
+        "ENABLED": false,
         "BLACK_LIST": [
-            "/evc/test/",
-            "oe"
+            "/test/"
         ]
     },
     "MESSAGE_INFO_ENGINE_CONTAINER": "engine_container run successfully",
