@@ -1,6 +1,6 @@
 import { List } from "lodash";
 import { Finding } from "../Finding";
-import { formatImpactPathsCollapsed } from "../../../infraestructure/helper/ImpactPathFormatter";
+import { formatImpactPathsCollapsed, formatImpactPathsForPrompt } from "../../../infraestructure/helper/ImpactPathFormatter";
 import { ImpactPath } from "../../../infraestructure/helper/ImpactPathFormatter";
 
 export interface IIacContext {
@@ -122,6 +122,7 @@ export class Mappers {
         installed_version: dependenciesScanContext.installed_version || "",
         fixed_version: dependenciesScanContext.fixed_version.join(",") || "",
         impact_paths: formatImpactPathsCollapsed(dependenciesScanContext.impact_paths),
+        impact_paths_prompt: formatImpactPathsForPrompt(dependenciesScanContext.impact_paths),
       }
     );
   }

@@ -39,7 +39,7 @@ export class DevSecOpsTreeDataProvider
     scanPath?: string
   ): void {
     const timestamp = new Date();
-    const findingItems = findings.map((f) => new FindingItem(f, scanPath));
+    const findingItems = findings.map((f) => new FindingItem(f, scanPath, sourceType));
 
     this.scanResults.unshift(
       new ScanResultItem(label, sourceType, timestamp, findingItems)

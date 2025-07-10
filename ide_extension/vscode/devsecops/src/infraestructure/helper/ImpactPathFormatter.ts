@@ -131,28 +131,31 @@ export function formatImpactPathsCollapsed(impactPaths: ImpactPath[]): string {
   const styles = `
     <style>
       .impact-paths-container {
-        font-family: var(--vscode-font-family);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         background: var(--vscode-editor-background);
         color: var(--vscode-editor-foreground);
-        border: 1px solid var(--vscode-panel-border);
-        border-radius: 8px;
-        padding: 16px;
-        margin: 8px 0;
+        border: 2px solid var(--vscode-panel-border);
+        border-radius: 12px;
+        padding: 1.5em;
+        margin: 1em 0;
         max-width: 100%;
         overflow-x: auto;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        line-height: 1.6;
       }
       .vulnerability-header {
-        background: var(--vscode-inputValidation-warningBackground);
-        border: 1px solid var(--vscode-inputValidation-warningBorder);
-        border-radius: 6px;
-        padding: 12px;
-        margin-bottom: 16px;
+        background: linear-gradient(135deg, var(--vscode-inputValidation-warningBackground), var(--vscode-button-secondaryBackground));
+        border: 2px solid var(--vscode-inputValidation-warningBorder);
+        border-radius: 8px;
+        padding: 1em;
+        margin-bottom: 1.2em;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       }
       .vulnerability-title {
-        color: var(--vscode-inputValidation-warningForeground);
-        font-weight: bold;
-        font-size: 14px;
-        margin-bottom: 8px;
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 1.1em;
+        margin-bottom: 0.8em;
       }
       .vulnerable-component {
         color: var(--vscode-errorForeground);
@@ -166,47 +169,58 @@ export function formatImpactPathsCollapsed(impactPaths: ImpactPath[]): string {
         border: 1px solid var(--vscode-inputValidation-errorBorder);
       }
       .recommendations {
-        background: var(--vscode-inputValidation-infoBackground);
-        border: 1px solid var(--vscode-inputValidation-infoBorder);
-        border-radius: 6px;
-        padding: 12px;
-        margin-bottom: 16px;
+        background: linear-gradient(135deg, var(--vscode-inputValidation-infoBackground), var(--vscode-button-secondaryBackground));
+        border: 2px solid var(--vscode-inputValidation-infoBorder);
+        border-radius: 8px;
+        padding: 1em;
+        margin-bottom: 1.2em;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       }
       .recommendations-title {
-        color: var(--vscode-inputValidation-infoForeground);
-        font-weight: bold;
-        font-size: 14px;
-        margin-bottom: 8px;
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 1.1em;
+        margin-bottom: 0.8em;
       }
       .direct-dependency {
-        color: var(--vscode-badge-foreground);
+        color: #ffffff;
         font-family: var(--vscode-editor-font-family);
-        background: var(--vscode-badge-background);
-        padding: 4px 8px;
-        border-radius: 3px;
-        margin: 2px 4px 2px 0;
+        background: linear-gradient(135deg, #007acc, #005a9e);
+        padding: 0.4em 0.8em;
+        border-radius: 6px;
+        margin: 0.3em 0.5em 0.3em 0;
         display: inline-block;
-        border: 1px solid var(--vscode-contrastBorder, transparent);
+        border: 2px solid #005a9e;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .direct-dependency:hover {
+        background: #ffffff;
+        color: #333333;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
       }
       .paths-section {
         margin-top: 16px;
       }
       .paths-title {
-        color: var(--vscode-foreground);
-        font-weight: bold;
-        font-size: 14px;
-        margin-bottom: 12px;
-        border-bottom: 2px solid var(--vscode-panel-border);
-        padding-bottom: 4px;
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 1.1em;
+        margin-bottom: 1em;
+        border-bottom: 2px solid #007acc;
+        padding-bottom: 0.5em;
       }
       .tree-container {
-        background: var(--vscode-sideBar-background);
-        border: 1px solid var(--vscode-sideBar-border);
-        border-radius: 6px;
-        padding: 16px;
+        background: var(--vscode-input-background);
+        border: 2px solid var(--vscode-panel-border);
+        border-radius: 8px;
+        padding: 1.2em;
         font-family: var(--vscode-editor-font-family);
         font-size: var(--vscode-editor-font-size, 13px);
-        line-height: 1.4;
+        line-height: 1.5;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
       }
       .tree-line {
         margin: 2px 0;
@@ -223,10 +237,11 @@ export function formatImpactPathsCollapsed(impactPaths: ImpactPath[]): string {
       }
       .vulnerable-item {
         background: var(--vscode-inputValidation-errorBackground);
-        padding: 4px 8px;
-        border-radius: 4px;
-        margin: 2px 0;
+        padding: 0.5em 0.8em;
+        border-radius: 6px;
+        margin: 0.3em 0;
         border-left: 4px solid var(--vscode-errorForeground);
+        box-shadow: 0 2px 4px rgba(229, 20, 0, 0.15);
       }
       .vulnerable-item .component-name {
         color: var(--vscode-errorForeground);
@@ -234,9 +249,10 @@ export function formatImpactPathsCollapsed(impactPaths: ImpactPath[]): string {
       }
       .component-name:hover {
         background: var(--vscode-list-hoverBackground);
-        padding: 2px 4px;
-        border-radius: 3px;
+        padding: 0.3em 0.5em;
+        border-radius: 4px;
         cursor: pointer;
+        transition: all 0.2s ease;
       }
       .no-paths-message {
         text-align: center;
@@ -307,19 +323,71 @@ export function formatImpactPathsCollapsed(impactPaths: ImpactPath[]): string {
     ${styles}
     <div class="impact-paths-container">
       <div class="vulnerability-header">
-        <div class="vulnerability-title">🔍 Vulnerable dependency found:</div>
+        <div class="vulnerability-title">🔍 Vulnerable dependency found</div>
         <div class="vulnerable-component">${escapeHtml(formatComponentName(vulnerableComponent))}</div>
       </div>
       
       <div class="recommendations">
-        <div class="recommendations-title">💡 Parent dependencies to update:</div>
+        <div class="recommendations-title">💡 Parent dependencies to update</div>
         <div>${directDepsHtml}</div>
       </div>
       
       <div class="paths-section">
-        <div class="paths-title">🌳 Dependency tree:</div>
+        <div class="paths-title">🌳 Dependency tree</div>
         <div class="tree-container">${formatTree(tree, 0, false, '', vulnerableComponent)}</div>
       </div>
     </div>
   `;
+}
+
+export function formatImpactPathsForPrompt(impactPaths: ImpactPath[]): string {
+  if (!impactPaths || impactPaths.length === 0) {
+    return "No impact paths found.";
+  }
+
+  const vulnerableComponent = getVulnerableComponent(impactPaths);
+  const directDependencies = getDirectDependencies(impactPaths);
+
+  let result = "";
+  
+  if (vulnerableComponent) {
+    result += `Vulnerable Component: ${vulnerableComponent}\n`;
+  }
+  
+  if (directDependencies.size > 0) {
+    result += `Direct Dependencies Affected: ${Array.from(directDependencies).join(", ")}\n`;
+  }
+  
+  result += "\nDependency Chains:\n";
+  
+  // Group paths by direct dependency
+  const pathsByDirectDep = new Map<string, string[]>();
+  
+  for (const path of impactPaths) {
+    const firstExternalDep = path.find(component => isExternalComponent(component.component_id));
+    if (firstExternalDep) {
+      const directDep = firstExternalDep.component_id;
+      const chain = path
+        .filter(component => isExternalComponent(component.component_id))
+        .map(component => component.component_id)
+        .join(" → ");
+      
+      if (!pathsByDirectDep.has(directDep)) {
+        pathsByDirectDep.set(directDep, []);
+      }
+      
+      if (!pathsByDirectDep.get(directDep)!.includes(chain)) {
+        pathsByDirectDep.get(directDep)!.push(chain);
+      }
+    }
+  }
+  
+  for (const [directDep, chains] of pathsByDirectDep) {
+    result += `\n• From ${directDep}:\n`;
+    for (const chain of chains) {
+      result += `  └── ${chain}\n`;
+    }
+  }
+  
+  return result.trim();
 }

@@ -7,6 +7,7 @@ import { SecurityCodeActionProvider } from "./actions/SecurityCodeActionProvider
 import { registerImageScanCommand } from "./commands/ImageScanCommand";
 import { registerDependenciesScanCommand } from "./commands/DependenciesScanCommand";
 import { registerCopilotCommands } from "./commands/copilotCommands";
+import { registerVulnerabilityCopilotCommands } from "./commands/vulnerabilityCopilotCommands";
 import { showVulnContextWebview, disposeVulnPanel } from './tree/results/finding/FindingImageScan';
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -34,6 +35,7 @@ export function activate(context: vscode.ExtensionContext): void {
   );
   
   registerCopilotCommands(context);
+  registerVulnerabilityCopilotCommands(context);
   
   const openWithDiagnosticDisposable = vscode.commands.registerCommand(
     "devsecops.openWithDiagnostic", 
@@ -44,8 +46,8 @@ export function activate(context: vscode.ExtensionContext): void {
   
   const showVulnContextDisposable = vscode.commands.registerCommand(
     "devsecops.showVulnContext",
-    (finding: Finding) => {
-      showVulnContextWebview(finding);
+    (finding: Finding, sourceType?: string) => {
+      showVulnContextWebview(finding, sourceType);
     }
   );
   context.subscriptions.push(iacScanDisposable);
