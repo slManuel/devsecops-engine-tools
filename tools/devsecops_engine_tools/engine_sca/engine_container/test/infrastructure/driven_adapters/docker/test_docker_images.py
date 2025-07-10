@@ -204,14 +204,14 @@ def test_validate_black_list_base_image_invalid_base_image_type():
     base_image = 12345  # Not a string
     black_list = ["forbidden"]
     result = docker_images.validate_black_list_base_image(base_image, black_list)
-    assert result is True
+    assert result is False
 
 def test_validate_black_list_base_image_invalid_black_list_type():
     docker_images = DockerImages()
     base_image = "my_image:latest"
     black_list = "not_a_list"  # Not a list
     result = docker_images.validate_black_list_base_image(base_image, black_list)
-    assert result is True
+    assert result is False
 
 def test_validate_black_list_base_image_empty_black_list():
     docker_images = DockerImages()

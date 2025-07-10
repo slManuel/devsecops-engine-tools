@@ -128,7 +128,7 @@ class DockerImages(ImagesGateway):
     def validate_black_list_base_image(self, base_image, black_list):
         if not isinstance(base_image, str) or not isinstance(black_list, list):
             logger.error("Invalid input types: expected a string and a list of strings.")
-            return True
+            return False
         for black in black_list:
             if black in base_image:
                 raise ValueError(
