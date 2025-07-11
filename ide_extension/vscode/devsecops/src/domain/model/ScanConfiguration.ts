@@ -12,6 +12,7 @@ export class ScanConfiguration {
   private dependenciesToken: string;
   private xrayMode: string;
   private dependenciesTool: string;
+  private dependencyCheckDatabase: string;
 
   constructor() {
     this.dockerImageName = "";
@@ -25,6 +26,7 @@ export class ScanConfiguration {
     this.dependenciesToken = "";
     this.xrayMode = "";
     this.dependenciesTool = "";
+    this.dependencyCheckDatabase = "";
 
     this.loadFromVSCodeConfig();
   }
@@ -45,6 +47,7 @@ export class ScanConfiguration {
     this.dependenciesToken = dependenciesConfig.get("dependenciesToken") || "";
     this.xrayMode = dependenciesConfig.get("xrayMode") || "audit";
     this.dependenciesTool = dependenciesConfig.get("dependenciesTool") || "xray";
+    this.dependencyCheckDatabase = dependenciesConfig.get("dependencyCheckDatabase") || "";
   }
 
   public refresh(): void {
@@ -109,4 +112,7 @@ export class ScanConfiguration {
     return this.dependenciesTool;
   }
 
+  public getDependencyCheckDatabase(): string {
+    return this.dependencyCheckDatabase;
+  }
 }

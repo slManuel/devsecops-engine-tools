@@ -1,5 +1,7 @@
 import { List } from "lodash";
 import { Finding } from "../Finding";
+import { formatImpactPathsCollapsed, formatImpactPathsForPrompt } from "../../../infraestructure/helper/ImpactPathFormatter";
+import { ImpactPath } from "../../../infraestructure/helper/ImpactPathFormatter";
 
 export interface IIacContext {
   id: string;
@@ -45,7 +47,7 @@ export interface IDependenciesScanContext {
   package_name: string;
   installed_version: string;
   fixed_version: string[];
-  impact_paths: List<List<any>>;
+  impact_paths: ImpactPath[];
   description: string;
   references: string[];
   source_tool: string;
@@ -119,7 +121,8 @@ export class Mappers {
         package_name: dependenciesScanContext.package_name || "",
         installed_version: dependenciesScanContext.installed_version || "",
         fixed_version: dependenciesScanContext.fixed_version.join(",") || "",
-        impact_paths: JSON.stringify(dependenciesScanContext.impact_paths || []),
+        impact_paths: formatImpactPathsCollapsed(dependenciesScanContext.impact_paths),
+        impact_paths_prompt: formatImpactPathsForPrompt(dependenciesScanContext.impact_paths),
       }
     );
   }

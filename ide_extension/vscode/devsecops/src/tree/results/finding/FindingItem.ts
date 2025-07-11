@@ -5,7 +5,8 @@ import { Finding } from "../../../domain/model/Finding";
 export class FindingItem extends vscode.TreeItem {
   constructor(
     public readonly finding: Finding,
-    private readonly scanPath?: string
+    private readonly scanPath?: string,
+    private readonly sourceType?: "iac" | "image" | "dependencies"
   ) {
     super(finding.getDescription() || "Unknown Issue", vscode.TreeItemCollapsibleState.None);
     this.label = finding.getId() || "Unknown Issue";
@@ -15,6 +16,9 @@ export class FindingItem extends vscode.TreeItem {
     Severity: ${finding.getSeverity()}\n
     Location: ${finding.getWhere() || "N/A"}
     Validation Rule Code: ${finding.getValidationRuleCode() || "N/A"}`;
+
+    // Set contextValue for menu context
+    this.contextValue = sourceType === "dependencies" ? "findingItem-dependencies" : "findingItem";
 
     const severityIcons: Record<string, vscode.ThemeIcon> = {
       high: new vscode.ThemeIcon("error", new vscode.ThemeColor("errorForeground")),
@@ -29,7 +33,7 @@ export class FindingItem extends vscode.TreeItem {
     this.command = {
       command: "devsecops.showVulnContext",
       title: "Show Vulnerability Context",
-      arguments: [finding], // Pass the full finding/context object
+      arguments: [finding, sourceType], // Pass the full finding/context object and sourceType
     };
 
     const fileInfo = this.extractFileInfo(finding.getWhere());
