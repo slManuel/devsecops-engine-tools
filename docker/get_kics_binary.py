@@ -63,12 +63,6 @@ if __name__ == "__main__":
     artifact_name = sys.argv[3]
     pipeline_id = sys.argv[4]
     token = sys.argv[5]
-
-    organization = "GrupoBancolombia"
-    project = "b267af7c-3233-4ad1-97b3-91083943100d"
-    artifact_name = "kics-devsecops"
-    pipeline_id = "49578"
-    token = "3vHiicBoYEQTrqKEZbcc6h7X9apUiO0AgtYSsZYQaZ3hvVjpqg0DJQQJ99BGACAAAAAFtioVAAASAZDO3GFl"
     
     download_artifact(organization, project, artifact_name, token, pipeline_id)
     extrac_artifact(f"{artifact_name}.zip")
