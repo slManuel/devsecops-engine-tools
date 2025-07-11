@@ -64,5 +64,8 @@ if __name__ == "__main__":
     pipeline_id = sys.argv[4]
     token = sys.argv[5]
     
-    download_artifact(organization, project, artifact_name, token, pipeline_id)
-    extrac_artifact(f"{artifact_name}.zip")
+    file_path = download_artifact(organization, project, artifact_name, token, pipeline_id)
+    if file_path and os.path.exists(file_path):
+        extrac_artifact(file_path)
+    else:
+        print("No se pudo descargar el artefacto, no se puede extraer.")
