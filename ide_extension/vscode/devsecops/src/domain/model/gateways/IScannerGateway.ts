@@ -10,6 +10,7 @@ export default interface IScannerGateway {
     dockerPath?: string,
     dependenciesToken?: string,
     xrayMode?: string,
-    dependenciesTool?: string
+    dependenciesTool?: string,
+    dependencyCheckDatabase?: string
   ): Promise<ScannerRes>;
 }
