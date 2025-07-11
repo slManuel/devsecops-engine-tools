@@ -153,9 +153,13 @@ class KicsTool(ToolGateway):
         queries,
     ):
         folders = ','.join(folders_to_scan)
-        queries = ','.join(
-            uuid for query in queries for uuid in list(query.values())[0]
-            ) if queries else ""
+        queries_flat = [
+            uuid
+            for query in queries
+            for uuid in list(query.values())[0]
+            if uuid
+        ] if queries else []
+        queries = ','.join(queries_flat)
         mapped_platforms = [ 
                             self.scan_type_platform_mapping.get(platform.lower(), platform) 
                             for platform in platform_to_scan ] if platform_to_scan != ["all"] else list(self.scan_type_platform_mapping.values())
@@ -212,6 +216,7 @@ class KicsTool(ToolGateway):
                     info = query_id_to_info[query_id]
                     finding["severity"] = info["severity"].upper()
                     finding["custom_id"] = info["custom_id"]
+                    finding["query_name"] = f"{info['custom_id']}: {finding.get('query_name', '')}"
 
             with open(results_path, "w") as f:
                 json.dump(data, f, indent=4)
