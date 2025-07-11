@@ -213,6 +213,7 @@ class KicsTool(ToolGateway):
                     info = query_id_to_info[query_id]
                     finding["severity"] = info["severity"].upper()
                     finding["custom_id"] = info["custom_id"]
+                    finding["query_name"] = f"{info['custom_id']}: {finding.get('query_name', '')}"
 
             with open(results_path, "w") as f:
                 json.dump(data, f, indent=4)

@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 
 export class ScanConfiguration {
   private dockerImageName: string;
+  private dockerImageVersion: string;
   private organizationName: string;
   private projectName: string;
   private definitionId: string;
@@ -11,9 +12,11 @@ export class ScanConfiguration {
   private dependenciesToken: string;
   private xrayMode: string;
   private dependenciesTool: string;
+  private dependencyCheckDatabase: string;
 
   constructor() {
     this.dockerImageName = "";
+    this.dockerImageVersion = "";
     this.organizationName = "";
     this.projectName = "";
     this.definitionId = "";
@@ -23,6 +26,7 @@ export class ScanConfiguration {
     this.dependenciesToken = "";
     this.xrayMode = "";
     this.dependenciesTool = "";
+    this.dependencyCheckDatabase = "";
 
     this.loadFromVSCodeConfig();
   }
@@ -33,6 +37,7 @@ export class ScanConfiguration {
     const dependenciesConfig = vscode.workspace.getConfiguration("devsecops.dependencies");
     
     this.dockerImageName = generalConfig.get("imageToUse") || "bancolombia/devsecops-engine-tools";
+    this.dockerImageVersion = generalConfig.get("imageVersion") || "1.75.3";
     this.organizationName = azureDevopsConfig.get("organizationName") || "";
     this.projectName = azureDevopsConfig.get("projectName") || "";
     this.definitionId = azureDevopsConfig.get("releaseId") || "";
@@ -42,6 +47,7 @@ export class ScanConfiguration {
     this.dependenciesToken = dependenciesConfig.get("dependenciesToken") || "";
     this.xrayMode = dependenciesConfig.get("xrayMode") || "audit";
     this.dependenciesTool = dependenciesConfig.get("dependenciesTool") || "xray";
+    this.dependencyCheckDatabase = dependenciesConfig.get("dependencyCheckDatabase") || "";
   }
 
   public refresh(): void {
@@ -64,6 +70,10 @@ export class ScanConfiguration {
 
   public getDockerImageName(): string {
     return this.dockerImageName;
+  }
+
+  public getDockerImageVersion(): string {
+    return this.dockerImageVersion;
   }
 
   public getOrganizationName(): string {
@@ -102,4 +112,7 @@ export class ScanConfiguration {
     return this.dependenciesTool;
   }
 
+  public getDependencyCheckDatabase(): string {
+    return this.dependencyCheckDatabase;
+  }
 }

@@ -4,7 +4,7 @@
   "displayName": "DevSecOps Engine Tools",
   "publisher": "GrupoBancolombiaOSPO",
   "description": "",
-  "version": "1.4.0",
+  "version": "1.6.0",
   "engines": {
     "vscode": "^1.95.0"
   },
@@ -50,6 +50,11 @@
             "type": "string",
             "default": "bancolombia/devsecops-engine-tools",
             "description": "Docker image to use for scanning"
+          },
+          "devsecops.general.imageVersion": {
+            "type": "string",
+            "default": "1.75.3",
+            "description": "Docker image version to use for scanning"
           }
         }
       },
@@ -120,6 +125,10 @@
             "default": "xray",
             "enum": ["xray", "dependency_check"],
             "description": "Dependency Scan Tool to use"
+          },
+          "devsecops.dependencies.dependencyCheckDatabase": {
+            "type": "string",
+            "description": "Dependency Check Database path (if using dependency_check tool, will increase performance)"
           }
         }
       }
@@ -148,6 +157,22 @@
       {
         "command": "devsecops.explainWithCopilot",
         "title": "Explain Security Issue with GitHub Copilot"
+      },
+      {
+        "command": "devsecops.fixVulnerabilityWithCopilot",
+        "title": "Fix Vulnerability with GitHub Copilot"
+      },
+      {
+        "command": "devsecops.explainVulnerabilityWithCopilot",
+        "title": "Explain Vulnerability with GitHub Copilot"
+      },
+      {
+        "command": "devsecops.generateDependencyUpdate",
+        "title": "Generate Dependency Update Solution"
+      },
+      {
+        "command": "devsecops.autoFixDependenciesWithAgent",
+        "title": "Auto-Fix Dependencies with Copilot Agent"
       }
     ],
     "menus": {
@@ -166,6 +191,28 @@
           "command": "devsecops.dependenciesScan",
           "when": "view == devsecopsView",
           "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "devsecops.fixVulnerabilityWithCopilot",
+          "when": "view == devsecops && viewItem == findingItem",
+          "group": "copilot@1"
+        },
+        {
+          "command": "devsecops.explainVulnerabilityWithCopilot",
+          "when": "view == devsecops && viewItem == findingItem",
+          "group": "copilot@2"
+        },
+        {
+          "command": "devsecops.generateDependencyUpdate",
+          "when": "view == devsecops && viewItem == findingItem-dependencies",
+          "group": "copilot@3"
+        },
+        {
+          "command": "devsecops.autoFixDependenciesWithAgent",
+          "when": "view == devsecops && viewItem == findingItem-dependencies",
+          "group": "copilot@4"
         }
       ]
     }
