@@ -10,16 +10,21 @@ def download_artifact(organization, project, artifact_name, token, pipeline_id):
         }
 
         url_build_id = f"https://dev.azure.com/{organization}/{project}/_apis/pipelines/{pipeline_id}/runs?api-version=7.1"
+        print("url_build_id", url_build_id)
         builds_response = requests.get(url_build_id, headers=headers)
+        print("builds_response", builds_response)
         builds = builds_response.json()
         build_id = next((build['id'] for build in builds['value'] if build['result'] == 'succeeded'), None)
+        print("build_id", build_id)
 
         if not build_id:
             print("No se encontró un build exitoso.")
             return None
 
-        url_artifact = f"https://dev.azure.com/{organization}/{project}/_apis/build/builds/{build_id}/artifacts?artifactName={artifact_name}&api-version=7.1&%24format=zip"
+        url_artifact = f"https://dev.azure.com/{organization}/{project}/_apis/build/builds/{build_id}/artifacts?artifactName={artifact_name}&api-version=7.1"
+        print("url_artifact", url_artifact)
         artifact_response = requests.get(url_artifact, headers=headers)
+        print("artifact_response", artifact_response)
         artifact = artifact_response.json()
         artifact_download_url = artifact['resource']['downloadUrl']
 
@@ -55,14 +60,15 @@ def extrac_artifact(artifact_path):
 
 if __name__ == "__main__":
     if len(sys.argv) < 6:
-        print("Usage: python get_kics_binary.py <organization> <project> <artifact_name> <token> <pipeline_id>")
+        print("Usage: python get_kics_binary.py <organization> <project> <artifact_name> <pipeline_id> <token>")
         sys.exit(1)
 
     organization = sys.argv[1]
     project = sys.argv[2]
     artifact_name = sys.argv[3]
-    pipeline_id = sys.argv[4]
-    token = sys.argv[5]
+    token = sys.argv[4]
+    pipeline_id = sys.argv[5]
+    
     
     file_path = download_artifact(organization, project, artifact_name, token, pipeline_id)
     if file_path and os.path.exists(file_path):
