@@ -93,7 +93,8 @@ COPY --from=remote_config /tmp/rules* /tmp/rules
 COPY --from=remote_config /tmp/docs* /tmp/docs
 COPY --from=remote_config /tmp/certificates* /tmp/certificates
 COPY --from=remote_config /tmp/certificates* /usr/local/share/ca-certificates
-COPY --from=remote_config /tmp/kics* /usr/local/bin/kics
+COPY --from=remote_config /tmp/kics/kics-devsecops* /usr/local/bin/kics
+RUN chmod +x /usr/local/bin/kics
 
 COPY .envdetlocal /app/.env
 
@@ -103,7 +104,7 @@ RUN apt-get update && \
 
 RUN ln -s /usr/bin/python3 /usr/local/bin/python3
 
-ENV PATH="/opt/venv/bin:/usr/local/go/bin:/root/go/bin:/usr/local/bin:$PATH"
+ENV PATH="/opt/venv/bin:/usr/local/go/bin:/root/go/bin:/usr/local/bin/kics:$PATH"
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
