@@ -18,7 +18,7 @@ def download_artifact(organization, project, artifact_name, token, pipeline_id):
             print("No se encontró un build exitoso.")
             return None
 
-        url_artifact = f"https://dev.azure.com/{organization}/{project}/_apis/build/builds/{build_id}/artifacts?artifactName={artifact_name}&api-version=7.1"
+        url_artifact = f"https://dev.azure.com/{organization}/{project}/_apis/build/builds/{build_id}/artifacts?artifactName={artifact_name}&api-version=7.1&%24format=zip"
         artifact_response = requests.get(url_artifact, headers=headers)
         artifact = artifact_response.json()
         artifact_download_url = artifact['resource']['downloadUrl']
