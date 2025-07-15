@@ -94,7 +94,7 @@ COPY --from=remote_config /tmp/docs* /tmp/docs
 COPY --from=remote_config /tmp/certificates* /tmp/certificates
 COPY --from=remote_config /tmp/certificates* /usr/local/share/ca-certificates
 COPY --from=remote_config /tmp/kics/kics-devsecops* /usr/local/bin/kics
-RUN chmod +x /usr/local/bin/kics
+RUN chmod +x /usr/local/bin/kics/*
 
 COPY .envdetlocal /app/.env
 
