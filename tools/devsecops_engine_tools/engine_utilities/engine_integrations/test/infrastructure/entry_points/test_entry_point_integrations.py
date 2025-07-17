@@ -21,7 +21,7 @@ class TestEntryPointIntegrations(unittest.TestCase):
         mock_devops = MagicMock()
         mock_remote = MagicMock()
         mock_metrics = MagicMock()
-        args = {"integration": "report_sonar"}
+        args = {"integration": "report_sonar", "remote_config_repo": "repo", "remote_config_branch": "branch"}
 
         # Act
         result = init_engine_integrations(

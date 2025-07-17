@@ -38,6 +38,3 @@ def runner_report_sonar(
             )
         )
         print(devops_platform_gateway.result_pipeline("failed"))
-
-if __name__ == "__main__":
-    runner_report_sonar()

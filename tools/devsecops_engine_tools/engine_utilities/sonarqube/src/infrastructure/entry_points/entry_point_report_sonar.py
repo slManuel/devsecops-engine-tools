@@ -1,9 +1,6 @@
 from devsecops_engine_tools.engine_utilities.sonarqube.src.domain.usecases.report_sonar import (
     ReportSonar,
 )
-from devsecops_engine_tools.engine_utilities.utils.printers import (
-    Printers,
-)
 from devsecops_engine_tools.engine_core.src.domain.usecases.metrics_manager import (
     MetricsManager,
 )
@@ -32,8 +29,6 @@ def init_report_sonar(
     excluded_pipelines = remote_config_source_gateway.get_remote_config(
         args["remote_config_repo"], "/report_sonar/Exclusions.json", args["remote_config_branch"]
     )
-    
-    Printers.print_logo_tool(config_tool["BANNER"])
 
     pipeline_name = devops_platform_gateway.get_variable("pipeline_name")
     branch = devops_platform_gateway.get_variable("branch_tag")
