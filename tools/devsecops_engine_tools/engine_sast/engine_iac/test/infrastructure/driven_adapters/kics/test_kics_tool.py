@@ -64,8 +64,9 @@ class TestKicsTool(unittest.TestCase):
         work_folder = "work_folder"
         os_platform = "Linux"
         queries = [{"rule1":"check1"}, {"rule2":"check2"}]
+        exclude_paths = ["path1", "path2"]
 
-        self.kics_tool._execute_kics(folders_to_scan, prefix, platform_to_scan, work_folder, os_platform, queries)
+        self.kics_tool._execute_kics(folders_to_scan, prefix, platform_to_scan, work_folder, os_platform, queries, exclude_paths)
 
         mock_logger.error.assert_called_once_with("Error during KICS execution: Command 'kics' returned non-zero exit status 1.")
 
