@@ -3,6 +3,8 @@ import json
 import platform
 import requests
 import os
+import shutil
+from devsecops_engine_tools.engine_sast.engine_iac.src.domain.model.context_iac import ContextIac
 from devsecops_engine_tools.engine_sast.engine_iac.src.domain.model.gateways.tool_gateway import (
     ToolGateway,
 )
@@ -43,6 +45,7 @@ class KicsTool(ToolGateway):
         kics_version = config_tool[self.TOOL_KICS]["CLI_VERSION"]
         path_kics = config_tool[self.TOOL_KICS]["PATH_KICS"]
         download_kics_assets = config_tool[self.TOOL_KICS]["DOWNLOAD_KICS_ASSETS"]
+        exclude_paths = config_tool[self.TOOL_KICS]["EXCLUDE_PATHS"]
 
         os_platform = platform.system()
         path_kics = (
@@ -57,7 +60,7 @@ class KicsTool(ToolGateway):
             else f"{work_folder}/{path_kics}"
         )
         if not self._validate_kics(command_prefix):
-            logger.info("KICS binary not found or invalid, downloading assets...")
+                return [], None
 
         if download_kics_assets:
             self._get_assets(kics_version, work_folder)
@@ -70,6 +73,7 @@ class KicsTool(ToolGateway):
             work_folder,
             os_platform,
             queries,
+            exclude_paths,
         )
         data = self._load_results(work_folder, queries)
 
@@ -90,19 +94,62 @@ class KicsTool(ToolGateway):
         return [], None
 
     def get_iac_context_from_results(self, path_file_results):
-        # TODO: Implement this method
-        pass
+        with open(path_file_results, "r") as file:
+            context_results_scan_list = json.load(file)
+            context_iac_list = []
+            failed_checks = context_results_scan_list.get("results", {}).get(
+                "failed_checks", []
+            )
+            for check in failed_checks:
+                file_line_range = check.get("file_line_range", ["unknown", "unknown"])
+                start_line = (
+                    file_line_range[0] if len(file_line_range) > 0 else "unknown"
+                )
+                end_line = file_line_range[1] if len(file_line_range) > 1 else "unknown"
+                line_range_str = (
+                    f"{start_line}-{end_line}"
+                    if start_line != end_line
+                    else str(start_line)
+                )
+
+                context_iac = ContextIac(
+                    id=check.get("check_id", "unknown"),
+                    check_name=check.get("check_name", "unknown"),
+                    check_class=check.get("check_class", "unknown"),
+                    severity=check.get("severity").lower(),
+                    where=f"{check.get('repo_file_path', 'unknown')}: {check.get('resource', 'unknown')} (line {line_range_str})",
+                    resource=check.get("resource", "unknown"),
+                    description=check.get("check_name", "unknown"),
+                    module="engine_iac",
+                    tool="Checkov",
+                )
+
+                context_iac_list.append(context_iac)
+
+            print("===== BEGIN CONTEXT OUTPUT =====")
+            print(
+                json.dumps(
+                    {"iac_context": [obj.__dict__ for obj in context_iac_list]},
+                    indent=4,
+                )
+            )
+            print("===== END CONTEXT OUTPUT =====")
 
     def _validate_kics(self, command_prefix):
         try:
-            result = subprocess.run(
-                [command_prefix, "version"], capture_output=True, text=True
-            )
-            if result.returncode == 0:
+            kics_in_path = shutil.which("kics.exe" if platform.system() == "Windows" else "kics")
+            if kics_in_path:
+                command_prefix = kics_in_path
                 return True
             else:
-                logger.error(f"KICS binary not valid: {result.stderr}")
-                return False
+                result = subprocess.run(
+                    [command_prefix, "version"], capture_output=True, text=True
+                )
+                if result.returncode == 0:
+                    return True
+                else:
+                    logger.error(f"KICS binary not valid: {result.stderr}")
+                    return False
         except Exception as e:
             logger.error(f"Error validating KICS binary: {e}")
 
@@ -148,6 +195,7 @@ class KicsTool(ToolGateway):
         work_folder,
         os_platform,
         queries,
+        exclude_paths
     ):
         folders = ','.join(folders_to_scan)
         queries_flat = [
@@ -158,32 +206,25 @@ class KicsTool(ToolGateway):
         ] if queries else []
         queries = ','.join(queries_flat)
         mapped_platforms = [ 
-                            self.scan_type_platform_mapping.get(platform.lower(), platform) 
-                            for platform in platform_to_scan ] if platform_to_scan != ["all"] else list(self.scan_type_platform_mapping.values())
+            self.scan_type_platform_mapping.get(platform.lower(), platform) 
+            for platform in platform_to_scan ] if platform_to_scan != ["all"] else list(self.scan_type_platform_mapping.values())
         platforms = ','.join(mapped_platforms)
+        exclude_paths_str = ",".join([path.strip().replace("'", "").replace('"', "") for path in exclude_paths]) if exclude_paths else ""
+        queries_path = f"{work_folder}\\kics-devsecops\\assets\\queries" if os_platform == "Windows" else f"{work_folder}/kics-devsecops/assets/queries"
 
         command = [
             prefix,
             "scan",
-            "-p",
-            folders,
-            "-t",
-            platforms,
-            "--include-queries",
-            queries,
-            "-q",
-            (
-                f"{work_folder}\\kics-devsecops\\assets\\queries"
-                if os_platform == "Windows"
-                else f"{work_folder}/kics-devsecops/assets/queries"
-            ),
-            "--report-formats",
-            "json",
-            "-o",
-            work_folder,
+            "-p", folders,
+            "--exclude-paths", exclude_paths_str,
+            "-t", platforms,
+            "--include-queries", queries,
+            "-q", queries_path,
+            "--report-formats", "json",
+            "-o", work_folder
         ]
         try:
-            subprocess.run(command, capture_output=True)
+            subprocess.run(command, capture_output=True, text=True, cwd=work_folder)
         except subprocess.CalledProcessError as e:
             logger.error(f"Error during KICS execution: {e}")
             return []
