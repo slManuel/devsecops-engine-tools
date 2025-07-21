@@ -740,6 +740,7 @@
         "CLI_VERSION":"2.1.5",
         "PATH_KICS": "kics/bin/kics",
         "DOWNLOAD_KICS_ASSETS": false,
+        "EXCLUDE_PATHS": ["path_to_exclude_file_folder_1", "path_to_exclude_file_folder_2"],
         "RULES":{
             "RULES_OPENAPI":{
                 "CKV_OPENAPI_1":{
