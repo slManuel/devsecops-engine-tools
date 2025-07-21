@@ -40,6 +40,9 @@ steps:
 - script: python3 docker/get_certificates.py $(certificate-url-ca)
   displayName: 'Get Custom CA Certificate'
 
+- script: python3 docker/get_kics_binary.py $(repo-owner-ad) "$(project-ad)" $(artifact_name) $(ad-at) $(pipeline_id)
+  displayName: 'Get KICS Binary'
+
 - script: docker build --build-arg VERSION=$(RELEASE_VERSION) -t $(artifactory-url)/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG) -f docker/Dockerfile . && docker tag artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG) artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG)
   displayName: 'Build Docker Image'
 
