@@ -186,7 +186,19 @@ class KicsTool(ToolGateway):
         except Exception as e:
             logger.error(f"Error writing queries file: {e}")
 
-    
+    def _find_exclude_paths(self, base_path, exclude_paths):
+        exclude_dirs = []
+        try:
+            for root, dirs, files in os.walk(base_path):
+                for dir_name in dirs:
+                    if dir_name.lower() in exclude_paths:
+                        rel_path = os.path.relpath(os.path.join(root, dir_name), base_path)
+                        exclude_dirs.append(rel_path)
+            return exclude_dirs
+        except Exception as e: 
+            logger.error(f"Error finding exclude paths: {e}")
+            return []
+        
     def _execute_kics(
         self,
         folders_to_scan,
@@ -209,7 +221,7 @@ class KicsTool(ToolGateway):
             self.scan_type_platform_mapping.get(platform.lower(), platform) 
             for platform in platform_to_scan ] if platform_to_scan != ["all"] else list(self.scan_type_platform_mapping.values())
         platforms = ','.join(mapped_platforms)
-        exclude_paths_str = ",".join([path.strip().replace("'", "").replace('"', "") for path in exclude_paths]) if exclude_paths else ""
+        exclude_paths_str = ",".join(self._find_exclude_paths(folders, exclude_paths)) if exclude_paths else ""
         queries_path = f"{work_folder}\\kics-devsecops\\assets\\queries" if os_platform == "Windows" else f"{work_folder}/kics-devsecops/assets/queries"
 
         command = [
@@ -224,7 +236,7 @@ class KicsTool(ToolGateway):
             "-o", work_folder
         ]
         try:
-            subprocess.run(command, capture_output=True, text=True, cwd=work_folder)
+            subprocess.run(command, capture_output=True, text=True, cwd=folders)
         except subprocess.CalledProcessError as e:
             logger.error(f"Error during KICS execution: {e}")
             return []
