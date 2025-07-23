@@ -38,7 +38,6 @@ class ContainerScaScan:
         self.pipeline_name = pipeline_name
         self.context = context
 
-
     def process(self):
         """
         Process SCA scanning.
@@ -60,6 +59,15 @@ class ContainerScaScan:
                 matching_image,
                 self.remote_config["VALIDATE_BASE_IMAGE_DATE"]["REFERENCE_IMAGE_DATE"],
             )
+        if self.remote_config["BLACK_LIST_BASE_IMAGE"][
+            "ENABLED"
+        ] and not self.exclusions.get(self.pipeline_name, {}).get(
+            "BLACK_LIST_BASE_IMAGE"
+        ):
+            self._validate_black_list_base_image(
+                base_image, self.remote_config["BLACK_LIST_BASE_IMAGE"]["BLACK_LIST"]
+            )
+
         sbom_components = None
         generate_sbom = self.remote_config["SBOM"]["ENABLED"] and any(
             branch in str(self.branch)
@@ -127,6 +135,15 @@ class ContainerScaScan:
         return self.tool_images.validate_base_image_date(
             matching_image, referenced_date
         )
+
+    def _validate_black_list_base_image(self, base_image, black_list):
+        """
+        Process the black list image base validation.
+
+        Returns:
+            string: blacklist.
+        """
+        return self.tool_images.validate_black_list_base_image(base_image, black_list)
 
     def _get_images_already_scanned(self):
         """

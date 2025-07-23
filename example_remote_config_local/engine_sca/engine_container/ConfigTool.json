@@ -2,7 +2,7 @@
     "PRISMA_CLOUD": {
         "TWISTCLI_PATH": "twistcli",
         "PRISMA_CONSOLE_URL": "",
-        "PRISMA_API_VERSION":"",
+        "PRISMA_API_VERSION": "",
         "SBOM_FORMAT": "cyclonedx_json"
     },
     "TRIVY": {
@@ -21,8 +21,14 @@
         "ENABLED": false,
         "REFERENCE_IMAGE_DATE": "20250206"
     },
+    "BLACK_LIST_BASE_IMAGE": {
+        "ENABLED": false,
+        "BLACK_LIST": [
+            "/test/"
+        ]
+    },
     "MESSAGE_INFO_ENGINE_CONTAINER": "engine_container run successfully",
-    "IGNORE_SEARCH_PATTERN":"(.*_demo0|.*_cer)",
+    "IGNORE_SEARCH_PATTERN": "(.*_demo0|.*_cer)",
     "REGEX_CLEAN_END_PIPELINE_NAME": "",
     "THRESHOLD": {
         "VULNERABILITY": {
