@@ -133,8 +133,6 @@ def test_get_base_image_exception(mock_docker_client, base_image_labels):
     mock_client.api.inspect_image.assert_called_once_with("image_id")
 
 def test_validate_base_image_date_with_baseline_date(mock_docker_client, base_image_labels):
-
-def test_validate_base_image_date_with_baseline_date(mock_docker_client, base_image_labels):
     docker_images = DockerImages()
     matching_image = MagicMock()
     matching_image.id = "image_id"
