@@ -125,11 +125,12 @@ def test_get_base_image_exception(mock_docker_client, base_image_labels):
     matching_image = MagicMock()
     matching_image.id = "image_id"
     
+    mock_client = MagicMock()
+    mock_docker_client.return_value = mock_client
     mock_client.api.inspect_image.side_effect = Exception("Inspection failed")
     
-    result, is_distroless = docker_images.get_base_image(matching_image, base_image_labels)
+    result = docker_images.get_base_image(matching_image, base_image_labels)
     assert result is None
-    assert not is_distroless
     mock_client.api.inspect_image.assert_called_once_with("image_id")
 
 def test_validate_base_image_date_with_baseline_date(mock_docker_client, base_image_labels):
