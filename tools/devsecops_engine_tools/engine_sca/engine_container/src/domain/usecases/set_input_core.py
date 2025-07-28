@@ -14,7 +14,8 @@ class SetInputCore:
 
     def get_exclusions(self, exclusions_data, pipeline_name, tool, base_image):
         list_exclusions = []
-        print("The base image used is:", base_image)
+        base_image_list = base_image[0] if base_image else None
+        print("The base image used is:", base_image_list)
         for key, value in exclusions_data.items():
             if key not in {"All", pipeline_name} or not value.get(tool):
                 continue
@@ -22,9 +23,9 @@ class SetInputCore:
             for item in value[tool]:
                 if key == "All":
                     source_images = item.get("x86.image.name", [])
-                    if source_images and base_image is None:
+                    if source_images and not base_image_list:
                         continue
-                    if source_images and not any(base_image in source for source in source_images):
+                    if source_images and not any(img in source for img in base_image_list for source in source_images):
                         continue
                     
                 list_exclusions.append(

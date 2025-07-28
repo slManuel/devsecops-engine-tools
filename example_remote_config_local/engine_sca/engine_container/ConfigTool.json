@@ -27,6 +27,10 @@
             "/test/"
         ]
     },
+    "BASE_IMAGE_LABELS": [
+        "com.example.label1",
+        "com.example.label2"
+    ],
     "MESSAGE_INFO_ENGINE_CONTAINER": "engine_container run successfully",
     "IGNORE_SEARCH_PATTERN": "(.*_demo0|.*_cer)",
     "REGEX_CLEAN_END_PIPELINE_NAME": "",

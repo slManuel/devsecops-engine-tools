@@ -33,19 +33,19 @@ class DockerImages(ImagesGateway):
                 f"Error listing images, docker must be running and added to PATH: {e}"
             )
 
-    def get_base_image(self, matching_image):
+    def get_base_image(self, matching_image, base_image_labels: list):
         try:
             image_details = self.get_image_details(matching_image.id)
             if not image_details:
                 return None
 
             labels = image_details.get("Config", {}).get("Labels", {})
-            return self.extract_base_image_from_labels(labels, matching_image)[0]
+            return self.extract_base_image_from_labels(labels, base_image_labels, matching_image)
         except Exception as e:
             logger.warning(f"Error obtaining base image: {e}")
-            return None
+            return None, False
 
-    def validate_base_image_date(self, matching_image, referenced_date):
+    def validate_base_image_date(self, matching_image, referenced_date, base_image_labels: list):
         if matching_image is None or matching_image.id is None:
             logger.error("Error: matching_image ID is None")
             return False
@@ -59,8 +59,8 @@ class DockerImages(ImagesGateway):
         if baseline_date:
             date_image = self.parse_date(baseline_date)
         else:
-            base_image = self.extract_base_image_from_labels(labels)
-            if not base_image[1]:
+            base_image, is_uso_especifico = self.extract_base_image_from_labels(labels, base_image_labels)
+            if not is_uso_especifico and base_image:
                 date_image = self.extract_date_from_image(base_image[0])
 
         return self.validate_date(date_image, referenced_date)
@@ -73,12 +73,14 @@ class DockerImages(ImagesGateway):
             logger.error(f"Error obtaining image details for '{image_id}': {e}")
             return None
 
-    def extract_base_image_from_labels(self, labels, matching_image=None):
+    def extract_base_image_from_labels(self, labels, base_image_labels: list, matching_image=None):
         try:
             if labels:
-                source_image = labels.get("x86.image.name") or labels.get("image.base.ref.name")
-                if not source_image:
-                    source_image = labels.get("source_images") or labels.get("source-image")
+                source_image = []
+                for label in base_image_labels:
+                    value = labels.get(label)
+                    if value:
+                        source_image.append(value)
                 is_uso_especifico = labels.get("repository") == 'evc/uso_especifico'
                 if source_image and matching_image:
                     logger.info(f"Base image for '{matching_image}' found: {source_image}")
