@@ -43,7 +43,7 @@ class GetArtifacts:
             file_name = os.path.basename(file_path)
             
             for ignore_pattern in ignore_files:
-                if (re.search(ignore_pattern, file_name, re.IGNORECASE)):
+                if (re.search(ignore_pattern, file_name, re.IGNORECASE) or re.search(ignore_pattern, file_path, re.IGNORECASE)):
                     should_ignore = True
                     break
                     
