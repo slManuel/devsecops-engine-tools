@@ -139,3 +139,28 @@ def test_deserialize(container_sca_scan):
         "finding2",
     ]
     assert container_sca_scan.deseralizator("image_scanned") == ["finding1", "finding2"]
+def test_validate_black_list_base_image_calls_tool_images(container_sca_scan):
+  
+    base_image = "ubuntu:latest"
+    black_list = ["alpine:3.12", "ubuntu:14.04"]
+    container_sca_scan.tool_images.validate_black_list_base_image = MagicMock(return_value="not_blacklisted")
+
+    
+    result = container_sca_scan._validate_black_list_base_image(base_image, black_list)
+
+    container_sca_scan.tool_images.validate_black_list_base_image.assert_called_once_with(base_image, black_list)
+    assert result == "not_blacklisted"
+
+
+def test_validate_black_list_base_image_blacklisted(container_sca_scan):
+  
+    base_image = "alpine:3.12"
+    black_list = ["alpine:3.12", "ubuntu:14.04"]
+    container_sca_scan.tool_images.validate_black_list_base_image = MagicMock(return_value="blacklisted")
+
+   
+    result = container_sca_scan._validate_black_list_base_image(base_image, black_list)
+
+   
+    container_sca_scan.tool_images.validate_black_list_base_image.assert_called_once_with(base_image, black_list)
+    assert result == "blacklisted"
