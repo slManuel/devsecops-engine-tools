@@ -129,8 +129,8 @@ class GetArtifacts:
             print(f"Files to scan: {files_string}")
 
             if ignore_files and len(filtered_files_list) < len(files_list):
-                ignored_files = set([f for f in files_list if f not in filtered_files_list])
-                files_ignore_string = ", ".join([os.path.basename(file_path) for file_path in ignored_files])
+                ignored_files = set([os.path.basename(f) for f in files_list if f not in filtered_files_list])
+                files_ignore_string = ", ".join(ignored_files)
                 print(f"Files ignored: {files_ignore_string}")
         else:
             logger.warning("No artifacts found")
