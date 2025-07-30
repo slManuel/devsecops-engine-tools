@@ -131,3 +131,80 @@ def test_find_artifacts(get_artifacts_instance):
         mock_compress_and_mv.assert_any_call
         mock_move_files.assert_called_once
         mock_logger.assert_called_once
+
+
+def test_filter_ignored_files(get_artifacts_instance):
+    files_list = [
+        "/path/to/file1.jar",
+        "/path/to/test-file.war",
+        "/path/to/production.ear",
+        "/path/to/temp.log",
+        "/path/to/valid.jar"
+    ]
+    ignore_files = ["test-", "temp.", "production"]
+    
+    result = get_artifacts_instance.filter_ignored_files(files_list, ignore_files)
+    
+    expected = ["/path/to/file1.jar", "/path/to/valid.jar"]
+    assert result == expected
+
+
+def test_filter_ignored_files_empty_ignore_list(get_artifacts_instance):
+    files_list = ["/path/to/file1.jar", "/path/to/file2.war"]
+    ignore_files = []
+    
+    result = get_artifacts_instance.filter_ignored_files(files_list, ignore_files)
+    
+    assert result == files_list
+
+
+def test_filter_ignored_files_none_ignore_list(get_artifacts_instance):
+    files_list = ["/path/to/file1.jar", "/path/to/file2.war"]
+    ignore_files = None
+    
+    result = get_artifacts_instance.filter_ignored_files(files_list, ignore_files)
+    
+    assert result == files_list
+
+
+def test_find_artifacts_with_ignore_files(get_artifacts_instance):
+    with patch("os.path.join") as mock_join, patch(
+        "os.path.exists"
+    ) as mock_exists, patch("os.makedirs") as mock_makedirs, patch(
+        "shutil.rmtree"
+    ) as mock_rmtree, patch(
+        "devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.helpers.get_artifacts.GetArtifacts.find_packages"
+    ) as mock_find_packages, patch(
+        "devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.helpers.get_artifacts.GetArtifacts.filter_ignored_files"
+    ) as mock_filter_ignored_files, patch(
+        "devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.helpers.get_artifacts.GetArtifacts.compress_and_mv"
+    ) as mock_compress_and_mv, patch(
+        "devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.helpers.get_artifacts.GetArtifacts.move_files"
+    ) as mock_move_files, patch(
+        "os.listdir"
+    ) as mock_listdir, patch(
+        "os.path.isfile"
+    ) as mock_isfile:
+        pattern = "\\.(jar|ear|war)$"
+        to_scan = "/path/to/working_dir"
+        packages = ["package"]
+        ignore_files = ["test-", "temp."]
+        
+        mock_join.side_effect = lambda *args: "/".join(args)
+        mock_exists.return_value = True
+        mock_find_packages.return_value = (
+            ["/path/to/node_modules"],
+            ["/path/to/file1.jar", "/path/to/test-file.war"],
+        )
+        mock_filter_ignored_files.return_value = ["/path/to/file1.jar"]
+        mock_listdir.return_value = ["file1.jar"]
+        mock_isfile.return_value = True
+
+        get_artifacts_instance.find_artifacts(to_scan, pattern, packages, ignore_files)
+
+        mock_filter_ignored_files.assert_called_once_with(
+            ["/path/to/file1.jar", "/path/to/test-file.war"], ignore_files
+        )
+        mock_move_files.assert_called_once_with(
+            "/path/to/working_dir/dependencies_to_scan", ["/path/to/file1.jar"]
+        )
