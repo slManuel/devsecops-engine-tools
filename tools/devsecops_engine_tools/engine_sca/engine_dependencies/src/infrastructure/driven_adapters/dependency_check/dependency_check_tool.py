@@ -142,8 +142,9 @@ class DependencyCheckTool(ToolGateway):
         pattern = get_artifacts.excluded_files(
             remote_config, pipeline_name, exclusion, "DEPENDENCY_CHECK"
         )
+        ignore_files = remote_config.get("IGNORE_FILES", [])
         to_scan = get_artifacts.find_artifacts(
-            to_scan, pattern, remote_config["DEPENDENCY_CHECK"]["PACKAGES_TO_SCAN"]
+            to_scan, pattern, remote_config["DEPENDENCY_CHECK"]["PACKAGES_TO_SCAN"], ignore_files
         )
 
         if not to_scan:
