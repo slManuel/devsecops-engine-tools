@@ -66,7 +66,6 @@ export function activate(context: vscode.ExtensionContext): void {
         `Are you sure you want to delete the scan result "${scanResultItem.label}"?`,
         { modal: true },
         "Delete",
-        "Cancel"
       );
 
       if (result === "Delete") {
