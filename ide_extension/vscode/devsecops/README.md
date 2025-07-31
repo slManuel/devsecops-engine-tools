@@ -98,7 +98,6 @@ Take advantage of the integration with **GitHub Copilot** for an intelligent, as
 2. Requirements:
    - ✅ [WSL](https://learn.microsoft.com/en-us/windows/wsl/install)
    - ✅ Docker or Podman
-   - ✅ Java (for Dependency-Check)
 3. Setup:
    - Enable Docker before scanning containers
    - Grant internet access for CVE updates (Dependency-Check/Xray)
