@@ -194,8 +194,9 @@ class XrayScan(ToolGateway):
             pattern = get_artifacts.excluded_files(
                 remote_config, pipeline_name, exclusion, "XRAY"
             )
+            ignore_files = remote_config.get("IGNORE_FILES", [])
             to_scan = get_artifacts.find_artifacts(
-                to_scan, pattern, remote_config["XRAY"]["PACKAGES_TO_SCAN"]
+                to_scan, pattern, remote_config["XRAY"]["PACKAGES_TO_SCAN"], ignore_files
             )
             cwd = os.getcwd()
             if not to_scan:

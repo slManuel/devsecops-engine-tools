@@ -2,58 +2,56 @@ import * as vscode from 'vscode';
 import { findingDetailWebview } from './FindingDetail';
 import { Finding } from "../../../domain/model/Finding";
 
-let vulnPanel: vscode.WebviewPanel | undefined;
-let editorListener: vscode.Disposable | undefined;
-let workspaceListener: vscode.Disposable | undefined;
-let messageListener: vscode.Disposable | undefined;
+let vulnPanels: Map<string, vscode.WebviewPanel> = new Map();
 
 export function showVulnContextWebview(finding: Finding, sourceType?: string): void {
+    const panelId = `vulnContext-${finding.getId()}-${new Date().getTime()}`;
 
-    if (vulnPanel) {
-        vulnPanel.webview.html = findingDetailWebview(finding, sourceType);
-        vulnPanel.title = `Vulnerability: ${finding.getId()}`;
-        vulnPanel.reveal(vscode.ViewColumn.Beside);
-        
-        // Dispose the old message listener and create a new one with the current finding
-        if (messageListener) {
-            messageListener.dispose();
-        }
-        setupMessageHandler(vulnPanel, finding);
+    if (vulnPanels.has(panelId)) {
+        const existingPanel = vulnPanels.get(panelId);
+        existingPanel?.reveal(vscode.ViewColumn.Beside);
     } else {
-        vulnPanel = vscode.window.createWebviewPanel(
+        const vulnPanel = vscode.window.createWebviewPanel(
             'vulnContext',
-            `Vulnerability: ${finding.getId()}`,
+            `Finding: ${finding.getId()}`,
             vscode.ViewColumn.Beside,
-            { enableScripts: true }
+            { enableScripts: true, retainContextWhenHidden: true }
         );
-        vulnPanel.webview.html = findingDetailWebview(finding, sourceType);
 
-        // Setup message handler for the current finding
+        // Determine sourceType from finding module if not provided
+        const actualSourceType = sourceType || getSourceTypeFromModule(finding.getModule());
+        vulnPanel.webview.html = findingDetailWebview(finding, actualSourceType);
+
+        // Setup message handler for Copilot buttons
         setupMessageHandler(vulnPanel, finding);
 
         vulnPanel.onDidDispose(() => {
-            disposeVulnPanel();
+            vulnPanels.delete(panelId);
         });
 
-        // Listen for editor changes and close the webview if no editors are open
-        editorListener = vscode.window.onDidChangeVisibleTextEditors(editors => {
-            if (editors.length === 0 && vulnPanel) {
-                vulnPanel.dispose();
-            }
-        });
+        vulnPanels.set(panelId, vulnPanel);
+    }
+}
 
-        // Listen for workspace changes and close the webview
-        workspaceListener = vscode.workspace.onDidChangeWorkspaceFolders(() => {
-            if (vulnPanel) {
-                vulnPanel.dispose();
-            }
-        });
+function getSourceTypeFromModule(module: string): string {
+    switch (module) {
+        case 'engine_iac':
+            return 'iac';
+        case 'engine_container':
+        case 'engine_image':
+            return 'image';
+        case 'engine_dependencies':
+            return 'dependencies';
+        case 'engine_secrets':
+            return 'secrets';
+        default:
+            return 'unknown';
     }
 }
 
 function setupMessageHandler(panel: vscode.WebviewPanel, finding: Finding): void {
     // Handle messages from the webview
-    messageListener = panel.webview.onDidReceiveMessage(
+    panel.webview.onDidReceiveMessage(
         async (message) => {
             switch (message.command) {
                 case 'fixWithCopilot':
@@ -84,13 +82,13 @@ function setupMessageHandler(panel: vscode.WebviewPanel, finding: Finding): void
     );
 }
 
+// Generic alias for all practices
+export const showGeneralFindingWebview = showVulnContextWebview;
+
 export function disposeVulnPanel(): void {
-    [vulnPanel, editorListener, workspaceListener, messageListener].forEach(listener => {
-        listener?.dispose?.();
+    vulnPanels.forEach(panel => {
+        panel.dispose();
     });
-    vulnPanel = undefined;
-    editorListener = undefined;
-    workspaceListener = undefined;
-    messageListener = undefined;
+    vulnPanels.clear();
 }
 
