@@ -27,13 +27,14 @@ It enables static scans for **Infrastructure as Code (IaC)**, **Container Images
 - Highlights the vulnerable line directly in the editor
 - Hover support for vulnerability details and contextual Copilot fix
 - Support for environment variable substitution (as in pipeline configs)
-- No additional configuration required beyond the initial setup  
+- Executed using [**Checkov**](https://www.checkov.io/) 
 
 ### 🐳 Container
 
-- Scans locally available images
+- Scans locally available container images
 - Displays scan findings per image
 - Right-side panel with detailed vulnerability info for the selected image
+- Executed using [**Trivy**](https://github.com/aquasecurity/trivy)
 
 ### 📦 Dependencies
 
@@ -41,42 +42,84 @@ It enables static scans for **Infrastructure as Code (IaC)**, **Container Images
   - [JFrog Xray](https://jfrog.com/xray/)
   - [OWASP Dependency-Check](https://owasp.org/www-project-dependency-check/)
 - Detect known CVEs in third-party libraries
-- Compatible with popular package managers (Maven, Gradle, npm, etc.)
-- Results are displayed in an organized findings panel with actionable insights
+- Compatible with Maven, Gradle, npm, yarn, etc.
+- Includes impact path to determine transitive vs direct vulnerabilities
+- Organized panel with detailed information and suggested updates
 
 ---
 
-## 🧠 AI Integration
+## 🤖 AI Assistant Actions
 
-The extension integrates with **GitHub Copilot** to:
-- Offer automated remediation suggestions (`Fix using Copilot`)
-- Explain vulnerabilities in plain language (`Explain`)
-- Apply fixes directly and reflect changes within the file
+Take advantage of the integration with **GitHub Copilot** for an intelligent, assisted security workflow:
+
+### 1. 💡 Fix with Copilot  
+- **Color:** Blue
+- **Icon:** 💡
+- **Function:**
+  - Generates a contextual prompt for GitHub Copilot to help fix the vulnerability
+  - Includes vulnerability details specific to:
+    - Dependencies → impact path & affected libraries
+    - Containers → image context & Dockerfile snippet
+    - IaC → validation rules for the vulnerable resource
+
+### 2. ℹ️ Explain Vulnerability  
+- **Color:** Purple
+- **Icon:** ℹ️
+- **Function:**
+  - Generates a prompt for GitHub Copilot to explain the vulnerability
+  - Provides educational context about the type of issue
+  - Details potential impact and security risks
+  - Helps you understand the issue before taking action
+
+### 3. 📦 Generate Update Solution *(Dependencies Only)*  
+- **Color:** Orange
+- **Icon:** 📦
+- **Function:**
+  - Specific for dependency vulnerabilities
+  - Generates CLI commands to update affected libraries
+  - Shows which direct dependencies need upgrading
+  - Suggests `npm`, `yarn`, or `maven` commands based on project type
+
+### 4. 🤖 Auto-Fix with Agent *(Dependencies Only)*  
+- **Color:** Green
+- **Icon:** 🤖
+- **Function:**
+  - Requires GitHub Copilot Agent mode
+  - Tries to apply fixes semi-automatically
+  - Scans files like `package.json`, `pom.xml`, etc.
+  - Generates a complete prompt with contextual details
+  - Suggests direct file changes
 
 ---
 
 ## 📥 Installation
 
 1. Install the extension from the [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=bancolombia.devsecops-engine-tools)
-2. Make sure the following are installed:
+2. Requirements:
    - ✅ [WSL](https://learn.microsoft.com/en-us/windows/wsl/install)
-   - ✅ Docker (Windows/Linux) or Podman (Mac)
-3. Activate Docker before scanning container images
-4. From the editor:
-   - Select the folder to scan
-   - View results in the left panel
-   - Explore details and suggestions in the right webview
+   - ✅ Docker or Podman
+   - ✅ Java (for Dependency-Check)
+3. Setup:
+   - Enable Docker before scanning containers
+   - Grant internet access for CVE updates (Dependency-Check/Xray)
+4. Launch:
+   - Open a folder in VSCode
+   - Select the desired scan (IaC, Container, Dependencies)
+   - View and interact with results from the left sidebar
 
 ---
 
 ## 🧪 Usage Considerations
 
+- Vulnerabilities are shown by file, line, and severity
 - Validate that results shown in the webview match the expected file and line
-- Configure custom environment variables within workspace settings
-- Feedback is crucial to evolve the tool (see below)
+- Use workspace settings for advanced configs:
+  - Custom variables
+  - Scanner arguments
+  - Exclusion rules
+- Copilot support is context-aware; use it to get the most helpful fix suggestions
 
 ---
-
 ## 📚 Additional Resources
 
 - [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
@@ -86,5 +129,3 @@ The extension integrates with **GitHub Copilot** to:
 ---
 
 **Thanks for being part of the shift toward secure development from day one!**
-
----
