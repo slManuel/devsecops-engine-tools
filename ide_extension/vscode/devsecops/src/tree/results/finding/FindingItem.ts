@@ -17,8 +17,16 @@ export class FindingItem extends vscode.TreeItem {
     Location: ${finding.getWhere() || "N/A"}
     Validation Rule Code: ${finding.getValidationRuleCode() || "N/A"}`;
 
-    // Set contextValue for menu context
-    this.contextValue = sourceType === "dependencies" ? "findingItem-dependencies" : "findingItem";
+    // Set context value based on module for right-click menu
+    if (sourceType === "dependencies") {
+      this.contextValue = "findingItem-dependencies";
+    } else if (finding.getModule() === "engine_iac") {
+      this.contextValue = "engine_iac";
+    } else if (finding.getModule() === "engine_secrets") {
+      this.contextValue = "engine_secrets";
+    } else {
+      this.contextValue = "findingItem";
+    }
 
     const severityIcons: Record<string, vscode.ThemeIcon> = {
       high: new vscode.ThemeIcon("error", new vscode.ThemeColor("errorForeground")),
