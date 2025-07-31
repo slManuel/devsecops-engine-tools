@@ -8,30 +8,83 @@
 ![Rating](https://img.shields.io/jetbrains/plugin/r/rating/25069-devsecops-engine-tools)
 ![Version](https://img.shields.io/jetbrains/plugin/v/25069-devsecops-engine-tools)
 
+---
 
-# Description
+## 🚀 Description
 
-Visual Studio Code plugin that allows you to run DevSecOps Engine Tools from the IDE.
+**DevSecOps Engine Tools** is a Visual Studio Code extension developed by Bancolombia to detect security vulnerabilities early in the development lifecycle without depending solely on pipelines.
+
+It enables static scans for **Infrastructure as Code (IaC)**, **Container Images**, and **Dependencies**, using custom and industry-recognized tools. It highlights vulnerable lines in the code, suggests fixes with GitHub Copilot, and presents interactive results.
 
 ---
 
-## Following extension guidelines
+## 📦 Key Features 
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+### 🛠️ Infrastructure as Code (IaC)
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+- Scan files such as Terraform, Dockerfiles, Kubernetes manifests, and CloudFormation templates
+- File-based findings panel
+- Highlights the vulnerable line directly in the editor
+- Hover support for vulnerability details and contextual Copilot fix
+- Support for environment variable substitution (as in pipeline configs)
+- No additional configuration required beyond the initial setup  
 
-## Working with Markdown
+### 🐳 Container
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+- Scans locally available images
+- Displays scan findings per image
+- Right-side panel with detailed vulnerability info for the selected image
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+### 📦 Dependencies
 
-## For more information
+- Analyze project dependencies with:
+  - [JFrog Xray](https://jfrog.com/xray/)
+  - [OWASP Dependency-Check](https://owasp.org/www-project-dependency-check/)
+- Detect known CVEs in third-party libraries
+- Compatible with popular package managers (Maven, Gradle, npm, etc.)
+- Results are displayed in an organized findings panel with actionable insights
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+---
 
-**Enjoy!**
+## 🧠 AI Integration
+
+The extension integrates with **GitHub Copilot** to:
+- Offer automated remediation suggestions (`Fix using Copilot`)
+- Explain vulnerabilities in plain language (`Explain`)
+- Apply fixes directly and reflect changes within the file
+
+---
+
+## 📥 Installation
+
+1. Install the extension from the [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=bancolombia.devsecops-engine-tools)
+2. Make sure the following are installed:
+   - ✅ [WSL](https://learn.microsoft.com/en-us/windows/wsl/install)
+   - ✅ Docker (Windows/Linux) or Podman (Mac)
+3. Activate Docker before scanning container images
+4. From the editor:
+   - Select the folder to scan
+   - View results in the left panel
+   - Explore details and suggestions in the right webview
+
+---
+
+## 🧪 Usage Considerations
+
+- Validate that results shown in the webview match the expected file and line
+- Configure custom environment variables within workspace settings
+- Feedback is crucial to evolve the tool (see below)
+
+---
+
+## 📚 Additional Resources
+
+- [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+- [Visual Studio Code Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
+- [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+
+---
+
+**Thanks for being part of the shift toward secure development from day one!**
+
+---
