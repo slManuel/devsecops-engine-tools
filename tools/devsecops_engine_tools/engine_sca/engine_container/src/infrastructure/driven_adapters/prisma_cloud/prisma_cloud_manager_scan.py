@@ -113,7 +113,7 @@ class PrismaCloudManagerScan(ToolGateway):
                             vulnerability.get("id") == exclusion.get("id") and
                             any(b_image.startswith(ex_image) for b_image in base_image_list for ex_image in exclusion.get("x86.image.name", []))
                         ):
-                            vulnerability["baseImage"] = base_image_list[0] if base_image_list else ""
+                            vulnerability["baseImage"] = str(base_image_list) if base_image_list else ""
                             modified = True
 
             if modified:
