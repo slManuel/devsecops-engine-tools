@@ -97,7 +97,7 @@ class PrismaCloudManagerScan(ToolGateway):
         except subprocess.CalledProcessError as e:
             logger.error(f"Error during image scan of {image_name}: {e.stderr}")
 
-    def _write_image_base(self, result_file, base_image, exclusions_data):
+    def _write_image_base(self, result_file, base_image, exclusions_data, remoteconfig):
         try:
             with open(result_file, "r") as file:
                 data = json.load(file)
@@ -106,12 +106,15 @@ class PrismaCloudManagerScan(ToolGateway):
             modified = False
             base_image_list = base_image[0] if base_image and base_image[0] else []
             
+            
+            key_image_exception = remoteconfig.get("VALIDATE_BASE_IMAGE_DATE", {}).get("LABEL_KEYS", {}).get("key_image_exception", None)
+            
             for result in data.get("results", []):
                 for vulnerability in result.get("vulnerabilities", []):
                     for exclusion in prisma_exclusions:
                         if (
                             vulnerability.get("id") == exclusion.get("id") and
-                            any(b_image.startswith(ex_image) for b_image in base_image_list for ex_image in exclusion.get("x86.image.name", []))
+                            any(b_image.startswith(ex_image) for b_image in base_image_list for ex_image in exclusion.get(key_image_exception, []))
                         ):
                             vulnerability["baseImage"] = str(base_image_list) if base_image_list else ""
                             modified = True
@@ -193,7 +196,7 @@ class PrismaCloudManagerScan(ToolGateway):
             prisma_key
         )
         if base_image:
-            self._write_image_base(result_file, base_image, exclusions)
+            self._write_image_base(result_file, base_image, exclusions, remoteconfig)
         if generate_sbom:
             sbom_components = self._generate_sbom(
                 image_scanned,

@@ -33,19 +33,19 @@ class DockerImages(ImagesGateway):
                 f"Error listing images, docker must be running and added to PATH: {e}"
             )
 
-    def get_base_image(self, matching_image, base_image_labels: list):
+    def get_base_image(self, matching_image, base_image_labels: list, label_keys: dict = None):
         try:
             image_details = self.get_image_details(matching_image.id)
             if not image_details:
                 return None
 
             labels = image_details.get("Config", {}).get("Labels", {})
-            return self.extract_base_image_from_labels(labels, base_image_labels, matching_image)
+            return self.extract_base_image_from_labels(labels, base_image_labels, matching_image, label_keys)
         except Exception as e:
             logger.warning(f"Error obtaining base image: {e}")
             return None, False
 
-    def validate_base_image_date(self, matching_image, referenced_date, base_image_labels: list):
+    def validate_base_image_date(self, matching_image, referenced_date, base_image_labels: list, label_keys: dict = None):
         if matching_image is None or matching_image.id is None:
             logger.error("Error: matching_image ID is None")
             return False
@@ -54,12 +54,16 @@ class DockerImages(ImagesGateway):
             return False
 
         labels = image_details.get("Config", {}).get("Labels", {})
-        baseline_date = labels.get("x86.baseline.date")
+
+        baseline_date = None
+        if label_keys and "baseline_date" in label_keys:
+            baseline_date_key = label_keys["baseline_date"]
+            baseline_date = labels.get(baseline_date_key)
         date_image = None
         if baseline_date:
             date_image = self.parse_date(baseline_date)
         else:
-            base_image, is_uso_especifico = self.extract_base_image_from_labels(labels, base_image_labels)
+            base_image, is_uso_especifico = self.extract_base_image_from_labels(labels, base_image_labels, None, label_keys)
             if not is_uso_especifico and base_image:
                 date_image = self.extract_date_from_image(base_image[0])
 
@@ -73,7 +77,7 @@ class DockerImages(ImagesGateway):
             logger.error(f"Error obtaining image details for '{image_id}': {e}")
             return None
 
-    def extract_base_image_from_labels(self, labels, base_image_labels: list, matching_image=None):
+    def extract_base_image_from_labels(self, labels, base_image_labels: list, matching_image=None, label_keys: dict = None):
         try:
             if labels:
                 source_image = []
@@ -81,7 +85,12 @@ class DockerImages(ImagesGateway):
                     value = labels.get(label)
                     if value:
                         source_image.append(value)
-                is_uso_especifico = labels.get("repository") == 'evc/uso_especifico'
+                
+                # Only check for specific_use if it's configured in remote config
+                is_uso_especifico = False
+                if label_keys and "specific_use" in label_keys:
+                    specific_use_value = label_keys["specific_use"]
+                    is_uso_especifico = labels.get("repository") == specific_use_value
                 if source_image and matching_image:
                     logger.info(f"Base image for '{matching_image}' found: {source_image}")
                 elif matching_image:

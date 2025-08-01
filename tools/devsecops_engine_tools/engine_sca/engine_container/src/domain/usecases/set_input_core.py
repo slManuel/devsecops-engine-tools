@@ -22,7 +22,8 @@ class SetInputCore:
 
             for item in value[tool]:
                 if key == "All":
-                    source_images = item.get("x86.image.name", [])
+                    key_image_exception = self.remote_config.get("VALIDATE_BASE_IMAGE_DATE", {}).get("LABEL_KEYS", {}).get("key_image_exception", None)
+                    source_images = item.get(key_image_exception, [])
                     if source_images and not base_image_list:
                         continue
                     if source_images and not any(img in source for img in base_image_list for source in source_images):

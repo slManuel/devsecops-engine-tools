@@ -138,14 +138,16 @@ def test_validate_base_image_date_with_baseline_date(mock_docker_client, base_im
     matching_image = MagicMock()
     matching_image.id = "image_id"
     referenced_date = "20230801"
-    
+    label_keys = {
+        "baseline_date": "x86.baseline.date"
+    }
     mock_client = MagicMock()
     mock_docker_client.return_value = mock_client
     mock_client.api.inspect_image.return_value = {
         "Config": {"Labels": {"x86.baseline.date": "20230802"}}
     }
     
-    result = docker_images.validate_base_image_date(matching_image, referenced_date, base_image_labels)
+    result = docker_images.validate_base_image_date(matching_image, referenced_date, base_image_labels, label_keys)
     assert result is True
     mock_client.api.inspect_image.assert_called_once_with("image_id")
 
@@ -172,7 +174,9 @@ def test_validate_base_image_date_older_than_referenced_date(mock_docker_client,
     matching_image = MagicMock()
     matching_image.id = "image_id"
     referenced_date = "20230802"
-    
+    label_keys = {
+        "baseline_date": "x86.baseline.date"
+    }
     mock_client = MagicMock()
     mock_docker_client.return_value = mock_client
     mock_client.api.inspect_image.return_value = {
@@ -180,8 +184,31 @@ def test_validate_base_image_date_older_than_referenced_date(mock_docker_client,
     }
     
     with pytest.raises(ValueError, match="Compliance issue:"):
-        docker_images.validate_base_image_date(matching_image, referenced_date, base_image_labels)
+        docker_images.validate_base_image_date(matching_image, referenced_date, base_image_labels, label_keys)
     
+    mock_client.api.inspect_image.assert_called_once_with("image_id")
+
+def test_validate_base_image_date_with_custom_label_keys(mock_docker_client, base_image_labels):
+    docker_images = DockerImages()
+    matching_image = MagicMock()
+    matching_image.id = "image_id"
+    referenced_date = "20230801"
+    
+    # Custom label keys configuration
+    label_keys = {
+        "baseline_date": "custom.baseline.date",
+        "specific_use": "evc/uso_especifico",
+        "key_image_exception": "custom.image.name"
+    }
+    
+    mock_client = MagicMock()
+    mock_docker_client.return_value = mock_client
+    mock_client.api.inspect_image.return_value = {
+        "Config": {"Labels": {"custom.baseline.date": "20230802"}}
+    }
+    
+    result = docker_images.validate_base_image_date(matching_image, referenced_date, base_image_labels, label_keys)
+    assert result is True
     mock_client.api.inspect_image.assert_called_once_with("image_id")
     
 def test_validate_black_list_base_image_valid_not_blacklisted():
