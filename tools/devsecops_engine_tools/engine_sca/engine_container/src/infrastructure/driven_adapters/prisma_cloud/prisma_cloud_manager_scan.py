@@ -104,7 +104,7 @@ class PrismaCloudManagerScan(ToolGateway):
 
             prisma_exclusions = exclusions_data.get("All", {}).get("PRISMA", [])
             modified = False
-            base_image_list = base_image[0] if base_image and base_image[0] else []
+            base_image_list = base_image[0][0] if base_image and base_image[0][0] else []
             
             
             key_image_exception = remoteconfig.get("VALIDATE_BASE_IMAGE_DATE", {}).get("LABEL_KEYS", {}).get("key_image_exception", None)

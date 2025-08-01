@@ -148,7 +148,7 @@ def test_validate_black_list_base_image_calls_tool_images(container_sca_scan):
     container_sca_scan._validate_black_list_base_image(base_image, black_list)
 
     container_sca_scan.tool_images.validate_black_list_base_image.assert_called_once_with(
-        "ubuntu:latest", black_list
+        "ubuntu:latest", black_list  
     )
 
 
@@ -163,7 +163,7 @@ def test_validate_black_list_base_image_blacklisted(container_sca_scan):
         container_sca_scan._validate_black_list_base_image(base_image, black_list)
 
     container_sca_scan.tool_images.validate_black_list_base_image.assert_called_once_with(
-        "alpine:3.12", black_list
+        "alpine:3.12", black_list  
     )
 
 

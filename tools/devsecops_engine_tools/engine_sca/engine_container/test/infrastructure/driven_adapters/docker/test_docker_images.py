@@ -213,43 +213,71 @@ def test_validate_base_image_date_with_custom_label_keys(mock_docker_client, bas
     
 def test_validate_black_list_base_image_valid_not_blacklisted():
     docker_images = DockerImages()
-    base_image = "my_image:latest"
+    base_image = ["my_image:latest"]  # Now a list
     black_list = ["forbidden", "banned"]
     result = docker_images.validate_black_list_base_image(base_image, black_list)
     assert result is True
 
 def test_validate_black_list_base_image_valid_blacklisted():
     docker_images = DockerImages()
-    base_image = "forbidden_image:latest"
+    base_image = ["forbidden_image:latest"]  # Now a list
     black_list = ["forbidden", "banned"]
     with pytest.raises(ValueError, match="Compliance issue: the image: forbidden_image:latest is blacklisted for forbidden"):
         docker_images.validate_black_list_base_image(base_image, black_list)
 
 def test_validate_black_list_base_image_blacklisted_partial_match():
     docker_images = DockerImages()
-    base_image = "my_image:banned"
+    base_image = ["my_image:banned"]  # Now a list
     black_list = ["forbidden", "banned"]
     with pytest.raises(ValueError, match="Compliance issue: the image: my_image:banned is blacklisted for banned"):
         docker_images.validate_black_list_base_image(base_image, black_list)
 
 def test_validate_black_list_base_image_invalid_base_image_type():
     docker_images = DockerImages()
-    base_image = 12345  # Not a string
+    base_image = 12345  # Not a list
     black_list = ["forbidden"]
     result = docker_images.validate_black_list_base_image(base_image, black_list)
     assert result is False
 
 def test_validate_black_list_base_image_invalid_black_list_type():
     docker_images = DockerImages()
-    base_image = "my_image:latest"
+    base_image = ["my_image:latest"]  # Now a list
     black_list = "not_a_list"  # Not a list
     result = docker_images.validate_black_list_base_image(base_image, black_list)
     assert result is False
 
 def test_validate_black_list_base_image_empty_black_list():
     docker_images = DockerImages()
-    base_image = "my_image:latest"
+    base_image = ["my_image:latest"]  # Now a list
     black_list = []
+    result = docker_images.validate_black_list_base_image(base_image, black_list)
+    assert result is True
+
+def test_validate_black_list_base_image_multiple_images_valid():
+    docker_images = DockerImages()
+    base_image = ["my_image:latest", "another_image:v1", "third_image:stable"]
+    black_list = ["forbidden", "banned"]
+    result = docker_images.validate_black_list_base_image(base_image, black_list)
+    assert result is True
+
+def test_validate_black_list_base_image_multiple_images_one_blacklisted():
+    docker_images = DockerImages()
+    base_image = ["my_image:latest", "forbidden_image:v1", "third_image:stable"]
+    black_list = ["forbidden", "banned"]
+    with pytest.raises(ValueError, match="Compliance issue: the image: forbidden_image:v1 is blacklisted for forbidden"):
+        docker_images.validate_black_list_base_image(base_image, black_list)
+
+def test_validate_black_list_base_image_mixed_types_in_list():
+    docker_images = DockerImages()
+    base_image = ["my_image:latest", 123, "another_image:v1"]  # Mixed types
+    black_list = ["forbidden", "banned"]
+    result = docker_images.validate_black_list_base_image(base_image, black_list)
+    assert result is True
+
+def test_validate_black_list_base_image_empty_list():
+    docker_images = DockerImages()
+    base_image = []  # Empty list
+    black_list = ["forbidden", "banned"]
     result = docker_images.validate_black_list_base_image(base_image, black_list)
     assert result is True
 

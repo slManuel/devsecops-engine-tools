@@ -137,12 +137,18 @@ class DockerImages(ImagesGateway):
         return True
 
     def validate_black_list_base_image(self, base_image, black_list):
-        if not isinstance(base_image, str) or not isinstance(black_list, list):
-            logger.error("Invalid input types: expected a string and a list of strings.")
+        if not isinstance(base_image, list) or not isinstance(black_list, list):
+            logger.error("Invalid input types: expected a list of images and a list of strings.")
             return False
-        for black in black_list:
-            if black in base_image:
-                raise ValueError(
-                f"Compliance issue: the image: {base_image} is blacklisted for {black}"
-            )
+        
+        for image in base_image:
+            if not isinstance(image, str):
+                logger.warning(f"Skipping non-string image: {image}")
+                continue
+                
+            for black in black_list:
+                if black in image:
+                    raise ValueError(
+                        f"Compliance issue: the image: {image} is blacklisted for {black}"
+                    )
         return True

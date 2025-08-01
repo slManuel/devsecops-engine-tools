@@ -248,7 +248,7 @@ def test_write_image_base_success():
             }
         }
     }
-    base_image_tuple = (["python:3.9"], False)
+    base_image_tuple = ([["python:3.9"]], False)
     with patch("builtins.open", mock_open(read_data=mock_file_data)) as mock_file, \
          patch("json.dump") as mock_json_dump:
         scan_manager = PrismaCloudManagerScan()
@@ -290,7 +290,7 @@ def test_write_image_base_no_match():
     with patch("builtins.open", mock_open(read_data=mock_file_data)), \
          patch("json.dump") as mock_json_dump:
         scan_manager = PrismaCloudManagerScan()
-        scan_manager._write_image_base("result.json", (["python:3.9"], False), exclusions_data, remote_config)
+        scan_manager._write_image_base("result.json", ([["python:3.9"]], False), exclusions_data, remote_config)
 
         # Validar que el archivo no fue modificado
         mock_json_dump.assert_not_called()
@@ -316,7 +316,7 @@ def test_write_image_base_file_not_found():
     with patch("builtins.open", side_effect=FileNotFoundError):
         scan_manager = PrismaCloudManagerScan()
         with pytest.raises(FileNotFoundError):
-            scan_manager._write_image_base("result.json", (["python:3.9"], False), exclusions_data, remote_config)
+            scan_manager._write_image_base("result.json", ([["python:3.9"]], False), exclusions_data, remote_config)
 
 def test_valid_prisma_key():
     scan_manager = PrismaCloudManagerScan()
