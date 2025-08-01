@@ -19,7 +19,16 @@
     "GET_IMAGE_BASE": false,
     "VALIDATE_BASE_IMAGE_DATE": {
         "ENABLED": false,
-        "REFERENCE_IMAGE_DATE": "20250206"
+        "REFERENCE_IMAGE_DATE": "20250206",
+        "BASE_IMAGE_LABELS": [
+            "com.example.label1",
+            "com.example.label2"
+        ],
+        "LABEL_KEYS": {
+            "baseline_date": "x86.baseline.date",
+            "specific_use": "evc/uso_especifico",
+            "key_image_exception": "x86.image.name"
+        }
     },
     "BLACK_LIST_BASE_IMAGE": {
         "ENABLED": false,
@@ -27,10 +36,6 @@
             "/test/"
         ]
     },
-    "BASE_IMAGE_LABELS": [
-        "com.example.label1",
-        "com.example.label2"
-    ],
     "MESSAGE_INFO_ENGINE_CONTAINER": "engine_container run successfully",
     "IGNORE_SEARCH_PATTERN": "(.*_demo0|.*_cer)",
     "REGEX_CLEAN_END_PIPELINE_NAME": "",

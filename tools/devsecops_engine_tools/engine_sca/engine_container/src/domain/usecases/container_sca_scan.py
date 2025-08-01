@@ -123,7 +123,7 @@ class ContainerScaScan:
         Returns:
             String: base image.
         """
-        return self.tool_images.get_base_image(matching_image, self.remote_config["BASE_IMAGE_LABELS"])
+        return self.tool_images.get_base_image(matching_image, self.remote_config["VALIDATE_BASE_IMAGE_DATE"]["BASE_IMAGE_LABELS"])
 
     def _validate_base_image_date(self, matching_image, referenced_date):
         """
@@ -133,7 +133,7 @@ class ContainerScaScan:
             string: base image date.
         """
         return self.tool_images.validate_base_image_date(
-            matching_image, referenced_date, self.remote_config["BASE_IMAGE_LABELS"]
+            matching_image, referenced_date, self.remote_config["VALIDATE_BASE_IMAGE_DATE"]["BASE_IMAGE_LABELS"]
         )
 
     def _validate_black_list_base_image(self, base_image, black_list):

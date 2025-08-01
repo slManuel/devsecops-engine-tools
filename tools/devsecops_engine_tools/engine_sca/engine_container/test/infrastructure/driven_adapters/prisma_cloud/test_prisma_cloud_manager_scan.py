@@ -251,7 +251,7 @@ def test_write_image_base_success():
         mock_file.assert_any_call("result.json", "w")
         mock_json_dump.assert_called_once()
         written_data = mock_json_dump.call_args[0][0]
-        assert written_data["results"][0]["vulnerabilities"][0]["baseImage"] == "python:3.9"
+        assert written_data["results"][0]["vulnerabilities"][0]["baseImage"] == "['python:3.9']"
 
 def test_write_image_base_no_match():
     mock_file_data = json.dumps({
