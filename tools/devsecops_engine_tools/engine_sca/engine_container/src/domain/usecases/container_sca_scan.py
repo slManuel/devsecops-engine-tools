@@ -48,7 +48,7 @@ class ContainerScaScan:
         base_image = None
         image_scanned = None
         matching_image = self._get_image(self.image_to_scan)
-        if self.remote_config["GET_IMAGE_BASE"]:
+        if self.remote_config["GET_IMAGE_BASE"]["ENABLED"]:
             base_image = self._get_base_image(matching_image)
         if self.remote_config["VALIDATE_BASE_IMAGE_DATE"][
             "ENABLED"
@@ -123,7 +123,7 @@ class ContainerScaScan:
         Returns:
             String: base image.
         """
-        return self.tool_images.get_base_image(matching_image, self.remote_config["VALIDATE_BASE_IMAGE_DATE"]["BASE_IMAGE_LABELS"]), self.remote_config["VALIDATE_BASE_IMAGE_DATE"].get("LABEL_KEYS", None)
+        return self.tool_images.get_base_image(matching_image, self.remote_config["GET_IMAGE_BASE"]["BASE_IMAGE_LABELS"]), self.remote_config["GET_IMAGE_BASE"].get("LABEL_KEYS", None)
 
     def _validate_base_image_date(self, matching_image, referenced_date):
         """
@@ -135,8 +135,8 @@ class ContainerScaScan:
         return self.tool_images.validate_base_image_date(
             matching_image, 
             referenced_date, 
-            self.remote_config["VALIDATE_BASE_IMAGE_DATE"]["BASE_IMAGE_LABELS"],
-            self.remote_config["VALIDATE_BASE_IMAGE_DATE"].get("LABEL_KEYS")
+            self.remote_config["GET_IMAGE_BASE"]["BASE_IMAGE_LABELS"],
+            self.remote_config["GET_IMAGE_BASE"].get("LABEL_KEYS")
         )
 
     def _validate_black_list_base_image(self, base_image, black_list):
