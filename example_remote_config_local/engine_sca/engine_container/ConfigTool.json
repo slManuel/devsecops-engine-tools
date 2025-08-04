@@ -16,10 +16,22 @@
             "main"
         ]
     },
-    "GET_IMAGE_BASE": false,
+    "GET_IMAGE_BASE": {
+        "ENABLED": false,
+        "BASE_IMAGE_LABELS": [
+            "com.example.label1",
+            "com.example.label2"
+        ],
+        "LABEL_KEYS": {
+            "baseline_date": "x86.baseline.date",
+            "specific_use": "evc/uso_especifico",
+            "key_image_exception": "x86.image.name"
+        }
+    },
     "VALIDATE_BASE_IMAGE_DATE": {
         "ENABLED": false,
         "REFERENCE_IMAGE_DATE": "20250206"
+        
     },
     "BLACK_LIST_BASE_IMAGE": {
         "ENABLED": false,
