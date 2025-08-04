@@ -52,7 +52,17 @@ class TestHandleRisk(unittest.TestCase):
             "remote_config_repo": "test_repo",
             "remote_config_branch": ""
         }
-        config_tool = {"ENGINE_RISK": {"ENABLED": "true"}}
+        config_tool = {
+            "ENGINE_RISK": {
+                "ENABLED": "true"
+            },
+            "VULNERABILITY_MANAGER": {
+                "DEFECT_DOJO": {
+                    "HOST_DEFECT_DOJO": "https://vm.com",
+                    "PRINT_DOMAIN": ""
+                }
+            }
+        }
         self.remote_config_source_gateway.get_remote_config.return_value = {
             "PARENT_ANALYSIS": {"ENABLED": "true", "REGEX_GET_PARENT": "^.*?_id"},
             "HANDLE_SERVICE_NAME": {
