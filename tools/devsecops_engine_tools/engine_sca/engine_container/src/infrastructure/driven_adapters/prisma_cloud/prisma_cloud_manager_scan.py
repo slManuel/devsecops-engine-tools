@@ -107,7 +107,7 @@ class PrismaCloudManagerScan(ToolGateway):
             base_image_list = base_image[0][0] if base_image and base_image[0][0] else []
             
             
-            key_image_exception = remoteconfig.get("VALIDATE_BASE_IMAGE_DATE", {}).get("LABEL_KEYS", {}).get("key_image_exception", None)
+            key_image_exception = remoteconfig.get("GET_IMAGE_BASE", {}).get("LABEL_KEYS", {}).get("key_image_exception", None)
             
             for result in data.get("results", []):
                 for vulnerability in result.get("vulnerabilities", []):

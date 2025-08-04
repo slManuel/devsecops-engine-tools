@@ -22,7 +22,7 @@ class SetInputCore:
 
             for item in value[tool]:
                 if key == "All":
-                    key_image_exception = self.remote_config.get("VALIDATE_BASE_IMAGE_DATE", {}).get("LABEL_KEYS", {}).get("key_image_exception", None)
+                    key_image_exception = self.remote_config.get("GET_IMAGE_BASE", {}).get("LABEL_KEYS", {}).get("key_image_exception", None)
                     source_images = item.get(key_image_exception, [])
                     if source_images and not base_image_list:
                         continue
