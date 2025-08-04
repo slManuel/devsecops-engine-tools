@@ -4,7 +4,7 @@
   "displayName": "DevSecOps Engine Tools",
   "publisher": "GrupoBancolombiaOSPO",
   "description": "",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "engines": {
     "vscode": "^1.95.0"
   },
@@ -117,13 +117,19 @@
           "devsecops.dependencies.xrayMode": {
             "type": "string",
             "default": "audit",
-            "enum": ["audit", "scan"],
+            "enum": [
+              "audit",
+              "scan"
+            ],
             "description": "Dependency scan mode with JFrog Xray (audit = dependency tree scanning, scan = compiled file scan)"
           },
           "devsecops.dependencies.dependenciesTool": {
             "type": "string",
             "default": "xray",
-            "enum": ["xray", "dependency_check"],
+            "enum": [
+              "xray",
+              "dependency_check"
+            ],
             "description": "Dependency Scan Tool to use"
           },
           "devsecops.dependencies.dependencyCheckDatabase": {
@@ -167,12 +173,20 @@
         "title": "Explain Vulnerability with GitHub Copilot"
       },
       {
+        "command": "devsecops.showGeneralFindingWebview",
+        "title": "Show Finding Details"
+      },
+      {
         "command": "devsecops.generateDependencyUpdate",
         "title": "Generate Dependency Update Solution"
       },
       {
         "command": "devsecops.autoFixDependenciesWithAgent",
         "title": "Auto-Fix Dependencies with Copilot Agent"
+      },
+      {
+        "command": "devsecops.deleteScanResult",
+        "title": "Delete Scan Result"
       }
     ],
     "menus": {
@@ -205,6 +219,31 @@
           "group": "copilot@2"
         },
         {
+          "command": "devsecops.fixVulnerabilityWithCopilot",
+          "when": "view == devsecops && viewItem == engine_iac",
+          "group": "copilot@1"
+        },
+        {
+          "command": "devsecops.explainVulnerabilityWithCopilot",
+          "when": "view == devsecops && viewItem == engine_iac",
+          "group": "copilot@2"
+        },
+        {
+          "command": "devsecops.showGeneralFindingWebview",
+          "when": "view == devsecops && viewItem == engine_iac",
+          "group": "details@1"
+        },
+        {
+          "command": "devsecops.fixVulnerabilityWithCopilot",
+          "when": "view == devsecops && viewItem == engine_secrets",
+          "group": "copilot@1"
+        },
+        {
+          "command": "devsecops.explainVulnerabilityWithCopilot",
+          "when": "view == devsecops && viewItem == engine_secrets",
+          "group": "copilot@2"
+        },
+        {
           "command": "devsecops.generateDependencyUpdate",
           "when": "view == devsecops && viewItem == findingItem-dependencies",
           "group": "copilot@3"
@@ -213,6 +252,16 @@
           "command": "devsecops.autoFixDependenciesWithAgent",
           "when": "view == devsecops && viewItem == findingItem-dependencies",
           "group": "copilot@4"
+        },
+        {
+          "command": "devsecops.showGeneralFindingWebview",
+          "when": "view == devsecops && viewItem == engine_secrets",
+          "group": "details@1"
+        },
+        {
+          "command": "devsecops.deleteScanResult",
+          "when": "view == devsecops && viewItem == scanResult",
+          "group": "management@1"
         }
       ]
     }

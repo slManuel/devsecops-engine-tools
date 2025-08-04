@@ -8,30 +8,123 @@
 ![Rating](https://img.shields.io/jetbrains/plugin/r/rating/25069-devsecops-engine-tools)
 ![Version](https://img.shields.io/jetbrains/plugin/v/25069-devsecops-engine-tools)
 
+---
 
-# Description
+## 🚀 Description
 
-Visual Studio Code plugin that allows you to run DevSecOps Engine Tools from the IDE.
+**DevSecOps Engine Tools** is a Visual Studio Code extension developed by Bancolombia to detect security vulnerabilities early in the development lifecycle without depending solely on pipelines.
+
+It enables static scans for **Infrastructure as Code (IaC)**, **Container Images**, and **Dependencies**, using custom and industry-recognized tools. It highlights vulnerable lines in the code, suggests fixes with GitHub Copilot, and presents interactive results.
 
 ---
 
-## Following extension guidelines
+## 📦 Key Features 
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+### 🛠️ Infrastructure as Code (IaC)
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+- Scan files such as Terraform, Dockerfiles, Kubernetes manifests, and CloudFormation templates
+- File-based findings panel
+- Highlights the vulnerable line directly in the editor
+- Hover support for vulnerability details and contextual Copilot fix
+- Support for environment variable substitution (as in pipeline configs)
+- Executed using [**Checkov**](https://www.checkov.io/) 
 
-## Working with Markdown
+### 🐳 Container
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+- Scans locally available container images
+- Displays scan findings per image
+- Right-side panel with detailed vulnerability info for the selected image
+- Executed using [**Trivy**](https://github.com/aquasecurity/trivy)
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+### 📦 Dependencies
 
-## For more information
+- Analyze project dependencies with:
+  - [JFrog Xray](https://jfrog.com/xray/)
+  - [OWASP Dependency-Check](https://owasp.org/www-project-dependency-check/)
+- Detect known CVEs in third-party libraries
+- Compatible with Maven, Gradle, npm, yarn, etc.
+- Includes impact path to determine transitive vs direct vulnerabilities
+- Organized panel with detailed information and suggested updates
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+---
 
-**Enjoy!**
+## 🤖 AI Assistant Actions
+
+Take advantage of the integration with **GitHub Copilot** for an intelligent, assisted security workflow:
+
+### 1. 💡 Fix with Copilot  
+- **Color:** Blue
+- **Icon:** 💡
+- **Function:**
+  - Generates a contextual prompt for GitHub Copilot to help fix the vulnerability
+  - Includes vulnerability details specific to:
+    - Dependencies → impact path & affected libraries
+    - Containers → image context & Dockerfile snippet
+    - IaC → validation rules for the vulnerable resource
+
+### 2. ℹ️ Explain Vulnerability  
+- **Color:** Purple
+- **Icon:** ℹ️
+- **Function:**
+  - Generates a prompt for GitHub Copilot to explain the vulnerability
+  - Provides educational context about the type of issue
+  - Details potential impact and security risks
+  - Helps you understand the issue before taking action
+
+### 3. 📦 Generate Update Solution *(Dependencies Only)*  
+- **Color:** Orange
+- **Icon:** 📦
+- **Function:**
+  - Specific for dependency vulnerabilities
+  - Generates CLI commands to update affected libraries
+  - Shows which direct dependencies need upgrading
+  - Suggests `npm`, `yarn`, or `maven` commands based on project type
+
+### 4. 🤖 Auto-Fix with Agent *(Dependencies Only)*  
+- **Color:** Green
+- **Icon:** 🤖
+- **Function:**
+  - Requires GitHub Copilot Agent mode
+  - Tries to apply fixes semi-automatically
+  - Scans files like `package.json`, `pom.xml`, etc.
+  - Generates a complete prompt with contextual details
+  - Suggests direct file changes
+
+---
+
+## 📥 Installation
+
+1. Install the extension from the [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=bancolombia.devsecops-engine-tools)
+2. Requirements:
+   - ✅ [WSL](https://learn.microsoft.com/en-us/windows/wsl/install)
+   - ✅ Docker or Podman
+3. Setup:
+   - Enable Docker before scanning containers
+   - Grant internet access for CVE updates (Dependency-Check/Xray)
+4. Launch:
+   - Open a folder in VSCode
+   - Select the desired scan (IaC, Container, Dependencies)
+   - View and interact with results from the left sidebar
+
+---
+
+## 🧪 Usage Considerations
+
+- Vulnerabilities are shown by file, line, and severity
+- Validate that results shown in the webview match the expected file and line
+- Use workspace settings for advanced configs:
+  - Custom variables
+  - Scanner arguments
+  - Exclusion rules
+- Copilot support is context-aware; use it to get the most helpful fix suggestions
+
+---
+## 📚 Additional Resources
+
+- [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+- [Visual Studio Code Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
+- [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+
+---
+
+**Thanks for being part of the shift toward secure development from day one!**

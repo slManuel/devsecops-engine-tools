@@ -5,8 +5,7 @@ import { FindingItem } from "./results/finding/FindingItem";
 import { Finding } from "../domain/model/Finding";
 
 export class DevSecOpsTreeDataProvider
-  implements vscode.TreeDataProvider<vscode.TreeItem>
-{
+  implements vscode.TreeDataProvider<vscode.TreeItem> {
   private _onDidChangeTreeData: vscode.EventEmitter<
     vscode.TreeItem | undefined | null | void
   > = new vscode.EventEmitter<vscode.TreeItem | undefined | null | void>();
@@ -46,6 +45,14 @@ export class DevSecOpsTreeDataProvider
     );
 
     this.refresh();
+  }
+
+  public deleteScanResult(scanResult: ScanResultItem): void {
+    const index = this.scanResults.indexOf(scanResult);
+    if (index > -1) {
+      this.scanResults.splice(index, 1);
+      this.refresh();
+    }
   }
 
   getChildren(element?: vscode.TreeItem): Thenable<vscode.TreeItem[]> {

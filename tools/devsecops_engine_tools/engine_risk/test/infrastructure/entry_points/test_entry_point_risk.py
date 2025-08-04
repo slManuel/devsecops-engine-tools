@@ -30,7 +30,6 @@ def test_init_engine_risk(
     # Configurar la instancia de HandleFilters correctamente
     instance_handle_filters = mock_handle_filters.return_value
     instance_handle_filters.filter.return_value = findings
-    instance_handle_filters.filter_duplicated.return_value = findings
     instance_handle_filters.filter_tags_days.return_value = ("filtered_findings", 0)
 
     # Configurar la instancia de GetExclusions correctamente
@@ -50,7 +49,6 @@ def test_init_engine_risk(
 
     assert mock_remote_config_source_gateway.get_remote_config.call_count == 2
     instance_handle_filters.filter.assert_called_once_with(findings)
-    instance_handle_filters.filter_duplicated.assert_called_once()
     instance_handle_filters.filter_tags_days.assert_called_once()
     mock_add_data.assert_called_once()
     mock_get_exclusions.assert_called_once()
