@@ -30,7 +30,7 @@
     },
     "VALIDATE_BASE_IMAGE_DATE": {
         "ENABLED": false,
-        "REFERENCE_IMAGE_DATE": "20250206",
+        "REFERENCE_IMAGE_DATE": "20250206"
         
     },
     "BLACK_LIST_BASE_IMAGE": {
