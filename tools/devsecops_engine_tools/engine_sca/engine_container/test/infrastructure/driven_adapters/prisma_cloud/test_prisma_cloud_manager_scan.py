@@ -242,7 +242,7 @@ def test_write_image_base_success():
         }
     }
     remote_config = {
-        "VALIDATE_BASE_IMAGE_DATE": {
+        "GET_IMAGE_BASE": {
             "LABEL_KEYS": {
                 "key_image_exception": "x86.image.name"
             }
