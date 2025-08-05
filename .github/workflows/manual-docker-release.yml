@@ -23,7 +23,48 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
 
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y make git
+
+      - name: Clone specific version of KICS
+        run: |
+          git clone https://github.com/Checkmarx/kics.git /tmp/kics
+          cd /tmp/kics
+          git checkout tags/$KICS_VERSION
+        env:
+          KICS_VERSION: ${{ vars.VAR_KICS_VERSION }}
+
+      - name: Run go mod vendor
+        working-directory: /tmp/kics
+        run: go mod vendor
+
+      - name: Build KICS binary
+        working-directory: /tmp/kics
+        run: |
+          mkdir -p bin
+          go build -o ./bin/kics cmd/console/main.go
+      - name: Validate KICS
+        run: |
+          if [ ! -f /tmp/kics/bin/kics ]; then
+            echo "Error: KICS binary was not generated"
+            exit 1
+          fi
+          file /tmp/kics/bin/kics
+          chmod +x /tmp/kics/bin/kics
+          /tmp/kics/bin/kics version || echo "Error: KICS compiled, but does not run correctly"
+      - name: Move KICS binary to custom folder
+        run: |
+          mkdir -p ./kics_binary/kics-devsecops
+          cp /tmp/kics/bin/kics ./kics_binary/kics-devsecops/
+          ls -la ./kics_binary
+          ls -la ./kics_binary/kics-devsecops
+          
       - name: Build and tag Docker image
         timeout-minutes: 3
         run: |

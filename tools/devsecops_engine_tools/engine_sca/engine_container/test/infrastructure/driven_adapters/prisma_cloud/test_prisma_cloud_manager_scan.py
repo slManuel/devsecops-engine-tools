@@ -241,16 +241,24 @@ def test_write_image_base_success():
             ]
         }
     }
+    remote_config = {
+        "GET_IMAGE_BASE": {
+            "LABEL_KEYS": {
+                "key_image_exception": "x86.image.name"
+            }
+        }
+    }
+    base_image_tuple = ([["python:3.9"]], False)
     with patch("builtins.open", mock_open(read_data=mock_file_data)) as mock_file, \
          patch("json.dump") as mock_json_dump:
         scan_manager = PrismaCloudManagerScan()
-        scan_manager._write_image_base("result.json", "python:3.9", exclusions_data)
+        scan_manager._write_image_base("result.json", base_image_tuple, exclusions_data, remote_config)
 
-        # Validar que el archivo fue modificado
-        mock_file.assert_called_with("result.json", "w")
+        mock_file.assert_any_call("result.json", "r")
+        mock_file.assert_any_call("result.json", "w")
         mock_json_dump.assert_called_once()
         written_data = mock_json_dump.call_args[0][0]
-        assert written_data["results"][0]["vulnerabilities"][0]["baseImage"] == "python:3.9"
+        assert written_data["results"][0]["vulnerabilities"][0]["baseImage"] == "['python:3.9']"
 
 def test_write_image_base_no_match():
     mock_file_data = json.dumps({
@@ -272,10 +280,17 @@ def test_write_image_base_no_match():
             ]
         }
     }
+    remote_config = {
+        "VALIDATE_BASE_IMAGE_DATE": {
+            "LABEL_KEYS": {
+                "key_image_exception": "x86.image.name"
+            }
+        }
+    }
     with patch("builtins.open", mock_open(read_data=mock_file_data)), \
          patch("json.dump") as mock_json_dump:
         scan_manager = PrismaCloudManagerScan()
-        scan_manager._write_image_base("result.json", "python:3.9", exclusions_data)
+        scan_manager._write_image_base("result.json", ([["python:3.9"]], False), exclusions_data, remote_config)
 
         # Validar que el archivo no fue modificado
         mock_json_dump.assert_not_called()
@@ -291,10 +306,17 @@ def test_write_image_base_file_not_found():
             ]
         }
     }
+    remote_config = {
+        "VALIDATE_BASE_IMAGE_DATE": {
+            "LABEL_KEYS": {
+                "key_image_exception": "x86.image.name"
+            }
+        }
+    }
     with patch("builtins.open", side_effect=FileNotFoundError):
         scan_manager = PrismaCloudManagerScan()
         with pytest.raises(FileNotFoundError):
-            scan_manager._write_image_base("result.json", "python:3.9", exclusions_data)
+            scan_manager._write_image_base("result.json", ([["python:3.9"]], False), exclusions_data, remote_config)
 
 def test_valid_prisma_key():
     scan_manager = PrismaCloudManagerScan()
@@ -320,4 +342,3 @@ def test_extra_colon_prisma_key():
     prisma_key = "your_access_key:your_secret_key:extra"
     with pytest.raises(ValueError, match="The string is not properly formatted. Make sure it contains a ':'."):
         scan_manager._split_prisma_token(prisma_key)
-    

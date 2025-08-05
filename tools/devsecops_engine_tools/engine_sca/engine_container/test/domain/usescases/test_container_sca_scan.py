@@ -61,7 +61,6 @@ def test_get_images_already_scanned(container_sca_scan):
     ) as mock_open:
         mock_path_join.return_value = "/path/to/scanned_images.txt"
         mock_path_exists.return_value = False
-        mock_open.return_value = MagicMock()
         container_sca_scan._get_images_already_scanned()
         assert mock_open.call_count == 2
 
@@ -139,28 +138,41 @@ def test_deserialize(container_sca_scan):
         "finding2",
     ]
     assert container_sca_scan.deseralizator("image_scanned") == ["finding1", "finding2"]
+
+
 def test_validate_black_list_base_image_calls_tool_images(container_sca_scan):
-  
-    base_image = "ubuntu:latest"
+    base_image = (["ubuntu:latest"], False)
     black_list = ["alpine:3.12", "ubuntu:14.04"]
-    container_sca_scan.tool_images.validate_black_list_base_image = MagicMock(return_value="not_blacklisted")
+    container_sca_scan.tool_images.validate_black_list_base_image = MagicMock()
 
-    
-    result = container_sca_scan._validate_black_list_base_image(base_image, black_list)
+    container_sca_scan._validate_black_list_base_image(base_image, black_list)
 
-    container_sca_scan.tool_images.validate_black_list_base_image.assert_called_once_with(base_image, black_list)
-    assert result == "not_blacklisted"
+    container_sca_scan.tool_images.validate_black_list_base_image.assert_called_once_with(
+        "ubuntu:latest", black_list  
+    )
 
 
 def test_validate_black_list_base_image_blacklisted(container_sca_scan):
-  
-    base_image = "alpine:3.12"
+    base_image = (["alpine:3.12"], False)
     black_list = ["alpine:3.12", "ubuntu:14.04"]
-    container_sca_scan.tool_images.validate_black_list_base_image = MagicMock(return_value="blacklisted")
+    container_sca_scan.tool_images.validate_black_list_base_image = MagicMock(
+        side_effect=ValueError("blacklisted")
+    )
 
-   
+    with pytest.raises(ValueError, match="blacklisted"):
+        container_sca_scan._validate_black_list_base_image(base_image, black_list)
+
+    container_sca_scan.tool_images.validate_black_list_base_image.assert_called_once_with(
+        "alpine:3.12", black_list  
+    )
+
+
+def test_validate_black_list_base_image_no_base_image(container_sca_scan):
+    base_image = ([], False)
+    black_list = ["alpine:3.12", "ubuntu:14.04"]
+    container_sca_scan.tool_images.validate_black_list_base_image = MagicMock()
+
     result = container_sca_scan._validate_black_list_base_image(base_image, black_list)
 
-   
-    container_sca_scan.tool_images.validate_black_list_base_image.assert_called_once_with(base_image, black_list)
-    assert result == "blacklisted"
+    container_sca_scan.tool_images.validate_black_list_base_image.assert_not_called()
+    assert result is True

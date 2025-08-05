@@ -12,7 +12,13 @@ from devsecops_engine_tools.engine_sca.engine_container.src.domain.usecases.set_
 
 @pytest.fixture
 def mock_tool_remote():
-    return Mock(spec=DevopsPlatformGateway)
+    return {
+        "VALIDATE_BASE_IMAGE_DATE": {
+            "LABEL_KEYS": {
+                "key_image_exception": "source_images"
+            }
+        }
+    }
 
 
 def test_get_exclusions(mock_tool_remote):
@@ -52,7 +58,7 @@ def test_get_exclusions(mock_tool_remote):
             },
         }
     pipeline_name = "repository_test"
-    base_image = "base_image:latest"  
+    base_image = [["base_image:latest"]]  # Format as expected by the code
 
     
     set_input_core = SetInputCore(mock_tool_remote, None, pipeline_name, "PRISMA", "release")
@@ -80,7 +86,7 @@ def test_get_exclusions_for_specific_pipeline(mock_tool_remote):
         }
     }
     pipeline_name = "pipeline_specific"
-    base_image = "base_image:latest"  
+    base_image = [["base_image:latest"]]  # Format as expected by the code
     set_input_core = SetInputCore(
         mock_tool_remote, None, pipeline_name, "PRISMA", "release"
     )
@@ -109,7 +115,7 @@ def test_get_exclusions_no_matching_exclusions(mock_tool_remote):
         }
     }
     pipeline_name = "my_pipeline"
-    base_image =  "base_image:latest"
+    base_image = [["base_image:latest"]]  # Format as expected by the code
     set_input_core = SetInputCore(
         mock_tool_remote, None, pipeline_name, "PRISMA", "release"
     )
