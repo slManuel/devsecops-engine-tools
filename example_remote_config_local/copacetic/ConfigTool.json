@@ -1,0 +1,23 @@
+{
+  "IGNORE_SEARCH_PATTERN": "(?i).*(?:test|demo|sample).*",
+  "TARGET_BRANCHES": ["main", "master", "develop", "release"],
+  "TIMEOUT": 1800,
+  "SECRETS": {
+    "TOKEN_REGISTRY": "copacetic-registry-token"
+  },
+  "DEFAULT_OUTPUT_SUFFIX": "-patched",
+  "SUPPORTED_FORMATS": ["trivy", "grype"],
+  "REGISTRY_CONFIG": {
+    "REGISTRY_URL": "registry.hub.docker.com",
+    "AUTH_REQUIRED": true
+  },
+  "BUILDKIT_CONFIG": {
+    "DEFAULT_ADDR": "docker-container://buildkit",
+    "TIMEOUT": 600
+  },
+  "PATCH_CONFIG": {
+    "CREATE_SBOM": true,
+    "VERIFY_PATCHES": true,
+    "CLEAN_TEMP_FILES": true
+  }
+}

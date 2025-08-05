@@ -1,0 +1,9 @@
+{
+  "test-pipeline": "Pipeline for testing purposes only",
+  "demo-application": "Demo application - not for production",
+  "BY_PATTERN_SEARCH": {
+    ".*-test$": "Test pipelines pattern",
+    "^temp-.*": "Temporary pipelines pattern",
+    ".*-poc$": "Proof of concept pipelines"
+  }
+}

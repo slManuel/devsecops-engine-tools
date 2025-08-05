@@ -33,7 +33,7 @@ def get_inputs_from_cli(args):
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--integration",
-        choices=["report_sonar"],
+        choices=["report_sonar", "copacetic"],
         type=str,
         required=True,
         help="Name of the integration to run",
@@ -109,6 +109,44 @@ def get_inputs_from_cli(args):
         required=False,
         help="Token to access sonar server",
     )
+    # copacetic flags
+    parser.add_argument(
+        "--container_image",
+        required=False,
+        help="Container image to patch with Copacetic",
+    )
+    parser.add_argument(
+        "--vulnerability_report",
+        required=False,
+        help="Path to vulnerability report file for Copacetic",
+    )
+    parser.add_argument(
+        "--token_registry",
+        required=False,
+        help="Token to access container registry",
+    )
+    parser.add_argument(
+        "--registry_url",
+        required=False,
+        help="Container registry URL",
+    )
+    parser.add_argument(
+        "--output_image",
+        required=False,
+        help="Output image name for patched container",
+    )
+    parser.add_argument(
+        "--patch_format",
+        choices=["trivy", "grype"],
+        type=str,
+        required=False,
+        help="Vulnerability report format for Copacetic",
+    )
+    parser.add_argument(
+        "--buildkit_addr",
+        required=False,
+        help="BuildKit daemon address for Copacetic",
+    )
 
     args = parser.parse_args()
     return {
@@ -124,6 +162,13 @@ def get_inputs_from_cli(args):
         "token_cmdb": args.token_cmdb,
         "token_vulnerability_management": args.token_vulnerability_management,
         "token_sonar": args.token_sonar,
+        "container_image": args.container_image,
+        "vulnerability_report": args.vulnerability_report,
+        "token_registry": args.token_registry,
+        "registry_url": args.registry_url,
+        "output_image": args.output_image,
+        "patch_format": args.patch_format,
+        "buildkit_addr": args.buildkit_addr,
     }
 
 def runner_engine_integrations():
