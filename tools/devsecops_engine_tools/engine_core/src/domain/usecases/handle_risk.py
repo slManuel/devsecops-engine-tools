@@ -208,16 +208,11 @@ class HandleRisk:
             dict_args, pipeline_name, service_list
         )
 
-        print_domain = remote_config["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["PRINT_DOMAIN"]
-        host_defect_dojo = remote_config["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["HOST_DEFECT_DOJO"]
         for engagement in new_service_list:
-            engagement_url = engagement.vm_url
-            if print_domain:
-                engagement_url = engagement.vm_url.replace(host_defect_dojo, print_domain)
-          
-            msg = f"Service to analyze: {engagement.name}, URL: {engagement_url}"
-            print(msg)
-            logger.info(msg)
+            print(f"Service to analyze: {engagement.name}, URL: {engagement.vm_url}")
+            logger.info(
+                f"Service to analyze: {engagement.name}, URL: {engagement.vm_url}"
+            )
 
         findings = []
         exclusions = []
