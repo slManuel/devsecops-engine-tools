@@ -39,6 +39,7 @@ class ContainerScaScan:
         self.context = context
 
     def _is_compressed_file(self, image_to_scan):
+        """Check if the input is a compressed file (tar, tar.gz, etc.)"""
         return any(
             image_to_scan.lower().endswith(ext) 
             for ext in ['.tar', '.tar.gz', '.tgz', '.tar.bz2', '.tar.xz']
