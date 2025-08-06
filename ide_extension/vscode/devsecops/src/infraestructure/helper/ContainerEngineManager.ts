@@ -19,13 +19,6 @@ export default class ContainerEngineManager {
     return engine.path;
   }
 
-  /**
-   * @deprecated Use getContainerEnginePath() instead
-   */
-  static getDockerPath(): string {
-    return this.getContainerEnginePath();
-  }
-
   static detectContainerEngine(): ContainerEngine {
     if (this.detectedEngine) {
       return this.detectedEngine;
