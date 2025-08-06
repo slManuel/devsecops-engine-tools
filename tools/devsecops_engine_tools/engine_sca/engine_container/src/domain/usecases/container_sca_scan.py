@@ -38,6 +38,12 @@ class ContainerScaScan:
         self.pipeline_name = pipeline_name
         self.context = context
 
+    def _is_compressed_file(self, image_to_scan):
+        return any(
+            image_to_scan.lower().endswith(ext) 
+            for ext in ['.tar', '.tar.gz', '.tgz', '.tar.bz2', '.tar.xz']
+        )
+
     def process(self):
         """
         Process SCA scanning.
@@ -47,51 +53,72 @@ class ContainerScaScan:
         """
         base_image = None
         image_scanned = None
-        matching_image = self._get_image(self.image_to_scan)
-        if self.remote_config["GET_IMAGE_BASE"]["ENABLED"]:
-            base_image = self._get_base_image(matching_image)
-        if self.remote_config["VALIDATE_BASE_IMAGE_DATE"][
-            "ENABLED"
-        ] and not self.exclusions.get(self.pipeline_name, {}).get(
-            "VALIDATE_BASE_IMAGE_DATE"
-        ):
-            self._validate_base_image_date(
-                matching_image,
-                self.remote_config["VALIDATE_BASE_IMAGE_DATE"]["REFERENCE_IMAGE_DATE"],
-            )
-        if self.remote_config["BLACK_LIST_BASE_IMAGE"][
-            "ENABLED"
-        ] and not self.exclusions.get(self.pipeline_name, {}).get(
-            "BLACK_LIST_BASE_IMAGE"
-        ):
-            self._validate_black_list_base_image(
-                base_image, self.remote_config["BLACK_LIST_BASE_IMAGE"]["BLACK_LIST"]
-            )
-
         sbom_components = None
+        
+        is_compressed_file = self._is_compressed_file(self.image_to_scan)
+        
+        if is_compressed_file:
+            if not os.path.exists(self.image_to_scan):
+                print(f"Compressed file not found: {self.image_to_scan}. Tool skipped.")
+                return image_scanned, base_image, sbom_components
+                
+            matching_image = None
+            image_name = self.image_to_scan
+            print(f"Processing compressed file: {image_name}")
+        else:
+            matching_image = self._get_image(self.image_to_scan)
+            if not matching_image:
+                print(f"'Not image found for {self.image_to_scan}'. Tool skipped.")
+                return image_scanned, base_image, sbom_components
+                
+            image_name = matching_image.tags[0]
+            
+            if self.remote_config["GET_IMAGE_BASE"]["ENABLED"]:
+                base_image = self._get_base_image(matching_image)
+            if self.remote_config["VALIDATE_BASE_IMAGE_DATE"][
+                "ENABLED"
+            ] and not self.exclusions.get(self.pipeline_name, {}).get(
+                "VALIDATE_BASE_IMAGE_DATE"
+            ):
+                self._validate_base_image_date(
+                    matching_image,
+                    self.remote_config["VALIDATE_BASE_IMAGE_DATE"]["REFERENCE_IMAGE_DATE"],
+                )
+            if self.remote_config["BLACK_LIST_BASE_IMAGE"][
+                "ENABLED"
+            ] and not self.exclusions.get(self.pipeline_name, {}).get(
+                "BLACK_LIST_BASE_IMAGE"
+            ):
+                self._validate_black_list_base_image(
+                    base_image, self.remote_config["BLACK_LIST_BASE_IMAGE"]["BLACK_LIST"]
+                )
+
         generate_sbom = self.remote_config["SBOM"]["ENABLED"] and any(
             branch in str(self.branch)
             for branch in self.remote_config["SBOM"]["BRANCH_FILTER"]
         )
-        if matching_image:
-            image_name = matching_image.tags[0]
-            result_file = image_name.replace("/", "_") + "_scan_result.json"
-            if image_name in self._get_images_already_scanned():
-                print(f"The image {image_name} has already been scanned previously.")
-                return image_scanned, base_image, sbom_components
-            image_scanned, sbom_components = self.tool_run.run_tool_container_sca(
-                self.remote_config,
-                self.secret_tool,
-                self.token_engine_container,
-                image_name,
-                result_file,
-                base_image,
-                self.exclusions,
-                generate_sbom,
-            )
+
+        result_file = image_name.replace("/", "_").replace(".", "_") + "_scan_result.json"
+        
+        if not is_compressed_file and image_name in self._get_images_already_scanned():
+            print(f"The image {image_name} has already been scanned previously.")
+            return image_scanned, base_image, sbom_components
+            
+        image_scanned, sbom_components = self.tool_run.run_tool_container_sca(
+            self.remote_config,
+            self.secret_tool,
+            self.token_engine_container,
+            image_name,
+            result_file,
+            base_image,
+            self.exclusions,
+            generate_sbom,
+            is_compressed_file,
+        )
+        
+        if not is_compressed_file:
             self._set_image_scanned(image_name)
-        else:
-            print(f"'Not image found for {self.image_to_scan}'. Tool skipped.")
+            
         return image_scanned, base_image, sbom_components
 
     def deseralizator(self, image_scanned):
