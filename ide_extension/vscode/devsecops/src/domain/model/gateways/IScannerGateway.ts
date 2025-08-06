@@ -7,7 +7,7 @@ export default interface IScannerGateway {
     outputChannel: OutputChannel,
     dockerImageName: string,
     toolVersion?: string,
-    dockerPath?: string,
+    containerEnginePath?: string,
     dependenciesToken?: string,
     xrayMode?: string,
     dependenciesTool?: string,

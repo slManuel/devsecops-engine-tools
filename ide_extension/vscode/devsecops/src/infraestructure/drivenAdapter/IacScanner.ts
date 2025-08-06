@@ -13,7 +13,7 @@ export class IacScanner implements IScannerGateway {
     outputChannel: OutputChannel,
     dockerImageName: string,
     toolVersion: string,
-    dockerPath: string
+    containerEnginePath: string
   ): Promise<ScannerRes> {
     outputChannel.clear();
     outputChannel.show();
@@ -23,13 +23,13 @@ export class IacScanner implements IScannerGateway {
 
       const timeout = setTimeout(() => {
         outputChannel.appendLine("Scan timed out after 2 minutes");
-        outputChannel.appendLine("Docker command may be hanging. Check Docker configuration.");
+        outputChannel.appendLine("Container command may be hanging. Check container engine configuration.");
         resolve(new ScannerRes(false, []));
       }, 120000);
 
-      const dockerCommand = `${dockerPath} run --rm -v ${elementToScan}:/ms_artifact ${dockerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo docker_default_remote_config --module engine_iac --tool checkov --folder_path /ms_artifact --context true"`;
+      const containerCommand = `${containerEnginePath} run --rm -v ${elementToScan}:/ms_artifact ${dockerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo docker_default_remote_config --module engine_iac --tool checkov --folder_path /ms_artifact --context true"`;
 
-      const childProcess = exec(dockerCommand, (error, stdout, stderr) => {
+      const childProcess = exec(containerCommand, (error, stdout, stderr) => {
         clearTimeout(timeout);
         if (error) {
           this.errorHandler(outputChannel, error, stderr);
@@ -89,7 +89,7 @@ export class IacScanner implements IScannerGateway {
 
       childProcess.on("exit", (code) => {
         if (code !== 0 && code !== null) {
-          outputChannel.appendLine(`Docker process exited with code ${code}`);
+          outputChannel.appendLine(`Container process exited with code ${code}`);
         }
       });
     });
@@ -110,9 +110,9 @@ export class IacScanner implements IScannerGateway {
 
   private errorHandler(outputChannel: OutputChannel, error: Error, stderr: string): void {
     outputChannel.appendLine(`Error: ${error.message}`);
-    outputChannel.appendLine("Please check your Docker configuration and try again.");
+    outputChannel.appendLine("Please check your container engine configuration and try again.");
     if (stderr.includes("Unable to find image")) {
-      outputChannel.appendLine("Docker image not found. Attempting to download...");
+      outputChannel.appendLine("Container image not found. Attempting to download...");
     } else {
       outputChannel.appendLine(`Standard Error: ${stderr}`);
       outputChannel.appendLine("Attempting to process partial results...");

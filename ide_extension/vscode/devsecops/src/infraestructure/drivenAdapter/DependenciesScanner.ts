@@ -12,7 +12,7 @@ export class DependenciesScanner implements IScannerGateway {
     outputChannel: OutputChannel,
     dockerImageName: string,
     toolVersion: string,
-    dockerPath: string,
+    containerEnginePath: string,
     dependenciesToken: string,
     xrayMode: string,
     dependenciesTool: string,
@@ -29,7 +29,7 @@ export class DependenciesScanner implements IScannerGateway {
       const timeout = setTimeout(() => {
         outputChannel.appendLine("Scan timed out after 2 minutes");
         outputChannel.appendLine(
-          "Docker command may be hanging. Check Docker configuration."
+          "Container command may be hanging. Check container engine configuration."
         );
         resolve(new ScannerRes(false, []));
       }, 12000000);
@@ -43,17 +43,17 @@ export class DependenciesScanner implements IScannerGateway {
           dependencyCheckDatabaseVolume = `-v ${dependencyCheckDatabase}:/root/dependency-check`;
       }
 
-      const dockerCommand = `${dockerPath} run --rm ${dependencyCheckDatabaseVolume} -v ${elementToScan}:/ms_artifact ${dockerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --xray_mode ${xrayMode} --remote_config_repo docker_default_remote_config --module engine_dependencies --tool ${dependenciesTool} --token_engine_dependencies ${dependenciesToken} --folder_path /ms_artifact --context true"`;
+      const containerCommand = `${containerEnginePath} run --rm ${dependencyCheckDatabaseVolume} -v ${elementToScan}:/ms_artifact ${dockerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --xray_mode ${xrayMode} --remote_config_repo docker_default_remote_config --module engine_dependencies --tool ${dependenciesTool} --token_engine_dependencies ${dependenciesToken} --folder_path /ms_artifact --context true"`;
 
-      const childProcess = exec(dockerCommand, (error, stdout, stderr) => {
+      const childProcess = exec(containerCommand, (error, stdout, stderr) => {
         clearTimeout(timeout);
         if (error) {
           outputChannel.appendLine(
-            `Error executing Docker command: ${error.message}`
+            `Error executing container command: ${error.message}`
           );
           if (stderr.includes("Unable to find image")) {
             outputChannel.appendLine(
-              "Docker image not found. Attempting to download..."
+              "Container image not found. Attempting to download..."
             );
           } else {
             outputChannel.appendLine(`Standard Error: ${stderr}`);
@@ -112,7 +112,7 @@ export class DependenciesScanner implements IScannerGateway {
           outputChannel.appendLine(cleanedOutput);
           outputChannel.appendLine(`Found ${findings.length} issues in scan`);
         } else {
-          outputChannel.appendLine("Docker command completed with no output");
+          outputChannel.appendLine("Container command completed with no output");
         }
 
         resolve(new ScannerRes(scanResult, findings));
@@ -120,7 +120,7 @@ export class DependenciesScanner implements IScannerGateway {
 
       childProcess.on("exit", (code) => {
         if (code !== 0 && code !== null) {
-          outputChannel.appendLine(`Docker process exited with code ${code}`);
+          outputChannel.appendLine(`Container process exited with code ${code}`);
         }
       });
     });

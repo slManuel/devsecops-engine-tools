@@ -337,7 +337,6 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "docker-cli-js": "^2.10.0",
     "generator-code": "^1.11.9",
     "keytar": "^7.9.0",
     "lodash": "^4.17.21"

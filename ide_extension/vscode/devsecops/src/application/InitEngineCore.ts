@@ -8,7 +8,7 @@ import { ImageScanUseCase } from "../domain/usecase/ImageScanUseCase";
 import { DependenciesScanUseCase } from "../domain/usecase/DependenciesScanUseCase";
 import { DependenciesScanRequest } from "../infraestructure/entryPoint/DependenciesScanRequest";
 import { DependenciesScanner } from "../infraestructure/drivenAdapter/DependenciesScanner";
-import DockerPathDetector from "../infraestructure/helper/DockerPathDetector";
+import ContainerEngineManager from "../infraestructure/helper/ContainerEngineManager";
 import { ScanConfiguration } from "../domain/model/ScanConfiguration";
 
 interface IResult {
@@ -23,23 +23,23 @@ interface IDockerApiResponse {
 }
 
 export async function iacScanRequest(): Promise<IacScanRequest> {
-    const dockerPath = DockerPathDetector.getDockerPath();
+    const containerEnginePath = ContainerEngineManager.getContainerEnginePath();
     const dockerImageVersion = await getLatestDockerImageVersion();
-    const iacScanUseCase = new IacScanUseCase(new IacScanner(), new RestClient(), dockerImageVersion, dockerPath);
+    const iacScanUseCase = new IacScanUseCase(new IacScanner(), new RestClient(), dockerImageVersion, containerEnginePath);
     return new IacScanRequest(iacScanUseCase);
 }
 
 export async function imageScanRequest(): Promise<ImageScanRequest>{
-    const dockerPath = DockerPathDetector.getDockerPath();
+    const containerEnginePath = ContainerEngineManager.getContainerEnginePath();
     const dockerImageVersion = await getLatestDockerImageVersion();
-    const imageScanUseCase = new ImageScanUseCase(new ImageScanner(), dockerImageVersion, dockerPath);
+    const imageScanUseCase = new ImageScanUseCase(new ImageScanner(), dockerImageVersion, containerEnginePath);
     return new ImageScanRequest(imageScanUseCase);
 }
 
 export async function dependenciesScanRequest(): Promise<DependenciesScanRequest> {
-    const dockerPath = DockerPathDetector.getDockerPath();
+    const containerEnginePath = ContainerEngineManager.getContainerEnginePath();
     const dockerImageVersion = await getLatestDockerImageVersion();
-    const dependenciesScanUseCase = new DependenciesScanUseCase(new DependenciesScanner(), dockerImageVersion, dockerPath);
+    const dependenciesScanUseCase = new DependenciesScanUseCase(new DependenciesScanner(), dockerImageVersion, containerEnginePath);
     return new DependenciesScanRequest(dependenciesScanUseCase);
 }
 
