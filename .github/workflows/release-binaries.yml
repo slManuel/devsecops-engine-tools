@@ -8,6 +8,8 @@ on:
     branches:
       - trunk
       - feature/*
+  release:
+    types: [published]
 
 jobs:
   build-release-artifacts:
@@ -82,11 +84,11 @@ jobs:
       # Zip artifacts
       - name: Zip Artifact (Windows)
         if: matrix.os == 'windows-latest'
-        run: tar.exe -a -c -f devsecops-engine-tools.zip dist\\devsecops-engine-tools${{ matrix.suffix }}
+        run: tar.exe -a -c -f devsecops-engine-tools-${{ matrix.name }}.zip dist\devsecops-engine-tools${{ matrix.suffix }}
 
       - name: Zip Artifact (Linux/macOS)
         if: matrix.os != 'windows-latest'
-        run: zip devsecops-engine-tools.zip dist/devsecops-engine-tools${{ matrix.suffix }}
+        run: zip devsecops-engine-tools-${{ matrix.name }}.zip dist/devsecops-engine-tools${{ matrix.suffix }}
 
       - name: Upload Artifact
         if: startsWith(github.ref, 'refs/heads/trunk')
@@ -94,3 +96,11 @@ jobs:
         with:
           name: devsecops-engine-tools-${{ matrix.os }}
           path: dist/devsecops-engine-tools*
+
+      - name: Upload Release Asset
+        if: github.event_name == 'release' && github.event.action == 'published'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: devsecops-engine-tools-${{ matrix.name }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
