@@ -10,12 +10,6 @@ on:
       - feature/*
   release:
     types: [published]
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag name to build and upload assets for (e.g., v1.2.3)'
-        required: true
-        type: string
 
 jobs:
   build-release-artifacts:
@@ -42,7 +36,7 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-          ref: ${{ inputs.tag || github.ref_name }}
+          ref: ${{ github.event.release.tag_name || github.ref_name }}
 
       # Linux: Build inside Docker container with Ubuntu 20.04
       - name: Build binary on Ubuntu 20.04 container
@@ -105,10 +99,10 @@ jobs:
           path: dist/devsecops-engine-tools*
 
       - name: Upload Release Asset
-        if: (github.event_name == 'release' && github.event.action == 'published') || (github.event_name == 'workflow_dispatch')
+        if: github.event_name == 'release' && github.event.action == 'published'
         uses: softprops/action-gh-release@v2
         with:
           files: devsecops-engine-tools-${{ matrix.name }}.zip
-          tag_name: ${{ github.event.release.tag_name || inputs.tag }}
+          tag_name: ${{ github.event.release.tag_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
