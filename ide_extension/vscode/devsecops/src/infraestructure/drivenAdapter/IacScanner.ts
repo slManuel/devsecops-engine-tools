@@ -6,28 +6,43 @@ import { Finding } from "../../domain/model/Finding";
 
 import { exec, execSync } from "child_process";
 import { IIacContext, Mappers } from "../../domain/model/mappers/Mappers";
+import { ScannerImageManager } from "../helper/ScannerImageManager";
 
 export class IacScanner implements IScannerGateway {
   async scan(
     elementToScan: string,
     outputChannel: OutputChannel,
-    dockerImageName: string,
+    containerImageName: string,
     toolVersion: string,
     containerEnginePath: string
   ): Promise<ScannerRes> {
     outputChannel.clear();
     outputChannel.show();
-    return new Promise((resolve, _reject) => {
+    return new Promise(async (resolve, _reject) => {
       let scanResult: boolean = false;
       let findings: Finding[] = [];
 
-      const timeout = setTimeout(() => {
-        outputChannel.appendLine("Scan timed out after 2 minutes");
-        outputChannel.appendLine("Container command may be hanging. Check container engine configuration.");
-        resolve(new ScannerRes(false, []));
-      }, 120000);
+      try {
+        const scannerImageAvailable = await ScannerImageManager.ensureScannerImageExists(
+          containerEnginePath,
+          containerImageName,
+          toolVersion,
+          outputChannel
+        );
+        
+        if (!scannerImageAvailable) {
+          outputChannel.appendLine("Failed to ensure scanner image is available. Aborting scan.");
+          resolve(new ScannerRes(false, []));
+          return;
+        }
 
-      const containerCommand = `${containerEnginePath} run --rm -v ${elementToScan}:/ms_artifact ${dockerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo docker_default_remote_config --module engine_iac --tool checkov --folder_path /ms_artifact --context true"`;
+        const timeout = setTimeout(() => {
+          outputChannel.appendLine("Scan timed out after 10 minutes");
+          outputChannel.appendLine("Container command may be hanging. Check container engine configuration.");
+          resolve(new ScannerRes(false, []));
+        }, 600000);
+
+      const containerCommand = `${containerEnginePath} run --rm -v ${elementToScan}:/ms_artifact ${containerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo docker_default_remote_config --module engine_iac --tool checkov --folder_path /ms_artifact --context true"`;
 
       const childProcess = exec(containerCommand, (error, stdout, stderr) => {
         clearTimeout(timeout);
@@ -92,18 +107,23 @@ export class IacScanner implements IScannerGateway {
           outputChannel.appendLine(`Container process exited with code ${code}`);
         }
       });
+
+      } catch (error) {
+        outputChannel.appendLine(`Error during IaC scanning: ${error instanceof Error ? error.message : String(error)}`);
+        resolve(new ScannerRes(false, []));
+      }
     });
   }
 
   getRuleCode(
     dockerPath: string,
-    dockerImageName: string,
+    containerImageName: string,
     toolVersion: string,
     ruleId: string,
     finding: Finding
   ): Finding {
-    const dockerCommand = `${dockerPath} run --rm ${dockerImageName}:${toolVersion}  python3 rules_context_extract.py ${ruleId}`;
-    const rulePrint = execSync(dockerCommand, { encoding: "utf-8" }).trim();
+    const containerCommand = `${dockerPath} run --rm ${containerImageName}:${toolVersion}  python3 rules_context_extract.py ${ruleId}`;
+    const rulePrint = execSync(containerCommand, { encoding: "utf-8" }).trim();
     finding.setValidationRuleCode(rulePrint);
     return finding;
   }

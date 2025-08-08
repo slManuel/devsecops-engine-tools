@@ -86,7 +86,7 @@ export class DevSecOpsTreeDataProvider
       arguments: [imageScanItem],
     };
     imageScanItem.iconPath = new vscode.ThemeIcon("breakpoints-view-icon");
-    imageScanItem.tooltip = "Scan a docker image";
+    imageScanItem.tooltip = "Scan an image";
     imageScanItems.push(imageScanItem);
 
     const iacScanItem = new vscode.TreeItem(

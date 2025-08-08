@@ -11,12 +11,13 @@ import {
   Mappers,
 } from "../../domain/model/mappers/Mappers";
 import ContainerEngineManager from "../helper/ContainerEngineManager";
+import { ScannerImageManager } from "../helper/ScannerImageManager";
 
 export class ImageScanner implements IScannerGateway {
   async scan(
     elementToScan: string,
     outputChannel: OutputChannel,
-    dockerImageName: string,
+    containerImageName: string,
     toolVersion: string,
     containerEnginePath: string
   ): Promise<ScannerRes> {
@@ -27,51 +28,50 @@ export class ImageScanner implements IScannerGateway {
       let scanResult: boolean = false;
       let findings: Finding[] = [];
       let imageTarPath: string | null = null;
-      let needsImageExport = false;
 
       try {
-        const engineType = ContainerEngineManager.getEngineType();
-        let containerCommand: string;
-        let needsImageExport = false;
-
-        if (engineType === 'docker') {
-          outputChannel.appendLine(`Using Docker socket for direct image access...`);
-          containerCommand = `${containerEnginePath} run --rm -v /var/run/docker.sock:/var/run/docker.sock ${dockerImageName}:${toolVersion} sh -c "
-            devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo docker_default_remote_config --module engine_container --tool trivy --image_to_scan ${elementToScan} --context true
-          "`;
-        } else {
-          needsImageExport = true;
-          outputChannel.appendLine(`Using Podman - exporting image ${elementToScan} to temporary file...`);
-          imageTarPath = ContainerEngineManager.createTemporaryImagePath(elementToScan);
-          
-          const exportSuccess = await ContainerEngineManager.exportImageToTar(elementToScan, imageTarPath);
-          if (!exportSuccess) {
-            outputChannel.appendLine(`Failed to export image ${elementToScan}`);
-            resolve(new ScannerRes(false, []));
-            return;
-          }
-
-          outputChannel.appendLine(`Image exported successfully to ${imageTarPath}`);
-          const imageTarName = path.basename(imageTarPath!);
-          
-          containerCommand = `${containerEnginePath} run --rm -v "${imageTarPath}:/tmp/${imageTarName}" ${dockerImageName}:${toolVersion} sh -c "
-            devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo docker_default_remote_config --module engine_container --tool trivy --image_to_scan /tmp/${imageTarName} --context true
-          "`;
+        const scannerImageAvailable = await ScannerImageManager.ensureScannerImageExists(
+          containerEnginePath,
+          containerImageName,
+          toolVersion,
+          outputChannel
+        );
+        
+        if (!scannerImageAvailable) {
+          outputChannel.appendLine("Failed to ensure scanner image is available. Aborting scan.");
+          resolve(new ScannerRes(false, []));
+          return;
         }
 
+        imageTarPath = ContainerEngineManager.createTemporaryImagePath(elementToScan);
+        
+        const exportSuccess = await ContainerEngineManager.exportImageToTar(elementToScan, imageTarPath);
+        if (!exportSuccess) {
+          outputChannel.appendLine(`Failed to export image ${elementToScan}`);
+          resolve(new ScannerRes(false, []));
+          return;
+        }
+
+        outputChannel.appendLine(`Image exported successfully to ${imageTarPath}`);
+        const imageTarName = path.basename(imageTarPath);
+        
+        const containerCommand = `${containerEnginePath} run --rm -v "${imageTarPath}:/tmp/${imageTarName}" ${containerImageName}:${toolVersion} sh -c "
+          devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo docker_default_remote_config --module engine_container --tool trivy --image_to_scan /tmp/${imageTarName} --context true
+        "`;
+
         const timeout = setTimeout(() => {
-          outputChannel.appendLine("Scan timed out after 6 minutes");
+          outputChannel.appendLine("Scan timed out after 10 minutes");
           outputChannel.appendLine("Container command may be hanging. Check container engine configuration.");
-          if (needsImageExport && imageTarPath) {
+          if (imageTarPath) {
             ContainerEngineManager.removeFile(imageTarPath).catch(console.error);
           }
           resolve(new ScannerRes(false, []));
-        }, 360000);
+        }, 600000);
 
         const childProcess = exec(containerCommand, (error, stdout, stderr) => {
           clearTimeout(timeout);
 
-          if (needsImageExport && imageTarPath) {
+          if (imageTarPath) {
             ContainerEngineManager.removeFile(imageTarPath).catch(console.error);
           }
 
@@ -138,7 +138,7 @@ export class ImageScanner implements IScannerGateway {
 
       } catch (error) {
         outputChannel.appendLine(`Error during image scanning: ${error instanceof Error ? error.message : String(error)}`);
-        if (needsImageExport && imageTarPath) {
+        if (imageTarPath) {
           ContainerEngineManager.removeFile(imageTarPath).catch(console.error);
         }
         resolve(new ScannerRes(false, []));

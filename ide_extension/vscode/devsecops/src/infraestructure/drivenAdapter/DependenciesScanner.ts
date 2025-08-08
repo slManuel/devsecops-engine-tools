@@ -5,12 +5,13 @@ import { ScannerRes } from "../../domain/model/ScannerRes";
 import { Finding } from "../../domain/model/Finding";
 import { exec } from "child_process";
 import { IDependenciesScanContext, Mappers } from "../../domain/model/mappers/Mappers";
+import { ScannerImageManager } from "../helper/ScannerImageManager";
 
 export class DependenciesScanner implements IScannerGateway {
   async scan(
     elementToScan: string,
     outputChannel: OutputChannel,
-    dockerImageName: string,
+    containerImageName: string,
     toolVersion: string,
     containerEnginePath: string,
     dependenciesToken: string,
@@ -21,29 +22,43 @@ export class DependenciesScanner implements IScannerGateway {
     outputChannel.clear();
     outputChannel.show();
 
-    return new Promise((resolve, _reject) => {
+    return new Promise(async (resolve, _reject) => {
       let scanResult: boolean = false;
       let findings: Finding[] = [];
       let dependencyCheckDatabaseVolume = "";
 
-      const timeout = setTimeout(() => {
-        outputChannel.appendLine("Scan timed out after 2 minutes");
-        outputChannel.appendLine(
-          "Container command may be hanging. Check container engine configuration."
+      try {
+        const scannerImageAvailable = await ScannerImageManager.ensureScannerImageExists(
+          containerEnginePath,
+          containerImageName,
+          toolVersion,
+          outputChannel
         );
-        resolve(new ScannerRes(false, []));
-      }, 12000000);
+        
+        if (!scannerImageAvailable) {
+          outputChannel.appendLine("Failed to ensure scanner image is available. Aborting scan.");
+          resolve(new ScannerRes(false, []));
+          return;
+        }
 
-      if (!dependenciesToken) {
-        outputChannel.appendLine("No Dependencies Token to scan provided\n Go to Settings to configure it!");
-        resolve(new ScannerRes(false, []));
-        return;
-      }
-      if (dependenciesTool === "dependency_check" && dependencyCheckDatabase) {
-          dependencyCheckDatabaseVolume = `-v ${dependencyCheckDatabase}:/root/dependency-check`;
-      }
+        const timeout = setTimeout(() => {
+          outputChannel.appendLine("Scan timed out after 10 minutes");
+          outputChannel.appendLine(
+            "Container command may be hanging. Check container engine configuration."
+          );
+          resolve(new ScannerRes(false, []));
+        }, 12000000);
 
-      const containerCommand = `${containerEnginePath} run --rm ${dependencyCheckDatabaseVolume} -v ${elementToScan}:/ms_artifact ${dockerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --xray_mode ${xrayMode} --remote_config_repo docker_default_remote_config --module engine_dependencies --tool ${dependenciesTool} --token_engine_dependencies ${dependenciesToken} --folder_path /ms_artifact --context true"`;
+        if (!dependenciesToken) {
+          outputChannel.appendLine("No Dependencies Token to scan provided\n Go to Settings to configure it!");
+          resolve(new ScannerRes(false, []));
+          return;
+        }
+        if (dependenciesTool === "dependency_check" && dependencyCheckDatabase) {
+            dependencyCheckDatabaseVolume = `-v ${dependencyCheckDatabase}:/root/dependency-check`;
+        }
+
+      const containerCommand = `${containerEnginePath} run --rm ${dependencyCheckDatabaseVolume} -v ${elementToScan}:/ms_artifact ${containerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --xray_mode ${xrayMode} --remote_config_repo docker_default_remote_config --module engine_dependencies --tool ${dependenciesTool} --token_engine_dependencies ${dependenciesToken} --folder_path /ms_artifact --context true"`;
 
       const childProcess = exec(containerCommand, (error, stdout, stderr) => {
         clearTimeout(timeout);
@@ -123,6 +138,11 @@ export class DependenciesScanner implements IScannerGateway {
           outputChannel.appendLine(`Container process exited with code ${code}`);
         }
       });
+
+      } catch (error) {
+        outputChannel.appendLine(`Error during dependencies scanning: ${error instanceof Error ? error.message : String(error)}`);
+        resolve(new ScannerRes(false, []));
+      }
     });
   }
 
