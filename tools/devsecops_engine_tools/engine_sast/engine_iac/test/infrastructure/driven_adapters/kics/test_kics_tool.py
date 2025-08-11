@@ -107,9 +107,10 @@ class TestKicsTool(unittest.TestCase):
         mock_subprocess_run.return_value = MagicMock(returncode=1, stderr="error")
 
         command_prefix = "kics"
-        result = self.kics_tool._validate_kics(command_prefix)
+        result, command = self.kics_tool._validate_kics(command_prefix)
 
         self.assertFalse(result)
+        self.assertEqual(command, "")
         mock_logger.error.assert_called_once_with("KICS binary not valid: error")
 
     @patch("devsecops_engine_tools.engine_sast.engine_iac.src.infrastructure.driven_adapters.kics.kics_tool.subprocess.run", side_effect=Exception("Test exception"))

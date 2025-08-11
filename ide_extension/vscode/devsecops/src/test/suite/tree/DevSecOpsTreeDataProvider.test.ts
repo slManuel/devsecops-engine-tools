@@ -250,7 +250,7 @@ suite("DevSecOpsTreeDataProvider Tests", () => {
     const imageItem = categories[1].children[0];
     assert.strictEqual(imageItem.label, "Image Scan");
     assert.strictEqual(imageItem.command?.command, "devsecops.imageScan");
-    assert.strictEqual(imageItem.tooltip, "Scan a docker image");
+    assert.strictEqual(imageItem.tooltip, "Scan an image");
 
     // Check the third category (Scan results)
     assert.strictEqual(categories[2].label, "Scan results");

@@ -171,8 +171,12 @@ class PrismaCloudManagerScan(ToolGateway):
             raise ValueError("The string is not properly formatted. Make sure it contains a ':'.")
         
     def run_tool_container_sca(
-        self, remoteconfig, secret_tool, token_engine_container, image_name, result_file, base_image, exclusions, generate_sbom
+        self, remoteconfig, secret_tool, token_engine_container, image_name, result_file, base_image, exclusions, generate_sbom, is_compressed_file=False
     ):
+        if is_compressed_file:
+            logger.warning("Prisma Cloud does not support compressed file scanning. Skipping.")
+            return "", None
+            
         prisma_key = (
             f"{secret_tool['access_prisma']}:{secret_tool['token_prisma']}" if secret_tool else token_engine_container
         )

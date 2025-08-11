@@ -7,8 +7,8 @@ import { ScanConfiguration } from "../model/ScanConfiguration";
 export class ImageScanUseCase implements IImageScanUseCase {
   constructor(
     private imageScanner: IScannerGateway,
-    private dockerImageVersion: string,
-    private dockerPath: string
+    private containerImageVersion: string,
+    private containerEnginePath: string
   ) {}
 
   async scan(
@@ -19,9 +19,9 @@ export class ImageScanUseCase implements IImageScanUseCase {
     return await this.imageScanner.scan(
       imageToScan,
       outputChannel,
-      scanConfiguration.getDockerImageName(),
-      this.dockerImageVersion,
-      this.dockerPath
+      scanConfiguration.getContainerImageName(),
+      this.containerImageVersion,
+      this.containerEnginePath
     );
   }
 }

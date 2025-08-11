@@ -6,10 +6,10 @@
     "MESSAGE_INFO_ENGINE_CODE": "engine_code run successfully",
     "THRESHOLD": {
         "VULNERABILITY": {
-            "Critical": 99,
-            "High": 100,
-            "Medium": 99,
-            "Low": 99
+            "Critical": 999,
+            "High": 999,
+            "Medium": 999,
+            "Low": 999
         },
         "COMPLIANCE": {
             "Critical": 0

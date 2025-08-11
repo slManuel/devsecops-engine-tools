@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
 
 export class ScanConfiguration {
-  private dockerImageName: string;
-  private dockerImageVersion: string;
+  private containerImageName: string;
+  private containerImageVersion: string;
   private organizationName: string;
   private projectName: string;
   private definitionId: string;
@@ -15,8 +15,8 @@ export class ScanConfiguration {
   private dependencyCheckDatabase: string;
 
   constructor() {
-    this.dockerImageName = "";
-    this.dockerImageVersion = "";
+    this.containerImageName = "";
+    this.containerImageVersion = "";
     this.organizationName = "";
     this.projectName = "";
     this.definitionId = "";
@@ -36,8 +36,8 @@ export class ScanConfiguration {
     const azureDevopsConfig = vscode.workspace.getConfiguration("devsecops.azuredevops");
     const dependenciesConfig = vscode.workspace.getConfiguration("devsecops.dependencies");
     
-    this.dockerImageName = generalConfig.get("imageToUse") || "bancolombia/devsecops-engine-tools";
-    this.dockerImageVersion = generalConfig.get("imageVersion") || "1.75.3";
+    this.containerImageName = generalConfig.get("imageToUse") || "bancolombia/devsecops-engine-tools";
+    this.containerImageVersion = generalConfig.get("imageVersion") || "";
     this.organizationName = azureDevopsConfig.get("organizationName") || "";
     this.projectName = azureDevopsConfig.get("projectName") || "";
     this.definitionId = azureDevopsConfig.get("releaseId") || "";
@@ -68,12 +68,12 @@ export class ScanConfiguration {
     return this.adUserName !== "" && this.adPersonalAccessToken !== "";
   }
 
-  public getDockerImageName(): string {
-    return this.dockerImageName;
+  public getContainerImageName(): string {
+    return this.containerImageName;
   }
 
-  public getDockerImageVersion(): string {
-    return this.dockerImageVersion;
+  public getContainerImageVersion(): string {
+    return this.containerImageVersion;
   }
 
   public getOrganizationName(): string {
@@ -114,5 +114,18 @@ export class ScanConfiguration {
 
   public getDependencyCheckDatabase(): string {
     return this.dependencyCheckDatabase;
+  }
+
+  public async setContainerImageVersion(version: string): Promise<void> {
+    const config = vscode.workspace.getConfiguration('devsecops.general');
+
+    const targetScope = vscode.workspace.workspaceFolders 
+      ? vscode.ConfigurationTarget.Workspace 
+      : vscode.ConfigurationTarget.Global;
+    
+    await config.update('imageVersion', version, targetScope);
+    this.containerImageVersion = version;
+    
+    console.log(`Saved container image version "${version}" to ${targetScope === vscode.ConfigurationTarget.Workspace ? 'Workspace' : 'Global'} settings`);
   }
 }
