@@ -8,23 +8,49 @@ export class ScanOutputLoader {
   private startTime = 0;
 
   private static readonly LOADING_DOTS = ['', '.', '..', '...'];
-
   private static readonly SECURITY_ICONS = ['🔒', '🔐', '🔑', '🛡️', '🔍'];
-
-  private static readonly COMPLETION_BANNER = `
-╔══════════════════════════════════════════════════════════════╗
-║                     ✅ Scan Completed!                       ║
-║             Thank you for using DevSecOps Engine Tools       ║
-╚══════════════════════════════════════════════════════════════╝
-`;
 
   constructor(outputChannel: vscode.OutputChannel) {
     this.outputChannel = outputChannel;
   }
 
   /**
-   * Start the loading animation - show continuous loop until stopped
+   * Generates a formatted, centered banner for the output channel.
+   * @param title The main text line of the banner.
+   * @param subtitle An optional second text line.
+   * @returns A formatted string representing the banner.
    */
+  private static createBanner(title: string, subtitle?: string): string {
+    const BANNER_WIDTH = 78;
+    const innerWidth = BANNER_WIDTH - 2; // Width between the '║' characters
+
+    const topBorder = `╔${'═'.repeat(innerWidth)}╗`;
+    const bottomBorder = `╚${'═'.repeat(innerWidth)}╝`;
+    const emptyLine = `║${' '.repeat(innerWidth)}║`;
+
+    // Helper to center a line of text within the banner
+    const centerText = (text: string): string => {
+      const padding = innerWidth - text.length;
+      const leftPadding = Math.floor(padding / 2);
+      const rightPadding = padding - leftPadding;
+      return `║${' '.repeat(leftPadding)}${text}${' '.repeat(rightPadding)}║`;
+    };
+
+    const bannerLines = [
+      topBorder,
+      emptyLine,
+      centerText(title)
+    ];
+
+    if (subtitle) {
+      bannerLines.push(centerText(subtitle));
+    }
+
+    bannerLines.push(emptyLine, bottomBorder);
+
+    return bannerLines.join('\n');
+  }
+
   public start(scanTarget: string): void {
     if (this.isRunning) {
       this.stop();
@@ -33,10 +59,7 @@ export class ScanOutputLoader {
     this.isRunning = true;
     this.scanTarget = scanTarget;
     this.startTime = Date.now();
-
-    // Show continuous looping animation
     this.showContinuousLoop();
-
     this.outputChannel.show();
   }
 
@@ -45,21 +68,16 @@ export class ScanOutputLoader {
       if (!this.isRunning) {
         return;
       }
-
-      // Calculate elapsed time in seconds
       const elapsedSeconds = Math.floor((Date.now() - this.startTime) / 1000);
-
       const dotsIndex = elapsedSeconds % 4;
       const loadingDots = ScanOutputLoader.LOADING_DOTS[dotsIndex];
-
       const iconIndex = Math.floor(elapsedSeconds / 3) % ScanOutputLoader.SECURITY_ICONS.length;
       const securityIcon = ScanOutputLoader.SECURITY_ICONS[iconIndex];
 
-      // Clear and show current status
       this.outputChannel.clear();
       this.outputChannel.appendLine(`${securityIcon} DevSecOps Scanning ${this.scanTarget}${loadingDots}`);
       this.outputChannel.appendLine(`⏱️ Time Elapsed: ${elapsedSeconds}s`);
-
+      this.outputChannel.appendLine('');
     }, 1000);
   }
 
@@ -68,13 +86,15 @@ export class ScanOutputLoader {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
-
     this.isRunning = false;
 
-    // If called without parameters, just stop animation silently (scan output will appear)
     if (findingsCount === undefined && scanType === undefined) {
       return;
     }
+    const completionBanner = ScanOutputLoader.createBanner(
+      'Scan Completed!',
+      'Thank you for using DevSecOps Engine Tools'
+    );
 
     this.outputChannel.appendLine('');
     this.outputChannel.appendLine('✅ PHASE: COMPLETED');
@@ -82,16 +102,16 @@ export class ScanOutputLoader {
       this.outputChannel.appendLine(`   └─ Found ${findingsCount} ${scanType} issues`);
     }
     this.outputChannel.appendLine('');
-    this.outputChannel.appendLine(ScanOutputLoader.COMPLETION_BANNER);
+    this.outputChannel.appendLine(completionBanner);
   }
 
   public showError(error: string): void {
     this.stop();
 
+    const errorBanner = ScanOutputLoader.createBanner('⚠️ ERROR ⚠️');
+
     this.outputChannel.appendLine('');
-    this.outputChannel.appendLine('╔══════════════════════════════════════════════════════════════╗');
-    this.outputChannel.appendLine('║                        ⚠️  ERROR                             ║');
-    this.outputChannel.appendLine('╚══════════════════════════════════════════════════════════════╝');
+    this.outputChannel.appendLine(errorBanner);
     this.outputChannel.appendLine('');
     this.outputChannel.appendLine(`❌ ${error}`);
     this.outputChannel.appendLine('');
