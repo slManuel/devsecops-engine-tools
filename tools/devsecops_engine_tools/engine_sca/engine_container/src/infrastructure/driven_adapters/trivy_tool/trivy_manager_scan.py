@@ -62,7 +62,7 @@ class TrivyScan(ToolGateway):
             except Exception as e:
                 logger.error(f"Error installing trivy: {e}")
 
-    def scan_image(self, prefix, image_name, result_file, base_image, is_compressed_file=False):
+    def scan_image(self, prefix, image_name, result_file, base_image, vuln_type, ignore_unfixed=False, is_compressed_file=False):
         command = [
             prefix,
             "--scanners",
@@ -71,7 +71,12 @@ class TrivyScan(ToolGateway):
             "json",
             "-o",
             result_file,
+            "--pkg-types",
+            vuln_type
         ]
+
+        if ignore_unfixed:
+            command.append("--ignore-unfixed")
         
         if is_compressed_file:
             command.extend(["--quiet", "image", "--input", image_name])
@@ -93,7 +98,7 @@ class TrivyScan(ToolGateway):
         except Exception as e:
             logger.error(f"Error during image scan of {image_name}: {e}")
 
-    def _generate_sbom(self, prefix, image_name, remoteconfig, is_compressed_file=False):
+    def _generate_sbom(self, prefix, image_name, remoteconfig, vuln_type, ignore_unfixed=False, is_compressed_file=False):
         result_sbom = f"{image_name.replace('/', '_')}_SBOM.json"
         command = [
             prefix,
@@ -101,8 +106,12 @@ class TrivyScan(ToolGateway):
             "--format",
             remoteconfig["TRIVY"]["SBOM_FORMAT"],
             "--output",
-            result_sbom
+            result_sbom,
+            "--pkg-types",
+            vuln_type
         ]
+        if ignore_unfixed:
+            command.append("--ignore-unfixed")
         if is_compressed_file:
             command.extend(["--quiet", "--input", image_name])
         else:
@@ -124,6 +133,9 @@ class TrivyScan(ToolGateway):
 
     def run_tool_container_sca(self, remoteconfig, secret_tool, token_engine_container, image_name, result_file, base_image, exclusions, generate_sbom, is_compressed_file=False):
         trivy_version = remoteconfig["TRIVY"]["TRIVY_VERSION"]
+        vuln_type = remoteconfig["TRIVY"].get("VULN_TYPE", "all").lower()
+        vuln_type = vuln_type if vuln_type in ["os", "library"] else "os,library"
+        ignore_unfixed = remoteconfig["TRIVY"].get("IGNORE_UNFIXED", False)
         os_platform = platform.system()
         arch_platform = platform.architecture()[0]
         base_url = f"https://github.com/aquasecurity/trivy/releases/download/v{trivy_version}/"
@@ -144,9 +156,9 @@ class TrivyScan(ToolGateway):
             return None
 
         image_scanned = (
-            self.scan_image(command_prefix, image_name, result_file, base_image, is_compressed_file)
+            self.scan_image(command_prefix, image_name, result_file, base_image, vuln_type, ignore_unfixed, is_compressed_file)
         )
         if generate_sbom:
-            sbom_components = self._generate_sbom(command_prefix, image_name, remoteconfig, is_compressed_file)
+            sbom_components = self._generate_sbom(command_prefix, image_name, remoteconfig, vuln_type, ignore_unfixed, is_compressed_file)
 
         return image_scanned, sbom_components
