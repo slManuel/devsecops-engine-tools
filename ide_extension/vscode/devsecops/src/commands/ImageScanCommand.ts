@@ -4,6 +4,7 @@ import { imageScanRequest } from "../application/InitEngineCore";
 import { Docker, IOptions } from "docker-cli-js";
 import { ScanConfiguration } from "../domain/model/ScanConfiguration";
 import DockerPathDetector from "../infraestructure/helper/DockerPathDetector";
+import { ScanOutputLoader } from "../infraestructure/helper/LoadingAnimator";
 
 export function registerImageScanCommand(
   context: vscode.ExtensionContext,
@@ -36,26 +37,38 @@ export function registerImageScanCommand(
       );
 
       const scanner = await imageScanRequest();
-      const outputChannel =
-        vscode.window.createOutputChannel("IaC Scan Results");
+      const outputChannel = vscode.window.createOutputChannel("Image Scan Results");
 
-      const scanResult = await scanner.makeScan(
-        imageName,
-        outputChannel,
-        new ScanConfiguration()
-      );
+      // Start the loading animation
+      const scanLoader = new ScanOutputLoader(outputChannel);
+      scanLoader.start(`Docker Image: ${imageName}`);
 
-      if (scanResult) {
-        void vscode.window.showInformationMessage(
-          "Image Scan completed successfully"
+      try {
+        const scanResult = await scanner.makeScan(
+          imageName,
+          outputChannel,
+          new ScanConfiguration()
         );
-        treeDataProvider.addScanResult(
-          "IMAGE SCAN RESULT",
-          scanResult.getFindings(),
-          "image",
-          undefined
-        );
-      } else {
+
+        if (scanResult) {
+          // Stop animation and show completion - THIS PRESERVES ALL OUTPUT DATA
+          scanLoader.stop(scanResult.getFindings().length, "image vulnerability");
+
+          void vscode.window.showInformationMessage(
+            "Image Scan completed successfully"
+          );
+          treeDataProvider.addScanResult(
+            "IMAGE SCAN RESULT",
+            scanResult.getFindings(),
+            "image"
+          );
+        } else {
+          scanLoader.showError("Image Scan failed - No results returned");
+          void vscode.window.showErrorMessage("Image Scan failed");
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+        scanLoader.showError(`Image Scan failed: ${errorMessage}`);
         void vscode.window.showErrorMessage("Image Scan failed");
       }
     }
