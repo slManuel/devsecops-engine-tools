@@ -233,3 +233,151 @@ def test_generate_sbom_failure(mock_logger, mock_subprocess_run):
     trivy_scan._generate_sbom(prefix, image_name, remoteconfig)
 
     mock_logger.error.assert_called_once_with("Error generating SBOM: Test exception")
+
+
+@patch('devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.subprocess.run')
+def test_scan_image_compressed_file(mock_subprocess_run):
+    """Test scanning a compressed file"""
+    mock_subprocess_run.return_value = None
+
+    trivy_scan = TrivyScan()
+    prefix = "trivy"
+    image_name = "/path/to/image.tar.gz"
+    result_file = "result.json"
+    base_image = None
+
+    result = trivy_scan.scan_image(prefix, image_name, result_file, base_image, is_compressed_file=True)
+
+    assert result == result_file
+    mock_subprocess_run.assert_called_once_with(
+        [
+            prefix,
+            "--scanners",
+            "vuln",
+            "-f",
+            "json",
+            "-o",
+            result_file,
+            "--quiet",
+            "image",
+            "--input",
+            image_name,
+        ],
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+
+
+@patch('devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.subprocess.run')
+def test_scan_image_regular_image(mock_subprocess_run):
+    """Test scanning a regular Docker image"""
+    mock_subprocess_run.return_value = None
+
+    trivy_scan = TrivyScan()
+    prefix = "trivy"
+    image_name = "nginx:latest"
+    result_file = "result.json"
+    base_image = None
+
+    result = trivy_scan.scan_image(prefix, image_name, result_file, base_image, is_compressed_file=False)
+
+    assert result == result_file
+    mock_subprocess_run.assert_called_once_with(
+        [
+            prefix,
+            "--scanners",
+            "vuln",
+            "-f",
+            "json",
+            "-o",
+            result_file,
+            "--quiet",
+            "image",
+            image_name,
+        ],
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+
+
+@patch('devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.get_list_component')
+@patch('devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.subprocess.run')
+def test_generate_sbom_compressed_file(mock_subprocess_run, mock_get_list_component):
+    """Test SBOM generation for compressed file"""
+    mock_subprocess_run.return_value = None
+    mock_get_list_component.return_value = ["component1", "component2"]
+
+    trivy_scan = TrivyScan()
+    prefix = "trivy"
+    image_name = "/path/to/image.tar.gz"
+    remoteconfig = {
+        "TRIVY": {
+            "SBOM_FORMAT": "json"
+        }
+    }
+
+    result = trivy_scan._generate_sbom(prefix, image_name, remoteconfig, is_compressed_file=True)
+
+    mock_subprocess_run.assert_called_once_with(
+        [
+            prefix,
+            "image",
+            "--format",
+            "json",
+            "--output",
+            f"{image_name.replace('/', '_')}_SBOM.json",
+            "--quiet",
+            "--input",
+            image_name,
+        ],
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    mock_get_list_component.assert_called_once_with(f"{image_name.replace('/', '_')}_SBOM.json", "json")
+    assert result, ["component1", "component2"]
+
+
+@patch('devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.platform.system')
+@patch('devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.TrivyScan.install_tool')
+@patch('devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.TrivyScan.scan_image')
+@patch('devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.TrivyScan._generate_sbom')
+def test_run_tool_container_sca_compressed_file(mock_generate_sbom, mock_scan_image, mock_install_tool, mock_platform_system):
+    """Test running SCA tool with compressed file"""
+    mock_platform_system.return_value = "Linux"
+    mock_install_tool.return_value = "trivy"
+    mock_scan_image.return_value = "result.json"
+    mock_generate_sbom.return_value = ["component1"]
+
+    trivy_scan = TrivyScan()
+    remoteconfig = {
+        "TRIVY": {
+            "TRIVY_VERSION": "0.48.1",
+            "SBOM_FORMAT": "json"
+        }
+    }
+
+    result = trivy_scan.run_tool_container_sca(
+        remoteconfig=remoteconfig,
+        secret_tool=None,
+        token_engine_container=None,
+        image_name="/path/to/image.tar.gz",
+        result_file="result.json",
+        base_image=None,
+        exclusions={},
+        generate_sbom=True,
+        is_compressed_file=True
+    )
+
+    mock_scan_image.assert_called_once_with(
+        "trivy", "/path/to/image.tar.gz", "result.json", None, True
+    )
+    mock_generate_sbom.assert_called_once_with(
+        "trivy", "/path/to/image.tar.gz", remoteconfig, True
+    )
+    assert result == ("result.json", ["component1"])

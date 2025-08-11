@@ -59,7 +59,8 @@ class KicsTool(ToolGateway):
             if os_platform == "Windows"
             else f"{work_folder}/{path_kics}"
         )
-        if not self._validate_kics(command_prefix):
+        valid, command_prefix = self._validate_kics(command_prefix)
+        if not valid:
                 return [], None
 
         if download_kics_assets:
@@ -140,16 +141,16 @@ class KicsTool(ToolGateway):
             kics_in_path = shutil.which("kics.exe" if platform.system() == "Windows" else "kics")
             if kics_in_path:
                 command_prefix = kics_in_path
-                return True
+                return True, command_prefix
             else:
                 result = subprocess.run(
                     [command_prefix, "version"], capture_output=True, text=True
                 )
                 if result.returncode == 0:
-                    return True
+                    return True, command_prefix
                 else:
                     logger.error(f"KICS binary not valid: {result.stderr}")
-                    return False
+                    return False, ""
         except Exception as e:
             logger.error(f"Error validating KICS binary: {e}")
 

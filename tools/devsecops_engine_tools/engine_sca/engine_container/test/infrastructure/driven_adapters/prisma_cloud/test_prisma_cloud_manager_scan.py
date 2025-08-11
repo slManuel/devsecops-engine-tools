@@ -342,3 +342,22 @@ def test_extra_colon_prisma_key():
     prisma_key = "your_access_key:your_secret_key:extra"
     with pytest.raises(ValueError, match="The string is not properly formatted. Make sure it contains a ':'."):
         scan_manager._split_prisma_token(prisma_key)
+
+
+def test_run_tool_container_sca_compressed_file():
+    """Test that Prisma Cloud returns None for compressed files with proper warning"""
+    scan_manager = PrismaCloudManagerScan()
+    
+    result = scan_manager.run_tool_container_sca(
+        remoteconfig={},
+        secret_tool=None,
+        token_engine_container=None,
+        image_name="/path/to/image.tar.gz",
+        result_file="result.json",
+        base_image=None,
+        exclusions={},
+        generate_sbom=False,
+        is_compressed_file=True
+    )
+    
+    assert result == ("", None)

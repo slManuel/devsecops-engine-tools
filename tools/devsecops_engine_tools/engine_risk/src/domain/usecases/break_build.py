@@ -300,7 +300,7 @@ class BreakBuild:
         remote_config = self.remote_config
         if report_list:
             tag_blacklist = set(remote_config["TAG_BLACKLIST_EXCLUSION_DAYS"].keys())
-            colombian_holidays = holidays.Colombia()
+            country_holidays = holidays.country_holidays(remote_config.get("COUNTRY_HOLIDAYS"))
 
         def calculate_working_days(start_date, days):
             current_date = start_date
@@ -309,7 +309,7 @@ class BreakBuild:
                 current_date += timedelta(days=1)
                 if (
                     current_date.weekday() < 5
-                    and current_date not in colombian_holidays
+                    and current_date not in country_holidays
                 ):
                     working_days += 1
             return current_date
