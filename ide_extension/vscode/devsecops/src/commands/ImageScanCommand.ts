@@ -41,7 +41,7 @@ export function registerImageScanCommand(
 
       // Start the loading animation
       const scanLoader = new ScanOutputLoader(outputChannel);
-      scanLoader.start(`Docker Image: ${imageName}`);
+      scanLoader.start(`Image: ${imageName}`);
 
       try {
         const scanResult = await scanner.makeScan(

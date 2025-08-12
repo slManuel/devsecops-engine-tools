@@ -39,7 +39,6 @@ export function registerIacScanCommand(
         const scanResult = await scanner.makeScan(folderPath, outputChannel, new ScanConfiguration());
 
         if (scanResult) {
-          // Stop animation and show completion - THIS PRESERVES ALL OUTPUT DATA
           scanLoader.stop(scanResult.getFindings().length, "Infrastructure as Code");
 
           void vscode.window.showInformationMessage("Iac Scan completed successfully");

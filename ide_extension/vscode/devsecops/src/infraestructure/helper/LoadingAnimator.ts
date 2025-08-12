@@ -21,7 +21,7 @@ export class ScanOutputLoader {
    * @returns A formatted string representing the banner.
    */
   private static createBanner(title: string, subtitle?: string): string {
-    const BANNER_WIDTH = 78;
+    const BANNER_WIDTH = 120
     const innerWidth = BANNER_WIDTH - 2; // Width between the '║' characters
 
     const topBorder = `╔${'═'.repeat(innerWidth)}╗`;
@@ -71,12 +71,12 @@ export class ScanOutputLoader {
       const elapsedSeconds = Math.floor((Date.now() - this.startTime) / 1000);
       const dotsIndex = elapsedSeconds % 4;
       const loadingDots = ScanOutputLoader.LOADING_DOTS[dotsIndex];
-      const iconIndex = Math.floor(elapsedSeconds / 3) % ScanOutputLoader.SECURITY_ICONS.length;
+      const iconIndex = Math.floor(elapsedSeconds / 2) % ScanOutputLoader.SECURITY_ICONS.length;
       const securityIcon = ScanOutputLoader.SECURITY_ICONS[iconIndex];
 
       this.outputChannel.clear();
+      this.outputChannel.appendLine('');
       this.outputChannel.appendLine(`${securityIcon} DevSecOps Scanning ${this.scanTarget}${loadingDots}`);
-      this.outputChannel.appendLine(`⏱️ Time Elapsed: ${elapsedSeconds}s`);
       this.outputChannel.appendLine('');
     }, 1000);
   }
@@ -88,12 +88,21 @@ export class ScanOutputLoader {
     }
     this.isRunning = false;
 
+    // If called without parameters, just stop animation silently (scan output will appear)
     if (findingsCount === undefined && scanType === undefined) {
       return;
     }
+
+    // Only show completion - processing results should be shown separately
+    this.showCompleted(findingsCount, scanType);
+  }
+
+
+  //Show completion message after all results are processed
+  public showCompleted(findingsCount?: number, scanType?: string): void {
     const completionBanner = ScanOutputLoader.createBanner(
       'Scan Completed!',
-      'Thank you for using DevSecOps Engine Tools'
+      'Thank you for using DevSecOps Engine Tools Extension'
     );
 
     this.outputChannel.appendLine('');
