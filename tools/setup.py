@@ -34,7 +34,7 @@ setup(
     entry_points={
         'console_scripts': [
             'devsecops-engine-tools=devsecops_engine_tools.engine_core.src.applications.runner_engine_core:application_core',
-            'devsecops-engine-tools-integrations=devsecops_engine_tools.engine_utilities.engine_integrations.src.applications.runner_engine_integrations:runner_engine_integrations'
+            'devsecops-engine-tools-integrations=devsecops_engine_tools.engine_integrations.src.applications.runner_engine_integrations:runner_engine_integrations'
         ]
     },
     classifiers=[
