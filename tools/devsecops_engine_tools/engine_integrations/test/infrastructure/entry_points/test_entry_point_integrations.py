@@ -1,14 +1,14 @@
 import unittest
 from unittest.mock import patch, MagicMock
 
-from devsecops_engine_tools.engine_utilities.engine_integrations.src.infrastructure.entry_points.entry_point_integrations import (
+from devsecops_engine_tools.engine_integrations.src.infrastructure.entry_points.entry_point_integrations import (
     init_engine_integrations,
 )
 
 class TestEntryPointIntegrations(unittest.TestCase):
 
     @patch(
-        "devsecops_engine_tools.engine_utilities.engine_integrations.src.infrastructure.entry_points.entry_point_integrations.Integrations"
+        "devsecops_engine_tools.engine_integrations.src.infrastructure.entry_points.entry_point_integrations.Integrations"
     )
     def test_init_engine_integrations_calls_process(self, mock_integrations):
         # Arrange

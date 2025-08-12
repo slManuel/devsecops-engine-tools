@@ -2,35 +2,35 @@ import unittest
 from unittest.mock import patch, MagicMock
 import sys
 import argparse
-from devsecops_engine_tools.engine_utilities.engine_integrations.src.applications.runner_engine_integrations import (
+from devsecops_engine_tools.engine_integrations.src.applications.runner_engine_integrations import (
     runner_engine_integrations, get_inputs_from_cli
 )
 
 class TestRunnerEngineIntegrations(unittest.TestCase):
 
     @patch(
-        "devsecops_engine_tools.engine_utilities.engine_integrations.src.applications.runner_engine_integrations.get_inputs_from_cli"
+        "devsecops_engine_tools.engine_integrations.src.applications.runner_engine_integrations.get_inputs_from_cli"
     )
     @patch(
-        "devsecops_engine_tools.engine_utilities.engine_integrations.src.applications.runner_engine_integrations.DefectDojoPlatform"
+        "devsecops_engine_tools.engine_integrations.src.applications.runner_engine_integrations.DefectDojoPlatform"
     )
     @patch(
-        "devsecops_engine_tools.engine_utilities.engine_integrations.src.applications.runner_engine_integrations.SecretsManager"
+        "devsecops_engine_tools.engine_integrations.src.applications.runner_engine_integrations.SecretsManager"
     )
     @patch(
-        "devsecops_engine_tools.engine_utilities.engine_integrations.src.applications.runner_engine_integrations.AzureDevops"
+        "devsecops_engine_tools.engine_integrations.src.applications.runner_engine_integrations.AzureDevops"
     )
     @patch(
-        "devsecops_engine_tools.engine_utilities.engine_integrations.src.applications.runner_engine_integrations.GithubActions"
+        "devsecops_engine_tools.engine_integrations.src.applications.runner_engine_integrations.GithubActions"
     )
     @patch(
-        "devsecops_engine_tools.engine_utilities.engine_integrations.src.applications.runner_engine_integrations.RuntimeLocal"
+        "devsecops_engine_tools.engine_integrations.src.applications.runner_engine_integrations.RuntimeLocal"
     )
     @patch(
-        "devsecops_engine_tools.engine_utilities.engine_integrations.src.applications.runner_engine_integrations.S3Manager"
+        "devsecops_engine_tools.engine_integrations.src.applications.runner_engine_integrations.S3Manager"
     )
     @patch(
-        "devsecops_engine_tools.engine_utilities.engine_integrations.src.applications.runner_engine_integrations.init_engine_integrations"
+        "devsecops_engine_tools.engine_integrations.src.applications.runner_engine_integrations.init_engine_integrations"
     )
     def test_runner_engine_integrations_success(
         self,
@@ -74,28 +74,28 @@ class TestRunnerEngineIntegrations(unittest.TestCase):
         self.assertTrue(mock_get_inputs_from_cli.called)
 
     @patch(
-        "devsecops_engine_tools.engine_utilities.engine_integrations.src.applications.runner_engine_integrations.get_inputs_from_cli"
+        "devsecops_engine_tools.engine_integrations.src.applications.runner_engine_integrations.get_inputs_from_cli"
     )
     @patch(
-        "devsecops_engine_tools.engine_utilities.engine_integrations.src.applications.runner_engine_integrations.DefectDojoPlatform"
+        "devsecops_engine_tools.engine_integrations.src.applications.runner_engine_integrations.DefectDojoPlatform"
     )
     @patch(
-        "devsecops_engine_tools.engine_utilities.engine_integrations.src.applications.runner_engine_integrations.SecretsManager"
+        "devsecops_engine_tools.engine_integrations.src.applications.runner_engine_integrations.SecretsManager"
     )
     @patch(
-        "devsecops_engine_tools.engine_utilities.engine_integrations.src.applications.runner_engine_integrations.AzureDevops"
+        "devsecops_engine_tools.engine_integrations.src.applications.runner_engine_integrations.AzureDevops"
     )
     @patch(
-        "devsecops_engine_tools.engine_utilities.engine_integrations.src.applications.runner_engine_integrations.GithubActions"
+        "devsecops_engine_tools.engine_integrations.src.applications.runner_engine_integrations.GithubActions"
     )
     @patch(
-        "devsecops_engine_tools.engine_utilities.engine_integrations.src.applications.runner_engine_integrations.RuntimeLocal"
+        "devsecops_engine_tools.engine_integrations.src.applications.runner_engine_integrations.RuntimeLocal"
     )
     @patch(
-        "devsecops_engine_tools.engine_utilities.engine_integrations.src.applications.runner_engine_integrations.S3Manager"
+        "devsecops_engine_tools.engine_integrations.src.applications.runner_engine_integrations.S3Manager"
     )
     @patch(
-        "devsecops_engine_tools.engine_utilities.engine_integrations.src.applications.runner_engine_integrations.init_engine_integrations"
+        "devsecops_engine_tools.engine_integrations.src.applications.runner_engine_integrations.init_engine_integrations"
     )
     def test_runner_engine_integrations_exception(
         self,
