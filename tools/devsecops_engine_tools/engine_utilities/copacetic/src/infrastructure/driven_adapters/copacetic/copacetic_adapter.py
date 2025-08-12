@@ -1,7 +1,7 @@
 import subprocess
-import json
 import os
-import tempfile
+import json
+import re
 from typing import Dict, Optional
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
 from devsecops_engine_tools.engine_utilities import settings
@@ -18,18 +18,13 @@ class CopaceticAdapter:
         self.copa_binary = self._find_copa_binary()
 
     def _find_copa_binary(self) -> str:
-        """
-        Find the Copa binary in the system
-        """
-        # Check if copa is in PATH
         try:
             result = subprocess.run(["which", "copa"], capture_output=True, text=True)
             if result.returncode == 0:
                 return "copa"
         except FileNotFoundError:
             pass
-        
-        # Check common installation paths
+
         common_paths = [
             "/usr/local/bin/copa",
             "/usr/bin/copa",
@@ -40,97 +35,83 @@ class CopaceticAdapter:
         for path in common_paths:
             if os.path.isfile(path) and os.access(path, os.X_OK):
                 return path
-        
-        # Default to 'copa' and let it fail if not found
+
         return "copa"
 
     def patch_image(
         self,
-        container_image: str,
+        image: str,
         vulnerability_report: str,
         output_image: Optional[str] = None,
         patch_format: str = "trivy",
-        registry_token: Optional[str] = None,
-        registry_url: Optional[str] = None,
-        buildkit_addr: Optional[str] = None,
         config: Optional[Dict] = None
-    ) -> Dict:
-        """
-        Patch a container image using Copacetic
-        
-        Args:
-            container_image: The container image to patch
-            vulnerability_report: Path to the vulnerability report file
-            output_image: Output image name (optional)
-            patch_format: Format of the vulnerability report (trivy, grype)
-            registry_token: Token for registry authentication
-            registry_url: Registry URL
-            buildkit_addr: BuildKit daemon address
-            config: Additional configuration from ConfigTool.json
-            
-        Returns:
-            Dict with patching results
-        """
+    ):
         try:
-            logger.info(f"Starting Copacetic patching for image: {container_image}")
+            config = config or {}
+            buildkit_config = config.get("BUILDKIT_CONFIG", {})
             
-            # Prepare Copa command
-            copa_cmd = [self.copa_binary, "patch"]
+            copa_cmd = [
+                self.copa_binary, 
+                "patch",
+                "--image",
+                image,
+                "--scanner",
+                patch_format
+            ]
+
+            if vulnerability_report:
+                copa_cmd.extend(["--report", vulnerability_report])
             
-            # Add image
-            copa_cmd.extend(["-i", container_image])
+            buildkit_addr = buildkit_config.get("DEFAULT_ADDR")
+            if buildkit_addr:
+                copa_cmd.extend(["--addr", buildkit_addr])
+
+            progress_mode = buildkit_config.get("PROGRESS", "auto")
+            if progress_mode not in ["auto", "plain", "tty", "quiet", "rawjson"]:
+                raise ValueError(f"Invalid progress mode: {progress_mode}")
+            else:
+                copa_cmd.extend(["--progress", progress_mode])
             
-            # Add vulnerability report
-            copa_cmd.extend(["-r", vulnerability_report])
-            
-            # Add report format
-            copa_cmd.extend(["-f", patch_format])
-            
-            # Add output image if specified
             if output_image:
                 copa_cmd.extend(["-t", output_image])
             else:
-                # Generate output image name
-                output_image = f"{container_image}-patched"
-                copa_cmd.extend(["-t", output_image])
-            
-            # Add BuildKit address if specified
-            if buildkit_addr:
-                copa_cmd.extend(["--addr", buildkit_addr])
-            
-            # Set environment variables for registry authentication
-            env = os.environ.copy()
-            
-            if registry_token and registry_url:
-                # Set docker config for authentication
-                docker_config = self._create_docker_config(registry_url, registry_token)
-                if docker_config:
-                    env["DOCKER_CONFIG"] = docker_config
+                tag_suffix = config.get("DEFAULT_OUTPUT_SUFFIX", "-patched")
+                # Remove leading dash if present for --tag-suffix
+                if tag_suffix.startswith("-"):
+                    tag_suffix = tag_suffix[1:]
+                copa_cmd.extend(["--tag-suffix", tag_suffix])
             
             # Add timeout configuration
-            if config and "TIMEOUT" in config:
-                copa_cmd.extend(["--timeout", str(config["TIMEOUT"])])
+            timeout_duration = config.get("TIMEOUT", 1800)
+            copa_cmd.extend(["--timeout", f"{timeout_duration}s"])
             
-            logger.info(f"Executing Copa command: {' '.join([cmd for cmd in copa_cmd if not cmd.startswith('auth')])}")
+            if buildkit_config.get("IGNORE_ERRORS", False):
+                copa_cmd.append("--ignore-errors")
             
-            # Execute Copa command
             result = subprocess.run(
                 copa_cmd,
                 capture_output=True,
-                text=True,
-                env=env,
-                timeout=config.get("TIMEOUT", 1800) if config else 1800  # 30 minutes default
+                text=True
             )
             
             if result.returncode == 0:
-                logger.info("Copacetic patching completed successfully")
-                
-                # Parse output to get patch details
+                print("Copacetic patching completed successfully")
+
                 patch_details = self._parse_copa_output(result.stdout)
+
+                if output_image:
+                    patched_image = output_image
+                else:
+                    tag_suffix = config.get("DEFAULT_OUTPUT_SUFFIX", "-patched")
+                    if ":" in image:
+                        base_image, tag = image.rsplit(":", 1)
+                        patched_image = f"{base_image}:{tag}{tag_suffix}"
+                    else:
+                        patched_image = f"{image}{tag_suffix}"
                 
                 return {
                     "success": True,
-                    "patched_image": output_image,
+                    "patched_image": patched_image,
                     "vulnerabilities_patched": patch_details.get("vulnerabilities_patched", 0),
                     "patch_details": patch_details.get("details", []),
                     "copa_output": result.stdout
@@ -146,7 +127,7 @@ class CopaceticAdapter:
                 }
                 
         except subprocess.TimeoutExpired:
-            error_msg = "Copa command timed out"
+            error_msg = f"Copa command timed out after {timeout_duration} seconds"
             logger.error(error_msg)
             return {
                 "success": False,
@@ -160,92 +141,96 @@ class CopaceticAdapter:
                 "error": error_msg
             }
 
-    def _create_docker_config(self, registry_url: str, token: str) -> Optional[str]:
-        """
-        Create a temporary Docker config for registry authentication
-        """
-        try:
-            temp_dir = tempfile.mkdtemp()
-            config_path = os.path.join(temp_dir, "config.json")
-            
-            # Create Docker config
-            docker_config = {
-                "auths": {
-                    registry_url: {
-                        "auth": token
-                    }
-                }
-            }
-            
-            with open(config_path, 'w') as f:
-                json.dump(docker_config, f)
-            
-            return temp_dir
-            
-        except Exception as e:
-            logger.error(f"Failed to create Docker config: {str(e)}")
-            return None
-
     def _parse_copa_output(self, output: str) -> Dict:
-        """
-        Parse Copa output to extract patching details
-        """
         try:
             details = {
                 "vulnerabilities_patched": 0,
-                "details": []
+                "details": [],
+                "packages_updated": 0,
+                "platforms_processed": []
             }
             
             lines = output.split('\n')
+            current_platform = None
+            
             for line in lines:
                 line = line.strip()
+                if not line:
+                    continue
                 
-                # Parse different types of output
-                if "patched" in line.lower():
+                # Parse platform information
+                if "platform" in line.lower() and ("linux/" in line.lower() or "amd64" in line.lower() or "arm64" in line.lower()):
+                    if current_platform not in details["platforms_processed"]:
+                        details["platforms_processed"].append(current_platform or "linux/amd64")
+                
+                # Parse patched vulnerabilities
+                if any(keyword in line.lower() for keyword in ["patched", "fixed", "updated", "resolved"]):
                     details["details"].append(line)
                 
-                # Try to extract number of vulnerabilities patched
-                if "vulnerabilities" in line.lower() and any(char.isdigit() for char in line):
-                    words = line.split()
-                    for word in words:
-                        if word.isdigit():
-                            details["vulnerabilities_patched"] = int(word)
-                            break
+                # Parse package updates
+                if any(keyword in line.lower() for keyword in ["package", "upgrade", "install"]):
+                    if any(char.isdigit() for char in line):
+                        # Try to extract numbers that might indicate package count
+                        import re
+                        numbers = re.findall(r'\d+', line)
+                        if numbers:
+                            details["packages_updated"] += int(numbers[0])
+                
+                # Try to extract vulnerability counts
+                if any(keyword in line.lower() for keyword in ["vulnerabilities", "cves", "security"]):
+                    if any(char.isdigit() for char in line):
+                        import re
+                        numbers = re.findall(r'\d+', line)
+                        for num in numbers:
+                            if int(num) > details["vulnerabilities_patched"]:
+                                details["vulnerabilities_patched"] = int(num)
+                
+                # Parse success indicators
+                if any(keyword in line.lower() for keyword in ["completed", "success", "finished", "done"]):
+                    details["details"].append(f"Status: {line}")
+            
+            # Default platform if none detected
+            if not details["platforms_processed"]:
+                details["platforms_processed"].append("linux/amd64")
             
             return details
             
         except Exception as e:
             logger.error(f"Failed to parse Copa output: {str(e)}")
-            return {"vulnerabilities_patched": 0, "details": []}
+            return {"vulnerabilities_patched": 0, "details": [], "packages_updated": 0, "platforms_processed": []}
 
-    def check_copa_availability(self) -> bool:
+    def get_image_info(self, image: str) -> Dict:
         """
-        Check if Copa is available and working
+        Get basic information about a container image
         """
         try:
+            # Try to inspect the image using docker
             result = subprocess.run(
-                [self.copa_binary, "--version"],
+                ["docker", "inspect", image],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=30
             )
-            return result.returncode == 0
-        except Exception:
-            return False
-
-    def get_copa_version(self) -> Optional[str]:
-        """
-        Get Copa version
-        """
-        try:
-            result = subprocess.run(
-                [self.copa_binary, "--version"],
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
+            
             if result.returncode == 0:
-                return result.stdout.strip()
-        except Exception:
-            pass
-        return None
+                import json
+                image_data = json.loads(result.stdout)
+                
+                if image_data:
+                    info = image_data[0]
+                    return {
+                        "exists": True,
+                        "created": info.get("Created"),
+                        "architecture": info.get("Architecture"),
+                        "os": info.get("Os"),
+                        "size": info.get("Size"),
+                        "layers": len(info.get("RootFS", {}).get("Layers", [])),
+                        "config": info.get("Config", {})
+                    }
+            
+            return {"exists": False}
+            
+        except Exception as e:
+            logger.warning(f"Could not get image info for {image}: {str(e)}")
+            return {"exists": False, "error": str(e)}
+

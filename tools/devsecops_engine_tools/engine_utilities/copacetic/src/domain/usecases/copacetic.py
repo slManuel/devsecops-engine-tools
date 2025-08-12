@@ -30,74 +30,80 @@ class Copacetic:
         self.copacetic_gateway = copacetic_gateway
 
     def process(self, args):
-        """
-        Process container image patching using Copacetic
-        """
         try:
-            # Get configuration
             copacetic_config = self.remote_config_source_gateway.get_remote_config(
                 args["remote_config_repo"], "/copacetic/ConfigTool.json", args["remote_config_branch"]
             )
-            
-            # Get secrets if needed
-            if args["use_secrets_manager"] == "true":
-                token_registry = self.secrets_manager_gateway.get_secret(
-                    copacetic_config["SECRETS"]["TOKEN_REGISTRY"]
-                )
-            else:
-                token_registry = args.get("token_registry")
 
-            # Validate required parameters
-            container_image = args.get("container_image")
+            image = args.get("image")
             vulnerability_report = args.get("vulnerability_report")
+            patch_format = args.get("patch_format", "trivy")
             
-            if not container_image:
-                raise ValueError("Container image is required for Copacetic patching")
-            
-            if not vulnerability_report:
-                raise ValueError("Vulnerability report is required for Copacetic patching")
+            if not image:
+                raise ValueError("Image is required for Copacetic patching")
 
-            logger.info(f"Starting Copacetic patching for image: {container_image}")
-            
-            # Execute Copacetic patching
+            print(f"Starting Copacetic patching for image: {image}")
+
+            image_info = {}
+            if hasattr(self.copacetic_gateway, 'get_image_info'):
+                image_info = self.copacetic_gateway.get_image_info(image)
+                if not image_info.get("exists", False):
+                    print(f"Image {image} may not exist locally. Copacetic will attempt to pull it.")
+
             patch_result = self.copacetic_gateway.patch_image(
-                container_image=container_image,
+                image=image,
                 vulnerability_report=vulnerability_report,
                 output_image=args.get("output_image"),
-                patch_format=args.get("patch_format", "trivy"),
-                registry_token=token_registry,
-                registry_url=args.get("registry_url"),
-                buildkit_addr=args.get("buildkit_addr"),
+                patch_format=patch_format,
                 config=copacetic_config
             )
 
             if patch_result["success"]:
                 logger.info("Copacetic patching completed successfully")
+                
+                success_msg = f"Container image patched successfully: {patch_result['patched_image']}"
+                if patch_result.get("vulnerabilities_patched", 0) > 0:
+                    success_msg += f" ({patch_result['vulnerabilities_patched']} vulnerabilities addressed)"
+                
                 print(
-                    self.devops_platform_gateway.message(
-                        "succeeded",
-                        f"Container image patched successfully: {patch_result['patched_image']}"
-                    )
+                    self.devops_platform_gateway.message("succeeded", success_msg)
                 )
                 
-                # Create summary report
+                # Create enhanced summary report
                 summary = {
                     "module": "copacetic",
-                    "original_image": container_image,
+                    "original_image": image,
                     "patched_image": patch_result["patched_image"],
                     "vulnerabilities_patched": patch_result.get("vulnerabilities_patched", 0),
-                    "patch_details": patch_result.get("patch_details", [])
+                    "packages_updated": patch_result.get("packages_updated", 0),
+                    "platforms_processed": patch_result.get("platforms_processed", []),
+                    "patch_details": patch_result.get("patch_details", []),
+                    "output_format": patch_result.get("output_format", "openvex"),
+                    "patch_format": patch_format,
+                    "configuration_used": {
+                        "timeout": copacetic_config.get("TIMEOUT", 1800),
+                        "buildkit_addr": copacetic_config.get("BUILDKIT_CONFIG", {}).get("DEFAULT_ADDR")
+                    }
                 }
+                
+                if image_info.get("exists", False):
+                    summary["original_image_info"] = {
+                        "architecture": image_info.get("architecture"),
+                        "os": image_info.get("os"),
+                        "layers": image_info.get("layers")
+                    }
                 
                 return summary
             else:
                 error_msg = patch_result.get("error", "Unknown error during patching")
                 logger.error(f"Copacetic patching failed: {error_msg}")
+                
+                detailed_error = f"Copacetic patching failed: {error_msg}"
+                if patch_result.get("copa_error"):
+                    detailed_error += f"\nCopa stderr: {patch_result['copa_error']}"
+                
                 print(
-                    self.devops_platform_gateway.message(
-                        "error",
-                        f"Copacetic patching failed: {error_msg}"
-                    )
+                    self.devops_platform_gateway.message("error", detailed_error)
                 )
                 raise Exception(error_msg)
 

@@ -19,24 +19,6 @@ class TestCopaceticAdapter(unittest.TestCase):
             binary = self.adapter._find_copa_binary()
             self.assertEqual(binary, "copa")
     
-    def test_check_copa_availability(self):
-        """Test checking Copa availability"""
-        with patch('subprocess.run') as mock_run:
-            mock_run.return_value.returncode = 0
-            mock_run.return_value.stdout = "copa version 0.11.0"
-            
-            is_available = self.adapter.check_copa_availability()
-            self.assertTrue(is_available)
-    
-    def test_get_copa_version(self):
-        """Test getting Copa version"""
-        with patch('subprocess.run') as mock_run:
-            mock_run.return_value.returncode = 0
-            mock_run.return_value.stdout = "copa version 0.11.0"
-            
-            version = self.adapter.get_copa_version()
-            self.assertEqual(version, "copa version 0.11.0")
-    
     @patch('subprocess.run')
     @patch('tempfile.mkdtemp')
     def test_patch_image_success(self, mock_mkdtemp, mock_run):
