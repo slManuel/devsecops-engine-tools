@@ -5,14 +5,15 @@ import { ScannerRes } from "../../domain/model/ScannerRes";
 import { Finding } from "../../domain/model/Finding";
 import { exec } from "child_process";
 import { IDependenciesScanContext, Mappers } from "../../domain/model/mappers/Mappers";
+import { ScannerImageManager } from "../helper/ScannerImageManager";
 
 export class DependenciesScanner implements IScannerGateway {
   async scan(
     elementToScan: string,
     outputChannel: OutputChannel,
-    dockerImageName: string,
+    containerImageName: string,
     toolVersion: string,
-    dockerPath: string,
+    containerEnginePath: string,
     dependenciesToken: string,
     xrayMode: string,
     dependenciesTool: string,
@@ -21,39 +22,53 @@ export class DependenciesScanner implements IScannerGateway {
     outputChannel.clear();
     outputChannel.show();
 
-    return new Promise((resolve, _reject) => {
+    return new Promise(async (resolve, _reject) => {
       let scanResult: boolean = false;
       let findings: Finding[] = [];
       let dependencyCheckDatabaseVolume = "";
 
-      const timeout = setTimeout(() => {
-        outputChannel.appendLine("Scan timed out after 2 minutes");
-        outputChannel.appendLine(
-          "Docker command may be hanging. Check Docker configuration."
+      try {
+        const scannerImageAvailable = await ScannerImageManager.ensureScannerImageExists(
+          containerEnginePath,
+          containerImageName,
+          toolVersion,
+          outputChannel
         );
-        resolve(new ScannerRes(false, []));
-      }, 12000000);
+        
+        if (!scannerImageAvailable) {
+          outputChannel.appendLine("Failed to ensure scanner image is available. Aborting scan.");
+          resolve(new ScannerRes(false, []));
+          return;
+        }
 
-      if (!dependenciesToken) {
-        outputChannel.appendLine("No Dependencies Token to scan provided\n Go to Settings to configure it!");
-        resolve(new ScannerRes(false, []));
-        return;
-      }
-      if (dependenciesTool === "dependency_check" && dependencyCheckDatabase) {
-          dependencyCheckDatabaseVolume = `-v ${dependencyCheckDatabase}:/root/dependency-check`;
-      }
+        const timeout = setTimeout(() => {
+          outputChannel.appendLine("Scan timed out after 10 minutes");
+          outputChannel.appendLine(
+            "Container command may be hanging. Check container engine configuration."
+          );
+          resolve(new ScannerRes(false, []));
+        }, 12000000);
 
-      const dockerCommand = `${dockerPath} run --rm ${dependencyCheckDatabaseVolume} -v ${elementToScan}:/ms_artifact ${dockerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --xray_mode ${xrayMode} --remote_config_repo docker_default_remote_config --module engine_dependencies --tool ${dependenciesTool} --token_engine_dependencies ${dependenciesToken} --folder_path /ms_artifact --context true"`;
+        if (!dependenciesToken) {
+          outputChannel.appendLine("No Dependencies Token to scan provided\n Go to Settings to configure it!");
+          resolve(new ScannerRes(false, []));
+          return;
+        }
+        if (dependenciesTool === "dependency_check" && dependencyCheckDatabase) {
+            dependencyCheckDatabaseVolume = `-v ${dependencyCheckDatabase}:/root/dependency-check`;
+        }
 
-      const childProcess = exec(dockerCommand, (error, stdout, stderr) => {
+      const containerCommand = `${containerEnginePath} run --rm ${dependencyCheckDatabaseVolume} -v ${elementToScan}:/ms_artifact ${containerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --xray_mode ${xrayMode} --remote_config_repo docker_default_remote_config --module engine_dependencies --tool ${dependenciesTool} --token_engine_dependencies ${dependenciesToken} --folder_path /ms_artifact --context true"`;
+
+      const childProcess = exec(containerCommand, (error, stdout, stderr) => {
         clearTimeout(timeout);
         if (error) {
           outputChannel.appendLine(
-            `Error executing Docker command: ${error.message}`
+            `Error executing container command: ${error.message}`
           );
           if (stderr.includes("Unable to find image")) {
             outputChannel.appendLine(
-              "Docker image not found. Attempting to download..."
+              "Container image not found. Attempting to download..."
             );
           } else {
             outputChannel.appendLine(`Standard Error: ${stderr}`);
@@ -112,7 +127,7 @@ export class DependenciesScanner implements IScannerGateway {
           outputChannel.appendLine(cleanedOutput);
           outputChannel.appendLine(`Found ${findings.length} issues in scan`);
         } else {
-          outputChannel.appendLine("Docker command completed with no output");
+          outputChannel.appendLine("Container command completed with no output");
         }
 
         resolve(new ScannerRes(scanResult, findings));
@@ -120,9 +135,14 @@ export class DependenciesScanner implements IScannerGateway {
 
       childProcess.on("exit", (code) => {
         if (code !== 0 && code !== null) {
-          outputChannel.appendLine(`Docker process exited with code ${code}`);
+          outputChannel.appendLine(`Container process exited with code ${code}`);
         }
       });
+
+      } catch (error) {
+        outputChannel.appendLine(`Error during dependencies scanning: ${error instanceof Error ? error.message : String(error)}`);
+        resolve(new ScannerRes(false, []));
+      }
     });
   }
 

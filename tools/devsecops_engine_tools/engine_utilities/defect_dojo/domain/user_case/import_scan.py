@@ -76,7 +76,7 @@ class ImportScanUserCase:
 
         logger.info(f"Match {request.scan_type}")
         products = self.__rest_product.get_products({"name": request.product_name})
-        if len(products.results) == 0:
+        if len(products.results) == 0 and request.product_name != "Orphan_Product":
             products = self.__rest_product.get_products({"name": request.code_app})
         if len(products.results) > 0:
             product_id = products.results[0].id
