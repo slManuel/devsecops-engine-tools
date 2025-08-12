@@ -2,8 +2,8 @@ import * as vscode from "vscode";
 import { DevSecOpsTreeDataProvider } from "../tree/DevSecOpsTreeDataProvider";
 import { imageScanRequest } from "../application/InitEngineCore";
 import { ScanConfiguration } from "../domain/model/ScanConfiguration";
-import DockerPathDetector from "../infraestructure/helper/DockerPathDetector";
 import { ScanOutputLoader } from "../infraestructure/helper/LoadingAnimator";
+import ContainerEngineManager from "../infraestructure/helper/ContainerEngineManager";
 
 export function registerImageScanCommand(
   context: vscode.ExtensionContext,
