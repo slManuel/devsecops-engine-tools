@@ -4,7 +4,7 @@
   "displayName": "DevSecOps Engine Tools",
   "publisher": "GrupoBancolombiaOSPO",
   "description": "",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "engines": {
     "vscode": "^1.95.0"
   },
@@ -49,12 +49,11 @@
           "devsecops.general.imageToUse": {
             "type": "string",
             "default": "bancolombia/devsecops-engine-tools",
-            "description": "Docker image to use for scanning"
+            "description": "Container image to use for scanning"
           },
           "devsecops.general.imageVersion": {
             "type": "string",
-            "default": "1.75.3",
-            "description": "Docker image version to use for scanning"
+            "description": "Container image version to use for scanning"
           }
         }
       },
@@ -337,7 +336,6 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "docker-cli-js": "^2.10.0",
     "generator-code": "^1.11.9",
     "keytar": "^7.9.0",
     "lodash": "^4.17.21"

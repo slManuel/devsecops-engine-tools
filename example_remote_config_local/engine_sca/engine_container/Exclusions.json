@@ -17,6 +17,11 @@
       "expired_date": "26052024",
       "hu": "2342342"
     },
+    "BLACK_LIST_BASE_IMAGE": {
+      "create_date": "21022024",
+      "expired_date": "26052024",
+      "hu": "2342342"
+    },
     "PRISMA": [
       {
         "id": "CVE-2023-6237",

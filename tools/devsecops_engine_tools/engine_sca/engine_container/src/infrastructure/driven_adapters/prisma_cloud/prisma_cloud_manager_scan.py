@@ -97,21 +97,26 @@ class PrismaCloudManagerScan(ToolGateway):
         except subprocess.CalledProcessError as e:
             logger.error(f"Error during image scan of {image_name}: {e.stderr}")
 
-    def _write_image_base(self, result_file, base_image, exclusions_data):
+    def _write_image_base(self, result_file, base_image, exclusions_data, remoteconfig):
         try:
             with open(result_file, "r") as file:
                 data = json.load(file)
 
             prisma_exclusions = exclusions_data.get("All", {}).get("PRISMA", [])
             modified = False
+            base_image_list = base_image[0][0] if base_image and base_image[0][0] else []
+            
+            
+            key_image_exception = remoteconfig.get("GET_IMAGE_BASE", {}).get("LABEL_KEYS", {}).get("key_image_exception", None)
+            
             for result in data.get("results", []):
                 for vulnerability in result.get("vulnerabilities", []):
                     for exclusion in prisma_exclusions:
                         if (
                             vulnerability.get("id") == exclusion.get("id") and
-                            any(image.startswith(base_image) for image in exclusion.get("x86.image.name", []))
+                            any(b_image.startswith(ex_image) for b_image in base_image_list for ex_image in exclusion.get(key_image_exception, []))
                         ):
-                            vulnerability["baseImage"] = base_image
+                            vulnerability["baseImage"] = str(base_image_list) if base_image_list else ""
                             modified = True
 
             if modified:
@@ -166,8 +171,12 @@ class PrismaCloudManagerScan(ToolGateway):
             raise ValueError("The string is not properly formatted. Make sure it contains a ':'.")
         
     def run_tool_container_sca(
-        self, remoteconfig, secret_tool, token_engine_container, image_name, result_file, base_image, exclusions, generate_sbom
+        self, remoteconfig, secret_tool, token_engine_container, image_name, result_file, base_image, exclusions, generate_sbom, is_compressed_file=False
     ):
+        if is_compressed_file:
+            logger.warning("Prisma Cloud does not support compressed file scanning. Skipping.")
+            return "", None
+            
         prisma_key = (
             f"{secret_tool['access_prisma']}:{secret_tool['token_prisma']}" if secret_tool else token_engine_container
         )
@@ -191,7 +200,7 @@ class PrismaCloudManagerScan(ToolGateway):
             prisma_key
         )
         if base_image:
-            self._write_image_base(result_file, base_image, exclusions)
+            self._write_image_base(result_file, base_image, exclusions, remoteconfig)
         if generate_sbom:
             sbom_components = self._generate_sbom(
                 image_scanned,

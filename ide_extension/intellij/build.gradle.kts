@@ -9,9 +9,9 @@ plugins {
     id("java")
     id("jacoco")
     // IntelliJ Platform Gradle Plugin
-    id("org.jetbrains.intellij.platform") version "2.6.0"
+    id("org.jetbrains.intellij.platform") version "2.7.1"
     // Gradle Changelog Plugin
-    id("org.jetbrains.changelog") version "2.2.1"
+    id("org.jetbrains.changelog") version "2.4.0"
     // Gradle Sonar Plugin
     id("org.sonarqube") version "6.2.0.5505"
 }

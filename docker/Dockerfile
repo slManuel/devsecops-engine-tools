@@ -15,6 +15,7 @@ COPY ./docker/remoteConfigGeneration.sh /app/remoteConfigGeneration.sh
 COPY ./rules* /tmp/rules
 COPY ./docs* /tmp/docs
 COPY ./certificates* /tmp/certificates
+COPY ./kics_binary* /tmp/kics
 
 RUN dos2unix /app/remoteConfigGeneration.sh
 
@@ -35,6 +36,8 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 RUN python3 -m pip install checkov==2.3.296
 RUN python3 -m pip install -i https://pypi.org/simple devsecops-engine-tools==$APP_VERSION
+
+ENV PATH="/opt/venv/bin:/usr/local/go/bin:$PATH"
 
 FROM debian:stable-20250520-slim
 WORKDIR /app
@@ -70,6 +73,8 @@ COPY --from=remote_config /tmp/rules* /tmp/rules
 COPY --from=remote_config /tmp/docs* /tmp/docs
 COPY --from=remote_config /tmp/certificates* /tmp/certificates
 COPY --from=remote_config /tmp/certificates* /usr/local/share/ca-certificates
+COPY --from=remote_config /tmp/kics/kics-devsecops* /usr/local/bin/kics
+RUN chmod +x /usr/local/bin/kics/*
 
 COPY .envdetlocal /app/.env
 
@@ -79,7 +84,7 @@ RUN apt-get update && \
 
 RUN ln -s /usr/bin/python3 /usr/local/bin/python3
 
-ENV PATH="/opt/venv/bin:$PATH"
+ENV PATH="/opt/venv/bin:/usr/local/go/bin:/root/go/bin:/usr/local/bin/kics:$PATH"
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -111,10 +116,13 @@ RUN apt-get update && \
     gnupg && \
     rm -rf /var/lib/apt/lists/*
 
-# Add Adoptium repository
-RUN wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public | apt-key add - && \
-    echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list
-
+# Crear carpeta de keyrings y descargar la clave
+RUN install -m 0755 -d /etc/apt/keyrings && \
+    wget -O /etc/apt/keyrings/adoptium.asc https://packages.adoptium.net/artifactory/api/gpg/key/public && \
+    chmod a+r /etc/apt/keyrings/adoptium.asc && \
+    echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(. /etc/os-release && echo \"$VERSION_CODENAME\") main" \
+    | tee /etc/apt/sources.list.d/adoptium.list
+    
 # Install Java 21
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \

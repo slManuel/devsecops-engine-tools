@@ -302,7 +302,7 @@ def test_blacklist_control_error():
             vm_id_url="vm_id_url",
         )
     ]
-    remote_config = {"TAG_BLACKLIST_EXCLUSION_DAYS": {"blacklisted": 5}}
+    remote_config = {"TAG_BLACKLIST_EXCLUSION_DAYS": {"blacklisted": 5}, "COUNTRY_HOLIDAYS": "CO"}
     tag_age_threshold = 5
     mock_devops_platform_gateway = MagicMock()
     break_build = BreakBuild(
@@ -334,7 +334,7 @@ def test_blacklist_control_warning():
             vm_id_url="vm_id_url",
         )
     ]
-    remote_config = {"TAG_BLACKLIST_EXCLUSION_DAYS": {"blacklisted": 5}}
+    remote_config = {"TAG_BLACKLIST_EXCLUSION_DAYS": {"blacklisted": 5}, "COUNTRY_HOLIDAYS": "CO"}
     tag_age_threshold = 5
     mock_devops_platform_gateway = MagicMock()
     break_build = BreakBuild(
@@ -371,7 +371,7 @@ def test_blacklist_control_working_days_error(mock_datetime):
             vm_id_url="vm_id_url",
         )
     ]
-    remote_config = {"TAG_BLACKLIST_EXCLUSION_DAYS": {"blacklisted": "3WD"}}
+    remote_config = {"TAG_BLACKLIST_EXCLUSION_DAYS": {"blacklisted": "3WD"}, "COUNTRY_HOLIDAYS": "CO"}
     mock_devops_platform_gateway = MagicMock()
     break_build = BreakBuild(
         mock_devops_platform_gateway,
@@ -407,7 +407,7 @@ def test_blacklist_control_working_days_warning(mock_datetime):
             vm_id_url="vm_id_url",
         )
     ]
-    remote_config = {"TAG_BLACKLIST_EXCLUSION_DAYS": {"blacklisted": "5WD"}}
+    remote_config = {"TAG_BLACKLIST_EXCLUSION_DAYS": {"blacklisted": "5WD"}, "COUNTRY_HOLIDAYS": "CO"}
     mock_devops_platform_gateway = MagicMock()
     break_build = BreakBuild(
         mock_devops_platform_gateway,

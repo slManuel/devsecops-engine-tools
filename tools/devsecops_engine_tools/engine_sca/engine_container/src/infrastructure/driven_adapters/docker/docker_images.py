@@ -33,19 +33,19 @@ class DockerImages(ImagesGateway):
                 f"Error listing images, docker must be running and added to PATH: {e}"
             )
 
-    def get_base_image(self, matching_image):
+    def get_base_image(self, matching_image, base_image_labels: list, label_keys: dict = None):
         try:
             image_details = self.get_image_details(matching_image.id)
             if not image_details:
                 return None
 
             labels = image_details.get("Config", {}).get("Labels", {})
-            return self.extract_base_image_from_labels(labels, matching_image)[0]
+            return self.extract_base_image_from_labels(labels, base_image_labels, matching_image, label_keys)
         except Exception as e:
             logger.warning(f"Error obtaining base image: {e}")
-            return None
+            return None, False
 
-    def validate_base_image_date(self, matching_image, referenced_date):
+    def validate_base_image_date(self, matching_image, referenced_date, base_image_labels: list, label_keys: dict = None):
         if matching_image is None or matching_image.id is None:
             logger.error("Error: matching_image ID is None")
             return False
@@ -54,13 +54,17 @@ class DockerImages(ImagesGateway):
             return False
 
         labels = image_details.get("Config", {}).get("Labels", {})
-        baseline_date = labels.get("x86.baseline.date")
+
+        baseline_date = None
+        if label_keys and "baseline_date" in label_keys:
+            baseline_date_key = label_keys["baseline_date"]
+            baseline_date = labels.get(baseline_date_key)
         date_image = None
         if baseline_date:
             date_image = self.parse_date(baseline_date)
         else:
-            base_image = self.extract_base_image_from_labels(labels)
-            if not base_image[1]:
+            base_image, is_uso_especifico = self.extract_base_image_from_labels(labels, base_image_labels, None, label_keys)
+            if not is_uso_especifico and base_image:
                 date_image = self.extract_date_from_image(base_image[0])
 
         return self.validate_date(date_image, referenced_date)
@@ -73,13 +77,20 @@ class DockerImages(ImagesGateway):
             logger.error(f"Error obtaining image details for '{image_id}': {e}")
             return None
 
-    def extract_base_image_from_labels(self, labels, matching_image=None):
+    def extract_base_image_from_labels(self, labels, base_image_labels: list, matching_image=None, label_keys: dict = None):
         try:
             if labels:
-                source_image = labels.get("x86.image.name") or labels.get("image.base.ref.name")
-                if not source_image:
-                    source_image = labels.get("source_images") or labels.get("source-image")
-                is_uso_especifico = labels.get("repository") == 'evc/uso_especifico'
+                source_image = []
+                for label in base_image_labels:
+                    value = labels.get(label)
+                    if value:
+                        source_image.append(value)
+                
+                # Only check for specific_use if it's configured in remote config
+                is_uso_especifico = False
+                if label_keys and "specific_use" in label_keys:
+                    specific_use_value = label_keys["specific_use"]
+                    is_uso_especifico = labels.get("repository") == specific_use_value
                 if source_image and matching_image:
                     logger.info(f"Base image for '{matching_image}' found: {source_image}")
                 elif matching_image:
@@ -123,4 +134,21 @@ class DockerImages(ImagesGateway):
             raise ValueError(
                 f"Compliance issue: the source base image date ({date.strftime('%Y-%m-%d')}) is older than the referenced date ({reference_date.strftime('%Y-%m-%d')})."
             )
+        return True
+
+    def validate_black_list_base_image(self, base_image, black_list):
+        if not isinstance(base_image, list) or not isinstance(black_list, list):
+            logger.error("Invalid input types: expected a list of images and a list of strings.")
+            return False
+        
+        for image in base_image:
+            if not isinstance(image, str):
+                logger.warning(f"Skipping non-string image: {image}")
+                continue
+                
+            for black in black_list:
+                if black in image:
+                    raise ValueError(
+                        f"Compliance issue: the image: {image} is blacklisted for {black}"
+                    )
         return True

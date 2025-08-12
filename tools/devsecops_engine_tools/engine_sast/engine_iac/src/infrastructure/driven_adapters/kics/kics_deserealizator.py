@@ -53,5 +53,6 @@ class KicsDeserealizator:
         high = severity_counters.get("HIGH", 0)
         medium = severity_counters.get("MEDIUM", 0)
         low = severity_counters.get("LOW", 0)
+        info = severity_counters.get("INFO", 0)
 
-        return critical + high + medium + low
+        return critical + high + medium + low + info

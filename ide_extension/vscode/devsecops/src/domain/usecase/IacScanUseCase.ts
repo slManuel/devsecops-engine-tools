@@ -33,7 +33,7 @@ export class IacScanUseCase implements IIacScanUseCase {
     private iacScanner: IacScanner,
     private restClient: IRestClientGateway,
     private toolVersion: string,
-    private dockerPath: string
+    private containerEnginePath: string
   ) {}
 
   public async scan(
@@ -125,15 +125,15 @@ export class IacScanUseCase implements IIacScanUseCase {
     const scannerRes: ScannerRes = await this.iacScanner.scan(
       folderToScan,
       outputChannel,
-      scanConfiguration.getDockerImageName(),
+      scanConfiguration.getContainerImageName(),
       this.toolVersion,
-      this.dockerPath
+      this.containerEnginePath
     );
 
     const findingsWithRuleCode: Finding[] = scannerRes.getFindings().map((finding: Finding) => {
       return this.iacScanner.getRuleCode(
-        this.dockerPath,
-        scanConfiguration.getDockerImageName(),
+        this.containerEnginePath,
+        scanConfiguration.getContainerImageName(),
         this.toolVersion,
         finding.getId(),
         finding

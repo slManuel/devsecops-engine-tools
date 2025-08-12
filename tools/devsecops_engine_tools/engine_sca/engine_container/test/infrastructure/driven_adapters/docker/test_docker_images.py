@@ -11,6 +11,10 @@ def mock_docker_client():
     with patch("docker.from_env") as mock:
         yield mock
 
+@pytest.fixture
+def base_image_labels():
+    return ["x86.image.name", "image.base.ref.name", "source-image", "source_images"]
+
 def test_list_images(mock_docker_client):
     # Arrange
     docker_images = DockerImages()
@@ -86,7 +90,7 @@ def test_list_images_exception(mock_docker_client):
     assert result is None
     mock_docker_client.assert_called_once()
 
-def test_get_base_image_source_label(mock_docker_client):
+def test_get_base_image_source_label(mock_docker_client, base_image_labels):
     docker_images = DockerImages()
     matching_image = MagicMock()
     matching_image.id = "image_id"
@@ -97,11 +101,12 @@ def test_get_base_image_source_label(mock_docker_client):
         "Config": {"Labels": {"x86.image.name": "source_image:1.0"}},
     }
     
-    result = docker_images.get_base_image(matching_image)
-    assert result == "source_image:1.0"
+    result, is_distroless = docker_images.get_base_image(matching_image, base_image_labels)
+    assert result == ["source_image:1.0"]
+    assert not is_distroless
     mock_client.api.inspect_image.assert_called_once_with("image_id")
 
-def test_get_base_image_no_base_image(mock_docker_client):
+def test_get_base_image_no_base_image(mock_docker_client, base_image_labels):
     docker_images = DockerImages()
     matching_image = MagicMock()
     matching_image.id = "image_id"
@@ -110,11 +115,12 @@ def test_get_base_image_no_base_image(mock_docker_client):
     mock_docker_client.return_value = mock_client
     mock_client.api.inspect_image.return_value = {"Config": {"Labels": {}}}
     
-    result = docker_images.get_base_image(matching_image)
+    result, is_distroless = docker_images.get_base_image(matching_image, base_image_labels)
     assert result is None
+    assert not is_distroless
     mock_client.api.inspect_image.assert_called_once_with("image_id")
 
-def test_get_base_image_exception(mock_docker_client):
+def test_get_base_image_exception(mock_docker_client, base_image_labels):
     docker_images = DockerImages()
     matching_image = MagicMock()
     matching_image.id = "image_id"
@@ -123,27 +129,29 @@ def test_get_base_image_exception(mock_docker_client):
     mock_docker_client.return_value = mock_client
     mock_client.api.inspect_image.side_effect = Exception("Inspection failed")
     
-    result = docker_images.get_base_image(matching_image)
+    result = docker_images.get_base_image(matching_image, base_image_labels)
     assert result is None
     mock_client.api.inspect_image.assert_called_once_with("image_id")
 
-def test_validate_base_image_date_with_baseline_date(mock_docker_client):
+def test_validate_base_image_date_with_baseline_date(mock_docker_client, base_image_labels):
     docker_images = DockerImages()
     matching_image = MagicMock()
     matching_image.id = "image_id"
     referenced_date = "20230801"
-    
+    label_keys = {
+        "baseline_date": "x86.baseline.date"
+    }
     mock_client = MagicMock()
     mock_docker_client.return_value = mock_client
     mock_client.api.inspect_image.return_value = {
         "Config": {"Labels": {"x86.baseline.date": "20230802"}}
     }
     
-    result = docker_images.validate_base_image_date(matching_image, referenced_date)
+    result = docker_images.validate_base_image_date(matching_image, referenced_date, base_image_labels, label_keys)
     assert result is True
     mock_client.api.inspect_image.assert_called_once_with("image_id")
 
-def test_validate_base_image_date_without_baseline_date(mock_docker_client):
+def test_validate_base_image_date_without_baseline_date(mock_docker_client, base_image_labels):
     docker_images = DockerImages()
     matching_image = MagicMock()
     matching_image.id = "image_id"
@@ -156,17 +164,19 @@ def test_validate_base_image_date_without_baseline_date(mock_docker_client):
     }
     
     with patch.object(docker_images, 'extract_date_from_image', return_value=datetime.strptime("20230802", "%Y%m%d")):
-        result = docker_images.validate_base_image_date(matching_image, referenced_date)
+        result = docker_images.validate_base_image_date(matching_image, referenced_date, base_image_labels)
     
     assert result is True
     mock_client.api.inspect_image.assert_called_once_with("image_id")
 
-def test_validate_base_image_date_older_than_referenced_date(mock_docker_client):
+def test_validate_base_image_date_older_than_referenced_date(mock_docker_client, base_image_labels):
     docker_images = DockerImages()
     matching_image = MagicMock()
     matching_image.id = "image_id"
     referenced_date = "20230802"
-    
+    label_keys = {
+        "baseline_date": "x86.baseline.date"
+    }
     mock_client = MagicMock()
     mock_docker_client.return_value = mock_client
     mock_client.api.inspect_image.return_value = {
@@ -174,6 +184,102 @@ def test_validate_base_image_date_older_than_referenced_date(mock_docker_client)
     }
     
     with pytest.raises(ValueError, match="Compliance issue:"):
-        docker_images.validate_base_image_date(matching_image, referenced_date)
+        docker_images.validate_base_image_date(matching_image, referenced_date, base_image_labels, label_keys)
     
     mock_client.api.inspect_image.assert_called_once_with("image_id")
+
+def test_validate_base_image_date_with_custom_label_keys(mock_docker_client, base_image_labels):
+    docker_images = DockerImages()
+    matching_image = MagicMock()
+    matching_image.id = "image_id"
+    referenced_date = "20230801"
+    
+    # Custom label keys configuration
+    label_keys = {
+        "baseline_date": "custom.baseline.date",
+        "specific_use": "evc/uso_especifico",
+        "key_image_exception": "custom.image.name"
+    }
+    
+    mock_client = MagicMock()
+    mock_docker_client.return_value = mock_client
+    mock_client.api.inspect_image.return_value = {
+        "Config": {"Labels": {"custom.baseline.date": "20230802"}}
+    }
+    
+    result = docker_images.validate_base_image_date(matching_image, referenced_date, base_image_labels, label_keys)
+    assert result is True
+    mock_client.api.inspect_image.assert_called_once_with("image_id")
+    
+def test_validate_black_list_base_image_valid_not_blacklisted():
+    docker_images = DockerImages()
+    base_image = ["my_image:latest"]  # Now a list
+    black_list = ["forbidden", "banned"]
+    result = docker_images.validate_black_list_base_image(base_image, black_list)
+    assert result is True
+
+def test_validate_black_list_base_image_valid_blacklisted():
+    docker_images = DockerImages()
+    base_image = ["forbidden_image:latest"]  # Now a list
+    black_list = ["forbidden", "banned"]
+    with pytest.raises(ValueError, match="Compliance issue: the image: forbidden_image:latest is blacklisted for forbidden"):
+        docker_images.validate_black_list_base_image(base_image, black_list)
+
+def test_validate_black_list_base_image_blacklisted_partial_match():
+    docker_images = DockerImages()
+    base_image = ["my_image:banned"]  # Now a list
+    black_list = ["forbidden", "banned"]
+    with pytest.raises(ValueError, match="Compliance issue: the image: my_image:banned is blacklisted for banned"):
+        docker_images.validate_black_list_base_image(base_image, black_list)
+
+def test_validate_black_list_base_image_invalid_base_image_type():
+    docker_images = DockerImages()
+    base_image = 12345  # Not a list
+    black_list = ["forbidden"]
+    result = docker_images.validate_black_list_base_image(base_image, black_list)
+    assert result is False
+
+def test_validate_black_list_base_image_invalid_black_list_type():
+    docker_images = DockerImages()
+    base_image = ["my_image:latest"]  # Now a list
+    black_list = "not_a_list"  # Not a list
+    result = docker_images.validate_black_list_base_image(base_image, black_list)
+    assert result is False
+
+def test_validate_black_list_base_image_empty_black_list():
+    docker_images = DockerImages()
+    base_image = ["my_image:latest"]  # Now a list
+    black_list = []
+    result = docker_images.validate_black_list_base_image(base_image, black_list)
+    assert result is True
+
+def test_validate_black_list_base_image_multiple_images_valid():
+    docker_images = DockerImages()
+    base_image = ["my_image:latest", "another_image:v1", "third_image:stable"]
+    black_list = ["forbidden", "banned"]
+    result = docker_images.validate_black_list_base_image(base_image, black_list)
+    assert result is True
+
+def test_validate_black_list_base_image_multiple_images_one_blacklisted():
+    docker_images = DockerImages()
+    base_image = ["my_image:latest", "forbidden_image:v1", "third_image:stable"]
+    black_list = ["forbidden", "banned"]
+    with pytest.raises(ValueError, match="Compliance issue: the image: forbidden_image:v1 is blacklisted for forbidden"):
+        docker_images.validate_black_list_base_image(base_image, black_list)
+
+def test_validate_black_list_base_image_mixed_types_in_list():
+    docker_images = DockerImages()
+    base_image = ["my_image:latest", 123, "another_image:v1"]  # Mixed types
+    black_list = ["forbidden", "banned"]
+    result = docker_images.validate_black_list_base_image(base_image, black_list)
+    assert result is True
+
+def test_validate_black_list_base_image_empty_list():
+    docker_images = DockerImages()
+    base_image = []  # Empty list
+    black_list = ["forbidden", "banned"]
+    result = docker_images.validate_black_list_base_image(base_image, black_list)
+    assert result is True
+
+
+

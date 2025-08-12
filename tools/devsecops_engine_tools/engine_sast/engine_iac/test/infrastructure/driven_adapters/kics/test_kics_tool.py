@@ -64,8 +64,9 @@ class TestKicsTool(unittest.TestCase):
         work_folder = "work_folder"
         os_platform = "Linux"
         queries = [{"rule1":"check1"}, {"rule2":"check2"}]
+        exclude_paths = ["path1", "path2"]
 
-        self.kics_tool._execute_kics(folders_to_scan, prefix, platform_to_scan, work_folder, os_platform, queries)
+        self.kics_tool._execute_kics(folders_to_scan, prefix, platform_to_scan, work_folder, os_platform, queries, exclude_paths)
 
         mock_logger.error.assert_called_once_with("Error during KICS execution: Command 'kics' returned non-zero exit status 1.")
 
@@ -106,9 +107,10 @@ class TestKicsTool(unittest.TestCase):
         mock_subprocess_run.return_value = MagicMock(returncode=1, stderr="error")
 
         command_prefix = "kics"
-        result = self.kics_tool._validate_kics(command_prefix)
+        result, command = self.kics_tool._validate_kics(command_prefix)
 
         self.assertFalse(result)
+        self.assertEqual(command, "")
         mock_logger.error.assert_called_once_with("KICS binary not valid: error")
 
     @patch("devsecops_engine_tools.engine_sast.engine_iac.src.infrastructure.driven_adapters.kics.kics_tool.subprocess.run", side_effect=Exception("Test exception"))

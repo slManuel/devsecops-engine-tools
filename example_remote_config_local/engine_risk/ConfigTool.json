@@ -1,6 +1,7 @@
 {
     "MESSAGE_INFO": "Custom message",
     "IGNORE_ANALYSIS_PATTERN": "(.*_test|test_.*)",
+    "COUNTRY_HOLIDAYS": "CO",
     "HANDLE_SERVICE_NAME": {
         "ENABLED": "false",
         "CHECK_ENDING": [
