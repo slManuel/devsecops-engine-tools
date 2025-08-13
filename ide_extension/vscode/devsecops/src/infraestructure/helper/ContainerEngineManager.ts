@@ -2,6 +2,7 @@ import { exec, execSync } from "child_process";
 import { promisify } from "util";
 import * as path from "path";
 import * as os from "os";
+import * as fs from "fs";
 
 const execAsync = promisify(exec);
 
@@ -170,13 +171,39 @@ export default class ContainerEngineManager {
   static async removeFile(filePath: string): Promise<void> {
     try {
       await execAsync(`rm -f "${filePath}"`);
+      
+      // Try to clean up the devsecops temp directory if it's empty
+      const dirPath = path.dirname(filePath);
+      const dirName = path.basename(dirPath);
+      
+      if (dirName === 'devsecops-temp') {
+        try {
+          const files = fs.readdirSync(dirPath);
+          if (files.length === 0) {
+            fs.rmdirSync(dirPath);
+          }
+        } catch (cleanupError) {
+          // Ignore cleanup errors - directory might not be empty or accessible
+        }
+      }
     } catch (error) {
       console.error(`Error removing file ${filePath}:`, error);
     }
   }
 
+  private static ensureDevsecopsDirectory(): string {
+    const homeDir = os.homedir();
+    const devsecopsDir = path.join(homeDir, 'devsecops-temp');
+    
+    if (!fs.existsSync(devsecopsDir)) {
+      fs.mkdirSync(devsecopsDir, { recursive: true });
+    }
+    
+    return devsecopsDir;
+  }
+
   static createTemporaryImagePath(imageName: string): string {
-    const tempDir = os.tmpdir();
+    const tempDir = this.ensureDevsecopsDirectory();
     const safeImageName = imageName.replace(/[^a-zA-Z0-9.-]/g, '_');
     const timestamp = Date.now();
     return path.join(tempDir, `devsecops_image_${safeImageName}_${timestamp}.tar`);
