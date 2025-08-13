@@ -43,7 +43,6 @@ export function registerImageScanCommand(
       const scanner = await imageScanRequest();
       const outputChannel = vscode.window.createOutputChannel("Image Scan Results");
 
-      // Start the loading animation
       const scanLoader = new ScanOutputLoader(outputChannel);
       scanLoader.start(`Image: ${imageName}`);
 
@@ -55,7 +54,6 @@ export function registerImageScanCommand(
         );
 
         if (scanResult) {
-          // Stop animation and show completion - THIS PRESERVES ALL OUTPUT DATA
           scanLoader.stop(scanResult.getFindings().length, "image vulnerability");
 
           void vscode.window.showInformationMessage(
