@@ -82,7 +82,7 @@ class ReportSonar:
 
         report_config_tool = self.remote_config_source_gateway.get_remote_config(
             args["remote_config_repo"],
-            "/report_sonar/ConfigTool.json",
+            "/engine_integrations/report_sonar/ConfigTool.json",
             args["remote_config_branch"]
         )
 

@@ -24,10 +24,10 @@ def init_report_sonar(
         args["remote_config_repo"], "/engine_core/ConfigTool.json", args["remote_config_branch"]
     )
     report_config_tool = remote_config_source_gateway.get_remote_config(
-        args["remote_config_repo"], "/report_sonar/ConfigTool.json", args["remote_config_branch"]
+        args["remote_config_repo"], "/engine_integrations/report_sonar/ConfigTool.json", args["remote_config_branch"]
     )
     excluded_pipelines = remote_config_source_gateway.get_remote_config(
-        args["remote_config_repo"], "/report_sonar/Exclusions.json", args["remote_config_branch"]
+        args["remote_config_repo"], "/engine_integrations/report_sonar/Exclusions.json", args["remote_config_branch"]
     )
 
     pipeline_name = devops_platform_gateway.get_variable("pipeline_name")
