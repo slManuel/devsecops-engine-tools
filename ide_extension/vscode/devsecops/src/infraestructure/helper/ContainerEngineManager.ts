@@ -14,6 +14,7 @@ export interface ContainerEngine {
 
 export default class ContainerEngineManager {
   private static detectedEngine: ContainerEngine | null = null;
+  private static tempDirectoryPath: string | null = null;
 
   static getContainerEnginePath(): string {
     const engine = this.detectContainerEngine();
@@ -170,35 +171,35 @@ export default class ContainerEngineManager {
 
   static async removeFile(filePath: string): Promise<void> {
     try {
-      await execAsync(`rm -f "${filePath}"`);
-      
-      // Try to clean up the devsecops temp directory if it's empty
       const dirPath = path.dirname(filePath);
       const dirName = path.basename(dirPath);
       
-      if (dirName === 'devsecops-temp') {
-        try {
-          const files = fs.readdirSync(dirPath);
-          if (files.length === 0) {
-            fs.rmdirSync(dirPath);
-          }
-        } catch (cleanupError) {
-          // Ignore cleanup errors - directory might not be empty or accessible
-        }
+      if (dirName.startsWith('devsecops-tmp-')) {
+        await execAsync(`rm -rf "${dirPath}"`);
+        this.tempDirectoryPath = null;
+      } else {
+        await execAsync(`rm -f "${filePath}"`);
       }
     } catch (error) {
-      console.error(`Error removing file ${filePath}:`, error);
+      console.error(`Error removing file/directory ${filePath}:`, error);
     }
   }
 
   private static ensureDevsecopsDirectory(): string {
+    if (this.tempDirectoryPath && fs.existsSync(this.tempDirectoryPath)) {
+      return this.tempDirectoryPath;
+    }
+
     const homeDir = os.homedir();
-    const devsecopsDir = path.join(homeDir, 'devsecops-temp');
+    const timestamp = Date.now();
+    const processId = process.pid;
+    const devsecopsDir = path.join(homeDir, `devsecops-tmp-${timestamp}-${processId}`);
     
     if (!fs.existsSync(devsecopsDir)) {
       fs.mkdirSync(devsecopsDir, { recursive: true });
     }
     
+    this.tempDirectoryPath = devsecopsDir;
     return devsecopsDir;
   }
 
