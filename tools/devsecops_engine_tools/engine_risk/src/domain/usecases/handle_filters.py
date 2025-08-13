@@ -1,5 +1,6 @@
 import copy
-
+import os
+import json
 
 class HandleFilters:
     def filter(self, findings):
@@ -9,8 +10,27 @@ class HandleFilters:
 
     def filter_tags_days(self, devops_platform_gateway, remote_config, findings):
         tag_exclusion_days = remote_config["TAG_EXCLUSION_DAYS"]
+        runtime_tag_exclusion_days = remote_config["RUNTIME_TAG_EXCLUSION_DAYS"]
         filtered_findings = []
         filtered = 0
+
+        if runtime_tag_exclusion_days['ENABLED']:
+
+            def print_error(devops_platform_gateway, tag_exclusion_days_str, message):
+                runtime_message_set = f"Runtime Tag Exclusions days set \"{tag_exclusion_days_str}\". {message}"
+                if runtime_tag_exclusion_days['ERROR_ON_FAILED']:
+                    print(devops_platform_gateway.message("error", runtime_message_set))
+                else:
+                    print(devops_platform_gateway.message("info", f"{runtime_message_set}. Using default TAG_EXCLUSION_DAYS"))
+
+            tag_exclusion_days_str = os.environ.get('TAG_EXCLUSION_DAYS')
+            if tag_exclusion_days_str and tag_exclusion_days_str.strip():
+                try:
+                    tag_exclusion_days = json.loads(tag_exclusion_days_str)
+                except:
+                    print_error(devops_platform_gateway, tag_exclusion_days_str, "Parse Error")
+            else:
+                print_error(devops_platform_gateway, tag_exclusion_days_str, "Invalid Env Var")
 
         for finding in findings:
             exclude = False

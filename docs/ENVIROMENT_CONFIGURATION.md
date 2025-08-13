@@ -123,7 +123,9 @@ PYTHONPATH=tools/
                 "RUNNER_WORKSPACE": "",
                 "RUNNER_OS": "Linux",
                 "GITHUB_SOURCE_CODE_MANAGEMENT_URI": "https://github.com/Owner/repository",
-                "RUNNER_TOOL_CACHE": ""
+                "RUNNER_TOOL_CACHE": "",
+                //engine risk
+                "TAG_EXCLUSION_DAYS": "{\"tag1\": 5, \"tag2\": 10}"
             },
             "justMyCode": true
         }
