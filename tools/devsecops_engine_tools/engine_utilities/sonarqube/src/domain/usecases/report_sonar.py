@@ -55,7 +55,7 @@ class ReportSonar:
             self.devops_platform_gateway.get_variable("stage").capitalize(),
         )
 
-        compact_remote_config_url = self.remote_config_source_gateway.get_base_compact_remote_config_url(args["remote_config_repo"])
+        compact_remote_config_url = self.devops_platform_gateway.get_base_compact_remote_config_url(args["remote_config_repo"])
         source_code_management_uri = set_repository(
             pipeline_name,
             self.devops_platform_gateway.get_source_code_management_uri()
@@ -82,7 +82,7 @@ class ReportSonar:
 
         report_config_tool = self.remote_config_source_gateway.get_remote_config(
             args["remote_config_repo"],
-            "/report_sonar/ConfigTool.json",
+            "/engine_integrations/report_sonar/ConfigTool.json",
             args["remote_config_branch"]
         )
 

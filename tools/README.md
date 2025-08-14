@@ -103,6 +103,16 @@ devsecops_engine_tools
 |                   driven_adapters
 |                   entry_points
 |                   utils.
+|
+├───engine_integrations -> Tool integration module.
+|           test
+|           src
+|               applications
+|               domain
+|                   usecases
+|               infraestructure
+|                   entry_points
+|
 ├───engine_utilities -> Utilities transversal.
 |           azuredevops
 |           defect_dojo
@@ -110,7 +120,7 @@ devsecops_engine_tools
 |           github
 |           input_validations
 |           sbom
-|           sonarqube
+|           sonarqube -> report_sonar integration
 |           ssh
 |           utils
 ```

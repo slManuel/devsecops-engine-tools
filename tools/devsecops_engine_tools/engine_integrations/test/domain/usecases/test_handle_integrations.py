@@ -1,12 +1,12 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from devsecops_engine_tools.engine_utilities.engine_integrations.src.domain.usecases.handle_integrations import Integrations
+from devsecops_engine_tools.engine_integrations.src.domain.usecases.handle_integrations import Integrations
 
 class TestIntegrations(unittest.TestCase):
 
     @patch(
-        "devsecops_engine_tools.engine_utilities.engine_integrations.src.domain.usecases.handle_integrations.runner_report_sonar"
+        "devsecops_engine_tools.engine_integrations.src.domain.usecases.handle_integrations.runner_report_sonar"
     )
     def test_process_report_sonar(self, mock_runner_report_sonar):
         # Arrange

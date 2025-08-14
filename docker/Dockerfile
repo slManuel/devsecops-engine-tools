@@ -116,10 +116,13 @@ RUN apt-get update && \
     gnupg && \
     rm -rf /var/lib/apt/lists/*
 
-# Add Adoptium repository
-RUN wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public | apt-key add - && \
-    echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list
-
+# Crear carpeta de keyrings y descargar la clave
+RUN install -m 0755 -d /etc/apt/keyrings && \
+    wget -O /etc/apt/keyrings/adoptium.asc https://packages.adoptium.net/artifactory/api/gpg/key/public && \
+    chmod a+r /etc/apt/keyrings/adoptium.asc && \
+    echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(. /etc/os-release && echo \"$VERSION_CODENAME\") main" \
+    | tee /etc/apt/sources.list.d/adoptium.list
+    
 # Install Java 21
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \

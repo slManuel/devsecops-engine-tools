@@ -1,4 +1,4 @@
-from devsecops_engine_tools.engine_utilities.engine_integrations.src.domain.usecases.handle_integrations import (
+from devsecops_engine_tools.engine_integrations.src.domain.usecases.handle_integrations import (
     Integrations
 )
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger

@@ -1,7 +1,7 @@
 from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.azure.azure_devops import (
     AzureDevops
 )
-from devsecops_engine_tools.engine_utilities.engine_integrations.src.infrastructure.entry_points.entry_point_integrations import (
+from devsecops_engine_tools.engine_integrations.src.infrastructure.entry_points.entry_point_integrations import (
     init_engine_integrations
 )
 from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.aws.secrets_manager import (
