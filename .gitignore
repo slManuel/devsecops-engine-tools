@@ -87,4 +87,5 @@ coverage/
 # Binarios
 checkov
 checkov.exe
-build/** 
+build/**
+copa
