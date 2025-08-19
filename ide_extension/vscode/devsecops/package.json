@@ -136,6 +136,17 @@
             "description": "Dependency Check Database path (if using dependency_check tool, will increase performance)"
           }
         }
+      },
+      {
+        "title": "IaC Scan Settings",
+        "properties": {
+          "devsecops.iac.iacTool": {
+            "type": "string",
+            "default": "checkov",
+            "enum": ["checkov", "kics"],
+            "description": "IaC Scan Tool to use (Checkov to scan Terraform, CloudFormation, Kubernetes, Dockerfile and OpenAPI; KICS to scan OpenAPI)"
+          }
+        }
       }
     ],
     "commands": [
