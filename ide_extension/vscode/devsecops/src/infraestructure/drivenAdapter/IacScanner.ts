@@ -13,6 +13,7 @@ export class IacScanner implements IScannerGateway {
     elementToScan: string,
     outputChannel: OutputChannel,
     containerImageName: string,
+    iacTool: string,
     toolVersion: string,
     containerEnginePath: string
   ): Promise<ScannerRes> {
@@ -42,7 +43,7 @@ export class IacScanner implements IScannerGateway {
           resolve(new ScannerRes(false, []));
         }, 600000);
 
-      const containerCommand = `${containerEnginePath} run --rm -v ${elementToScan}:/ms_artifact ${containerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo docker_default_remote_config --module engine_iac --tool checkov --folder_path /ms_artifact --context true"`;
+      const containerCommand = `${containerEnginePath} run --rm -v ${elementToScan}:/ms_artifact ${containerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo docker_default_remote_config --module engine_iac --tool ${iacTool}${iacTool === "kics" ? " --platform openapi" : ""} --folder_path /ms_artifact --context true"`;
 
       const childProcess = exec(containerCommand, (error, stdout, stderr) => {
         clearTimeout(timeout);
