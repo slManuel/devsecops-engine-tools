@@ -24,10 +24,10 @@ def init_copacetic(
         args["remote_config_repo"], "/engine_core/ConfigTool.json", args["remote_config_branch"]
     )
     copacetic_config_tool = remote_config_source_gateway.get_remote_config(
-        args["remote_config_repo"], "/copacetic/ConfigTool.json", args["remote_config_branch"]
+        args["remote_config_repo"], "/engine_integrations/copacetic/ConfigTool.json", args["remote_config_branch"]
     )
     excluded_pipelines = remote_config_source_gateway.get_remote_config(
-        args["remote_config_repo"], "/copacetic/Exclusions.json", args["remote_config_branch"]
+        args["remote_config_repo"], "/engine_integrations/copacetic/Exclusions.json", args["remote_config_branch"]
     )
 
     pipeline_name = devops_platform_gateway.get_variable("pipeline_name")

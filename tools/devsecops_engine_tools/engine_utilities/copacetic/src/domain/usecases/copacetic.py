@@ -7,6 +7,8 @@ from devsecops_engine_tools.engine_core.src.domain.model.gateway.secrets_manager
 from devsecops_engine_tools.engine_core.src.domain.model.gateway.devops_platform_gateway import (
     DevopsPlatformGateway
 )
+import json
+from devsecops_engine_tools.engine_core.src.domain.model.input_core import InputCore
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
 from devsecops_engine_tools.engine_utilities import settings
 import json
@@ -32,7 +34,7 @@ class Copacetic:
     def process(self, args):
         try:
             copacetic_config = self.remote_config_source_gateway.get_remote_config(
-                args["remote_config_repo"], "/copacetic/ConfigTool.json", args["remote_config_branch"]
+                args["remote_config_repo"], "/engine_integrations/copacetic/ConfigTool.json", args["remote_config_branch"]
             )
 
             image = args.get("image")
@@ -55,7 +57,8 @@ class Copacetic:
                 vulnerability_report=vulnerability_report,
                 output_image=args.get("output_image"),
                 patch_format=patch_format,
-                config=copacetic_config
+                config=copacetic_config,
+                work_folder=self.devops_platform_gateway.get_variable("path_directory")
             )
 
             if patch_result["success"]:
@@ -68,8 +71,7 @@ class Copacetic:
                 print(
                     self.devops_platform_gateway.message("succeeded", success_msg)
                 )
-                
-                # Create enhanced summary report
+
                 summary = {
                     "module": "copacetic",
                     "original_image": image,
@@ -92,20 +94,27 @@ class Copacetic:
                         "os": image_info.get("os"),
                         "layers": image_info.get("layers")
                     }
-                
-                return summary
+
+                print("==========")
+                print(json.dumps(summary, indent=4))
+                print("==========")
             else:
-                error_msg = patch_result.get("error", "Unknown error during patching")
-                logger.error(f"Copacetic patching failed: {error_msg}")
-                
-                detailed_error = f"Copacetic patching failed: {error_msg}"
                 if patch_result.get("copa_error"):
                     detailed_error += f"\nCopa stderr: {patch_result['copa_error']}"
                 
                 print(
                     self.devops_platform_gateway.message("error", detailed_error)
                 )
-                raise Exception(error_msg)
+
+            return InputCore(
+                totalized_exclusions=[],
+                threshold_defined=None,
+                path_file_results=patch_result.get("output_file", ""),
+                custom_message_break_build=f"Copacetic patching completed for {image}",
+                scope_pipeline="",
+                scope_service="",
+                stage_pipeline=self.devops_platform_gateway.get_variable("stage")
+            )
 
         except Exception as e:
             logger.error(f"Error in Copacetic process: {str(e)}")
@@ -115,4 +124,3 @@ class Copacetic:
                     f"Error in Copacetic process: {str(e)}"
                 )
             )
-            raise e

@@ -2,6 +2,10 @@ import subprocess
 import os
 import json
 import re
+import platform
+import requests
+import tarfile
+import tempfile
 from typing import Dict, Optional
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
 from devsecops_engine_tools.engine_utilities import settings
@@ -10,33 +14,67 @@ logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
 
 class CopaceticAdapter:
-    """
-    Adapter for Copacetic container image vulnerability patching tool
-    """
+    def __init__(self, config: Optional[Dict] = None):
+        self.config = config or {}
 
-    def __init__(self):
-        self.copa_binary = self._find_copa_binary()
-
-    def _find_copa_binary(self) -> str:
+    def install_tool(self, version, path="."):
         try:
-            result = subprocess.run(["which", "copa"], capture_output=True, text=True)
-            if result.returncode == 0:
-                return "copa"
+            installed = subprocess.run(
+                ["which", "copa"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            if installed.returncode == 0:
+                return
         except FileNotFoundError:
             pass
 
-        common_paths = [
-            "/usr/local/bin/copa",
-            "/usr/bin/copa",
-            "/opt/copa/copa",
-            "./copa"
-        ]
-        
-        for path in common_paths:
-            if os.path.isfile(path) and os.access(path, os.X_OK):
-                return path
+        try:
+            os_platform = platform.system()
+            architecture = platform.machine()
 
-        return "copa"
+            if os_platform == "Linux":
+                if architecture == "aarch64" or architecture == "arm64":
+                    arch = "arm64"
+                else:
+                    arch = "amd64"
+                curr_os = "linux"
+            elif os_platform == "Darwin":
+                curr_os = "darwin"
+            else:
+                raise OSError(f"Copa installation is not supported on {os_platform}")
+
+            url = f"https://github.com/project-copacetic/copacetic/releases/download/v{version}/copa_{version}_{curr_os}_{arch}.tar.gz"
+
+            response = requests.get(url, allow_redirects=True)
+            response.raise_for_status()
+
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.tar.gz') as temp_file:
+                temp_file.write(response.content)
+                temp_path = temp_file.name
+            
+            with tarfile.open(temp_path, 'r:gz') as tar:
+                copa_member = None
+                for member in tar.getmembers():
+                    if member.name.endswith('copa') and member.isfile():
+                        copa_member = member
+                        break
+                
+                if copa_member:
+                    tar.extract(copa_member, path=path)
+                    extracted_path = os.path.join(path, copa_member.name)
+                    if os.path.exists(extracted_path):
+                        os.chmod(extracted_path, 0o755)
+
+            os.unlink(temp_path)
+            return extracted_path
+            
+        except requests.RequestException as error:
+            logger.error(f"Error downloading Copa for {os_platform}: {error}")
+        except tarfile.TarError as error:
+            logger.error(f"Error extracting Copa archive: {error}")
+        except Exception as error:
+            logger.error(f"Error during Copa installation on {os_platform}: {error}")
 
     def patch_image(
         self,
@@ -44,14 +82,16 @@ class CopaceticAdapter:
         vulnerability_report: str,
         output_image: Optional[str] = None,
         patch_format: str = "trivy",
-        config: Optional[Dict] = None
+        config: Optional[Dict] = None,
+        work_folder: str = "."
     ):
         try:
             config = config or {}
             buildkit_config = config.get("BUILDKIT_CONFIG", {})
+            prefix = self.install_tool(config.get("VERSION"), path=work_folder)
             
             copa_cmd = [
-                self.copa_binary, 
+                prefix,
                 "patch",
                 "--image",
                 image,
@@ -73,17 +113,15 @@ class CopaceticAdapter:
                 copa_cmd.extend(["--progress", progress_mode])
             
             if output_image:
-                copa_cmd.extend(["-t", output_image])
+                copa_cmd.extend(["--tag", output_image])
             else:
                 tag_suffix = config.get("DEFAULT_OUTPUT_SUFFIX", "-patched")
-                # Remove leading dash if present for --tag-suffix
                 if tag_suffix.startswith("-"):
                     tag_suffix = tag_suffix[1:]
                 copa_cmd.extend(["--tag-suffix", tag_suffix])
-            
-            # Add timeout configuration
+
             timeout_duration = config.get("TIMEOUT", 1800)
-            copa_cmd.extend(["--timeout", f"{timeout_duration}s"])
+            copa_cmd.extend(["--timeout", f"{timeout_duration}"])
             
             if buildkit_config.get("IGNORE_ERRORS", False):
                 copa_cmd.append("--ignore-errors")
@@ -170,7 +208,6 @@ class CopaceticAdapter:
                 # Parse package updates
                 if any(keyword in line.lower() for keyword in ["package", "upgrade", "install"]):
                     if any(char.isdigit() for char in line):
-                        # Try to extract numbers that might indicate package count
                         import re
                         numbers = re.findall(r'\d+', line)
                         if numbers:
@@ -196,15 +233,11 @@ class CopaceticAdapter:
             return details
             
         except Exception as e:
-            logger.error(f"Failed to parse Copa output: {str(e)}")
+            print(f"Failed to parse Copa output: {str(e)}")
             return {"vulnerabilities_patched": 0, "details": [], "packages_updated": 0, "platforms_processed": []}
 
     def get_image_info(self, image: str) -> Dict:
-        """
-        Get basic information about a container image
-        """
         try:
-            # Try to inspect the image using docker
             result = subprocess.run(
                 ["docker", "inspect", image],
                 capture_output=True,
@@ -231,6 +264,5 @@ class CopaceticAdapter:
             return {"exists": False}
             
         except Exception as e:
-            logger.warning(f"Could not get image info for {image}: {str(e)}")
+            print(f"Could not get image info for {image}: {str(e)}")
             return {"exists": False, "error": str(e)}
-
