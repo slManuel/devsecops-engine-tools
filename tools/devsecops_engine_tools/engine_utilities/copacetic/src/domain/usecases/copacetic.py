@@ -83,7 +83,7 @@ class Copacetic:
                     "output_format": patch_result.get("output_format", "openvex"),
                     "patch_format": patch_format,
                     "configuration_used": {
-                        "timeout": copacetic_config.get("TIMEOUT", 1800),
+                        "timeout": copacetic_config.get("TIMEOUT", 5),
                         "buildkit_addr": copacetic_config.get("BUILDKIT_CONFIG", {}).get("DEFAULT_ADDR")
                     }
                 }

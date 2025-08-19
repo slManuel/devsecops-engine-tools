@@ -120,8 +120,8 @@ class CopaceticAdapter:
                     tag_suffix = tag_suffix[1:]
                 copa_cmd.extend(["--tag-suffix", tag_suffix])
 
-            timeout_duration = config.get("TIMEOUT", 1800)
-            copa_cmd.extend(["--timeout", f"{timeout_duration}"])
+            timeout_duration = config.get("TIMEOUT", 5)
+            copa_cmd.extend(["--timeout", f"{timeout_duration}m"])
             
             if buildkit_config.get("IGNORE_ERRORS", False):
                 copa_cmd.append("--ignore-errors")
@@ -165,7 +165,7 @@ class CopaceticAdapter:
                 }
                 
         except subprocess.TimeoutExpired:
-            error_msg = f"Copa command timed out after {timeout_duration} seconds"
+            error_msg = f"Copa command timed out after {timeout_duration} minutes"
             logger.error(error_msg)
             return {
                 "success": False,
