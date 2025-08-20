@@ -27,5 +27,8 @@
         "REGEX_EXPRESSION_EXTENSIONS": "\\.(jar|ear|war)$",
         "PACKAGES_TO_SCAN": ["node_modules", "site-packages"],
         "VULNERABILITY_CONFIDENCE" : ["highest"]
+    },
+    "TRIVY": {
+        "CLI_VERSION": "0.65.0"
     }
 }

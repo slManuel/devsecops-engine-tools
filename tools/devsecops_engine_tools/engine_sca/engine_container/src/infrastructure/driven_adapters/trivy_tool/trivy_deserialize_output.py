@@ -36,7 +36,7 @@ class TrivyDeserializator(DeseralizatorGateway):
                         )
                     ),
                     where=vul.get("PkgName", "")
-                    + " "
+                    + ":"
                     + vul.get("InstalledVersion", ""),
                     description=vul.get("Description", "").replace("\n", "")[:150],
                     severity=vul.get("Severity", "").lower(),
