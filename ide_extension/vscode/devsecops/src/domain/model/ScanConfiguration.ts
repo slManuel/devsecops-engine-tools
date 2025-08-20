@@ -13,6 +13,7 @@ export class ScanConfiguration {
   private xrayMode: string;
   private dependenciesTool: string;
   private dependencyCheckDatabase: string;
+  private iacTool: string;
 
   constructor() {
     this.containerImageName = "";
@@ -27,6 +28,7 @@ export class ScanConfiguration {
     this.xrayMode = "";
     this.dependenciesTool = "";
     this.dependencyCheckDatabase = "";
+    this.iacTool = "";
 
     this.loadFromVSCodeConfig();
   }
@@ -35,6 +37,7 @@ export class ScanConfiguration {
     const generalConfig = vscode.workspace.getConfiguration("devsecops.general");
     const azureDevopsConfig = vscode.workspace.getConfiguration("devsecops.azuredevops");
     const dependenciesConfig = vscode.workspace.getConfiguration("devsecops.dependencies");
+    const iacConfig = vscode.workspace.getConfiguration("devsecops.iac");
     
     this.containerImageName = generalConfig.get("imageToUse") || "bancolombia/devsecops-engine-tools";
     this.containerImageVersion = generalConfig.get("imageVersion") || "";
@@ -48,6 +51,7 @@ export class ScanConfiguration {
     this.xrayMode = dependenciesConfig.get("xrayMode") || "audit";
     this.dependenciesTool = dependenciesConfig.get("dependenciesTool") || "xray";
     this.dependencyCheckDatabase = dependenciesConfig.get("dependencyCheckDatabase") || "";
+    this.iacTool = iacConfig.get("iacTool") || "checkov";
   }
 
   public refresh(): void {
@@ -127,5 +131,9 @@ export class ScanConfiguration {
     this.containerImageVersion = version;
     
     console.log(`Saved container image version "${version}" to ${targetScope === vscode.ConfigurationTarget.Workspace ? 'Workspace' : 'Global'} settings`);
+  }
+
+  public getIacTool(): string {
+    return this.iacTool;
   }
 }
