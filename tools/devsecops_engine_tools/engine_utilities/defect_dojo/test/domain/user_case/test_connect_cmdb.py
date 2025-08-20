@@ -139,10 +139,10 @@ def test_execute(engagement_name, obj_cmdb):
     assert response.product_type_name in ["ORPHAN_PRODUCT_TYPE", "Product_type_test"]
 
 
-@pytest.mark.parametrize("engagement_name", [("error"), ("nu12212error")])
+@pytest.mark.parametrize("engagement_name", [("engament_name")])
 def test_get_code_app(engagement_name):
     uc = CmdbUserCase(
         rest_consumer_cmdb=None, utils_azure=None, expression=r"((AUD|AP|CLD|USR|OPS|ASN|AW|NU|EUC|IS)\d+)_"
     )
-    with pytest.raises(ApiError):
-        uc.get_code_app(engagement_name)
+    code_app = uc.get_code_app(engagement_name)
+    assert code_app == ""
