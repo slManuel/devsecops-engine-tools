@@ -207,7 +207,6 @@ export default class ContainerEngineManager {
     const tempDir = fs.realpathSync(os.tmpdir());
     const safeImageName = imageName.replace(/[^a-zA-Z0-9.-]/g, '_');
     const timestamp = Date.now();
-    // return path.join(tempDir, `devsecops_image_${safeImageName}_${timestamp}.tar`);
-    return path.join(process.env.HOME!, `devsecops_image_${safeImageName}_${timestamp}.tar`);
+    return path.join(tempDir, `devsecops_image_${safeImageName}_${timestamp}.tar`);
   }
 }
