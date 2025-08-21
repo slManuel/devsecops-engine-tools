@@ -13,9 +13,6 @@ from devsecops_engine_tools.engine_core.src.domain.usecases.metrics_manager impo
 from devsecops_engine_tools.engine_utilities.utils.printers import (
     Printers,
 )
-from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft import Syft
-from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen import CdxGen
-
 
 def init_engine_core(
     vulnerability_management_gateway: any,
@@ -24,16 +21,14 @@ def init_engine_core(
     remote_config_source_gateway: any,
     print_table_gateway: any,
     metrics_manager_gateway: any,
+    sbom_tool_gateway: any,
     args: any
 ):
     config_tool = remote_config_source_gateway.get_remote_config(
         args["remote_config_repo"], "/engine_core/ConfigTool.json", args["remote_config_branch"]
     )
     Printers.print_logo_tool(config_tool["BANNER"])
-    sbom_tool_gateway = {
-        "syft": Syft(),
-        "cdxgen": CdxGen()
-    }.get(config_tool["SBOM_MANAGER"]["TOOL"].lower())
+    sbom_tool_gateway = sbom_tool_gateway.get(config_tool["SBOM_MANAGER"]["TOOL"].lower())
 
     if config_tool[args["module"].upper()]["ENABLED"]:
         if args["module"] == "engine_risk":
