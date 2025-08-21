@@ -56,6 +56,7 @@ class TestEntryPointCore(unittest.TestCase):
             remote_config_source_gateway=mock_remote_config_source_gateway,
             print_table_gateway=mock.Mock(),
             metrics_manager_gateway=mock.Mock(),
+            sbom_tool_gateway=mock.Mock(),
             args=args,
         )
 
@@ -106,6 +107,7 @@ class TestEntryPointCore(unittest.TestCase):
             remote_config_source_gateway=mock_remote_config_source_gateway,
             print_table_gateway=mock.Mock(),
             metrics_manager_gateway=mock.Mock(),
+            sbom_tool_gateway=mock.Mock(),
             args={"remote_config_repo": "test", "module": "engine_iac", "remote_config_branch": ""},
         )
 
@@ -143,6 +145,7 @@ class TestEntryPointCore(unittest.TestCase):
             remote_config_source_gateway=mock_remote_config_source_gateway,
             print_table_gateway=mock.Mock(),
             metrics_manager_gateway=mock.Mock(),
+            sbom_tool_gateway=mock.Mock(),
             args={"remote_config_repo": "test", "module": "engine_risk", "send_metrics": "true", "remote_config_branch": ""},
         )
 
@@ -202,6 +205,7 @@ class TestEntryPointCore(unittest.TestCase):
             remote_config_source_gateway=mock_remote_config_source_gateway,
             print_table_gateway=mock.Mock(),
             metrics_manager_gateway=mock.Mock(),
+            sbom_tool_gateway=mock.Mock(),
             args=args,
         )
 
