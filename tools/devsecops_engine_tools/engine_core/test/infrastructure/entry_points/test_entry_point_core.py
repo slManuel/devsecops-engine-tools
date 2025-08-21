@@ -24,7 +24,7 @@ class TestEntryPointCore(unittest.TestCase):
     ):
         # Set up mock arguments
 
-        mock_config_tool = {"BANNER": "DevSecOps Engine Tools", "WARNING_RELEASE": False, "ENGINE_IAC": {"ENABLED": "true", "TOOL": "tool"}}
+        mock_config_tool = {"BANNER": "DevSecOps Engine Tools", "WARNING_RELEASE": False, "ENGINE_IAC": {"ENABLED": "true", "TOOL": "tool"}, "SBOM_MANAGER": {"TOOL": "SYFT"}}
         mock_findings_list = []
         mock_input_core = {}
         mock_scan_result = {}
@@ -56,7 +56,6 @@ class TestEntryPointCore(unittest.TestCase):
             remote_config_source_gateway=mock_remote_config_source_gateway,
             print_table_gateway=mock.Mock(),
             metrics_manager_gateway=mock.Mock(),
-            sbom_tool_gateway=mock.Mock(),
             args=args,
         )
 
@@ -89,7 +88,10 @@ class TestEntryPointCore(unittest.TestCase):
 
         mock_config_tool = {
             "BANNER": "DevSecOps Engine Tools",
-            "ENGINE_IAC": {"ENABLED": False, "TOOL": "tool"}
+            "ENGINE_IAC": {"ENABLED": False, "TOOL": "tool"},
+            "SBOM_MANAGER": {
+                "TOOL": "SYFT"
+            }
         }
         mock_devops_platform_gateway = mock.Mock()
         mock_remote_config_source_gateway = mock.Mock()
@@ -104,7 +106,6 @@ class TestEntryPointCore(unittest.TestCase):
             remote_config_source_gateway=mock_remote_config_source_gateway,
             print_table_gateway=mock.Mock(),
             metrics_manager_gateway=mock.Mock(),
-            sbom_tool_gateway=mock.Mock(),
             args={"remote_config_repo": "test", "module": "engine_iac", "remote_config_branch": ""},
         )
 
@@ -122,7 +123,8 @@ class TestEntryPointCore(unittest.TestCase):
 
         mock_config_tool = {
             "BANNER": "DevSecOps Engine Tools",
-            "ENGINE_RISK": {"ENABLED": "true"}
+            "ENGINE_RISK": {"ENABLED": "true"},
+            "SBOM_MANAGER": {"TOOL": "SYFT"}
         }
         mock_devops_platform_gateway = mock.Mock()
         mock_remote_config_source_gateway = mock.Mock()
@@ -141,7 +143,6 @@ class TestEntryPointCore(unittest.TestCase):
             remote_config_source_gateway=mock_remote_config_source_gateway,
             print_table_gateway=mock.Mock(),
             metrics_manager_gateway=mock.Mock(),
-            sbom_tool_gateway=mock.Mock(),
             args={"remote_config_repo": "test", "module": "engine_risk", "send_metrics": "true", "remote_config_branch": ""},
         )
 
@@ -167,8 +168,8 @@ class TestEntryPointCore(unittest.TestCase):
     ):
         # Set up mock arguments
 
-        mock_config_tool = {"BANNER": "DevSecOps Engine Tools", "WARNING_RELEASE": "false", "ENGINE_IAC": {"ENABLED": "true", "TOOL": "tool"}}
-        mock_config_tool_flag = {"BANNER": "DevSecOps Engine Tools", "WARNING_RELEASE": "false", "ENGINE_IAC": {"ENABLED": "true", "TOOL": "OTHER_TOOL"}}
+        mock_config_tool = {"BANNER": "DevSecOps Engine Tools", "WARNING_RELEASE": "false", "ENGINE_IAC": {"ENABLED": "true", "TOOL": "tool"}, "SBOM_MANAGER": {"TOOL": "SYFT"}}
+        mock_config_tool_flag = {"BANNER": "DevSecOps Engine Tools", "WARNING_RELEASE": "false", "ENGINE_IAC": {"ENABLED": "true", "TOOL": "OTHER_TOOL"}, "SBOM_MANAGER": {"TOOL": "SYFT"}}
         mock_findings_list = []
         mock_input_core = {}
         mock_scan_result = {}
@@ -201,7 +202,6 @@ class TestEntryPointCore(unittest.TestCase):
             remote_config_source_gateway=mock_remote_config_source_gateway,
             print_table_gateway=mock.Mock(),
             metrics_manager_gateway=mock.Mock(),
-            sbom_tool_gateway=mock.Mock(),
             args=args,
         )
 
