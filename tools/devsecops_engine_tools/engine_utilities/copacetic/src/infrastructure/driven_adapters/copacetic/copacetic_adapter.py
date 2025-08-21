@@ -141,10 +141,9 @@ class CopaceticAdapter:
                 copa_cmd.append("--ignore-errors")
             
             result = subprocess.run(
-                "ls",#copa_cmd,
+                copa_cmd,
                 capture_output=True,
-                text=True,
-                timeout=timeout_duration
+                text=True
             )
             
             if result.returncode == 0:
