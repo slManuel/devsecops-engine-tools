@@ -116,7 +116,7 @@ class CodeScan:
                 dict_args["folder_path"],
                 pull_request_files,
                 self.devops_platform_gateway.get_variable("path_directory"),
-                self.devops_platform_gateway.get_variable("repository"),
+                dict_args.get("repo_name", False) if dict_args.get("repo_name", False) else self.devops_platform_gateway.get_variable("repository"),
                 config_tool,
             )
 
