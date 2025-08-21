@@ -96,7 +96,8 @@ class TestCopacetic(unittest.TestCase):
         self.copacetic_gateway.patch_image.assert_called_once()
         self.copacetic_gateway.get_image_info.assert_called_once_with("nginx:latest")
     
-    def test_process_missing_image(self):
+    @patch('builtins.print')
+    def test_process_missing_image(self, mock_print):
         """Test process with missing image"""
         # Arrange
         args = {
@@ -108,8 +109,9 @@ class TestCopacetic(unittest.TestCase):
         # Act
         result = self.copacetic.process(args)
         
-        # Assert - The current implementation returns None for exceptions
+        # Assert - Should return None due to exception handling, but message should be printed
         self.assertIsNone(result)
+        self.devops_platform_gateway.message.assert_called()
     
     @patch('builtins.print')
     def test_process_patch_failure(self, mock_print):
@@ -135,11 +137,15 @@ class TestCopacetic(unittest.TestCase):
         # Act
         result = self.copacetic.process(args)
         
-        # Assert - Should still return InputCore but with error message
+        # Assert - Implementation always returns InputCore, even on failure
         self.assertIsInstance(result, InputCore)
-        self.devops_platform_gateway.message.assert_called()
+        self.assertEqual(result.custom_message_break_build, "Copacetic patching completed for nginx:latest")
+        # Verify error message was printed
+        self.devops_platform_gateway.message.assert_called_with("error", 
+                                                                "Copacetic patching failed for nginx:latest: Patching failed\nCopa stderr: Copa command failed")
     
-    def test_process_exception_handling(self):
+    @patch('builtins.print')
+    def test_process_exception_handling(self, mock_print):
         """Test exception handling in process method"""
         # Arrange
         args = {
@@ -154,9 +160,9 @@ class TestCopacetic(unittest.TestCase):
         # Act
         result = self.copacetic.process(args)
         
-        # Assert - The current implementation returns None for exceptions, but should handle it properly
+        # Assert - Exception handling returns None, error message is logged and printed
         self.assertIsNone(result)
-        self.devops_platform_gateway.message.assert_called()
+        self.devops_platform_gateway.message.assert_called_with("error", "Error in Copacetic process: Test exception")
     
     @patch('shutil.get_terminal_size')
     @patch('builtins.print')
@@ -197,6 +203,70 @@ class TestCopacetic(unittest.TestCase):
         printed_calls = [call[0][0] for call in mock_print.call_args_list if call[0]]
         table_elements = [call for call in printed_calls if "=" in str(call)]
         self.assertTrue(len(table_elements) >= 2)  # At least header and footer separators
+    
+    @patch('shutil.get_terminal_size')
+    @patch('builtins.print')
+    def test_print_results_table_with_image_info(self, mock_print, mock_terminal_size):
+        """Test _print_results_table method with image info"""
+        # Arrange
+        mock_terminal_size.return_value.columns = 80
+        
+        summary = {
+            "original_image": "nginx:latest",
+            "patched_image": "nginx:latest-patched",
+            "vulnerabilities_patched": 2,
+            "packages_updated": 3,
+            "platforms_processed": ["linux/amd64"],
+            "patch_details": [
+                {
+                    "vulnerability": "CVE-2023-1234",
+                    "packages": [{"name": "libssl", "version": "1.1.1"}]
+                }
+            ],
+            "original_image_info": {
+                "architecture": "amd64",
+                "os": "linux",
+                "size": "142MB",
+                "layers": 5
+            }
+        }
+        
+        # Act
+        self.copacetic._print_results_table(summary)
+        
+        # Assert
+        printed_calls = [str(call[0][0]) for call in mock_print.call_args_list if call[0]]
+        
+        # Check for key elements
+        self.assertTrue(any("COPACETIC PATCHING RESULTS" in call for call in printed_calls))
+        self.assertTrue(any("Original Image: nginx:latest" in call for call in printed_calls))
+        self.assertTrue(any("Patched Image:  nginx:latest-patched" in call for call in printed_calls))
+        self.assertTrue(any("Vulnerabilities Patched: 2" in call for call in printed_calls))
+        self.assertTrue(any("Architecture: amd64" in call for call in printed_calls))
+        self.assertTrue(any("CVE-2023-1234" in call for call in printed_calls))
+    
+    @patch('shutil.get_terminal_size')
+    @patch('builtins.print')
+    def test_print_results_table_no_vulnerabilities(self, mock_print, mock_terminal_size):
+        """Test _print_results_table with no vulnerabilities patched"""
+        # Arrange
+        mock_terminal_size.return_value.columns = 80
+        
+        summary = {
+            "original_image": "nginx:latest",
+            "patched_image": "nginx:latest-patched",
+            "vulnerabilities_patched": 0,
+            "packages_updated": 0,
+            "platforms_processed": [],
+            "patch_details": []
+        }
+        
+        # Act
+        self.copacetic._print_results_table(summary)
+        
+        # Assert
+        printed_calls = [str(call[0][0]) for call in mock_print.call_args_list if call[0]]
+        self.assertTrue(any("Status: COMPLETED - No vulnerabilities found to patch" in call for call in printed_calls))
 
 
 if __name__ == '__main__':

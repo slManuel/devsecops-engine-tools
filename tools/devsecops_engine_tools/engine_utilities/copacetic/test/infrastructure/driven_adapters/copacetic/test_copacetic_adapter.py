@@ -193,12 +193,24 @@ class TestCopaceticAdapter(unittest.TestCase):
     def test_patch_image_success(self, mock_run):
         """Test successful image patching"""
         # Arrange
-        mock_run.return_value.returncode = 0
-        mock_run.return_value.stdout = "Patching completed successfully"
-        mock_run.return_value.stderr = ""
+        # Mock two calls: first for install_tool (which), second for actual patching (ls command)
+        mock_run.side_effect = [
+            Mock(returncode=1),  # which copa (not found)
+            Mock(returncode=0, stdout="Patching completed successfully", stderr="")  # ls command (mocked copa)
+        ]
         
         # Mock the install_tool method to avoid actual installation
-        with patch.object(self.adapter, 'install_tool', return_value="/fake/copa/path"):
+        with patch.object(self.adapter, 'install_tool', return_value="/fake/copa/path"), \
+             patch.object(self.adapter, '_parse_copa_output', return_value={
+                 "vulnerabilities_patched": 2,
+                 "details": [],
+                 "packages_updated": [],
+                 "platforms_processed": []
+             }), \
+             patch('subprocess.run') as mock_chmod:
+            
+            mock_chmod.return_value = Mock(returncode=0)
+            
             # Act
             result = self.adapter.patch_image(
                 image="nginx:latest",
@@ -211,6 +223,7 @@ class TestCopaceticAdapter(unittest.TestCase):
         
         # Assert
         self.assertTrue(result["success"])
+        self.assertEqual(result["original_image"], "nginx:latest")
         self.assertEqual(result["patched_image"], "nginx:latest-patched")
     
     @patch('subprocess.run')
@@ -234,6 +247,8 @@ class TestCopaceticAdapter(unittest.TestCase):
         # Assert
         self.assertFalse(result["success"])
         self.assertIn("Copa command failed", result["error"])
+        self.assertEqual(result["copa_output"], "Patching failed")
+        self.assertEqual(result["copa_error"], "Error: Could not patch image")
     
     @patch('builtins.open')
     @patch('json.load')
@@ -322,6 +337,87 @@ class TestCopaceticAdapter(unittest.TestCase):
         
         # Assert
         self.assertFalse(result["exists"])
+
+
+    @patch('subprocess.run')
+    def test_patch_image_timeout(self, mock_run):
+        """Test patch_image with timeout"""
+        # Arrange
+        import subprocess
+        mock_run.side_effect = subprocess.TimeoutExpired("copa", 5)
+        
+        with patch.object(self.adapter, 'install_tool', return_value="/fake/copa/path"):
+            # Act
+            result = self.adapter.patch_image(
+                image="nginx:latest",
+                vulnerability_report="/path/to/report.json",
+                config={"TIMEOUT": 1},
+                work_folder="/test"
+            )
+        
+        # Assert
+        self.assertFalse(result["success"])
+        self.assertIn("Copa command timed out", result["error"])
+    
+    def test_patch_image_auto_tag_generation(self):
+        """Test automatic tag generation when no output_image provided"""
+        # Arrange
+        with patch.object(self.adapter, 'install_tool', return_value="/fake/copa/path"), \
+             patch('subprocess.run') as mock_run, \
+             patch.object(self.adapter, '_parse_copa_output', return_value={
+                 "vulnerabilities_patched": 1,
+                 "details": [],
+                 "packages_updated": [],
+                 "platforms_processed": []
+             }), \
+             patch('subprocess.run') as mock_chmod:
+            
+            mock_run.return_value = Mock(returncode=0, stdout="Success", stderr="")
+            mock_chmod.return_value = Mock(returncode=0)
+            
+            # Act
+            result = self.adapter.patch_image(
+                image="nginx:1.20",
+                vulnerability_report="/path/to/report.json",
+                config={"DEFAULT_OUTPUT_SUFFIX": "-patched"},
+                work_folder="/test"
+            )
+        
+        # Assert
+        self.assertTrue(result["success"])
+        self.assertEqual(result["patched_image"], "nginx:1.20-patched")
+    
+    def test_patch_image_validation_error(self):
+        """Test patch_image with validation errors"""
+        # Arrange
+        with patch.object(self.adapter, 'install_tool', return_value="/fake/copa/path"):
+            # Act - no vulnerability_report and no platform
+            result = self.adapter.patch_image(
+                image="nginx:latest",
+                vulnerability_report="",
+                platform="",
+                config=self.config,
+                work_folder="/test"
+            )
+        
+        # Assert
+        self.assertFalse(result["success"])
+        self.assertIn("platforms to be patched must be provided", result["error"])
+    
+    @patch('subprocess.run')
+    @patch('builtins.print')
+    def test_get_image_info_exception(self, mock_print, mock_run):
+        """Test get_image_info with exception"""
+        # Arrange
+        mock_run.side_effect = Exception("Docker not available")
+        
+        # Act
+        result = self.adapter.get_image_info("nginx:latest")
+        
+        # Assert
+        self.assertFalse(result["exists"])
+        self.assertIn("error", result)
+        mock_print.assert_called_once()
 
 
 if __name__ == '__main__':

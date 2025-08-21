@@ -165,7 +165,10 @@ class TestRunnerEngineIntegrations(unittest.TestCase):
             token_vulnerability_management="my_token_vm",
             token_sonar="my_token_sonar",
             image="nginx:latest",
-            output_image="nginx:latest-patched"
+            output_image="nginx:latest-patched",
+            vulnerability_report="/path/to/report.json",
+            patch_format="trivy",
+            platform=""
         )
 
         expected_output = {
@@ -182,7 +185,10 @@ class TestRunnerEngineIntegrations(unittest.TestCase):
             "token_vulnerability_management": "my_token_vm",
             "token_sonar": "my_token_sonar",
             "image": "nginx:latest",
-            "output_image": "nginx:latest-patched"
+            "output_image": "nginx:latest-patched",
+            "vulnerability_report": "/path/to/report.json",
+            "patch_format": "trivy",
+            "platform": ""
         }
 
         # Act
