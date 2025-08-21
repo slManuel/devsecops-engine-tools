@@ -134,6 +134,11 @@ def get_inputs_from_cli(args):
         required=False,
         help="Output tag name for patched image",
     )
+    parser.add_argument(
+        "--platform",
+        required=False,
+        help="Target(s) platform(s) for multi-arch images when no report directory is provided",
+    )
 
     args = parser.parse_args()
     return {
@@ -152,7 +157,8 @@ def get_inputs_from_cli(args):
         "image": args.image,
         "vulnerability_report": args.vulnerability_report,
         "patch_format": args.patch_format,
-        "output_image": args.output_image
+        "output_image": args.output_image,
+        "platform": args.platform
     }
 
 def runner_engine_integrations():

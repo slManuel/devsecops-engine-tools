@@ -1,7 +1,6 @@
 import subprocess
 import os
 import json
-import re
 import platform
 import requests
 import tarfile
@@ -83,20 +82,26 @@ class CopaceticAdapter:
         output_image: Optional[str] = None,
         patch_format: str = "trivy",
         config: Optional[Dict] = None,
-        work_folder: str = "."
+        work_folder: str = ".",
+        platform: str = ""
     ):
         try:
             config = config or {}
             buildkit_config = config.get("BUILDKIT_CONFIG", {})
             prefix = self.install_tool(config.get("VERSION"), path=work_folder)
-            
+            output_file = f"{image.replace('/', '_')}-patch-vex.json"
+
             copa_cmd = [
                 prefix,
                 "patch",
                 "--image",
                 image,
                 "--scanner",
-                patch_format
+                patch_format,
+                "--format",
+                "openvex",
+                "--output",
+                output_file
             ]
 
             if vulnerability_report:
@@ -119,6 +124,11 @@ class CopaceticAdapter:
                 if tag_suffix.startswith("-"):
                     tag_suffix = tag_suffix[1:]
                 copa_cmd.extend(["--tag-suffix", tag_suffix])
+            
+            if platform:
+                copa_cmd.extend(["--platform", platform])
+            elif not vulnerability_report:
+                raise ValueError(f"If a vulnerability report is not provided, the platforms to be patched must be provided.")
 
             timeout_duration = config.get("TIMEOUT", 5)
             copa_cmd.extend(["--timeout", f"{timeout_duration}m"])
@@ -134,8 +144,9 @@ class CopaceticAdapter:
             
             if result.returncode == 0:
                 print("Copacetic patching completed successfully")
+                subprocess.run(["chmod", "644", f"./{output_file}"])
 
-                patch_details = self._parse_copa_output(result.stdout)
+                patch_details = self._parse_copa_output(output_file)
 
                 if output_image:
                     patched_image = output_image
@@ -179,61 +190,48 @@ class CopaceticAdapter:
                 "error": error_msg
             }
 
-    def _parse_copa_output(self, output: str) -> Dict:
+    def _parse_copa_output(self, output_path: str) -> Dict:
         try:
             details = {
                 "vulnerabilities_patched": 0,
                 "details": [],
-                "packages_updated": 0,
-                "platforms_processed": []
+                "packages_updated": set(),
+                "platforms_processed": set()
             }
-            
-            lines = output.split('\n')
-            current_platform = None
-            
-            for line in lines:
-                line = line.strip()
-                if not line:
-                    continue
-                
-                # Parse platform information
-                if "platform" in line.lower() and ("linux/" in line.lower() or "amd64" in line.lower() or "arm64" in line.lower()):
-                    if current_platform not in details["platforms_processed"]:
-                        details["platforms_processed"].append(current_platform or "linux/amd64")
-                
-                # Parse patched vulnerabilities
-                if any(keyword in line.lower() for keyword in ["patched", "fixed", "updated", "resolved"]):
-                    details["details"].append(line)
-                
-                # Parse package updates
-                if any(keyword in line.lower() for keyword in ["package", "upgrade", "install"]):
-                    if any(char.isdigit() for char in line):
-                        import re
-                        numbers = re.findall(r'\d+', line)
-                        if numbers:
-                            details["packages_updated"] += int(numbers[0])
-                
-                # Try to extract vulnerability counts
-                if any(keyword in line.lower() for keyword in ["vulnerabilities", "cves", "security"]):
-                    if any(char.isdigit() for char in line):
-                        import re
-                        numbers = re.findall(r'\d+', line)
-                        for num in numbers:
-                            if int(num) > details["vulnerabilities_patched"]:
-                                details["vulnerabilities_patched"] = int(num)
-                
-                # Parse success indicators
-                if any(keyword in line.lower() for keyword in ["completed", "success", "finished", "done"]):
-                    details["details"].append(f"Status: {line}")
-            
-            # Default platform if none detected
-            if not details["platforms_processed"]:
-                details["platforms_processed"].append("linux/amd64")
-            
+
+            with open(output_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            for stmt in data.get("statements", []):
+                vuln_id = stmt.get("vulnerability", {}).get("@id")
+                status = stmt.get("status")
+                products = stmt.get("products", [])
+
+                if status == "fixed":
+                    details["vulnerabilities_patched"] += 1
+
+                    for product in products:
+                        for sub in product.get("subcomponents", []):
+                            pkg_id = sub.get("@id", "")
+                            details["packages_updated"].add(pkg_id)
+
+                            if "?arch=" in pkg_id:
+                                arch = pkg_id.split("?arch=")[-1]
+                                details["platforms_processed"].add(arch)
+
+                    details["details"].append({
+                        "vulnerability": vuln_id,
+                        "status": status,
+                        "products": [p.get("@id") for p in products],
+                    })
+
+            details["packages_updated"] = list(details["packages_updated"])
+            details["platforms_processed"] = list(details["platforms_processed"])
+
             return details
             
         except Exception as e:
-            print(f"Failed to parse Copa output: {str(e)}")
+            print("An error occurred while processing the OpenVEX json generated by Copacetic, or it was not generated.")
             return {"vulnerabilities_patched": 0, "details": [], "packages_updated": 0, "platforms_processed": []}
 
     def get_image_info(self, image: str) -> Dict:

@@ -58,7 +58,8 @@ class Copacetic:
                 output_image=args.get("output_image"),
                 patch_format=patch_format,
                 config=copacetic_config,
-                work_folder=self.devops_platform_gateway.get_variable("path_directory")
+                work_folder=self.devops_platform_gateway.get_variable("path_directory"),
+                platform=args.get("platform")
             )
 
             if patch_result["success"]:
@@ -68,9 +69,7 @@ class Copacetic:
                 if patch_result.get("vulnerabilities_patched", 0) > 0:
                     success_msg += f" ({patch_result['vulnerabilities_patched']} vulnerabilities addressed)"
                 
-                print(
-                    self.devops_platform_gateway.message("succeeded", success_msg)
-                )
+                print(success_msg)
 
                 summary = {
                     "module": "copacetic",
@@ -80,12 +79,7 @@ class Copacetic:
                     "packages_updated": patch_result.get("packages_updated", 0),
                     "platforms_processed": patch_result.get("platforms_processed", []),
                     "patch_details": patch_result.get("patch_details", []),
-                    "output_format": patch_result.get("output_format", "openvex"),
-                    "patch_format": patch_format,
-                    "configuration_used": {
-                        "timeout": copacetic_config.get("TIMEOUT", 5),
-                        "buildkit_addr": copacetic_config.get("BUILDKIT_CONFIG", {}).get("DEFAULT_ADDR")
-                    }
+                    "output_format": patch_result.get("output_format", "openvex")
                 }
                 
                 if image_info.get("exists", False):
