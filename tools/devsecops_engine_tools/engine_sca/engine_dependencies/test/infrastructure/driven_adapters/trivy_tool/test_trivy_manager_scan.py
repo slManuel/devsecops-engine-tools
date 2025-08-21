@@ -59,7 +59,7 @@ class TestTrivyScanSBOM(unittest.TestCase):
         
         # Act
         with patch('builtins.print') as mock_print:
-            result = self.trivy_scanner.scan_dependencies_sbom(command_prefix, sbom_path)
+            result = self.trivy_scanner._scan_dependencies_sbom(command_prefix, sbom_path)
         
         # Assert
         self.assertEqual(result, expected_result_file)
@@ -83,20 +83,17 @@ class TestTrivyScanSBOM(unittest.TestCase):
         mock_subprocess_run.side_effect = Exception(error_message)
         
         # Act
-        result = self.trivy_scanner.scan_dependencies_sbom(command_prefix, sbom_path)
+        result = self.trivy_scanner._scan_dependencies_sbom(command_prefix, sbom_path)
         
         # Assert
         self.assertIsNone(result)
         mock_logger.error.assert_called_once_with(f"Error during SBOM scan of {sbom_path}: {error_message}")
 
     @patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.os.path.exists')
-    @patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.TrivyScan')
-    def test_run_tool_dependencies_sca_success(self, mock_trivy_scan_class, mock_exists):
+    @patch('devsecops_engine_tools.engine_utilities.trivy_utils.infrastructure.driven_adapters.trivy_manager_scan_utils.TrivyManagerScanUtils.identify_os_and_install')
+    def test_run_tool_dependencies_sca_success(self, mock_identify_os, mock_exists):
         # Arrange
-        mock_trivy_scan_instance = Mock()
-        mock_trivy_scan_instance.identify_os_and_install.return_value = "/usr/bin/trivy"
-        mock_trivy_scan_class.return_value = mock_trivy_scan_instance
-        
+        mock_identify_os.return_value = "/usr/bin/trivy"
         mock_exists.return_value = True
         
         dict_args = {}
@@ -109,7 +106,7 @@ class TestTrivyScanSBOM(unittest.TestCase):
         expected_result_file = f"{pipeline_name}_SBOM_scan_result.json"
         
         # Act
-        with patch.object(self.trivy_scanner, 'scan_dependencies_sbom', return_value=expected_result_file) as mock_scan:
+        with patch.object(self.trivy_scanner, '_scan_dependencies_sbom', return_value=expected_result_file) as mock_scan:
             result = self.trivy_scanner.run_tool_dependencies_sca(
                 self.mock_remote_config,
                 dict_args,
@@ -122,16 +119,14 @@ class TestTrivyScanSBOM(unittest.TestCase):
         
         # Assert
         self.assertEqual(result, expected_result_file)
-        mock_trivy_scan_instance.identify_os_and_install.assert_called_once_with("0.45.0")
+        mock_identify_os.assert_called_once_with("0.45.0")
         mock_scan.assert_called_once_with("/usr/bin/trivy", f"{pipeline_name}_SBOM.json")
 
     @patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.os.path.exists')
-    @patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.TrivyScan')
-    def test_run_tool_dependencies_sca_no_command_prefix(self, mock_trivy_scan_class, mock_exists):
+    @patch('devsecops_engine_tools.engine_utilities.trivy_utils.infrastructure.driven_adapters.trivy_manager_scan_utils.TrivyManagerScanUtils.identify_os_and_install')
+    def test_run_tool_dependencies_sca_no_command_prefix(self, mock_identify_os, mock_exists):
         # Arrange
-        mock_trivy_scan_instance = Mock()
-        mock_trivy_scan_instance.identify_os_and_install.return_value = None
-        mock_trivy_scan_class.return_value = mock_trivy_scan_instance
+        mock_identify_os.return_value = None
         
         dict_args = {}
         exclusion = []
@@ -155,13 +150,10 @@ class TestTrivyScanSBOM(unittest.TestCase):
         self.assertIsNone(result)
 
     @patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.os.path.exists')
-    @patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.TrivyScan')
-    def test_run_tool_dependencies_sca_sbom_not_found(self, mock_trivy_scan_class, mock_exists):
+    @patch('devsecops_engine_tools.engine_utilities.trivy_utils.infrastructure.driven_adapters.trivy_manager_scan_utils.TrivyManagerScanUtils.identify_os_and_install')
+    def test_run_tool_dependencies_sca_sbom_not_found(self, mock_identify_os, mock_exists):
         # Arrange
-        mock_trivy_scan_instance = Mock()
-        mock_trivy_scan_instance.identify_os_and_install.return_value = "/usr/bin/trivy"
-        mock_trivy_scan_class.return_value = mock_trivy_scan_instance
-        
+        mock_identify_os.return_value = "/usr/bin/trivy"
         mock_exists.return_value = False
         
         dict_args = {}
