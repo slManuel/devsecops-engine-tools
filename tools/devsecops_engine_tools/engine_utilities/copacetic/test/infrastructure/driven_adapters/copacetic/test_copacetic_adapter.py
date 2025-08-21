@@ -121,35 +121,49 @@ class TestCopaceticAdapter(unittest.TestCase):
         expected_url = "https://github.com/project-copacetic/copacetic/releases/download/v0.11.1/copa_0.11.1_linux_arm64.tar.gz"
         mock_requests_get.assert_called_with(expected_url, allow_redirects=True)
     
-    @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.driven_adapters.copacetic.copacetic_adapter.subprocess.run')
-    @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.driven_adapters.copacetic.copacetic_adapter.requests.get')
-    @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.driven_adapters.copacetic.copacetic_adapter.tarfile.open')
-    @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.driven_adapters.copacetic.copacetic_adapter.platform.system')
-    @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.driven_adapters.copacetic.copacetic_adapter.platform.machine')
-    def test_install_tool_darwin(self, mock_machine, mock_system, mock_tarfile, mock_requests, mock_subprocess):
+    @patch('subprocess.run')
+    @patch('platform.system')
+    @patch('platform.machine')  
+    @patch('requests.get')
+    @patch('tarfile.open')
+    @patch('tempfile.NamedTemporaryFile')
+    @patch('os.makedirs')
+    @patch('os.path.exists')
+    @patch('os.chmod')
+    @patch('os.unlink')
+    def test_install_tool_darwin(self, mock_unlink, mock_chmod, mock_exists, 
+                                mock_makedirs, mock_temp_file, mock_tarfile_open, 
+                                mock_requests_get, mock_machine, mock_system, mock_run):
         """Test Copa installation on Darwin"""
         # Arrange
+        mock_run.return_value.returncode = 1  # Copa not installed
         mock_system.return_value = "Darwin"
         mock_machine.return_value = "x86_64"
-        mock_subprocess.return_value.returncode = 1  # Copa not found
+        mock_exists.return_value = True
         
         mock_response = Mock()
         mock_response.content = b"fake_tarball_content"
-        mock_requests.return_value = mock_response
+        mock_requests_get.return_value = mock_response
+        mock_response.raise_for_status = Mock()
+        
+        mock_temp_file_obj = Mock()
+        mock_temp_file_obj.name = "/tmp/fake_temp.tar.gz"
+        mock_temp_file.__enter__ = Mock(return_value=mock_temp_file_obj)
+        mock_temp_file.__exit__ = Mock(return_value=None)
         
         mock_tar = Mock()
         mock_member = Mock()
         mock_member.name = "copa"
         mock_member.isfile.return_value = True
         mock_tar.getmembers.return_value = [mock_member]
-        mock_tarfile.return_value.__enter__.return_value = mock_tar
+        mock_tarfile_open.return_value.__enter__.return_value = mock_tar
         
-        # Act & Assert - Darwin will fail because arch is not defined for Darwin
-        result = self.adapter.install_tool("1.0.0")
+        # Act
+        result = self.adapter.install_tool("0.11.1", "/test/path")
         
-        # The implementation will fail with UnboundLocalError for Darwin
-        # So we expect None to be returned (handled in except block)
-        self.assertIsNone(result)
+        # Assert
+        expected_url = "https://github.com/project-copacetic/copacetic/releases/download/v0.11.1/copa_0.11.1_darwin_amd64.tar.gz"
+        mock_requests_get.assert_called_with(expected_url, allow_redirects=True)
     
     @patch('subprocess.run')
     def test_install_tool_already_installed(self, mock_run):
@@ -221,36 +235,56 @@ class TestCopaceticAdapter(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertIn("Copa command failed", result["error"])
     
-    def test_parse_copa_output_success(self):
+    @patch('builtins.open')
+    @patch('json.load')
+    def test_parse_copa_output_success(self, mock_json_load, mock_open):
         """Test parsing Copa output successfully"""
         # Arrange
-        output = """
-        Successfully patched 5 vulnerabilities
-        Updated 3 packages
-        Platform: linux/amd64
-        Completed patching process
-        """
+        mock_vex_data = {
+            "statements": [
+                {
+                    "vulnerability": {"@id": "CVE-2023-1234"},
+                    "status": "fixed",
+                    "products": [
+                        {
+                            "@id": "pkg:deb/debian/libssl1.1@1.1.1n-0+deb11u5?arch=amd64",
+                            "subcomponents": [
+                                {"@id": "pkg:deb/debian/libssl1.1@1.1.1n-0+deb11u5?arch=amd64"}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "vulnerability": {"@id": "CVE-2023-5678"},
+                    "status": "not_affected",
+                    "products": []
+                }
+            ]
+        }
+        mock_json_load.return_value = mock_vex_data
         
         # Act
-        result = self.adapter._parse_copa_output(output)
+        result = self.adapter._parse_copa_output("/fake/output.json")
         
         # Assert
         self.assertIsInstance(result, dict)
-        self.assertIn("vulnerabilities_patched", result)
+        self.assertEqual(result["vulnerabilities_patched"], 1)  # Only "fixed" status counts
         self.assertIn("details", result)
         self.assertIn("packages_updated", result)
         self.assertIn("platforms_processed", result)
+        self.assertIn("amd64", result["platforms_processed"])
     
-    def test_parse_copa_output_empty(self):
-        """Test parsing empty Copa output"""
+    @patch('builtins.print')  
+    def test_parse_copa_output_empty(self, mock_print):
+        """Test parsing empty Copa output file that doesn't exist"""
         # Act
-        result = self.adapter._parse_copa_output("")
+        result = self.adapter._parse_copa_output("/nonexistent/file.json")
         
         # Assert
         self.assertEqual(result["vulnerabilities_patched"], 0)
         self.assertEqual(result["details"], [])
         self.assertEqual(result["packages_updated"], 0)
-        self.assertEqual(result["platforms_processed"], ["linux/amd64"])
+        self.assertEqual(result["platforms_processed"], [])
     
     @patch('subprocess.run')
     def test_get_image_info_success(self, mock_run):

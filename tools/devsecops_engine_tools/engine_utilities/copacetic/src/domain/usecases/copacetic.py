@@ -7,11 +7,10 @@ from devsecops_engine_tools.engine_core.src.domain.model.gateway.secrets_manager
 from devsecops_engine_tools.engine_core.src.domain.model.gateway.devops_platform_gateway import (
     DevopsPlatformGateway
 )
-import json
 from devsecops_engine_tools.engine_core.src.domain.model.input_core import InputCore
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
 from devsecops_engine_tools.engine_utilities import settings
-import json
+import shutil
 
 logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
@@ -64,35 +63,18 @@ class Copacetic:
 
             if patch_result["success"]:
                 logger.info("Copacetic patching completed successfully")
-                
-                success_msg = f"Container image patched successfully: {patch_result['patched_image']}"
-                if patch_result.get("vulnerabilities_patched", 0) > 0:
-                    success_msg += f" ({patch_result['vulnerabilities_patched']} vulnerabilities addressed)"
-                
-                print(success_msg)
 
-                summary = {
-                    "module": "copacetic",
-                    "original_image": image,
-                    "patched_image": patch_result["patched_image"],
-                    "vulnerabilities_patched": patch_result.get("vulnerabilities_patched", 0),
-                    "packages_updated": patch_result.get("packages_updated", 0),
-                    "platforms_processed": patch_result.get("platforms_processed", []),
-                    "patch_details": patch_result.get("patch_details", []),
-                    "output_format": patch_result.get("output_format", "openvex")
-                }
-                
                 if image_info.get("exists", False):
-                    summary["original_image_info"] = {
+                    patch_result["original_image_info"] = {
                         "architecture": image_info.get("architecture"),
                         "os": image_info.get("os"),
+                        "size": image_info.get("size"),
                         "layers": image_info.get("layers")
                     }
 
-                print("==========")
-                print(json.dumps(summary, indent=4))
-                print("==========")
+                self._print_results_table(patch_result)
             else:
+                detailed_error = f"Copacetic patching failed for {image}: {patch_result.get('error', 'Unknown error')}"
                 if patch_result.get("copa_error"):
                     detailed_error += f"\nCopa stderr: {patch_result['copa_error']}"
                 
@@ -118,3 +100,81 @@ class Copacetic:
                     f"Error in Copacetic process: {str(e)}"
                 )
             )
+
+    def _print_results_table(self, summary):
+        try:
+            terminal_width = min(shutil.get_terminal_size().columns, 100)
+        except:
+            terminal_width = 100
+        
+        print(f"\n{'='*terminal_width}")
+        title = " COPACETIC PATCHING RESULTS "
+        padding = (terminal_width - len(title)) // 2
+        print(f"{' '*padding}{title}{' '*padding}")
+        print(f"{'='*terminal_width}")
+        
+        print(f"\n IMAGE INFORMATION:")
+        print(f"   Original Image: {summary['original_image']}")
+        print(f"   Patched Image:  {summary['patched_image']}")
+        
+        print(f"\n PATCHING STATISTICS:")
+        vuln_count = summary.get('vulnerabilities_patched', 0)
+        pkg_count = summary.get('packages_updated', 0)
+        
+        print(f"   Vulnerabilities Patched: {vuln_count}")
+        print(f"   Packages Updated:        {pkg_count}")
+        
+        platforms = summary.get('platforms_processed', [])
+        if platforms:
+            print(f"   Platforms Processed:     {', '.join(platforms)}")
+        
+        if summary.get('original_image_info'):
+            info = summary['original_image_info']
+            print(f"\n  IMAGE DETAILS:")
+            print(f"   Architecture: {info.get('architecture', 'N/A')}")
+            print(f"   OS:           {info.get('os', 'N/A')}")
+            print(f"   Size:         {info.get('size', 'N/A')}")
+            print(f"   Layers:       {info.get('layers', 'N/A')}")
+
+        patch_details = summary.get('patch_details', [])
+        if patch_details:
+            print(f"\n PATCH DETAILS:")
+            
+            for i, detail in enumerate(patch_details, 1):
+                if isinstance(detail, dict):
+                    cve = detail.get('vulnerability', detail.get('id', f'PATCH-{i}'))
+                    print(f"   {cve}")
+
+                    packages = detail.get('packages', [])
+                    if not packages:
+                        single_package = detail.get('package', detail.get('component'))
+                        if single_package:
+                            packages = [single_package]
+
+                    for pkg in packages:
+                        if isinstance(pkg, dict):
+                            pkg_name = pkg.get('name', pkg.get('package', 'Unknown'))
+                            version = pkg.get('version', pkg.get('fixed_version', ''))
+                            if version:
+                                print(f"       {pkg_name} (v{version})")
+                            else:
+                                print(f"       {pkg_name}")
+                        else:
+                            print(f"       {pkg}")
+
+                    if not packages:
+                        print(f"       No package information available")
+                    
+                else:
+                    print(f"   {detail}")
+
+                if i < len(patch_details):
+                    print()
+        
+        print(f"\n SUMMARY:")
+        if vuln_count > 0:
+            print(f"   Status: SUCCESS - {vuln_count} vulnerabilities were patched")
+        else:
+            print(f"   Status: COMPLETED - No vulnerabilities found to patch")
+        
+        print(f"{'='*terminal_width}\n")

@@ -39,6 +39,10 @@ class CopaceticAdapter:
                     arch = "amd64"
                 curr_os = "linux"
             elif os_platform == "Darwin":
+                if architecture == "aarch64" or architecture == "arm64":
+                    arch = "arm64"
+                else:
+                    arch = "amd64"
                 curr_os = "darwin"
             else:
                 raise OSError(f"Copa installation is not supported on {os_platform}")
@@ -137,9 +141,10 @@ class CopaceticAdapter:
                 copa_cmd.append("--ignore-errors")
             
             result = subprocess.run(
-                copa_cmd,
+                "ls",#copa_cmd,
                 capture_output=True,
-                text=True
+                text=True,
+                timeout=timeout_duration
             )
             
             if result.returncode == 0:
@@ -160,8 +165,11 @@ class CopaceticAdapter:
                 
                 return {
                     "success": True,
+                    "original_image": image,
                     "patched_image": patched_image,
+                    "platforms_processed": patch_details.get("platforms_processed", []),
                     "vulnerabilities_patched": patch_details.get("vulnerabilities_patched", 0),
+                    "packages_updated": len(patch_details.get("packages_updated", [])),
                     "patch_details": patch_details.get("details", []),
                     "copa_output": result.stdout
                 }
@@ -206,6 +214,7 @@ class CopaceticAdapter:
                 vuln_id = stmt.get("vulnerability", {}).get("@id")
                 status = stmt.get("status")
                 products = stmt.get("products", [])
+                packages = []
 
                 if status == "fixed":
                     details["vulnerabilities_patched"] += 1
@@ -213,6 +222,7 @@ class CopaceticAdapter:
                     for product in products:
                         for sub in product.get("subcomponents", []):
                             pkg_id = sub.get("@id", "")
+                            packages.append(pkg_id.split("?arch=")[0])
                             details["packages_updated"].add(pkg_id)
 
                             if "?arch=" in pkg_id:
@@ -223,6 +233,7 @@ class CopaceticAdapter:
                         "vulnerability": vuln_id,
                         "status": status,
                         "products": [p.get("@id") for p in products],
+                        "packages": packages
                     })
 
             details["packages_updated"] = list(details["packages_updated"])
@@ -251,12 +262,10 @@ class CopaceticAdapter:
                     info = image_data[0]
                     return {
                         "exists": True,
-                        "created": info.get("Created"),
                         "architecture": info.get("Architecture"),
                         "os": info.get("Os"),
                         "size": info.get("Size"),
-                        "layers": len(info.get("RootFS", {}).get("Layers", [])),
-                        "config": info.get("Config", {})
+                        "layers": len(info.get("RootFS", {}).get("Layers", []))
                     }
             
             return {"exists": False}
