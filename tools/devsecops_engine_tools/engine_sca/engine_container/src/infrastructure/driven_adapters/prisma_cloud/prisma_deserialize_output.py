@@ -12,7 +12,7 @@ import json
 
 @dataclass
 class PrismaDeserealizator(DeseralizatorGateway):
-    def get_list_findings(self, image_scanned) -> "list[Finding]":
+    def get_list_findings(self, image_scanned, module="engine_container") -> "list[Finding]":
         list_open_vulnerabilities = []
         SEVERITY_MAP = {
             "unimportant": "low",
@@ -55,7 +55,7 @@ class PrismaDeserealizator(DeseralizatorGateway):
                     published_date_cve=vul.get("publishedDate", "").replace(
                         "Z", "+00:00"
                     ),
-                    module="engine_container",
+                    module=module,
                     category=Category.VULNERABILITY,
                     requirements=vul.get("status", ""),
                     tool="PrismaCloud",

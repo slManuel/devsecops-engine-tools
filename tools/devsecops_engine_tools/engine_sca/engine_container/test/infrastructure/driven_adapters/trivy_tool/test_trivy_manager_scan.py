@@ -13,77 +13,6 @@ def trivy_scan_instance():
     return TrivyScan()
 
 
-def test_download_tool_success(trivy_scan_instance):
-    with patch("builtins.open") as mock_open, patch(
-        "requests.get"
-        ) as mock_request:
-
-        trivy_scan_instance.download_tool("file", "url")
-
-        assert mock_request.call_count == 1
-        assert mock_open.call_count == 1
-
-
-def test_download_tool_exception(trivy_scan_instance):
-    with patch("requests.get") as mock_request, patch(
-            "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.logger.error"
-        ) as mocke_logger:
-        mock_request.side_effect = Exception("custom error")
-
-        trivy_scan_instance.download_tool("file", "url")
-
-        mocke_logger.assert_called_with("Error downloading trivy: custom error")
-
-
-def test_install_tool_success(trivy_scan_instance):
-    with patch("subprocess.run") as mock_run, patch(
-        "tarfile.open"
-    ) as mock_tar_open:
-        mock_run.return_value = Mock(returncode=1)
-        trivy_scan_instance.download_tool = MagicMock()
-
-        trivy_scan_instance.install_tool("file", "url", "trivy")
-
-        assert mock_tar_open.call_count == 1
-
-def test_install_tool_exception(trivy_scan_instance):
-    with patch("subprocess.run") as mock_run, patch(
-        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.logger.error"
-        ) as mocke_logger:
-        mock_run.return_value = Mock(returncode=1)
-        trivy_scan_instance.download_tool = MagicMock()
-        trivy_scan_instance.download_tool.side_effect = Exception("custom error")
-
-        trivy_scan_instance.install_tool("file", "url", "trivy")
-
-        mocke_logger.assert_called_with("Error installing trivy: custom error")
-
-
-def test_install_tool_windows_success(trivy_scan_instance):
-    with patch("subprocess.run") as mock_run, patch(
-        "zipfile.ZipFile"
-    ) as mock_zipfile:
-        mock_run.side_effect = Exception()
-        trivy_scan_instance.download_tool = MagicMock()
-
-        trivy_scan_instance.install_tool_windows("file", "url", "trivy.exe")
-
-        assert mock_zipfile.call_count == 1
-
-
-def test_install_tool_windows_exception(trivy_scan_instance):
-    with patch("subprocess.run") as mock_run, patch(
-        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.logger.error"
-        ) as mocke_logger:
-        mock_run.side_effect = Exception()
-        trivy_scan_instance.download_tool = MagicMock()
-        trivy_scan_instance.download_tool.side_effect = Exception("custom error")
-
-        trivy_scan_instance.install_tool_windows("file", "url", "trivy.exe")
-
-        mocke_logger.assert_called_with("Error installing trivy: custom error")
-
-
 def test_scan_image_success(trivy_scan_instance):
     with patch("subprocess.run") as mock_run, patch(
         "builtins.print"
@@ -97,77 +26,53 @@ def test_scan_image_success(trivy_scan_instance):
 def test_scan_image_exception(trivy_scan_instance):
     with patch("subprocess.run") as mock_run, patch(
         "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.logger.error"
-        ) as mocke_logger:
+        ) as mock_logger:
         mock_run.side_effect = Exception("custom error")
 
         trivy_scan_instance.scan_image("prefix", "image_name", "result.json","base_image", "os,library")
 
-        mocke_logger.assert_called_with("Error during image scan of image_name: custom error")
+        mock_logger.assert_called_with("Error during image scan of image_name: custom error")
 
 
-def test_run_tool_container_sca_linux(trivy_scan_instance):
-    with patch("platform.system") as mock_platform:
+def test_run_tool_container_sca_success(trivy_scan_instance):
+    with patch("devsecops_engine_tools.engine_utilities.trivy_utils.infrastructure.driven_adapters.trivy_manager_scan_utils.TrivyManagerScanUtils.identify_os_and_install") as mock_identify:
         remote_config = {"TRIVY":{"TRIVY_VERSION": "1.2.3"}}
-        mock_platform.return_value = "Linux"
-        trivy_scan_instance.install_tool = MagicMock()
+        mock_identify.return_value = "trivy"
         trivy_scan_instance.scan_image = MagicMock()
         trivy_scan_instance.scan_image.return_value = "result.json"
         version = remote_config["TRIVY"]["TRIVY_VERSION"]
-        file = f"trivy_{version}_Linux-64bit.tar.gz"
-        base_url = f"https://github.com/aquasecurity/trivy/releases/download/v{version}/"
 
         result = trivy_scan_instance.run_tool_container_sca(remote_config, None, None, "image_name", "result.json", "base_image", "exclusions", False)
 
-        trivy_scan_instance.install_tool.assert_called_with(file, base_url+file, "trivy")
+        mock_identify.assert_called_with(version)
         assert result == ("result.json", None)
 
 
-def test_run_tool_container_sca_darwin(trivy_scan_instance):
-    with patch("platform.system") as mock_platform:
+def test_run_tool_container_sca_with_sbom(trivy_scan_instance):
+    with patch("devsecops_engine_tools.engine_utilities.trivy_utils.infrastructure.driven_adapters.trivy_manager_scan_utils.TrivyManagerScanUtils.identify_os_and_install") as mock_identify:
         remote_config = {"TRIVY":{"TRIVY_VERSION": "1.2.3"}}
-        mock_platform.return_value = "Darwin"
-        trivy_scan_instance.install_tool = MagicMock()
+        mock_identify.return_value = "trivy"
         trivy_scan_instance.scan_image = MagicMock()
         trivy_scan_instance.scan_image.return_value = "result.json"
         trivy_scan_instance._generate_sbom = MagicMock()
         trivy_scan_instance._generate_sbom.return_value = [Component("component1", "version1")]
         version = remote_config["TRIVY"]["TRIVY_VERSION"]
-        file = f"trivy_{version}_macOS-64bit.tar.gz"
-        base_url = f"https://github.com/aquasecurity/trivy/releases/download/v{version}/"
 
         result = trivy_scan_instance.run_tool_container_sca(remote_config, None, None, "image_name", "result.json", "base_image","exclusions", True)
 
-        trivy_scan_instance.install_tool.assert_called_with(file, base_url+file, "trivy")
+        mock_identify.assert_called_with(version)
         assert result == ("result.json", [Component("component1", "version1")])
 
 
-def test_run_tool_container_sca_windows(trivy_scan_instance):
-    with patch("platform.system") as mock_platform:
-        remote_config = {"TRIVY":{"TRIVY_VERSION": "1.2.3"}}
-        mock_platform.return_value = "Windows"
-        trivy_scan_instance.install_tool_windows = MagicMock()
-        trivy_scan_instance.scan_image = MagicMock()
-        trivy_scan_instance.scan_image.return_value = "result.json"
-        version = remote_config["TRIVY"]["TRIVY_VERSION"]
-        file = f"trivy_{version}_windows-64bit.zip"
-        base_url = f"https://github.com/aquasecurity/trivy/releases/download/v{version}/"
-
-        result = trivy_scan_instance.run_tool_container_sca(remote_config, None, None, "image_name", "result.json", "base_image","exclusions", False)
-
-        trivy_scan_instance.install_tool_windows.assert_called_with(file, base_url+file, "trivy.exe")
-        assert result == ("result.json", None)
-
 def test_run_tool_container_sca_none(trivy_scan_instance):
-    with patch("platform.system") as mock_platform, patch(
-        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.logger.warning"
-    ) as mock_logger:
+    with patch("devsecops_engine_tools.engine_utilities.trivy_utils.infrastructure.driven_adapters.trivy_manager_scan_utils.TrivyManagerScanUtils.identify_os_and_install") as mock_identify:
         remote_config = {"TRIVY":{"TRIVY_VERSION": "1.2.3"}}
-        mock_platform.return_value = "None"
+        mock_identify.return_value = None
 
         result = trivy_scan_instance.run_tool_container_sca(remote_config, None, None, "image_name", "result.json", "base_image","exclusions", False)
 
-        mock_logger.assert_called_with("None is not supported.")
         assert result == None
+
 
 @patch('devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.subprocess.run')
 @patch('devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.get_list_component')
@@ -213,6 +118,7 @@ def test_generate_sbom_success(mock_get_list_component, mock_subprocess_run):
     )
     mock_get_list_component.assert_called_once_with(f"{image_name.replace('/', '_')}_SBOM.json", "json")
     assert result, ["component1", "component2"]
+
 
 @patch('devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.subprocess.run')
 @patch('devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.logger')
@@ -356,14 +262,12 @@ def test_generate_sbom_compressed_file(mock_subprocess_run, mock_get_list_compon
     assert result, ["component1", "component2"]
 
 
-@patch('devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.platform.system')
-@patch('devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.TrivyScan.install_tool')
 @patch('devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.TrivyScan.scan_image')
 @patch('devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.TrivyScan._generate_sbom')
-def test_run_tool_container_sca_compressed_file(mock_generate_sbom, mock_scan_image, mock_install_tool, mock_platform_system):
+@patch('devsecops_engine_tools.engine_utilities.trivy_utils.infrastructure.driven_adapters.trivy_manager_scan_utils.TrivyManagerScanUtils.identify_os_and_install')
+def test_run_tool_container_sca_compressed_file(mock_identify_os, mock_generate_sbom, mock_scan_image):
     """Test running SCA tool with compressed file"""
-    mock_platform_system.return_value = "Linux"
-    mock_install_tool.return_value = "trivy"
+    mock_identify_os.return_value = "trivy"
     mock_scan_image.return_value = "result.json"
     mock_generate_sbom.return_value = ["component1"]
 
@@ -387,6 +291,7 @@ def test_run_tool_container_sca_compressed_file(mock_generate_sbom, mock_scan_im
         is_compressed_file=True
     )
 
+    mock_identify_os.assert_called_once_with("0.48.1")
     mock_scan_image.assert_called_once_with(
         "trivy", "/path/to/image.tar.gz", "result.json", None, "os,library", False, True
     )

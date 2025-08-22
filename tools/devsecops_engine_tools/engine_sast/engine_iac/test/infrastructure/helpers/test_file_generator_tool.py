@@ -1,8 +1,9 @@
 from devsecops_engine_tools.engine_sast.engine_iac.src.infrastructure.helpers.file_generator_tool import (
-    generate_file_from_tool
+    generate_file_from_tool,
 )
 import json
 from functools import reduce
+
 
 def test_generate_file_from_tool():
     results_scan_list = [
@@ -42,9 +43,7 @@ def test_generate_file_from_tool():
                         "check_id": "CKV_K8S_13",
                         "bc_check_id": None,
                         "check_name": "Minimize the admission of containers with capabilities assigned",
-                        "check_result": {
-                            "result": "FAILED"
-                        },
+                        "check_result": {"result": "FAILED"},
                         "code_block": None,
                         "file_path": "/app.yaml",
                         "file_abs_path": "./_AW1234/app.yaml",
@@ -75,9 +74,7 @@ def test_generate_file_from_tool():
                         "check_id": "CKV_AWS_20",
                         "bc_check_id": None,
                         "check_name": "Ensure the S3 bucket does not allow READ permissions to everyone",
-                        "check_result": {
-                            "result": "FAILED"
-                        },
+                        "check_result": {"result": "FAILED"},
                         "code_block": None,
                         "file_path": "/template-cloudfront.yaml",
                         "file_abs_path": "/test_path/_AW1234/template-cloudfront.yaml",
@@ -99,7 +96,7 @@ def test_generate_file_from_tool():
                 "resource_count": 7,
                 "checkov_version": "2.3.296",
             },
-        }
+        },
     ]
     rules_doc = {
         "CKV_DOCKER_3": {
@@ -126,12 +123,23 @@ def test_generate_file_from_tool():
         },
     }
 
-    absolute_path = generate_file_from_tool("CHECKOV", results_scan_list, rules_doc, "", "")
+    config_tool = {
+        "DEFAULT_SEVERITY": "Critical",
+        "DEFAULT_CATEGORY": "Vulnerability",
+        "REGEX_CLEAN_RESOURCE": "(-dev|-qa|-pdn)",
+    }
+
+    absolute_path = generate_file_from_tool(
+        "CHECKOV", results_scan_list, rules_doc, config_tool
+    )
 
     with open(absolute_path, "r") as file:
         data = file.read()
         json_data = json.loads(data)
-        assert len(json_data["results"]["failed_checks"]) ==  reduce(lambda x, y: x + y, map(lambda x: len(x["results"]["failed_checks"]), results_scan_list))
+        assert len(json_data["results"]["failed_checks"]) == reduce(
+            lambda x, y: x + y,
+            map(lambda x: len(x["results"]["failed_checks"]), results_scan_list),
+        )
 
 
 def test_generate_file_from_tool_exception():
@@ -172,9 +180,7 @@ def test_generate_file_from_tool_exception():
                         "check_id": "CKV_K8S_13",
                         "bc_check_id": None,
                         "check_name": "Minimize the admission of containers with capabilities assigned",
-                        "check_result": {
-                            "result": "FAILED"
-                        },
+                        "check_result": {"result": "FAILED"},
                         "code_block": None,
                         "file_path": "/app.yaml",
                         "file_abs_path": "./_AW1234/app.yaml",
@@ -205,9 +211,7 @@ def test_generate_file_from_tool_exception():
                         "check_id": "CKV_AWS_20",
                         "bc_check_id": None,
                         "check_name": "Ensure the S3 bucket does not allow READ permissions to everyone",
-                        "check_result": {
-                            "result": "FAILED"
-                        },
+                        "check_result": {"result": "FAILED"},
                         "code_block": None,
                         "file_path": "/template-cloudfront.yaml",
                         "file_abs_path": "/test_path/_AW1234/template-cloudfront.yaml",
@@ -229,10 +233,9 @@ def test_generate_file_from_tool_exception():
                 "resource_count": 7,
                 "checkov_version": "2.3.296",
             },
-        }
+        },
     ]
 
-    absolute_path = generate_file_from_tool("CHECKOV", results_scan_list, None, "", "")
+    absolute_path = generate_file_from_tool("CHECKOV", results_scan_list, None, "")
 
     assert absolute_path == None
-        

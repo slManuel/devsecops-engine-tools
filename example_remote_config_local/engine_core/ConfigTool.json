@@ -83,6 +83,7 @@
     },
     "SBOM_MANAGER": {
         "ENABLED": false,
+        "TOOL": "SYFT|CDXGEN",
         "BRANCH_FILTER": [
             "trunk",
             "main"
@@ -90,6 +91,11 @@
         "SYFT": {
             "SYFT_VERSION": "1.17.0",
             "OUTPUT_FORMAT": "cyclonedx-json"
+        },
+        "CDXGEN": {
+            "CDXGEN_VERSION": "11.6.0",
+            "OUTPUT_FORMAT": "cyclonedx-json",
+            "SLIM_BINARY": false
         }
     },
     "ENGINE_IAC": {
@@ -111,7 +117,7 @@
     },
     "ENGINE_DEPENDENCIES": {
         "ENABLED": true,
-        "TOOL": "XRAY|DEPENDENCY_CHECK"
+        "TOOL": "XRAY|DEPENDENCY_CHECK|TRIVY"
     },
     "ENGINE_CODE": {
         "ENABLED": true,

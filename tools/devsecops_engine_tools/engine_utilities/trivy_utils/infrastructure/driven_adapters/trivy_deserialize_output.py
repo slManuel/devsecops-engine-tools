@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 @dataclass
 class TrivyDeserializator(DeseralizatorGateway):
 
-    def get_list_findings(self, image_scanned) -> "list[Finding]":
+    def get_list_findings(self, image_scanned, remote_config={}, module="") -> "list[Finding]":
         list_open_vulnerabilities = []
         with open(image_scanned, "rb") as file:
             image_object = file.read()
@@ -36,13 +36,13 @@ class TrivyDeserializator(DeseralizatorGateway):
                         )
                     ),
                     where=vul.get("PkgName", "")
-                    + " "
+                    + ":"
                     + vul.get("InstalledVersion", ""),
                     description=vul.get("Description", "").replace("\n", "")[:150],
                     severity=vul.get("Severity", "").lower(),
                     identification_date=datetime.now().strftime("%Y-%m-%dT%H:%M:%S%z"),
                     published_date_cve=self._check_date_format(vul),
-                    module="engine_container",
+                    module=module,
                     category=Category.VULNERABILITY,
                     requirements=vul.get("FixedVersion") or vul.get("Status", ""),
                     tool="Trivy",
