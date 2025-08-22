@@ -88,3 +88,4 @@ coverage/
 checkov
 checkov.exe
 build/** 
+cdxgen-*
