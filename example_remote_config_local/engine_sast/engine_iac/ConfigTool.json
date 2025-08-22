@@ -35,6 +35,7 @@
         "INSTALLATION_ID_GITHUB":"",
         "DEFAULT_SEVERITY": "Critical",
         "DEFAULT_CATEGORY": "Compliance",
+        "REGEX_CLEAN_RESOURCE": "",
         "RULES": {
             "RULES_DOCKER": {
                 "CKV_DOCKER_1": {
