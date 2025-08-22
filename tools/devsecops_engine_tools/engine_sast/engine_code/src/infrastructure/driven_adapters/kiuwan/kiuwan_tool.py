@@ -385,7 +385,7 @@ class KiuwanTool(ToolGateway):
         analysis_code: str,
         severity_mapper: Dict[str,str]
     ) -> List[EngineCodeFinding]:
-        return KiuwanDeserealizator.get_findings(self.base_url, last_analysis, defects_data, analysis_code, severity_mapper)
+        return KiuwanDeserealizator.get_findings(last_analysis, defects_data, analysis_code, severity_mapper)
 
     def _find_or_download_kiuwan_agent(self) -> str:
         """Ensure Kiuwan agent is available and return its path."""
@@ -484,9 +484,9 @@ def get_kiuwan_instance(dict_args: Dict, devops_platform_gateway) -> KiuwanTool:
     logger.info("Retrieving kiuwan configuration file...")
     kiuwan_config_tool = devops_platform_gateway.get_remote_config(
         dict_args["remote_config_repo"], 
-        "/engine_sast/engine_code/kiuwan/ConfigTool.json",
+        "/engine_sast/engine_code/ConfigTool.json",
         dict_args["remote_config_branch"]
-    )
+    ).get(dict_args["tool"].upper(), {})
     logger.info("Kiuwan configuration file retrieved")
     logger.info("Settings config dictionary to scan tool...")
     config = {
