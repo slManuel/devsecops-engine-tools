@@ -14,7 +14,7 @@ from devsecops_engine_tools.engine_sast.engine_code.src.infrastructure.driven_ad
 
 logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
-def runner_engine_code(dict_args, tool, devops_platform_gateway, remote_config_source_gateway, secret_tool):
+def runner_engine_code(dict_args, tool, devops_platform_gateway, remote_config_source_gateway):
     try:
         logger.info("Selecting tool...")
         tool_gateway = None
@@ -26,7 +26,7 @@ def runner_engine_code(dict_args, tool, devops_platform_gateway, remote_config_s
             logger.info("Kiuwan tool selected...")
             tool_gateway = get_kiuwan_instance(
                 dict_args=dict_args,
-                devops_platform_gateway=devops_platform_gateway
+                devops_platform_gateway=devops_platform_gateway,
             )
         
         logger.info("Tool has been selected successfully")
