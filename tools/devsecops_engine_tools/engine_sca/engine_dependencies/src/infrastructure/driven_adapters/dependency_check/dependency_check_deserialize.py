@@ -20,7 +20,7 @@ logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 class DependencyCheckDeserialize(DeserializatorGateway):
     TOOL = "DEPENDENCY_CHECK"
 
-    def get_list_findings(self, dependencies_scanned_file, remote_config) -> "list[Finding]":
+    def get_list_findings(self, dependencies_scanned_file, remote_config={}, module="") -> "list[Finding]":
         dependencies, namespace = self.filter_vulnerabilities_by_confidence(dependencies_scanned_file, remote_config)
         list_open_vulnerabilities = []
 
