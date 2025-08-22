@@ -22,7 +22,13 @@ from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.aws.s
 from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.printer_pretty_table.printer_pretty_table import (
     PrinterPrettyTable,
 )
-from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft import Syft
+from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft import (
+    Syft
+)
+from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen import (
+    CdxGen
+)
+
 import sys
 import argparse
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
@@ -285,7 +291,10 @@ def application_core():
         }.get(args["remote_config_source"])
         metrics_manager_gateway = S3Manager()
         printer_table_gateway = PrinterPrettyTable()
-        sbom_tool_gateway = Syft()
+        sbom_tool_gateway = {
+            "syft": Syft(),
+            "cdxgen": CdxGen()
+        }
 
         init_engine_core(
             vulnerability_management_gateway,
