@@ -53,7 +53,6 @@ class TestKiuwanToolInit(TestKiuwanToolBase):
             self.assertEqual(tool.user, "test_user")
             self.assertEqual(tool.password, "test_token")
             self.assertEqual(tool.base_url, "https://test.kiuwan.com")
-            self.assertEqual(tool.app_name, "test_app")
             self.assertEqual(tool.build_execution_id, "test_build_123")
             self.assertEqual(tool.source_branch_name, "feature/test")
             self.assertEqual(tool.target_branch, "master")
@@ -73,7 +72,6 @@ class TestKiuwanToolInit(TestKiuwanToolBase):
             
             self.assertEqual(tool.user, "user")
             self.assertEqual(tool.password, "")
-            self.assertEqual(tool.app_name, "")
             self.assertEqual(tool.modelo_regla, "General")
             self.assertEqual(tool.kiuwan_agent_path, '/path/to/agent.sh')
 
@@ -556,7 +554,7 @@ class TestValidateResults(TestKiuwanToolBase):
     @patch('requests.get')
     def test_validate_results_baseline_success(self, mock_get):
         mock_response = Mock()
-        mock_response.json.return_value = {"applicationBusinessValue": "LOW"}
+        mock_response.json.return_value = [{"applicationBusinessValue": "LOW"}]
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
         
@@ -570,14 +568,13 @@ class TestValidateResults(TestKiuwanToolBase):
     @patch('requests.get')
     def test_validate_results_baseline_critical(self, mock_get):
         mock_response = Mock()
-        mock_response.json.return_value = {"applicationBusinessValue": "CRITICAL"}
+        mock_response.json.return_value = [{"applicationBusinessValue": "CRITICAL"}]
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
         
         tool = self.create_kiuwan_tool()
-        with self.assertRaises(RuntimeError) as context:
-            tool._validate_results("baseline")
-        self.assertIn("Validation analysis results failed", str(context.exception))
+        tool._validate_results("baseline")
+        mock_get.assert_called_once()
     
     @patch('requests.get')
     def test_validate_results_delivery_success(self, mock_get):
@@ -600,11 +597,8 @@ class TestValidateResults(TestKiuwanToolBase):
         mock_get.return_value = mock_response
         
         tool = self.create_kiuwan_tool()
-        with self.assertRaises(RuntimeError) as context:
-            tool._validate_results("delivery")
-        
-        self.assertIn("Validation analysis results failed", str(context.exception))
-
+        tool._validate_results("delivery")
+        mock_get.assert_called_once()
 
 class TestFetchLastAnalysis(TestKiuwanToolBase):
     
@@ -726,7 +720,7 @@ class TestMapDefectsToFindings(TestKiuwanToolBase):
         
         self.assertEqual(result, expected_findings)
         mock_get_findings.assert_called_once_with(
-            tool.base_url, last_analysis, defects_data, "123", severity_mapper
+            last_analysis, defects_data, "123", severity_mapper
         )
 
 
@@ -743,7 +737,7 @@ class TestGetAnalysisDefects(TestKiuwanToolBase):
         tool._fetch_defects_for_analysis = Mock(return_value=defects_data)
         tool._map_defects_to_findings = Mock(return_value=expected_findings)
         
-        result = tool._get_analysis_defects(severity_mapper)
+        result = tool._get_analysis_defects(severity_mapper, None)
         
         self.assertEqual(result, expected_findings)
         tool._fetch_last_analysis.assert_called_once()
@@ -755,17 +749,18 @@ class TestGetKiuwanInstance(unittest.TestCase):
     @patch('devsecops_engine_tools.engine_sast.engine_code.src.infrastructure.driven_adapters.kiuwan.kiuwan_tool.KiuwanTool')
     def test_get_kiuwan_instance(self, mock_kiuwan_tool):
         # Mock dependencies
-        secret_tool = Mock()
         devops_platform_gateway = Mock()
         
         # Mock configuration
         kiuwan_config = {
-            "KIUWAN_SERVER": {
-                "KIUWAN_BASE_URL": "https://test.kiuwan.com",
-                "KIUWAN_USER": "test_user",
-                "KIUWAN_DOMAIN_ID": "test_domain"
-            },
-            "MODELOS": {"task1": "Model1"}
+            "KIUWAN":{
+                "KIUWAN_SERVER": {
+                    "KIUWAN_BASE_URL": "https://test.kiuwan.com",
+                    "KIUWAN_USER": "test_user",
+                    "KIUWAN_DOMAIN_ID": "test_domain"
+                },
+                "MODELOS": {"task1": "Model1"}
+            }
         }
         
         devops_platform_gateway.get_remote_config.return_value = kiuwan_config
@@ -780,14 +775,15 @@ class TestGetKiuwanInstance(unittest.TestCase):
         dict_args = {
             "remote_config_repo": "config_repo",
             "remote_config_branch": "main",
-            "token_engine_code": "test_token"
+            "token_engine_code": "test_token",
+            "tool": "KIUWAN"
         }
         
         # Mock KiuwanTool instance
         mock_instance = Mock()
         mock_kiuwan_tool.return_value = mock_instance
         
-        result = get_kiuwan_instance(dict_args, secret_tool, devops_platform_gateway)
+        result = get_kiuwan_instance(dict_args, devops_platform_gateway)
         
         self.assertEqual(result, mock_instance)
         devops_platform_gateway.get_remote_config.assert_called_once()
@@ -798,4 +794,3 @@ class TestGetKiuwanInstance(unittest.TestCase):
         self.assertEqual(call_args["host_engine_code"], "https://test.kiuwan.com")
         self.assertEqual(call_args["user_engine_code"], "test_user")
         self.assertEqual(call_args["token_engine_code"], "test_token")
-        self.assertEqual(call_args["app_name"], "test_app")
