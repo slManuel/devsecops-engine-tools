@@ -31,6 +31,9 @@ class PrinterPrettyTable(PrinterTableGateway):
                 finding.module == "engine_dependencies"
             ):
                 row_data.append(finding.requirements)
+            elif finding.module == "engine_code":
+                row_data.append(finding.cvss)
+                row_data.append(finding.defect_type)
 
             table.add_row(row_data)
 
@@ -50,10 +53,15 @@ class PrinterPrettyTable(PrinterTableGateway):
     def print_table_findings(self, finding_list: "list[Finding]"):
         if (
             finding_list
-            and (finding_list[0].module != "engine_container")
-            and (finding_list[0].module != "engine_dependencies")
+            and (
+                (finding_list[0].module == "engine_container") 
+                or (finding_list[0].module == "engine_dependencies")
+                )
         ):
-            headers = ["Severity", "ID", "Description", "Where"]
+            headers = ["Severity", "ID", "Description", "Where", "Fixed in"]
+        elif finding_list and finding_list[0].module == "engine_code":
+            headers = ["Severity", "ID", "Description", "Where", "Rule", "Defect Type"]
+
         else:
             headers = ["Severity", "ID", "Description", "Where", "Fixed in"]
 

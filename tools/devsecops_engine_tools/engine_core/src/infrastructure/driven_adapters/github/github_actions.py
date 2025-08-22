@@ -7,7 +7,8 @@ from devsecops_engine_tools.engine_utilities.github.models.GithubPredefinedVaria
     SystemVariables,
     ReleaseVariables,
     AgentVariables,
-    VMVariables
+    VMVariables,
+    ApplicationVariables
 )
 from devsecops_engine_tools.engine_utilities.github.infrastructure.github_api import (
     GithubApi,
@@ -93,6 +94,7 @@ class GithubActions(DevopsPlatformGateway):
             "vm_product_type_name": VMVariables.Vm_Product_Type_Name,
             "vm_product_name": VMVariables.Vm_Product_Name,
             "vm_product_description": VMVariables.Vm_Product_Description,
+            "build_task":  ApplicationVariables.Application_Build_Task,
         }
         try:
             return variable_map.get(variable).value()

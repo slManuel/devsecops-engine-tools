@@ -50,16 +50,16 @@ class BreakBuild:
 
             findings_excluded, findings_without_exclusions = self._filter_findings(findings_list, exclusions)
             scan_result["findings_excluded"] = [self._map_finding_excluded(item) for item in findings_excluded]
-
+            
             vulnerabilities = [v for v in findings_without_exclusions if v.category == Category.VULNERABILITY]
             compliances = [v for v in findings_without_exclusions if v.category == Category.COMPLIANCE]
 
             vulnerability_counts = self._count_severities(vulnerabilities)
             compliance_counts = self._count_severities(compliances)
 
-            self._handle_vulnerabilities(vulnerability_counts, vulnerabilities, threshold, warning_release, scan_result)
+            self._handle_vulnerabilities(vulnerability_counts, vulnerabilities, threshold, warning_release, scan_result, args)
             self._handle_cve_policy(vulnerabilities, threshold)
-            self._handle_compliances(compliance_counts, compliances, threshold, warning_release, scan_result)
+            self._handle_compliances(compliance_counts, compliances, threshold, warning_release, scan_result, args)
             self._handle_exclusions(findings_excluded, exclusions)
         else:
             print(devops_platform_gateway.message("succeeded", "There are no findings"))
@@ -109,7 +109,7 @@ class BreakBuild:
         return {
             "id": item.id,
             "severity": item.severity,
-            "category": item.category.value,
+            "category": item.category,
         }
 
     def _count_severities(self, findings_list):
@@ -125,7 +125,7 @@ class BreakBuild:
                 counts[severity] += 1
         return counts
 
-    def _handle_vulnerabilities(self, counts, vulnerabilities_list, threshold, warning_release, scan_result):
+    def _handle_vulnerabilities(self, counts, vulnerabilities_list, threshold, warning_release, scan_result, args):
         devops_platform_gateway = self.devops_platform_gateway
         printer_table_gateway = self.printer_table_gateway
         print()
@@ -142,6 +142,8 @@ class BreakBuild:
             counts["low"] >= threshold.vulnerability.low):
             
             print("Below are all vulnerabilities detected.")
+            if vulnerabilities_list and args["tool"] == "kiuwan":
+                print(f"Analysis url: {vulnerabilities_list[0].analysis_url}")
             printer_table_gateway.print_table_findings(vulnerabilities_list)
             print(devops_platform_gateway.message(
                 "error",
@@ -194,13 +196,15 @@ class BreakBuild:
             ))
             print(devops_platform_gateway.result_pipeline("failed"))
 
-    def _handle_compliances(self, counts, compliances_list, threshold, warning_release, scan_result):
+    def _handle_compliances(self, counts, compliances_list, threshold, warning_release, scan_result, args):
         devops_platform_gateway = self.devops_platform_gateway
         printer_table_gateway = self.printer_table_gateway
         print()
 
         if compliances_list:
             print("Below are all compliances issues detected.")
+            if compliances_list and args["tool"] == "kiuwan":
+                print(f"Analysis url: {compliances_list[0].analysis_url}")
             printer_table_gateway.print_table_findings(compliances_list)
             status = "succeeded"
             if counts["critical"] >= threshold.compliance.critical:

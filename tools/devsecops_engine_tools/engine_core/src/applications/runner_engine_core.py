@@ -35,7 +35,6 @@ from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
 from devsecops_engine_tools.engine_utilities import settings
 from devsecops_engine_tools.version import version
 
-
 logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
 
@@ -109,6 +108,7 @@ def get_inputs_from_cli(args):
             "trivy",
             "xray",
             "dependency_check",
+            "kiuwan",
         ],
         type=str,
         required=False,
@@ -200,6 +200,12 @@ def get_inputs_from_cli(args):
         help="Token for downloading external checks from engine_iac or engine_secret if is necessary. Ej: github_token:token, github_app:private_key, ssh:privatekey:pass",
     )
     parser.add_argument(
+        "--token_engine_code",
+        type=str,
+        required=False,
+        help="Password for connecting with the kiuwan platform. In order to get a kiuwan pass, go to the platform and select the pass of the account selected for the engine."
+    )
+    parser.add_argument(
         "--xray_mode",
         choices=["scan", "audit","build-scan"],
         required=False,
@@ -226,13 +232,20 @@ def get_inputs_from_cli(args):
         default="false",
         help="Enable or disable context creation. Applies to engine_iac, engine_container and engine_dependencies. Default is false."
     )
+    parser.add_argument(
+        "-repo",
+        "--repo_name",
+        type=str,
+        required=False,
+        help="Repository name, used when the repository name should not be taken from environment variable. Apply to kiuwan"
+    )
 
     TOOLS = {
         "engine_iac": ["checkov", "kics", "kubescape"],
         "engine_secret": ["trufflehog", "gitleaks"],
         "engine_container": ["prisma", "trivy"],
         "engine_dependencies": ["xray", "dependency_check"],
-        "engine_code": ["bearer"],
+        "engine_code": ["bearer", "kiuwan"],
         "engine_dast": ["nuclei"],
         "engine_risk": None,
     }
@@ -264,10 +277,12 @@ def get_inputs_from_cli(args):
         "token_engine_container": args.token_engine_container,
         "token_engine_dependencies": args.token_engine_dependencies,
         "token_external_checks": args.token_external_checks,
+        "token_engine_code": args.token_engine_code,
         "xray_mode": args.xray_mode,
         "image_to_scan": args.image_to_scan,
         "dast_file_path": args.dast_file_path,
-        "context": args.context
+        "context": args.context,
+        "repo_name": args.repo_name
     }
 
 
