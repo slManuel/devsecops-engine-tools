@@ -1,0 +1,152 @@
+@import url('https://library-sdb.apps.bancolombia.com/bds/7.19.0/bds.min.css');
+
+:root {
+  --ifm-color-primary: #000000;
+  --ifm-color-primary-dark: #000000;
+  --ifm-color-primary-darker: #000000;
+  --ifm-color-primary-darkest: #000000;
+  --ifm-color-primary-light: #000000;
+  --ifm-color-primary-lighter: #000000;
+  --ifm-color-primary-lightest: #000000;
+}
+
+.label {
+  padding: 5px; 
+  border-radius: 5px;
+}
+
+.blue {
+  background-color: #ccf3f2;
+}
+
+.red {
+  background-color: #f38278;
+
+}
+
+.yellow {
+  background-color: #fdf196;
+}
+
+.green {
+  background-color: #dbf7b5;
+}
+
+.pink {
+  background-color: #f9caf9;
+}
+
+.purple {
+  background-color: #dbbcfb;
+}
+
+.light-blue {
+  background-color: #c7d6f8;
+}
+
+.orange{
+  background-color: #fdb18a;
+}
+
+.gray{
+  background-color: #c1bdbb;
+}
+
+.aqua{
+  background-color: #a3f7e8;
+}
+
+.lime{
+  background-color: #f0fa83;
+}
+
+.salmon{
+  background-color: #fa839b;
+}
+
+.light-red{
+  background-color: #e6a291;
+}
+
+.dark-blue{
+  background-color: #7494ec;
+}
+
+
+
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+/* [data-theme='dark'] {
+  --ifm-color-primary: #25c2a0;
+  --ifm-color-primary-dark: #21af90;
+  --ifm-color-primary-darker: #1fa588;
+  --ifm-color-primary-darkest: #1a8870;
+  --ifm-color-primary-light: #29d5b0;
+  --ifm-color-primary-lighter: #32d8b4;
+  --ifm-color-primary-lightest: #4fddbf;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+} */
+[data-theme='dark'] {
+  --ifm-color-primary: #ffffff;
+  --ifm-color-primary-dark: #e6e6e6;
+  --ifm-color-primary-darker: #d9d9d9;
+  --ifm-color-primary-darkest: #a6a6a6;
+  --ifm-color-primary-light: #ffffff;
+  --ifm-color-primary-lighter: #ffffff;
+  --ifm-color-primary-lightest: #ffffff;
+  --ifm-background-color: #000000;
+}
+
+a{
+  color: rgb(0, 195, 137);
+}
+
+ .background-img {
+  position: relative;
+  background-image: url(../../static/img/home-image.png);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  max-height: 100vh;
+  min-height: 70vh;
+}
+
+.background-img.con::after {
+  content: "";
+  width: 100%;
+  height: 500px;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  background: linear-gradient(transparent, #000000ec);
+}
+
+.stroke{
+    bottom: 0;
+    right: 0;
+    position: absolute;
+  }
+
+  .bg-dark{
+    display: flex;
+    height: 100%;
+    min-height: 30vh;
+    flex-direction: column;
+    background-color: black;
+  }
+
+  .text-decoration{
+    text-decoration: none;
+  }
+
+  @media only screen and (max-width: 1400px) {
+    .row-col {
+      display: flex;
+    }
+  }
+
+  .min-width-fit{
+    min-width: fit-content;
+  }
+
+

@@ -88,3 +88,6 @@ coverage/
 checkov
 checkov.exe
 build/** 
+
+# Doc
+.docusaurus
