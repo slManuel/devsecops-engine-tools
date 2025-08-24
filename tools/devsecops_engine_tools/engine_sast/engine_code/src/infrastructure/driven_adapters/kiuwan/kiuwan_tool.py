@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import subprocess
 import platform
 import time
@@ -469,11 +470,11 @@ class KiuwanTool(ToolGateway):
                 if member.startswith("KiuwanLocalAnalyzer/") and not member.endswith("/"):
                     relative_path = os.path.relpath(member, "KiuwanLocalAnalyzer")
                     target_path = os.path.join(self.working_directory, relative_path)
-
-                    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                    
+                    Path(os.path.dirname(target_path)).mkdir(parents=True, exist_ok=True)
                     with zip_ref.open(member) as source, open(target_path, "wb") as target:
                         shutil.copyfileobj(source, target)
-                        extracted_files.append(target_path)
+                    extracted_files.append(target_path)
         
         return extracted_files
 
