@@ -1,12 +1,11 @@
 import unittest
-from unittest.mock import Mock, patch, MagicMock, mock_open, call
+from unittest.mock import Mock, patch
 import os
 import tempfile
 import shutil
-import platform
 import subprocess
-from typing import Dict, Any, List
 import zipfile
+from pathlib import Path
 
 from devsecops_engine_tools.engine_sast.engine_code.src.domain.model.config_tool import ConfigTool
 from devsecops_engine_tools.engine_sast.engine_code.src.infrastructure.driven_adapters.kiuwan.kiuwan_tool import KiuwanTool, get_kiuwan_instance
@@ -39,8 +38,8 @@ class TestKiuwanToolBase(unittest.TestCase):
         if os.path.exists(self.temp_directory):
             shutil.rmtree(self.temp_directory)
     
-    def create_kiuwan_tool(self, config=None):
-        with patch.object(KiuwanTool, '_find_or_download_kiuwan_agent', return_value='/path/to/agent.sh'):
+    def create_kiuwan_tool(self, config=None, path_mock="/path/to/agent.sh"):
+        with patch.object(KiuwanTool, '_find_or_download_kiuwan_agent', return_value=path_mock):
             return KiuwanTool(config or self.config)
 
 
@@ -150,7 +149,7 @@ class TestSearchAgentScript(TestKiuwanToolBase):
     def test_search_agent_script_found(self):
         tool = self.create_kiuwan_tool()
         # Crear estructura de directorios
-        os.makedirs(os.path.join(self.temp_directory, "tools"))
+        Path(os.path.join(self.temp_directory, "tools")).mkdir(parents=True, exist_ok=True)
         agent_path = os.path.join(self.temp_directory, "tools", "agent.sh")
         with open(agent_path, 'w') as f:
             f.write("#!/bin/bash")
@@ -191,7 +190,7 @@ class TestSetExecutionPermissions(TestKiuwanToolBase):
         self.mock_config_tool.data = {"SEVERITY": {"HIGH": "Critical", "MEDIUM": "High"}}
         
         self.temp_directory = tempfile.mkdtemp()
-        os.makedirs(os.path.join(self.temp_directory, "tools"))
+        Path(os.path.join(self.temp_directory, "tools")).mkdir(parents=True, exist_ok=True)
         self.agent_path = os.path.join(self.temp_directory, "tools", "agent.sh")
         with open(self.agent_path, 'w') as f:
             f.write("#!/bin/bash")
@@ -247,50 +246,57 @@ class TestSetExecutionPermissions(TestKiuwanToolBase):
 class TestExtractZip(TestKiuwanToolBase):
     
     def test_extract_zip_success(self):
-        os.makedirs(os.path.join(self.temp_directory, "KiuwanLocalAnalyzer","bin"), exist_ok=True)
-        os.makedirs(os.path.join(self.temp_directory, "KiuwanLocalAnalyzer","lib"), exist_ok=True)
+        self.temp_directory = tempfile.mkdtemp()
+        # Rutas locales
+        bin_dir = os.path.join(self.temp_directory, "KiuwanLocalAnalyzer", "bin")
+        lib_dir = os.path.join(self.temp_directory, "KiuwanLocalAnalyzer", "lib")
+        Path(bin_dir).mkdir(parents=True, exist_ok=True)
+        Path(lib_dir).mkdir(parents=True, exist_ok=True)
 
-        agent_sh_path = os.path.join(self.temp_directory, "KiuwanLocalAnalyzer","bin", "agent.sh")
-        lib_path = os.path.join(self.temp_directory, "KiuwanLocalAnalyzer","lib")
-        kiuwan_jar_path = os.path.join(self.temp_directory, "KiuwanLocalAnalyzer","lib","kiuwan.jar")
-        
-        mock_zip = Mock()
-        mock_zip.namelist.return_value = [
-            agent_sh_path,
-            lib_path,
-            kiuwan_jar_path,
-        ]
-        with open(agent_sh_path, 'w') as f:
-            f.write("#!/bin/bash")
-            
-        with open(kiuwan_jar_path, 'w') as f:
-            f.write(".jar")
-        
-        #Crear un archivo ZIP con los archivos
+        agent_sh_path = os.path.join(bin_dir, "agent.sh")
+        kiuwan_jar_path = os.path.join(lib_dir, "kiuwan.jar")
+
+        Path(agent_sh_path).write_text("#!/bin/bash")
+        Path(kiuwan_jar_path).write_text("fake jar content", encoding="utf-8")
+
+        # Crear ZIP
         zip_path = os.path.join(self.temp_directory, "test_kiuwan.zip")
         with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            # Agregar agent.sh con permisos de ejecución
-            zip_info = zipfile.ZipInfo("KiuwanLocalAnalyzer/bin/agent.sh")
-            zip_info.external_attr = 0o755 << 16  # Permisos Unix: rwx para propietario, rx para grupo y otros
+            # ✅ Directorios (opcionales, pero ayudan)
+            zipf.writestr("KiuwanLocalAnalyzer/", "")
+            zipf.writestr("KiuwanLocalAnalyzer/bin/", "")
+            zipf.writestr("KiuwanLocalAnalyzer/lib/", "")
+
+            # Archivos
+            info = zipfile.ZipInfo("KiuwanLocalAnalyzer/bin/agent.sh")
+            info.external_attr = 0o755 << 16
             with open(agent_sh_path, 'rb') as f:
-                zipf.writestr(zip_info, f.read())
-            
-            # Agregar kiuwan.jar (sin permisos de ejecución)
-            zip_info = zipfile.ZipInfo("KiuwanLocalAnalyzer/lib/kiuwan.jar")
-            zip_info.external_attr = 0o644 << 16  # Permisos Unix: rw para propietario, r para grupo y otros
+                zipf.writestr(info, f.read())
+
+            info = zipfile.ZipInfo("KiuwanLocalAnalyzer/lib/kiuwan.jar")
+            info.external_attr = 0o644 << 16
             with open(kiuwan_jar_path, 'rb') as f:
-                zipf.writestr(zip_info, f.read())
-            
-            # Agregar el directorio lib/ (opcional, para reflejar la estructura)
-            zip_info = zipfile.ZipInfo("KiuwanLocalAnalyzer/lib/")
-            zipf.writestr(zip_info, "")
-        
-        
+                zipf.writestr(info, f.read())
+
+        # Imprimir contenido del ZIP para depurar
+        print("\n=== ZIP CONTENT ===")
+        with zipfile.ZipFile(zip_path, 'r') as zf:
+            for f in zf.namelist():
+                print(f"  {f}")
+        print("==================\n")
+
+        # Preparar herramienta
         tool = self.create_kiuwan_tool()
-        os.makedirs(os.path.join(self.temp_directory, "extracted"), exist_ok=True)
-        tool.working_directory =  os.path.join(self.temp_directory, "extracted")
+        extracted_dir = os.path.join(self.temp_directory, "extracted")
+        tool.working_directory = extracted_dir
+
+        # Llamar al método
         result = tool._extract_zip(zip_path)
-        self.assertEqual(len(result), 2)  # Solo archivos, no directorios
+
+        # Validar
+        self.assertEqual(len(result), 2)
+        self.assertTrue(os.path.exists(os.path.join(extracted_dir, "bin", "agent.sh")))
+        self.assertTrue(os.path.exists(os.path.join(extracted_dir, "lib", "kiuwan.jar")))
 
     
     @patch('zipfile.ZipFile')
