@@ -1,3 +1,4 @@
+import platform
 import unittest
 from unittest.mock import Mock, patch, mock_open
 from devsecops_engine_tools.engine_dast.src.infrastructure.driven_adapters.nuclei.nuclei_tool import (
@@ -60,10 +61,13 @@ class TestNucleiTool(unittest.TestCase):
         mock_download_tool.return_value = 0
 
         result = self.nuclei_tool.install_tool(self.version, '/home/user')
-
-        self.assertEqual(result["status"], 201)
+        os_type = platform.system().lower()
+        if os_type == "windows":
+            self.assertEqual(result["status"], 202)
+        else:
+            self.assertEqual(result["status"], 201)
+            mock_subprocess_run.assert_called_once_with(["chmod", "+x", "/home/user/nuclei"], check=True)
         mock_download_tool.assert_called_once()
-        mock_subprocess_run.assert_called_once_with(["chmod", "+x", "/home/user/nuclei"], check=True)
 
     @patch('builtins.open', new_callable=mock_open, read_data='{"key": "value"}')
     @patch('json.load', return_value={"key": "value"})
