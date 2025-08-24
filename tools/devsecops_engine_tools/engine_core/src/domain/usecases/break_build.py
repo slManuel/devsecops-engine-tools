@@ -142,7 +142,7 @@ class BreakBuild:
             counts["low"] >= threshold.vulnerability.low):
             
             print("Below are all vulnerabilities detected.")
-            if vulnerabilities_list and args["tool"] == "kiuwan":
+            if vulnerabilities_list and args.get("tool", None) == "kiuwan":
                 print(f"Analysis url: {vulnerabilities_list[0].analysis_url}")
             printer_table_gateway.print_table_findings(vulnerabilities_list)
             print(devops_platform_gateway.message(
@@ -203,7 +203,7 @@ class BreakBuild:
 
         if compliances_list:
             print("Below are all compliances issues detected.")
-            if compliances_list and args["tool"] == "kiuwan":
+            if compliances_list and args.get("tool", None) == "kiuwan":
                 print(f"Analysis url: {compliances_list[0].analysis_url}")
             printer_table_gateway.print_table_findings(compliances_list)
             status = "succeeded"
