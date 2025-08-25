@@ -37,11 +37,11 @@ class TestCodeScan(unittest.TestCase):
     )
     def test_set_config_tool(self, mock_config_tool):
         # Arrange
-        self.mock_remote_config_source_gateway.get_remote_config.return_value = {"test_key": "test_value"}
+        self.mock_remote_config_source_gateway.get_remote_config.return_value = {"BEARER": {"test_key": "test_value"}}
         self.mock_devops_platform_gateway.get_variable.return_value = "pipeline_test_name"
 
         # Act
-        self.code_scan.set_config_tool({"remote_config_repo": "test_repo", "remote_config_branch": ""})
+        self.code_scan.set_config_tool({"remote_config_repo": "test_repo", "remote_config_branch": "", "tool": "BEARER"}, "engine_sast/engine_code/ConfigTool.json")
 
         # Assert
         self.mock_remote_config_source_gateway.get_remote_config.assert_called_once_with(
@@ -179,7 +179,7 @@ class TestCodeScan(unittest.TestCase):
         self.mock_devops_platform_gateway.get_variable.side_effect = ["test_work_folder", "test_repo", "test_stage"]
 
         # Act
-        findings_list, _ = self.code_scan.process({"folder_path": None, "remote_config_repo": "some_repo", "remote_config_branch": ""}, "TOOL_NAME")
+        findings_list, _ = self.code_scan.process({"folder_path": None, "remote_config_repo": "some_repo", "remote_config_branch": ""}, "BEARER")
 
         # Assert
         self.code_scan.set_config_tool.assert_called_once()
@@ -205,7 +205,7 @@ class TestCodeScan(unittest.TestCase):
         self.mock_devops_platform_gateway.get_variable.return_value = "test_stage"
 
         # Act
-        findings_list, _ = self.code_scan.process({"folder_path": None, "remote_config_repo": "some_repo", "remote_config_branch": ""}, "TOOL_NAME")
+        findings_list, _ = self.code_scan.process({"folder_path": None, "remote_config_repo": "some_repo", "remote_config_branch": ""}, "BEARER")
 
         # Assert
         self.code_scan.set_config_tool.assert_called_once()
