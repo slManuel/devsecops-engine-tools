@@ -19,7 +19,7 @@ from prettytable import PrettyTable, DOUBLE_BORDER
 class PrinterPrettyTable(PrinterTableGateway):
     def _create_table(self, headers, finding_list):
         table = PrettyTable(headers)
-
+        
         for finding in finding_list:
             row_data = [
                 finding.severity,
@@ -34,7 +34,6 @@ class PrinterPrettyTable(PrinterTableGateway):
             elif finding.module == "engine_code":
                 row_data.append(finding.cvss)
                 row_data.append(finding.defect_type)
-
             table.add_row(row_data)
 
         severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "unknown": 4}
@@ -63,7 +62,7 @@ class PrinterPrettyTable(PrinterTableGateway):
             headers = ["Severity", "ID", "Description", "Where", "Rule", "Defect Type"]
 
         else:
-            headers = ["Severity", "ID", "Description", "Where", "Fixed in"]
+            headers = ["Severity", "ID", "Description", "Where"]
 
         sorted_table = self._create_table(headers, finding_list)
 
