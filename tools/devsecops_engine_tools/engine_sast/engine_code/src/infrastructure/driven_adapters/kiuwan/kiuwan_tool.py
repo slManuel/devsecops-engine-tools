@@ -426,7 +426,7 @@ class KiuwanTool(ToolGateway):
         """Set execution permissions to extracted files"""
 
         # Set execution permissions on .sh files if on Unix-like system
-        if platform.system() in ["Linux", "Darwin"]:
+        if platform.system().lower() in ["linux", "darwin"]:
             for file_path in extracted_files:
                 if file_path.endswith(".sh"):
                     try:
