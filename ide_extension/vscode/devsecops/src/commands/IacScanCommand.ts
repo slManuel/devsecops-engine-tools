@@ -30,13 +30,12 @@ export function registerIacScanCommand(
 
       const scanner = await iacScanRequest();
       const outputChannel = vscode.window.createOutputChannel("IaC Scan Results");
+      outputChannel.clear();
 
-      // Start the loading animation
       const scanLoader = new ScanOutputLoader(outputChannel);
-      scanLoader.start(`Infrastructure as Code for: ${path.basename(folderPath)}`);
 
       try {
-        const scanResult = await scanner.makeScan(folderPath, outputChannel, new ScanConfiguration());
+        const scanResult = await scanner.makeScan(folderPath, outputChannel, new ScanConfiguration(), scanLoader);
 
         if (scanResult) {
           scanLoader.stop(scanResult.getFindings().length, "Infrastructure as Code");

@@ -52,32 +52,29 @@ export class ScanOutputLoader {
   }
 
   public start(scanTarget: string): void {
-    if (this.isRunning) {
-      this.stop();
-    }
-
     this.isRunning = true;
     this.scanTarget = scanTarget;
     this.startTime = Date.now();
-    this.showContinuousLoop();
+    // Print the scan message once
+    this.outputChannel.appendLine('');
+    this.outputChannel.appendLine(`🛡️ DevSecOps Scanning ${this.scanTarget}...`);
+    this.outputChannel.appendLine('');
     this.outputChannel.show();
+    // Don't start continuous animation - just print once
   }
 
   private showContinuousLoop(): void {
+    let dotIndex = 0;
     this.intervalId = setInterval(() => {
       if (!this.isRunning) {
         return;
       }
-      const elapsedSeconds = Math.floor((Date.now() - this.startTime) / 1000);
-      const dotsIndex = elapsedSeconds % 4;
-      const loadingDots = ScanOutputLoader.LOADING_DOTS[dotsIndex];
-      const iconIndex = Math.floor(elapsedSeconds / 2) % ScanOutputLoader.SECURITY_ICONS.length;
-      const securityIcon = ScanOutputLoader.SECURITY_ICONS[iconIndex];
-
-      this.outputChannel.clear();
-      this.outputChannel.appendLine('');
-      this.outputChannel.appendLine(`${securityIcon} DevSecOps Scanning ${this.scanTarget}${loadingDots}`);
-      this.outputChannel.appendLine('');
+      // Move cursor up one line and clear it (VSCode OutputChannel does not support this, so we re-print the line)
+      // Instead, print the scan message with animated dots on the same line (simulate by appending, but only update every 1s)
+      const dots = ScanOutputLoader.LOADING_DOTS[dotIndex % ScanOutputLoader.LOADING_DOTS.length];
+      // Remove the last scan message (not possible in OutputChannel), so just print again for now
+      this.outputChannel.appendLine(`🛡️ DevSecOps Scanning ${this.scanTarget}${dots}`);
+      dotIndex++;
     }, 1000);
   }
 
