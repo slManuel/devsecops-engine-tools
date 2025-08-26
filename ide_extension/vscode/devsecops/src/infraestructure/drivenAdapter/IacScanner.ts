@@ -13,6 +13,7 @@ export class IacScanner implements IScannerGateway {
     elementToScan: string,
     outputChannel: OutputChannel,
     containerImageName: string,
+    iacTool: string,
     toolVersion: string,
     containerEnginePath: string,
     scanLoader?: any // Accept ScanOutputLoader as optional argument

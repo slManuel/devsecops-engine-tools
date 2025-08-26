@@ -46,6 +46,10 @@
         "max_age": 12,
         "epss_score": 100
     },
+    "RUNTIME_TAG_EXCLUSION_DAYS": {
+        "ENABLED": false,
+        "ERROR_ON_FAILED": false
+    },
     "TAG_EXCLUSION_DAYS": {
         "tag1": 10,
         "tag2": 20

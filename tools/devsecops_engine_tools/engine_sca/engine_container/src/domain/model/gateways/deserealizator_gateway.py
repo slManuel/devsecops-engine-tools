@@ -7,7 +7,7 @@ from devsecops_engine_tools.engine_sca.engine_container.src.domain.model.context
 
 class DeseralizatorGateway(metaclass=ABCMeta):
     @abstractmethod
-    def get_list_findings(self, results_scan_list: list) -> "list[Finding]":
+    def get_list_findings(self, results_scan_list: str) -> "list[Finding]":
         "Deseralizator"
 
     @abstractmethod

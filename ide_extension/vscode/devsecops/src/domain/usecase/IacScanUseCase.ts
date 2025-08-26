@@ -127,6 +127,7 @@ export class IacScanUseCase implements IIacScanUseCase {
       folderToScan,
       outputChannel,
       scanConfiguration.getContainerImageName(),
+      scanConfiguration.getIacTool(),
       this.toolVersion,
       this.containerEnginePath,
       scanLoader

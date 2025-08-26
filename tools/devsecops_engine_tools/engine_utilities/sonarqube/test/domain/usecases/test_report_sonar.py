@@ -62,6 +62,7 @@ class TestReportSonar(unittest.TestCase):
             vulnerability_management_gateway=mock_vulnerability_gateway,
             secrets_manager_gateway=mock_secrets_manager_gateway,
             devops_platform_gateway=mock_devops_platform_gateway,
+            remote_config_source_gateway=mock_devops_platform_gateway,
             sonar_gateway=mock_sonar_gateway,
         )
 

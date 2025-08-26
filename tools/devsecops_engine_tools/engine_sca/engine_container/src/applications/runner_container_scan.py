@@ -13,7 +13,7 @@ from devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.drive
 from devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan import (
     TrivyScan,
 )
-from devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_deserialize_output import (
+from devsecops_engine_tools.engine_utilities.trivy_utils.infrastructure.driven_adapters.trivy_deserialize_output import (
     TrivyDeserializator,
 )
 
