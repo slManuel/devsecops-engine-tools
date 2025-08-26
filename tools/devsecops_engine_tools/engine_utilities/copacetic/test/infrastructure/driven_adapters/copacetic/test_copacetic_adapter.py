@@ -207,7 +207,8 @@ class TestCopaceticAdapter(unittest.TestCase):
                  "packages_updated": [],
                  "platforms_processed": []
              }), \
-             patch('subprocess.run') as mock_chmod:
+             patch('subprocess.run') as mock_chmod, \
+             patch('os.path.exists', return_value=True):  # VEX file exists
             
             mock_chmod.return_value = Mock(returncode=0)
             
@@ -225,6 +226,7 @@ class TestCopaceticAdapter(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertEqual(result["original_image"], "nginx:latest")
         self.assertEqual(result["patched_image"], "nginx:latest-patched")
+        self.assertTrue(result["vex_file_generated"])
     
     @patch('subprocess.run')
     def test_patch_image_failure(self, mock_run):
@@ -252,9 +254,11 @@ class TestCopaceticAdapter(unittest.TestCase):
     
     @patch('builtins.open')
     @patch('json.load')
-    def test_parse_copa_output_success(self, mock_json_load, mock_open):
+    @patch('os.path.exists')
+    def test_parse_copa_output_success(self, mock_exists, mock_json_load, mock_open):
         """Test parsing Copa output successfully"""
         # Arrange
+        mock_exists.return_value = True  # File exists
         mock_vex_data = {
             "statements": [
                 {
@@ -289,17 +293,22 @@ class TestCopaceticAdapter(unittest.TestCase):
         self.assertIn("platforms_processed", result)
         self.assertIn("amd64", result["platforms_processed"])
     
-    @patch('builtins.print')  
-    def test_parse_copa_output_empty(self, mock_print):
-        """Test parsing empty Copa output file that doesn't exist"""
+    @patch('builtins.print')
+    @patch('os.path.exists')
+    def test_parse_copa_output_file_not_exists(self, mock_exists, mock_print):
+        """Test parsing Copa output when file doesn't exist"""
+        # Arrange
+        mock_exists.return_value = False
+        
         # Act
         result = self.adapter._parse_copa_output("/nonexistent/file.json")
         
         # Assert
         self.assertEqual(result["vulnerabilities_patched"], 0)
         self.assertEqual(result["details"], [])
-        self.assertEqual(result["packages_updated"], 0)
+        self.assertEqual(result["packages_updated"], [])
         self.assertEqual(result["platforms_processed"], [])
+        mock_print.assert_called_once_with("VEX output file not found at /nonexistent/file.json")
     
     @patch('subprocess.run')
     def test_get_image_info_success(self, mock_run):
@@ -370,7 +379,8 @@ class TestCopaceticAdapter(unittest.TestCase):
                  "packages_updated": [],
                  "platforms_processed": []
              }), \
-             patch('subprocess.run') as mock_chmod:
+             patch('subprocess.run') as mock_chmod, \
+             patch('os.path.exists', return_value=True):  # VEX file exists
             
             mock_run.return_value = Mock(returncode=0, stdout="Success", stderr="")
             mock_chmod.return_value = Mock(returncode=0)
@@ -386,6 +396,7 @@ class TestCopaceticAdapter(unittest.TestCase):
         # Assert
         self.assertTrue(result["success"])
         self.assertEqual(result["patched_image"], "nginx:1.20-patched")
+        self.assertTrue(result["vex_file_generated"])
     
     def test_patch_image_validation_error(self):
         """Test patch_image with validation errors"""
@@ -418,6 +429,33 @@ class TestCopaceticAdapter(unittest.TestCase):
         self.assertFalse(result["exists"])
         self.assertIn("error", result)
         mock_print.assert_called_once()
+
+    @patch('subprocess.run')
+    @patch('os.path.exists')
+    def test_patch_image_without_vulnerability_report(self, mock_exists, mock_run):
+        """Test successful image patching without vulnerability report"""
+        # Arrange
+        mock_run.return_value = Mock(returncode=0, stdout="Patching completed successfully", stderr="")
+        mock_exists.return_value = False  # VEX file doesn't exist
+        
+        # Mock the install_tool method to avoid actual installation
+        with patch.object(self.adapter, 'install_tool', return_value="/fake/copa/path"):
+            
+            # Act
+            result = self.adapter.patch_image(
+                image="nginx:latest",
+                vulnerability_report=None,  # No vulnerability report provided
+                platform="linux/amd64",  # Platform is required when no vulnerability report
+                config=self.config,
+                work_folder="/test"
+            )
+        
+        # Assert
+        self.assertTrue(result["success"])
+        self.assertEqual(result["original_image"], "nginx:latest")
+        self.assertFalse(result["vex_file_generated"])
+        self.assertEqual(result["vulnerabilities_patched"], 0)  # No VEX file means no vulnerability info
+        self.assertEqual(result["packages_updated"], 0)
 
 
 if __name__ == '__main__':

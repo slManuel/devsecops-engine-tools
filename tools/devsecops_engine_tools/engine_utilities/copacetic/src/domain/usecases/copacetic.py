@@ -120,9 +120,14 @@ class Copacetic:
         print(f"\n PATCHING STATISTICS:")
         vuln_count = summary.get('vulnerabilities_patched', 0)
         pkg_count = summary.get('packages_updated', 0)
+        vex_generated = summary.get('vex_file_generated', False)
         
         print(f"   Vulnerabilities Patched: {vuln_count}")
         print(f"   Packages Updated:        {pkg_count}")
+        print(f"   VEX Report Generated:    {'Yes' if vex_generated else 'No'}")
+        
+        if not vex_generated:
+            print(f"   Note: VEX report not generated (no vulnerability report provided)")
         
         platforms = summary.get('platforms_processed', [])
         if platforms:
@@ -172,9 +177,14 @@ class Copacetic:
                     print()
         
         print(f"\n SUMMARY:")
+        vex_generated = summary.get('vex_file_generated', False)
+        
         if vuln_count > 0:
             print(f"   Status: SUCCESS - {vuln_count} vulnerabilities were patched")
-        else:
+        elif vex_generated:
             print(f"   Status: COMPLETED - No vulnerabilities found to patch")
+        else:
+            print(f"   Status: COMPLETED - Image patched successfully without vulnerability report")
+            print(f"           Use --vulnerability_report to generate detailed VEX output")
         
         print(f"{'='*terminal_width}\n")

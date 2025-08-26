@@ -258,7 +258,8 @@ class TestCopacetic(unittest.TestCase):
             "vulnerabilities_patched": 0,
             "packages_updated": 0,
             "platforms_processed": [],
-            "patch_details": []
+            "patch_details": [],
+            "vex_file_generated": True
         }
         
         # Act
