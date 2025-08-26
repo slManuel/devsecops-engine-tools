@@ -30,16 +30,14 @@ export function registerDependenciesScanCommand(
 
             const scanner = await dependenciesScanRequest();
             const outputChannel = vscode.window.createOutputChannel("Dependencies Scan Results");
+            outputChannel.clear();
 
-            // Start the loading animation
             const scanLoader = new ScanOutputLoader(outputChannel);
-            scanLoader.start(`Dependencies for: ${path.basename(folderPath)}`);
 
             try {
-                const scanResult = await scanner.makeScan(folderPath, outputChannel, new ScanConfiguration());
+                const scanResult = await scanner.makeScan(folderPath, outputChannel, new ScanConfiguration(), scanLoader);
 
                 if (scanResult) {
-                    // Stop animation and show completion - THIS PRESERVES ALL OUTPUT DATA
                     scanLoader.stop(scanResult.getFindings().length, "dependency");
 
                     void vscode.window.showInformationMessage("Dependencies Scan completed successfully");

@@ -19,7 +19,8 @@ export class ImageScanner implements IScannerGateway {
     outputChannel: OutputChannel,
     containerImageName: string,
     toolVersion: string,
-    containerEnginePath: string
+    containerEnginePath: string,
+    scanLoader: any
   ): Promise<ScannerRes> {
     outputChannel.clear();
     outputChannel.show();
@@ -36,7 +37,7 @@ export class ImageScanner implements IScannerGateway {
           toolVersion,
           outputChannel
         );
-        
+
         if (!scannerImageAvailable) {
           outputChannel.appendLine("Failed to ensure scanner image is available. Aborting scan.");
           resolve(new ScannerRes(false, []));
@@ -44,7 +45,7 @@ export class ImageScanner implements IScannerGateway {
         }
 
         imageTarPath = ContainerEngineManager.createTemporaryImagePath(elementToScan);
-        
+
         const exportSuccess = await ContainerEngineManager.exportImageToTar(elementToScan, imageTarPath);
         if (!exportSuccess) {
           outputChannel.appendLine(`Failed to export image ${elementToScan}`);
@@ -53,8 +54,13 @@ export class ImageScanner implements IScannerGateway {
         }
 
         outputChannel.appendLine(`Image exported successfully to ${imageTarPath}`);
+
+        // Call scanLoader after all Docker operations (scanner image check + image export) are complete
+        if (scanLoader) {
+          scanLoader.start(`Image: ${elementToScan}`);
+        }
         const imageTarName = path.basename(imageTarPath);
-        
+
         const containerCommand = `${containerEnginePath} run --rm -v "${imageTarPath}:/tmp/${imageTarName}" ${containerImageName}:${toolVersion} sh -c "
           devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo docker_default_remote_config --module engine_container --tool trivy --image_to_scan /tmp/${imageTarName} --context true
         "`;

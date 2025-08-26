@@ -42,15 +42,16 @@ export function registerImageScanCommand(
 
       const scanner = await imageScanRequest();
       const outputChannel = vscode.window.createOutputChannel("Image Scan Results");
+      outputChannel.clear(); 
 
       const scanLoader = new ScanOutputLoader(outputChannel);
-      scanLoader.start(`Image: ${imageName}`);
 
       try {
         const scanResult = await scanner.makeScan(
           imageName,
           outputChannel,
-          new ScanConfiguration()
+          new ScanConfiguration(),
+          scanLoader
         );
 
         if (scanResult) {
