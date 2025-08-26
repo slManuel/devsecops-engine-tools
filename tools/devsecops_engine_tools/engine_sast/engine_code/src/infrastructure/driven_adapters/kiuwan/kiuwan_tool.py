@@ -95,7 +95,7 @@ class KiuwanTool(ToolGateway):
         self._validate_results(analysis_type)
         last_analysis = self._fetch_last_analysis()
         self._promote_to_baseline(last_analysis)
-        findings = self._get_analysis_defects(config_tool.data["SEVERITY"], last_analysis)
+        findings = self._get_analysis_defects(config_tool.data["KIUWAN"]["SEVERITY"], last_analysis)
         return findings, None
 
     def _validate_target_branch(self, config_tool: ConfigTool) -> bool:
@@ -487,18 +487,18 @@ def get_kiuwan_instance(dict_args: Dict, devops_platform_gateway) -> KiuwanTool:
         dict_args["remote_config_repo"], 
         "/engine_sast/engine_code/ConfigTool.json",
         dict_args["remote_config_branch"]
-    ).get(dict_args["tool"].upper(), {})
+    )
     logger.info("Kiuwan configuration file retrieved")
     logger.info("Settings config dictionary to scan tool...")
     config = {
-        "host_engine_code": kiuwan_config_tool["KIUWAN_SERVER"]["KIUWAN_BASE_URL"],
-        "user_engine_code": kiuwan_config_tool["KIUWAN_SERVER"]["KIUWAN_USER"],
-        "domain_id_engine_code": kiuwan_config_tool["KIUWAN_SERVER"]["KIUWAN_DOMAIN_ID"],
+        "host_engine_code": kiuwan_config_tool["KIUWAN"]["SERVER"]["BASE_URL"],
+        "user_engine_code": kiuwan_config_tool["KIUWAN"]["SERVER"]["USER"],
+        "domain_id_engine_code": kiuwan_config_tool["KIUWAN"]["SERVER"]["DOMAIN_ID"],
         "token_engine_code": dict_args["token_engine_code"],
         "build_execution_id": devops_platform_gateway.get_variable("build_execution_id"),
         "source_branch_name": devops_platform_gateway.get_variable("branch_name"),
         "target_branch": devops_platform_gateway.get_variable("target_branch"),
         "build_task": devops_platform_gateway.get_variable("build_task"),
-        "MODELOS": kiuwan_config_tool["MODELOS"]
+        "MODELOS": kiuwan_config_tool["KIUWAN"]["MODELOS"]
     }
     return KiuwanTool(config)
