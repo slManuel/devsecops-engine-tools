@@ -7,9 +7,6 @@ export class ScanOutputLoader {
   private scanTarget = '';
   private startTime = 0;
 
-  private static readonly LOADING_DOTS = ['', '.', '..', '...'];
-  private static readonly SECURITY_ICONS = ['🔒', '🔐', '🔑', '🛡️', '🔍'];
-
   constructor(outputChannel: vscode.OutputChannel) {
     this.outputChannel = outputChannel;
   }
@@ -55,28 +52,12 @@ export class ScanOutputLoader {
     this.isRunning = true;
     this.scanTarget = scanTarget;
     this.startTime = Date.now();
-    // Print the scan message once
     this.outputChannel.appendLine('');
     this.outputChannel.appendLine(`🛡️ DevSecOps Scanning ${this.scanTarget}...`);
     this.outputChannel.appendLine('');
     this.outputChannel.show();
-    // Don't start continuous animation - just print once
   }
 
-  private showContinuousLoop(): void {
-    let dotIndex = 0;
-    this.intervalId = setInterval(() => {
-      if (!this.isRunning) {
-        return;
-      }
-      // Move cursor up one line and clear it (VSCode OutputChannel does not support this, so we re-print the line)
-      // Instead, print the scan message with animated dots on the same line (simulate by appending, but only update every 1s)
-      const dots = ScanOutputLoader.LOADING_DOTS[dotIndex % ScanOutputLoader.LOADING_DOTS.length];
-      // Remove the last scan message (not possible in OutputChannel), so just print again for now
-      this.outputChannel.appendLine(`🛡️ DevSecOps Scanning ${this.scanTarget}${dots}`);
-      dotIndex++;
-    }, 1000);
-  }
 
   public stop(findingsCount?: number, scanType?: string): void {
     if (this.intervalId) {
@@ -85,17 +66,13 @@ export class ScanOutputLoader {
     }
     this.isRunning = false;
 
-    // If called without parameters, just stop animation silently (scan output will appear)
     if (findingsCount === undefined && scanType === undefined) {
       return;
     }
 
-    // Only show completion - processing results should be shown separately
     this.showCompleted(findingsCount, scanType);
   }
 
-
-  //Show completion message after all results are processed
   public showCompleted(findingsCount?: number, scanType?: string): void {
     const completionBanner = ScanOutputLoader.createBanner(
       'Scan Completed!',

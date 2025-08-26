@@ -16,7 +16,7 @@ export class IacScanner implements IScannerGateway {
     iacTool: string,
     toolVersion: string,
     containerEnginePath: string,
-    scanLoader?: any // Accept ScanOutputLoader as optional argument
+    scanLoader?: any
   ): Promise<ScannerRes> {
     outputChannel.show();
     return new Promise(async (resolve, _reject) => {
