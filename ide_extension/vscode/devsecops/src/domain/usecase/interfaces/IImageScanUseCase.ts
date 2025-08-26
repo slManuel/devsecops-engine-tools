@@ -6,6 +6,7 @@ export interface IImageScanUseCase {
   scan(
     imageToScan: string,
     outputChannel: OutputChannel,
-    scanConfiguration: ScanConfiguration
+    scanConfiguration: ScanConfiguration,
+    scanLoader: any
   ): Promise<ScannerRes>;
 }

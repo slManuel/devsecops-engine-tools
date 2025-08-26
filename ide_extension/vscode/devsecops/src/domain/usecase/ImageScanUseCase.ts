@@ -9,19 +9,21 @@ export class ImageScanUseCase implements IImageScanUseCase {
     private imageScanner: IScannerGateway,
     private containerImageVersion: string,
     private containerEnginePath: string
-  ) {}
+  ) { }
 
   async scan(
     imageToScan: string,
     outputChannel: OutputChannel,
-    scanConfiguration: ScanConfiguration
+    scanConfiguration: ScanConfiguration,
+    scanLoader: any
   ): Promise<ScannerRes> {
     return await this.imageScanner.scan(
       imageToScan,
       outputChannel,
       scanConfiguration.getContainerImageName(),
       this.containerImageVersion,
-      this.containerEnginePath
+      this.containerEnginePath,
+      scanLoader
     );
   }
 }
