@@ -315,10 +315,10 @@ def application_core():
     except Exception as e:
         import traceback
         traceback.print_exc()
-        logger.error("Error engine_core: {0} ".format(str(e)))
+        logger.error("Error engine_core: {0} ".format(str(traceback.print_exc())))
         print(
             devops_platform_gateway.message(
-                "error", "Error engine_core: {0} ".format(traceback.print_exc())
+                "error", "Error engine_core: {0} ".format(str(traceback.print_exc()))
             )
         )
         print(devops_platform_gateway.result_pipeline("failed"))
