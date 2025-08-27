@@ -47,8 +47,8 @@ RULES_OPENAPIcheckov_config.yaml
 RULES_TERRAFORMcheckov_config.yaml
 log/
 twistcli
-trivy*
-trivy_*
+trivy
+trivy_*.zip
 nuclei
 *scan_result.json
 jf
@@ -88,3 +88,4 @@ coverage/
 checkov
 checkov.exe
 build/** 
+cdxgen-*

@@ -101,8 +101,7 @@ class CheckovTool(ToolGateway):
                     self.TOOL_CHECKOV,
                     result_scans,
                     rules_run,
-                    config_tool[self.TOOL_CHECKOV]["DEFAULT_SEVERITY"],
-                    config_tool[self.TOOL_CHECKOV]["DEFAULT_CATEGORY"],
+                    config_tool[self.TOOL_CHECKOV],
                 ),
             )
         else:
