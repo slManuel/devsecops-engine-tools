@@ -6,31 +6,30 @@ sidebar_position: 1
 
 ## DevSecOps Engine Tools
 
-**DevSecOps Engine Tools** es una plataforma integral que automatiza, centraliza y facilita la gestión de seguridad, cumplimiento y calidad en el ciclo de vida del desarrollo de software. El ecosistema está compuesto por modulos y utilidades que permiten a los equipos de desarrollo, seguridad y operaciones:
+**DevSecOps Engine Tools** is a library that automates, centralizes, and facilitates security, compliance, and quality management throughout the software development lifecycle. The ecosystem consists of modules and utilities that enable development, security, and operations teams to:
 
-- Orquestar y automatizar escaneos de seguridad (SAST, SCA, DAST, IaC) sobre código, contenedores, artefactos y entornos.
-- Generar y gestionar SBOMs (Software Bill of Materials) para trazabilidad y cumplimiento normativo.
-- Integrar y consolidar resultados de diferentes motores de análisis, generando reportes unificados y accionables.
-- Facilitar la integración con pipelines CI/CD y repositorios de artefactos.
-- Proveer métricas, alertas y tableros para la toma de decisiones y mejora continua.
+- Orchestrate and automate security scans (SAST, SCA, DAST, IaC) on code, containers, artifacts, and environments.
+- Generate and manage SBOMs (Software Bill of Materials) for traceability and regulatory compliance.
+- Integrate and consolidate results from different analysis engines, generating unified and actionable reports.
+- Facilitate integration with CI/CD pipelines and artifact repositories.
+- Provide metrics, alerts, and dashboards for decision-making and continuous improvement.
 
-### Que hace
+### What it does
 
-#### Componentes principales:
+#### Main components:
 
-- **Ingesta de vulnerabilidades:** Recibe información desde múltiples fuentes externas, como webhooks de proveedores de hacking continuo, escáneres de contenedores, plataformas de seguridad en la nube (Prisma, Tenable, etc.) y resultados de análisis SAST/SCA/DAST/IaC.
-- **Procesamiento y normalización:** Estandariza y transforma los datos recibidos mediante flujos batch y streaming, asegurando la consistencia y calidad de la información.
-- **Orquestador de flujos:** Coordina la ejecución de tareas, la integración con otros sistemas y la gestión de eventos para mantener actualizada la información de vulnerabilidades y cumplimiento.
-- **Integración con ASPM:** Envía los resultados procesados a una plataforma centralizadora de gestión de vulnerabilidades y cumplimiento, y sincroniza los estados con las bases de datos de los proveedores.
-- **Gestión de SBOM y artefactos:** Permite la generación, almacenamiento y consulta de SBOMs, facilitando la trazabilidad de componentes y dependencias en los artefactos analizados.
+- **Processing and normalization:** Standardizes and transforms the data received through batch and streaming flows, ensuring the consistency and quality of the information.
+- **Flow orchestrator:** Coordinates task execution, integration with other systems, and event management to keep vulnerability and compliance information up to date.
+- **Integration with ASPM:** Sends processed results to a centralized vulnerability and compliance management platform and synchronizes statuses with vendor databases.
+- **SBOM and artifact management:** Enables the generation, storage, and querying of SBOMs, facilitating the traceability of components and dependencies in the analyzed artifacts.
 
 
-### ¿Qué problema resuelve?
+### ¿What problem does it solve?
 
-DevSecOps Engine Tools resuelve el desafío de la fragmentación y dispersión de la información de seguridad, centralizando y normalizando datos de vulnerabilidades y cumplimiento provenientes de diversas fuentes. Gracias a su arquitectura reactiva y procesamiento eficiente, permite:
+DevSecOps Engine Tools solves the challenge of fragmentation and dispersion of security information by centralizing and standardizing vulnerability and compliance data from various sources. Thanks to its reactive architecture and efficient processing, it allows you to:
 
-- Unificar la gestión de vulnerabilidades y cumplimiento
-- Automatizar el flujo de información entre sistemas externos y la plataforma centralizada
-- Proporcionar datos procesados y listos para su análisis, remediación y auditoría
+- Unify vulnerability and compliance management
+- Automate the flow of information between external systems and the centralized platform
+- Provide processed data ready for analysis, remediation, and auditing
 
-Esta documentación está dirigida a desarrolladores, ingenieros de seguridad y administradores de sistemas que necesiten comprender, mantener o extender la funcionalidad de DevSecOps Engine Tools.
+This documentation is intended for developers, security engineers, and system administrators who need to understand, maintain, or extend the functionality of DevSecOps Engine Tools.

@@ -4,47 +4,45 @@ sidebar_position: 1
 
 # How to use this documentation
 
-Mantener la documentación técnica al día es crucial para asegurar que refleje con precisión los cambios, mejoras y nuevas funcionalidades que se implementan en el software. Esta sección describe el propósito de la documentación, cómo navegarla eficazmente y los procedimientos a seguir cuando el software sufre modificaciones, garantizando que todos los usuarios y miembros del equipo tengan acceso a la información correcta y vigente.
+Keeping technical documentation up to date is crucial to ensure that it accurately reflects changes, improvements, and new features implemented in the software. This section describes the purpose of documentation, how to navigate it effectively, and the procedures to follow when the software undergoes modifications, ensuring that all users and team members have access to accurate and current information.
 
-## Estructura de la documentación
+## Documentation structure
 
-La documentación está dividida en varias secciones principales para asegurar que se cubran todas las áreas relevantes, en cada una de ellas podra encontrar el detalle de como documentarlas:
+The documentation is divided into several main sections to ensure that all relevant areas are covered. In each section, you will find details on how to document them:
 
-- Como usar esta documentación
-- Generalidades
-    - Aqui van los archivos .md del repositorio
-- Ciclo de Vida
-    - Introducción
-    - Primeros pasos
-    - Estructura del proyecto
-    - Seguridad
-    - DevOps
-    - Métricas de calidad y pruebas
-    - Arquitectura Cloud
-    - Artefactos
+- How to use this documentation
+- General information
+    - Here are the .md files from the repository
+- Life cycle
+    - Introduction
+    - First steps
+        - Project structure
+    - Security
+    - Quality metrics and testing
+    - Architecture
 
-## Actualización de la documentación
+## Documentation update
 
-Es esencial que la documentación se mantenga actualizada para reflejar cualquier cambio en el software. Aquí se describe el proceso para garantizar que la información esté al día:
+It is essential that documentation is kept up to date to reflect any changes in the software. The process for ensuring that information is up to date is described here:
 
-- **Procedimiento de actualización:** Cada vez que se realicen cambios en el código, nuevas características, o mejoras, la documentación debe ser revisada y actualizada. Esto incluye actualizar las guías de usuario, ejemplos de código, y referencias a comandos o configuraciones.
+- **Update procedure:** Whenever changes are made to the code, new features are added, or improvements are made, the documentation must be reviewed and updated. This includes updating user guides, code examples, and references to commands or configurations.
 
-- **Responsabilidad de actualización:** Es importante que se asigne la responsabilidad de actualizar la documentación a un miembro del equipo cada vez que se realicen cambios. Este responsable se asegurará de que la documentación refleje con precisión el estado actual del software.
+- **Responsibility for updating:** It is important to assign responsibility for updating the documentation to a team member whenever changes are made. This person will ensure that the documentation accurately reflects the current state of the software.
 
-- **Versiones paralelas:** Si el software tiene múltiples versiones activas, la documentación debe manejarse en paralelo para evitar confusión entre versiones. Cada versión debe tener su propia documentación para que los usuarios accedan a la información correcta según su implementación.
+- **Parallel versions:** If the software has multiple active versions, the documentation must be managed in parallel to avoid confusion between versions. Each version must have its own documentation so that users can access the correct information for their implementation.
 
     <details>
-        <summary>¿Como hacer el versionamiento?</summary>
+        <summary>How to version?</summary>
 
-        Si requiere usar más de una versión en su código, Docosaurus es la herramienta perfecta para automatizar rápidamente esto. Primero asegúrese que no va a agregar nada más a la versión vieja y quiere empezar a hacer la documentación de la nueva versión, antes de empezar a hacer la nueva documentación ejecute el siguiente comando:
+        if you need to use more than one version in your code, Docosaurus is the perfect tool to quickly automate this. First, make sure you are not going to add anything else to the old version and that you want to start documenting the new version. Before you start creating the new documentation, run the following command:
 
         ```bash npm2yarn
         npm run docusaurus docs:version 1.1.0
         ```
 
-        Esto generara una nueva carpeta dentro del proyecto llamada **versioned_docs** donde encontrara una copia de la carpeta **docs**, también encontrara una carpeta **versioned_sidebars** que harán referencias a las **sidebars** de cada versión y por último un archivo llamado **versions.json** donde encontrara las versiones que quiere mostrar.
+        This will create a new folder within the project called **versioned_docs** where you will find a copy of the **docs** folder. You will also find a folder called **versioned_sidebars** that will reference the **sidebars** for each version, and finally a file called **versions.json** where you will find the versions you want to display.
 
-        Finalmente, para habilitar las versiones tendrá que entrar dentro del archivo de configuración de Docosaurus llamado **docosaurus.config.js** y modificar las siguientes líneas:
+        Finally, to enable the versions, you will need to open the Docosaurus configuration file called **docosaurus.config.js** and modify the following lines:
 
         ```js title="docosaurus.config.js"
         const config = {

@@ -7,14 +7,14 @@ import TabItem from '@theme/TabItem';
 
 # Tool Structure
 
-**¿Por qué es importante?**
+**¿Why is it important?**
 
-La documentación de la estructura del proyecto es crucial para que cualquier persona, ya sea un desarrollador nuevo o un miembro del equipo técnico, pueda comprender rápidamente cómo está organizado el código. Esto facilita la colaboración, el mantenimiento y el escalado del software, además de ayudar a identificar patrones comunes y posibles áreas de mejora.
+Documenting the project structure is crucial so that anyone, whether a new developer or a member of the technical team, can quickly understand how the code is organized. This facilitates collaboration, maintenance, and scaling of the software, as well as helping to identify common patterns and potential areas for improvement.
 
-**¿Qué debe incluir?**
+**¡What should it include?**
 
-- **Vista General de la Estructura de Archivos:**
-    - El proyecto DevSecOps Engine Tools está estructurado siguiendo una arquitectura limpia, donde cada servicio es un módulo independiente pero sigue patrones comunes de organización.
+- **Overview of the File Structure:**
+    - The DevSecOps Engine Tools project is structured according to a clean architecture, where each service is an independent module but follows common patterns.
     
     ```
     devsecops_engine_tools

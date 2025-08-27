@@ -14,12 +14,6 @@ sidebar_position: 2
 pip3 install devsecops-engine-tools
 ```
 
-### Scan running - flags (CLI)
-
-```bash
-devsecops-engine-tools --platform_devops ["local","azure","github"] --remote_config_source ["local","azure","github"] --remote_config_repo ["remote_config_repo"] --remote_config_branch ["remote_config_branch"] --module ["engine_iac", "engine_dast", "engine_secret", "engine_dependencies", "engine_container", "engine_risk", "engine_code"] --tool ["nuclei", "bearer", "checkov", "kics", "kubescape", "trufflehog", "gitleaks", "prisma", "trivy", "xray", "dependency_check"] --folder_path ["Folder path scan engine_iac, engine_code, engine_dependencies and engine_secret"] --platform ["k8s","cloudformation","docker", "openapi", "terraform"] --use_secrets_manager ["false", "true"] --use_vulnerability_management ["false", "true"] --send_metrics ["false", "true"] --token_cmdb ["token_cmdb"] --token_vulnerability_management ["token_vulnerability_management"] --token_engine_container ["token_engine_container"] --token_engine_dependencies ["token_engine_dependencies"] --token_external_checks ["token_external_checks"] --xray_mode ["scan", "audit","build-scan"] --image_to_scan ["image_to_scan"] --dast_file_path ["dast_file_path"] --context ["false", "true"] --terraform_repo_root ["terraform_files_repo"]
-```
-
 ### Structure Remote Config
 [example_remote_config_local](https://github.com/bancolombia/devsecops-engine-tools/blob/trunk/example_remote_config_local/)
 ```bash
@@ -54,7 +48,8 @@ devsecops-engine-tools --platform_devops ["local","azure","github"] --remote_con
    ┃   ┗ 📜Exclusions.json
 ```
 For more information visit [here](https://github.com/bancolombia/devsecops-engine-tools/blob/trunk/example_remote_config_local/README.md)
-#### Tools available for the modules (Configuration engine_core/ConfigTool.json)
+
+### Tools available for the modules
 
 <table>
   <tr>
@@ -119,6 +114,12 @@ For more information visit [here](https://github.com/bancolombia/devsecops-engin
   </tr>
 </table>
 
+### Scan running - (CLI) - Flags
+
+```bash
+devsecops-engine-tools --platform_devops ["local","azure","github"] --remote_config_source ["local","azure","github"] --remote_config_repo ["remote_config_repo"] --remote_config_branch ["remote_config_branch"] --module ["engine_iac", "engine_dast", "engine_secret", "engine_dependencies", "engine_container", "engine_risk", "engine_code"] --tool ["nuclei", "bearer", "checkov", "kics", "kubescape", "trufflehog", "gitleaks", "prisma", "trivy", "xray", "dependency_check"] --folder_path ["Folder path scan engine_iac, engine_code, engine_dependencies and engine_secret"] --platform ["k8s","cloudformation","docker", "openapi", "terraform"] --use_secrets_manager ["false", "true"] --use_vulnerability_management ["false", "true"] --send_metrics ["false", "true"] --token_cmdb ["token_cmdb"] --token_vulnerability_management ["token_vulnerability_management"] --token_engine_container ["token_engine_container"] --token_engine_dependencies ["token_engine_dependencies"] --token_external_checks ["token_external_checks"] --xray_mode ["scan", "audit","build-scan"] --image_to_scan ["image_to_scan"] --dast_file_path ["dast_file_path"] --context ["false", "true"] --terraform_repo_root ["terraform_files_repo"]
+```
+
 ### Scan running sample (CLI) - Local
 
 > Complete the value in **.envdetlocal** file a set in execution environment
@@ -135,23 +136,6 @@ devsecops-engine-tools --platform_devops local --remote_config_source local --re
 ```
 
 ![Demo CLI Local](demo_session.svg)
-
-### Scan running sample (Docker)
-
-> Installation
-
-```bash
-docker pull bancolombia/devsecops-engine-tools
-```
-```bash
-docker run --rm -v ./folder_to_analyze:/folder_to_analyze bancolombia/devsecops-engine-tools:latest devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo docker_default_remote_config --module engine_iac --folder_path /folder_to_analyze
-```
-
-The docker image have it own default remote config with basic configuration called docker_default_remote_config, but you can define your own config and pass it as volume
-
-```bash
-docker run --rm -v ./folder_to_analyze:/folder_to_analyze -v ./custom_remote_config:/custom_remote_config bancolombia/devsecops-engine-tools:latest devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo custom_remote_config --module engine_iac --folder_path /folder_to_analyze
-```
 
 
 ### Scan running sample - Azure Pipelines
@@ -209,6 +193,7 @@ name: DevSecOps Engine Tools
 on:
   push:
     branches:
+      - main
       - feature/*
 env:
   GITHUB_ACCESS_TOKEN: ${{ secrets.GH_ACCESSTOKEN }} #In this case, the remote config repository is private
@@ -234,6 +219,23 @@ jobs:
           if [[ $output == *"✘Failed"* ]]; then
             exit 1
           fi
+```
+
+### Scan running sample (Docker)
+
+> Installation
+
+```bash
+docker pull bancolombia/devsecops-engine-tools
+```
+```bash
+docker run --rm -v ./folder_to_analyze:/folder_to_analyze bancolombia/devsecops-engine-tools:latest devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo docker_default_remote_config --module engine_iac --folder_path /folder_to_analyze
+```
+
+The docker image have it own default remote config with basic configuration called docker_default_remote_config, but you can define your own config and pass it as volume
+
+```bash
+docker run --rm -v ./folder_to_analyze:/folder_to_analyze -v ./custom_remote_config:/custom_remote_config bancolombia/devsecops-engine-tools:latest devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo custom_remote_config --module engine_iac --folder_path /folder_to_analyze
 ```
 
 # Metrics
