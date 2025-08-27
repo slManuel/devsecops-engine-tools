@@ -387,10 +387,16 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
 
             engagements = Engagement.get_engagements(request_is, request_active).results
 
+            print_domain = config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"][
+                "PRINT_DOMAIN"
+            ]
             host_dd = config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"][
                 "HOST_DEFECT_DOJO"
             ]
 
+            if print_domain:
+                host_dd = print_domain
+                
             for engagement in engagements:
                 engagement.vm_url = f"{host_dd}/engagement/{engagement.id}/finding/open"
 

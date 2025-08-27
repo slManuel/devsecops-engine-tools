@@ -9,12 +9,13 @@ export class DependenciesScanUseCase implements IDependenciesScanUseCase {
     private dependenciesScanner: IScannerGateway,
     private containerImageVersion: string,
     private containerEnginePath: string
-  ) {}
+  ) { }
 
   async scan(
     folderToScan: string,
     outputChannel: OutputChannel,
-    scanConfiguration: ScanConfiguration
+    scanConfiguration: ScanConfiguration,
+    scanLoader: any
   ): Promise<ScannerRes> {
     return await this.dependenciesScanner.scan(
       folderToScan,
@@ -25,7 +26,8 @@ export class DependenciesScanUseCase implements IDependenciesScanUseCase {
       scanConfiguration.getDependenciesToken(),
       scanConfiguration.getXrayMode(),
       scanConfiguration.getDependenciesTool(),
-      scanConfiguration.getDependencyCheckDatabase()
+      scanConfiguration.getDependencyCheckDatabase(),
+      scanLoader
     );
   }
 }

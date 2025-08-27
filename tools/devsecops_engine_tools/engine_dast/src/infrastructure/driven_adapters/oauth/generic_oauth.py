@@ -13,6 +13,7 @@ class GenericOauth(AuthenticationGateway):
         self.data: dict = data
         self.endpoint: str = endpoint
         self.config = {}
+        self.type: str = data.get("type")
 
     def process_data(self):
 

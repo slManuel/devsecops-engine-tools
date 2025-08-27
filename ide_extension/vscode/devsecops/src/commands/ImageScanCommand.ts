@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { DevSecOpsTreeDataProvider } from "../tree/DevSecOpsTreeDataProvider";
 import { imageScanRequest } from "../application/InitEngineCore";
 import { ScanConfiguration } from "../domain/model/ScanConfiguration";
+import { ScanOutputLoader } from "../infraestructure/helper/LoadingAnimator";
 import ContainerEngineManager from "../infraestructure/helper/ContainerEngineManager";
 
 export function registerImageScanCommand(
@@ -40,26 +41,37 @@ export function registerImageScanCommand(
       );
 
       const scanner = await imageScanRequest();
-      const outputChannel =
-        vscode.window.createOutputChannel("Image Scan Results");
+      const outputChannel = vscode.window.createOutputChannel("Image Scan Results");
+      outputChannel.clear(); 
 
-      const scanResult = await scanner.makeScan(
-        imageName,
-        outputChannel,
-        new ScanConfiguration()
-      );
+      const scanLoader = new ScanOutputLoader(outputChannel);
 
-      if (scanResult) {
-        void vscode.window.showInformationMessage(
-          "Image Scan completed successfully"
+      try {
+        const scanResult = await scanner.makeScan(
+          imageName,
+          outputChannel,
+          new ScanConfiguration(),
+          scanLoader
         );
-        treeDataProvider.addScanResult(
-          "IMAGE SCAN RESULT",
-          scanResult.getFindings(),
-          "image",
-          undefined
-        );
-      } else {
+
+        if (scanResult) {
+          scanLoader.stop(scanResult.getFindings().length, "image vulnerability");
+
+          void vscode.window.showInformationMessage(
+            "Image Scan completed successfully"
+          );
+          treeDataProvider.addScanResult(
+            "IMAGE SCAN RESULT",
+            scanResult.getFindings(),
+            "image"
+          );
+        } else {
+          scanLoader.showError("Image Scan failed - No results returned");
+          void vscode.window.showErrorMessage("Image Scan failed");
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+        scanLoader.showError(`Image Scan failed: ${errorMessage}`);
         void vscode.window.showErrorMessage("Image Scan failed");
       }
     }

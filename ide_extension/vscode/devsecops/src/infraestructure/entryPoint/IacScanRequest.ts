@@ -4,17 +4,19 @@ import { ScannerRes } from "../../domain/model/ScannerRes";
 import { ScanConfiguration } from "../../domain/model/ScanConfiguration";
 
 export class IacScanRequest {
-  constructor(private iacScannerUseCase: IIacScanUseCase) {}
+  constructor(private iacScannerUseCase: IIacScanUseCase) { }
 
   async makeScan(
     folderToScan: string,
     outputChannel: OutputChannel,
-    scanConfiguration: ScanConfiguration
+    scanConfiguration: ScanConfiguration,
+    scanLoader?: any
   ): Promise<ScannerRes> {
     return await this.iacScannerUseCase.scan(
       folderToScan,
       outputChannel,
-      scanConfiguration
+      scanConfiguration,
+      scanLoader
     );
   }
 }
