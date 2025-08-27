@@ -133,7 +133,7 @@ class ContainerScaScan:
         if context_flag == "true":
             self.tool_deseralizator.get_container_context_from_results(image_scanned)
 
-        return self.tool_deseralizator.get_list_findings(image_scanned)
+        return self.tool_deseralizator.get_list_findings(image_scanned, module="engine_container")
 
     def _get_image(self, image_to_scan):
         """

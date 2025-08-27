@@ -50,9 +50,8 @@ class CmdbUserCase:
     def get_code_app(self, engagement_name: str):
         m = re.search(r"" + self.__expression, engagement_name, re.IGNORECASE)
         if m is None:
-            e = f"Engagement name {engagement_name} not match whit expression: {self.__expression}"
-            logger.error(e)
-            raise ApiError(e)
+            logger.warning(f"Engagement name {engagement_name} not match whit expression: {self.__expression}")
+            return ''
         code_app = m.group(1)
         logger.debug(code_app)
         return code_app.lower()
