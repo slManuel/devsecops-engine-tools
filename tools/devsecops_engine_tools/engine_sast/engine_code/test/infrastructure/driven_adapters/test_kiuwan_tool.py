@@ -746,10 +746,10 @@ class TestGetKiuwanInstance(unittest.TestCase):
         # Mock configuration
         kiuwan_config = {
             "KIUWAN":{
-                "KIUWAN_SERVER": {
-                    "KIUWAN_BASE_URL": "https://test.kiuwan.com",
-                    "KIUWAN_USER": "test_user",
-                    "KIUWAN_DOMAIN_ID": "test_domain"
+                "SERVER": {
+                    "BASE_URL": "https://test.kiuwan.com",
+                    "USER": "test_user",
+                    "DOMAIN_ID": "test_domain"
                 },
                 "MODELOS": {"task1": "Model1"}
             }
