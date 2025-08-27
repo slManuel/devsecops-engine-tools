@@ -92,3 +92,4 @@ cdxgen-*
 
 # Doc
 .docusaurus
+docs/Docusaurus/build/**
