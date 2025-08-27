@@ -318,7 +318,7 @@ def application_core():
         logger.error("Error engine_core: {0} ".format(str(e)))
         print(
             devops_platform_gateway.message(
-                "error", "Error engine_core: {0} ".format(str(e))
+                "error", "Error engine_core: {0} ".format(traceback.print_exc())
             )
         )
         print(devops_platform_gateway.result_pipeline("failed"))
