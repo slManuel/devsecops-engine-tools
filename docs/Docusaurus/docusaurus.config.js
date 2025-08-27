@@ -44,7 +44,7 @@ const config = {
         docs: {
           sidebarPath: './sidebars.js',
           editUrl:
-            'https://github.com/bancolombia/devsecops-engine-tools/tree/trunk/docs/Docusaurus/',
+            'https://github.com/bancolombia/devsecops-engine-tools/tree/feature/docusaurus/docs/Docusaurus',
           
             // Agrega el wrapper para proteger la documentación
             docItemComponent: process.env.APP_ENV === 'pdn' ? require.resolve('./src/docsWrapper.js') : undefined,
