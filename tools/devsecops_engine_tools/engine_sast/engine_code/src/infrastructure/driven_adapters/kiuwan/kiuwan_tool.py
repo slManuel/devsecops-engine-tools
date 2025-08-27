@@ -8,6 +8,7 @@ import urllib.request
 import zipfile
 import stat
 import shutil
+import json
 from typing import Dict, Any, List, Optional, Union
 from urllib.parse import urlparse
 
@@ -96,7 +97,8 @@ class KiuwanTool(ToolGateway):
         last_analysis = self._fetch_last_analysis()
         self._promote_to_baseline(last_analysis)
         findings = self._get_analysis_defects(config_tool.data["KIUWAN"]["SEVERITY"], last_analysis)
-        return findings, None
+        defects_file = self._get_defect_files(last_analysis)
+        return findings, defects_file
 
     def _validate_target_branch(self, config_tool: ConfigTool) -> bool:
         """Validate if the target branch is allowed for analysis."""
@@ -477,6 +479,45 @@ class KiuwanTool(ToolGateway):
                     extracted_files.append(target_path)
         
         return extracted_files
+    
+    def _get_defect_files(self, last_analysis: Dict[str, Any]):
+
+        """
+        Get security findings and save in a file
+
+        Arguments:
+            last_analysis (Dict): last analysis make by kiuwan
+        Returns: 
+            defects_json_path (str): json path with vulnerabilities
+                retrieved from kiuwan
+        """ 
+        last_analysis_code = last_analysis.get("analysisCode")
+        findings_url = f"https://api.kiuwan.com/insights/analysis/security?analysisCode={last_analysis_code}&{application}={self.repository_name}"
+        response = requests.get(
+            findings_url,
+            headers=self.headers,
+            auth=(self.user, self.password),
+            timeout=60,
+        )
+        data = response.json()["data"]
+        return self._save_json_file(data)
+
+    def _save_json_file(self, data: Dict[str, Any]):
+
+        """
+        Create a file with the content passed by argument
+
+        Arguments:
+            data (Dict): Content that will be save in json file
+        Returns: 
+         
+            defects_json_path (str): json path with vulnerabilities
+                retrieved from kiuwan
+        """
+        path = "kiuwan_vuls_file.json"
+        with open(path, "w", encoding="utf-8") as defects_file:
+            defects_file.write(json.dumps(data, indent=4))
+        return path
 
 def get_kiuwan_instance(dict_args: Dict, devops_platform_gateway) -> KiuwanTool:
     """
