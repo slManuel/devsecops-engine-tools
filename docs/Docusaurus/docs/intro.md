@@ -2,7 +2,7 @@
 sidebar_position: 1
 ---
 
-# Cómo usar esta documentación
+# How to use this documentation
 
 Mantener la documentación técnica al día es crucial para asegurar que refleje con precisión los cambios, mejoras y nuevas funcionalidades que se implementan en el software. Esta sección describe el propósito de la documentación, cómo navegarla eficazmente y los procedimientos a seguir cuando el software sufre modificaciones, garantizando que todos los usuarios y miembros del equipo tengan acceso a la información correcta y vigente.
 
@@ -15,7 +15,7 @@ La documentación está dividida en varias secciones principales para asegurar q
     - Aqui van los archivos .md del repositorio
 - Ciclo de Vida
     - Introducción
-    - Gestión de entornos y contenedores
+    - Primeros pasos
     - Estructura del proyecto
     - Seguridad
     - DevOps
