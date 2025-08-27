@@ -329,11 +329,11 @@ class BreakBuildTests(unittest.TestCase):
 
         result_compare = {
             "findings_excluded": [
-                {"id": "CKV_DOCKER_3", "severity": "high", "category": "vulnerability"},
-                {"id": "CKV_K8S_20", "severity": "high", "category": "vulnerability"},
+                {"id": "CKV_DOCKER_3", "severity": "high", "category": Category.VULNERABILITY},
+                {"id": "CKV_K8S_20", "severity": "high", "category": Category.VULNERABILITY},
             ],
             "vulnerabilities": {},
             "compliances": {},
         }
 
-        assert result == result_compare
+        self.assertEqual(result, result_compare)
