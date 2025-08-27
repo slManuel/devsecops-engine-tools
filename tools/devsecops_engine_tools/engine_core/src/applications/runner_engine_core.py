@@ -314,13 +314,13 @@ def application_core():
         )
     except Exception as e:
         import traceback
-        traceback.print_exc()
-        logger.error("Error engine_core: {0} ".format(str(traceback.print_exc())))
-        print(
-            devops_platform_gateway.message(
-                "error", "Error engine_core: {0} ".format(str(traceback.print_exc()))
-            )
-        )
+        tb_str = ''.join(traceback.format_tb(e.__traceback__))  # Solo el traceback
+        error_msg = "Error engine_core: {0}\nTraceback:\n{1}".format(str(e), tb_str)
+        
+        traceback.print_exc()  # sigue siendo útil para logs brutos
+        logger.error(error_msg)
+        
+        print(devops_platform_gateway.message("error", error_msg))
         print(devops_platform_gateway.result_pipeline("failed"))
 
 
