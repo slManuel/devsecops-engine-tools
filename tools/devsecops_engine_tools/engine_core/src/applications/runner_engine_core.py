@@ -313,6 +313,8 @@ def application_core():
             args,
         )
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         logger.error("Error engine_core: {0} ".format(str(e)))
         print(
             devops_platform_gateway.message(
