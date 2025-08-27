@@ -15,10 +15,10 @@ The documentation is divided into several main sections to ensure that all relev
     - Here are the .md files from the repository
 - Life cycle
     - Introduction
-    - First steps
-        - Project structure
-    - Security
+    - Getting started
+    - Project structure
     - Quality metrics and testing
+    - Security
     - Architecture
 
 ## Documentation update
