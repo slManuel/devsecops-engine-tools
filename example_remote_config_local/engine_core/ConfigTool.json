@@ -121,7 +121,7 @@
     },
     "ENGINE_CODE": {
         "ENABLED": true,
-        "TOOL": "BEARER"
+        "TOOL": "BEARER|KIUWAN"
     },
     "ENGINE_RISK": {
         "ENABLED": false

@@ -75,6 +75,6 @@ class RuntimeLocal(DevopsPlatformGateway):
             "vm_product_type_name" : "DET_VM_PRODUCT_TYPE_NAME",
             "vm_product_name" : "DET_VM_PRODUCT_NAME",
             "vm_product_description" : "DET_VM_PRODUCT_DESCRIPTION",
-            "build_task":  "DET_APPLPICATION_BUILD_TASK",
+            "build_task":  "DET_APPLICATION_BUILD_TASK",
         }
         return os.environ.get(env_variables[variable], None)

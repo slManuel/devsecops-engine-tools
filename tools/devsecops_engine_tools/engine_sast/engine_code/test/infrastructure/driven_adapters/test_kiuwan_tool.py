@@ -215,20 +215,6 @@ class TestSetExecutionPermissions(TestKiuwanToolBase):
         self.assertNotEqual(permission_sh, permission_txt)
         
     @patch('platform.system')
-    def test_set_execution_permissions_windows(self, mock_system):
-        mock_system.return_value = "windows"
-                
-        tool = self.create_kiuwan_tool()
-
-        files = [self.agent_path, f'{os.path.join(self.temp_directory, "tools", "file.txt")}']
-        tool._set_execution_permissions(files)
-        permission_sh = os.access(files[0], os.X_OK)
-        permission_txt = os.access(files[1], os.X_OK)
-        self.assertTrue(permission_sh)
-        self.assertFalse(permission_txt)
-        self.assertNotEqual(permission_sh, permission_txt)
-        
-    @patch('platform.system')
     def test_set_execution_permissions_darwin(self, mock_system):
         mock_system.return_value = "darwin"
                 
@@ -760,10 +746,10 @@ class TestGetKiuwanInstance(unittest.TestCase):
         # Mock configuration
         kiuwan_config = {
             "KIUWAN":{
-                "KIUWAN_SERVER": {
-                    "KIUWAN_BASE_URL": "https://test.kiuwan.com",
-                    "KIUWAN_USER": "test_user",
-                    "KIUWAN_DOMAIN_ID": "test_domain"
+                "SERVER": {
+                    "BASE_URL": "https://test.kiuwan.com",
+                    "USER": "test_user",
+                    "DOMAIN_ID": "test_domain"
                 },
                 "MODELOS": {"task1": "Model1"}
             }

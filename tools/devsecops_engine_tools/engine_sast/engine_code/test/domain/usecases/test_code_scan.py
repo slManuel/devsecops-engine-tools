@@ -37,7 +37,7 @@ class TestCodeScan(unittest.TestCase):
     )
     def test_set_config_tool(self, mock_config_tool):
         # Arrange
-        self.mock_remote_config_source_gateway.get_remote_config.return_value = {"BEARER": {"test_key": "test_value"}}
+        self.mock_remote_config_source_gateway.get_remote_config.return_value = {"test_key": "test_value"}
         self.mock_devops_platform_gateway.get_variable.return_value = "pipeline_test_name"
 
         # Act
