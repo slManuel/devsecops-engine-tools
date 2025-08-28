@@ -89,3 +89,7 @@ checkov
 checkov.exe
 build/** 
 cdxgen-*
+
+# Doc
+.docusaurus
+docs/Docusaurus/build/**
