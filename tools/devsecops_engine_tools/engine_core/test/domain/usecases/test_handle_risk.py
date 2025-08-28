@@ -62,9 +62,10 @@ class TestHandleRisk(unittest.TestCase):
                 "REGEX_GET_SERVICE_CODE": "[^_]+",
             },
         }
-        self.devops_platform_gateway.get_variable.return_value = (
-            "code_pipeline_name_id_test"
-        )
+        self.devops_platform_gateway.get_variable.return_value.side_effect = [
+            "code_pipeline_name_id_test",
+            "code_definition_name_test"
+        ]
         mock_should_skip_analysis.return_value = False
         mock_runner_engine_risk.return_value = {"result": "result"}
         mock_get_all_from_vm.return_value = ([], [])
