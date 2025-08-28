@@ -69,7 +69,7 @@ class TestHandleRisk(unittest.TestCase):
         ]
         def _gae_side_effect(name, *args, **kwargs):
             if name == "code_definition_name_test":
-                return []
+                return [MagicMock(name="code_definition_name_test")]
             return []
         self.vulnerability_management.get_active_engagements.side_effect = _gae_side_effect
         mock_should_skip_analysis.return_value = False
