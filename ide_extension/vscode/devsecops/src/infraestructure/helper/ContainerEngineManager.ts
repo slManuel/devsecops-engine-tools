@@ -3,6 +3,7 @@ import { promisify } from "util";
 import * as path from "path";
 import * as os from "os";
 import * as fs from "fs";
+import * as fs from "fs";
 
 const execAsync = promisify(exec);
 
@@ -204,9 +205,10 @@ export default class ContainerEngineManager {
   }
 
   static createTemporaryImagePath(imageName: string): string {
-    const tempDir = this.ensureDevsecopsDirectory();
+    const tempDir = fs.realpathSync(os.tmpdir());
     const safeImageName = imageName.replace(/[^a-zA-Z0-9.-]/g, '_');
     const timestamp = Date.now();
-    return path.join(tempDir, `devsecops_image_${safeImageName}_${timestamp}.tar`);
+    // return path.join(tempDir, `devsecops_image_${safeImageName}_${timestamp}.tar`);
+    return path.join(process.env.HOME!, `devsecops_image_${safeImageName}_${timestamp}.tar`);
   }
 }
