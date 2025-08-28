@@ -24,7 +24,7 @@ Here are the channels we use to communicate about the project:
 
 # Getting Started
 
-Please follow our [Getting Started Guide](https://bancolombia.github.io/devsecops-engine-tools//docs/intro)
+Please follow our [Getting Started Guide](https://bancolombia.github.io/devsecops-engine-tools/)
 
 # How can I help?
 
