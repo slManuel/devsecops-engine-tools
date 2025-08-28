@@ -16,10 +16,10 @@ const config = {
   },
   themes: ["@docusaurus/theme-mermaid"],
   // Set the production url of your site here
-  url: 'https://your-docusaurus-site.example.com',
+  url: 'https://bancolombia.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/',
+  baseUrl: '/devsecops-engine-tools/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
@@ -44,15 +44,7 @@ const config = {
         docs: {
           sidebarPath: './sidebars.js',
           editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
-          
-            // Agrega el wrapper para proteger la documentación
-            docItemComponent: process.env.APP_ENV === 'pdn' ? require.resolve('./src/docsWrapper.js') : undefined,
-          },
-          blog: {
-            showReadingTime: true,
-            editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+            'https://github.com/bancolombia/devsecops-engine-tools/tree/feature/docs/Docusaurus',
           },
           theme: {
             customCss: './src/css/custom.css',
