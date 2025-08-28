@@ -45,9 +45,9 @@ jobs:
 
       - name: Install dependencies and Build
         run: | 
-          cd docs/Docusaurus/
           npm install
           npm run build
+        working-directory: docs/Docusaurus/
           
       - name: Setup Pages
         uses: actions/configure-pages@v3
