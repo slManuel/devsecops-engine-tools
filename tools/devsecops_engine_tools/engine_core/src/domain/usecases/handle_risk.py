@@ -137,6 +137,7 @@ class HandleRisk:
             dict_args["remote_config_repo"], "engine_risk/Exclusions.json", dict_args["remote_config_branch"]
         )
         pipeline_name = self.devops_platform_gateway.get_variable("pipeline_name")
+        definition_name = self.devops_platform_gateway.get_variable("definition_name")
 
         input_core = InputCore(
             [],
@@ -203,6 +204,14 @@ class HandleRisk:
                     if engagement.name.lower() == service.lower():
                         service_list += [engagement]
                         break
+
+        if definition_name and definition_name.lower() != pipeline_name.lower():
+            build_engagements = self.vulnerability_management.get_active_engagements(
+                definition_name, dict_args, secret_tool, remote_config
+            )
+            for build_engagement in build_engagements:
+                if build_engagement.name.lower() == definition_name.lower():
+                    service_list += [build_engagement]
 
         new_service_list = self._exclude_services(
             dict_args, pipeline_name, service_list
