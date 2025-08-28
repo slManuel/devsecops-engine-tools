@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - trunk
+      - fix/docs_break_page
     paths:
       - "docs/Docusaurus/**"
 
