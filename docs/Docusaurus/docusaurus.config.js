@@ -44,7 +44,7 @@ const config = {
         docs: {
           sidebarPath: './sidebars.js',
           editUrl:
-            'https://github.com/bancolombia/devsecops-engine-tools/tree/feature/docs/Docusaurus',
+            'https://github.com/bancolombia/devsecops-engine-tools/tree/trunk/docs/Docusaurus',
           },
           theme: {
             customCss: './src/css/custom.css',
