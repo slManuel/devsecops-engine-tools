@@ -62,10 +62,16 @@ class TestHandleRisk(unittest.TestCase):
                 "REGEX_GET_SERVICE_CODE": "[^_]+",
             },
         }
-        self.devops_platform_gateway.get_variable.return_value.side_effect = [
+        self.devops_platform_gateway.get_variable.side_effect = [
             "code_pipeline_name_id_test",
-            "code_definition_name_test"
+            "code_definition_name_test",
+            "Build",
         ]
+        def _gae_side_effect(name, *args, **kwargs):
+            if name == "code_definition_name_test":
+                return []
+            return []
+        self.vulnerability_management.get_active_engagements.side_effect = _gae_side_effect
         mock_should_skip_analysis.return_value = False
         mock_runner_engine_risk.return_value = {"result": "result"}
         mock_get_all_from_vm.return_value = ([], [])
@@ -88,6 +94,9 @@ class TestHandleRisk(unittest.TestCase):
         assert mock_runner_engine_risk.call_count == 1
         assert result == {"result": "result"}
         assert type(input_core) == InputCore
+        self.vulnerability_management.get_active_engagements.assert_any_call(
+            "code_definition_name_test", dict_args, mock.ANY, config_tool
+        )
 
     @mock.patch("re.search")
     def test_filter_engagements(self, mock_search):
