@@ -21,10 +21,10 @@ export default function Home() {
               DevSecOps Engine Backend
             </h1>
             <h2 className="bc-text-brand-primary-01 bc-cibsans-font-style-8-bold ">
-              Somos parte de la revolución del código abierto
+              We are part of the open source revolution
             </h2>
             <p className="bc-cibsans-font-style-7-extralight bc-text-brand-primary-01">
-              Tu tambien tienes algo para contribuir.
+              You also have something to contribute.
             </p>
           </div>
           <div className="bc-me-5"></div>
@@ -33,7 +33,7 @@ export default function Home() {
                   className="bc-button bc-button-primary bc-text-center bc-me-3 bc-mb-3 min-width-fit"
                   to="/docs/intro"
                 >
-                  Empezemos!
+                  Let's get started!
                 </Link>
           </div>
         </div>
