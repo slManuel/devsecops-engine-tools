@@ -90,3 +90,10 @@ checkov.exe
 build/**
 copa
 cdxgen-*
+build/** 
+cdxgen-*
+copa
+
+# Doc
+.docusaurus
+docs/Docusaurus/build/**

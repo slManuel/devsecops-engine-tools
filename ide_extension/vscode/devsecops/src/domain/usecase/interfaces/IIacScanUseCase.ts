@@ -6,5 +6,6 @@ export interface IIacScanUseCase {
     scan(folderToScan: string,
         outputChannel: OutputChannel,
         scanConfiguration: ScanConfiguration,
+        scanLoader?: any
     ): Promise<ScannerRes>;
 }
