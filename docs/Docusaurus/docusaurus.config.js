@@ -44,10 +44,15 @@ const config = {
         docs: {
           sidebarPath: './sidebars.js',
           editUrl:
-            'https://github.com/bancolombia/devsecops-engine-tools/tree/feature/docusaurus/docs/Docusaurus',
+            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
           
             // Agrega el wrapper para proteger la documentación
             docItemComponent: process.env.APP_ENV === 'pdn' ? require.resolve('./src/docsWrapper.js') : undefined,
+          },
+          blog: {
+            showReadingTime: true,
+            editUrl:
+            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
           },
           theme: {
             customCss: './src/css/custom.css',
@@ -67,7 +72,6 @@ const config = {
           src: 'img/logo.png',
         },
         items: [
-
           {
             type: 'search',
             position: 'right',
