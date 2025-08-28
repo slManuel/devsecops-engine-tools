@@ -14,40 +14,11 @@ sidebar_position: 2
 pip3 install devsecops-engine-tools
 ```
 
-### Structure Remote Config
-[example_remote_config_local](https://github.com/bancolombia/devsecops-engine-tools/blob/trunk/example_remote_config_local/)
-```bash
-📦Remote_Config
-   ┣ 📂engine_core
-   ┃ ┗ 📜ConfigTool.json
-   ┣ 📂engine_risk
-   ┃ ┗ 📜ConfigTool.json
-   ┃ ┗ 📜Exclusions.json
-   ┣ 📂engine_dast
-   ┃ ┗ 📜ConfigTool.json
-   ┃ ┗ 📜Exclusions.json
-   ┣ 📂engine_sast
-   ┃ ┗ 📂engine_iac
-   ┃   ┗ 📜ConfigTool.json
-   ┃   ┗ 📜Exclusions.json
-   ┃ ┗ 📂engine_secret
-   ┃   ┗ 📜ConfigTool.json
-   ┃ ┗ 📂engine_code
-   ┃   ┗ 📜ConfigTool.json
-   ┃   ┗ 📜Exclusions.json
-   ┣ 📂engine_sca
-   ┃ ┗ 📂engine_container
-   ┃   ┗ 📜ConfigTool.json
-   ┃   ┗ 📜Exclusions.json
-   ┃ ┗ 📂engine_dependencies
-   ┃   ┗ 📜ConfigTool.json
-   ┃   ┗ 📜Exclusions.json
-   ┣ 📂engine_integrations
-   ┃ ┗ 📂report_sonar
-   ┃   ┗ 📜ConfigTool.json
-   ┃   ┗ 📜Exclusions.json
-```
-For more information visit [here](https://github.com/bancolombia/devsecops-engine-tools/blob/trunk/example_remote_config_local/README.md)
+### Configuration
+
+- Copy [example_remote_config_local](https://github.com/bancolombia/devsecops-engine-tools/blob/trunk/example_remote_config_local/) to the location where you want to store the remote configuration (either locally or in a git repository), and the folder name or repository name would be the one you should send in the --remote_config_repo flag.
+
+For more information about structure remote config visit [Structure Remote Config](remote_config_structure.md)
 
 ### Tools available for the modules
 
