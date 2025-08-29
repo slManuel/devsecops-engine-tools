@@ -12,8 +12,8 @@ import json
 from typing import Dict, Any, List, Optional, Union
 from urllib.parse import urlparse
 
-
 import requests
+from requests.exceptions import RequestException, Timeout, ConnectionError
 
 from devsecops_engine_tools.engine_sast.engine_code.src.domain.model.config_tool import ConfigTool
 from devsecops_engine_tools.engine_sast.engine_code.src.domain.model.gateways.tool_gateway import ToolGateway
@@ -91,14 +91,19 @@ class KiuwanTool(ToolGateway):
         logger.info("Analysis selected: %s\n", analysis_type)
         logger.info("Analysis %s started", analysis_type)
         
-        # Ejecutar el escaneo con el directorio preparado
         self._execute_kiuwan_scan(analysis_type, scan_directory)
         self._validate_results(analysis_type)
         last_analysis = self._fetch_last_analysis()
         self._promote_to_baseline(last_analysis)
-        findings = self._get_analysis_defects(config_tool.data["KIUWAN"]["SEVERITY"], last_analysis)
-        defects_file = self._get_defect_files(last_analysis)
-        return findings, defects_file
+        if not last_analysis:
+            last_analysis = self._fetch_last_analysis()
+        defects = self._fetch_defects_for_analysis(last_analysis.get("analysisCode", ""))
+        findings= self._map_defects_to_findings(last_analysis, defects, last_analysis.get("analysisCode", ""), config_tool.data["KIUWAN"]["SEVERITY"])
+        parsed_defects = self._transform_kiuwan_defects_for_defectdojo(
+            defects
+        )
+        defects_file_path = self._save_json_file(parsed_defects)
+        return findings, defects_file_path
 
     def _validate_target_branch(self, config_tool: ConfigTool) -> bool:
         """Validate if the target branch is allowed for analysis."""
@@ -311,21 +316,6 @@ class KiuwanTool(ToolGateway):
         else:
             logger.info("No promotion needed")
 
-    def _get_analysis_defects(self, severity_mapper: Dict[str,str], last_analysis:Dict[str, str]) -> List[EngineCodeFinding]:
-        """
-        Retrieve the last analysis defects for a repository and map them to KiuwanFinding objects.
-
-        Returns:
-            List of KiuwanFinding objects representing the defects found in the analysis.
-
-        Raises:
-            RuntimeError: If there's an error fetching the analysis or defects from the Kiuwan API.
-        """
-        if not last_analysis:
-            last_analysis = self._fetch_last_analysis()
-        analysis_code = last_analysis.get("analysisCode")
-        defects_data = self._fetch_defects_for_analysis(analysis_code)
-        return self._map_defects_to_findings(last_analysis, defects_data, analysis_code, severity_mapper)
 
     def _fetch_defects_for_analysis(self, analysis_code: str) -> Dict[str, Any]:
         """
@@ -381,6 +371,51 @@ class KiuwanTool(ToolGateway):
         except (requests.RequestException, ValueError) as e:
             raise RuntimeError(f"Failed to fetch defects: {e}") from e
 
+    def _transform_kiuwan_defects_for_defectdojo(self, kiuwan_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Transform Kiuwan /defects response into DefectDojo-compatible findings.
+        Filters only 'Security' defects and maps fields.
+        """
+        findings = []
+        security_defects = [
+            d for d in kiuwan_data.get("defects", [])
+            if d.get("characteristic") == "Security"
+        ]
+
+        for defect in security_defects:
+            # Mapeo de prioridad a severidad
+            priority_to_severity = {
+                "Critical": "Critical",
+                "High": "High",
+                "Normal": "Medium",
+                "Low": "Low"
+            }
+            severity = priority_to_severity.get(defect.get("priority"), "Medium")
+
+            finding = {
+                "title": defect.get("rule", "Unknown vulnerability"),
+                "description": (
+                    f"**Rule:** {defect.get('rule')}\n"
+                    f"**Code:** `{defect.get('code', 'N/A')}`\n"
+                    f"**File:** {defect.get('file')}\n"
+                    f"**Line:** {defect.get('line')}\n"
+                    f"**Rule Code:** {defect.get('ruleCode')}"
+                ),
+                "severity": severity,
+                "file_path": defect.get("file"),
+                "line": defect.get("line"),
+                "cwe": defect.get("cweId"),
+                "vuln_id_from_tool": defect.get("ruleCode"),
+                "mitigation": "Review the code and apply secure coding practices.",
+                "active": True,
+                "verified": False,
+                "static_finding": True,
+                "test": {}  # Se llenará en DefectDojo
+            }
+            findings.append(finding)
+
+        return findings
+    
     def _map_defects_to_findings(
         self,
         last_analysis: Dict[str, Any],
@@ -480,27 +515,6 @@ class KiuwanTool(ToolGateway):
         
         return extracted_files
     
-    def _get_defect_files(self, last_analysis: Dict[str, Any]):
-
-        """
-        Get security findings and save in a file
-
-        Arguments:
-            last_analysis (Dict): last analysis make by kiuwan
-        Returns: 
-            defects_json_path (str): json path with vulnerabilities
-                retrieved from kiuwan
-        """ 
-        last_analysis_code = last_analysis.get("analysisCode")
-        findings_url = f"https://api.kiuwan.com/insights/analysis/security?analysisCode={last_analysis_code}&{application}={self.repository_name}"
-        response = requests.get(
-            findings_url,
-            headers=self.headers,
-            auth=(self.user, self.password),
-            timeout=60,
-        )
-        data = response.json()["data"]
-        return self._save_json_file(data)
 
     def _save_json_file(self, data: Dict[str, Any]):
 
