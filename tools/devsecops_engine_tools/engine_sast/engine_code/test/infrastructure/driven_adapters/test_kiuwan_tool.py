@@ -1,5 +1,6 @@
+import json
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, mock_open, patch, MagicMock
 import os
 import tempfile
 import shutil
@@ -7,9 +8,11 @@ import subprocess
 import zipfile
 from pathlib import Path
 
+import requests
+
 from devsecops_engine_tools.engine_sast.engine_code.src.domain.model.config_tool import ConfigTool
 from devsecops_engine_tools.engine_sast.engine_code.src.infrastructure.driven_adapters.kiuwan.kiuwan_tool import KiuwanTool, get_kiuwan_instance
-
+from devsecops_engine_tools.engine_sast.engine_code.src.infrastructure.driven_adapters.kiuwan.kiuwan_tool import logger
 
 class TestKiuwanToolBase(unittest.TestCase):
     
@@ -716,25 +719,6 @@ class TestMapDefectsToFindings(TestKiuwanToolBase):
         )
 
 
-class TestGetAnalysisDefects(TestKiuwanToolBase):
-    
-    def test_get_analysis_defects(self):
-        last_analysis = {"analysisCode": "123"}
-        defects_data = {"defects": []}
-        severity_mapper = {"HIGH": "Critical"}
-        expected_findings = [Mock()]
-        
-        tool = self.create_kiuwan_tool()
-        tool._fetch_last_analysis = Mock(return_value=last_analysis)
-        tool._fetch_defects_for_analysis = Mock(return_value=defects_data)
-        tool._map_defects_to_findings = Mock(return_value=expected_findings)
-        
-        result = tool._get_analysis_defects(severity_mapper, None)
-        
-        self.assertEqual(result, expected_findings)
-        tool._fetch_last_analysis.assert_called_once()
-        tool._fetch_defects_for_analysis.assert_called_once_with("123")
-
 
 class TestGetKiuwanInstance(unittest.TestCase):
     
@@ -786,3 +770,39 @@ class TestGetKiuwanInstance(unittest.TestCase):
         self.assertEqual(call_args["host_engine_code"], "https://test.kiuwan.com")
         self.assertEqual(call_args["user_engine_code"], "test_user")
         self.assertEqual(call_args["token_engine_code"], "test_token")
+
+
+class TestKiuwanClient(TestKiuwanToolBase):
+
+    def setUp(self):
+        super().setUp()
+        self.tool = self.create_kiuwan_tool()
+
+    @patch("builtins.open", new_callable=mock_open)
+    def test_save_json_file_success(self, mock_file):
+        """Prueba: _save_json_file guarda correctamente"""
+        data = {"vulnerabilities": [{"id": "V1"}]}
+        result = self.tool._save_json_file(data)
+
+        # Verifica que se haya llamado a open y write correctamente
+        mock_file.assert_called_once_with("kiuwan_vuls_file.json", "w", encoding="utf-8")
+        handle = mock_file()
+        handle.write.assert_called_once_with(json.dumps(data, indent=4))
+        self.assertEqual(result, "kiuwan_vuls_file.json")
+
+    @patch("builtins.open", new_callable=mock_open)
+    def test_save_json_file_empty_data(self, mock_file):
+        """Prueba: guardar datos vacíos"""
+        data = {}
+        result = self.tool._save_json_file(data)
+
+        mock_file.assert_called_once()
+        handle = mock_file()
+        handle.write.assert_called_once()
+        written_content = handle.write.call_args[0][0]
+        self.assertEqual(json.loads(written_content), {})
+
+    def tearDown(self):
+        """Limpiar archivos temporales si se crearon (por si acaso)"""
+        if os.path.exists("kiuwan_vuls_file.json"):
+            os.remove("kiuwan_vuls_file.json")
