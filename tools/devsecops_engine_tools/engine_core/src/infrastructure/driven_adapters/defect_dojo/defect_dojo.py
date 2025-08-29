@@ -69,6 +69,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
         "SONARQUBE": "SonarQube API Import",
         "GITLEAKS": "Gitleaks Scan",
         "NUCLEI": "Nuclei Scan",
+        "KIUWAN": "Kiuwan Scan"
     }
 
     def send_vulnerability_management(
