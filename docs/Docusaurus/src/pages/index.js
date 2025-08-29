@@ -18,7 +18,7 @@ export default function Home() {
         <div className="bc-row bc-align-items-center ">
           <div className="bc-mx-3">
             <h1 className="bc-text-brand-primary-01 bc-cibsans-font-style-12-bold ">
-              DevSecOps Engine Backend
+              DevSecOps Engine Tools
             </h1>
             <h2 className="bc-text-brand-primary-01 bc-cibsans-font-style-8-bold ">
               We are part of the open source revolution
