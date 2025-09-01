@@ -43,13 +43,13 @@ class Copacetic:
             if not image:
                 raise ValueError("Image is required for Copacetic patching")
 
-            print(f"Starting Copacetic patching for image: {image}")
+            logger.info(f"Starting Copacetic patching for image: {image}")
 
             image_info = {}
             if hasattr(self.copacetic_gateway, 'get_image_info'):
                 image_info = self.copacetic_gateway.get_image_info(image)
                 if not image_info.get("exists", False):
-                    print(f"Image {image} may not exist locally. Copacetic will attempt to pull it.")
+                    logger.info(f"Image {image} may not exist locally. Copacetic will attempt to pull it.")
 
             patch_result = self.copacetic_gateway.patch_image(
                 image=image,
@@ -78,7 +78,7 @@ class Copacetic:
                 if patch_result.get("copa_error"):
                     detailed_error += f"\nCopa stderr: {patch_result['copa_error']}"
                 
-                print(
+                logger.info(
                     self.devops_platform_gateway.message("error", detailed_error)
                 )
 
@@ -94,7 +94,7 @@ class Copacetic:
 
         except Exception as e:
             logger.error(f"Error in Copacetic process: {str(e)}")
-            print(
+            logger.info(
                 self.devops_platform_gateway.message(
                     "error",
                     f"Error in Copacetic process: {str(e)}"
@@ -107,48 +107,48 @@ class Copacetic:
         except:
             terminal_width = 100
         
-        print(f"\n{'='*terminal_width}")
+        logger.info(f"\n{'='*terminal_width}")
         title = " COPACETIC PATCHING RESULTS "
         padding = (terminal_width - len(title)) // 2
-        print(f"{' '*padding}{title}{' '*padding}")
-        print(f"{'='*terminal_width}")
+        logger.info(f"{' '*padding}{title}{' '*padding}")
+        logger.info(f"{'='*terminal_width}")
         
-        print(f"\n IMAGE INFORMATION:")
-        print(f"   Original Image: {summary['original_image']}")
-        print(f"   Patched Image:  {summary['patched_image']}")
-        
-        print(f"\n PATCHING STATISTICS:")
+        logger.info("\n IMAGE INFORMATION:")
+        logger.info(f"   Original Image: {summary['original_image']}")
+        logger.info(f"   Patched Image:  {summary['patched_image']}")
+
+        logger.info("\n PATCHING STATISTICS:")
         vuln_count = summary.get('vulnerabilities_patched', 0)
         pkg_count = summary.get('packages_updated', 0)
         vex_generated = summary.get('vex_file_generated', False)
         
-        print(f"   Vulnerabilities Patched: {vuln_count}")
-        print(f"   Packages Updated:        {pkg_count}")
-        print(f"   VEX Report Generated:    {'Yes' if vex_generated else 'No'}")
+        logger.info(f"   Vulnerabilities Patched: {vuln_count}")
+        logger.info(f"   Packages Updated:        {pkg_count}")
+        logger.info(f"   VEX Report Generated:    {'Yes' if vex_generated else 'No'}")
         
         if not vex_generated:
-            print(f"   Note: VEX report not generated (no vulnerability report provided)")
-        
+            logger.info("   Note: VEX report not generated (no vulnerability report provided)")
+
         platforms = summary.get('platforms_processed', [])
         if platforms:
-            print(f"   Platforms Processed:     {', '.join(platforms)}")
+            logger.info(f"   Platforms Processed:     {', '.join(platforms)}")
         
         if summary.get('original_image_info'):
             info = summary['original_image_info']
-            print(f"\n  IMAGE DETAILS:")
-            print(f"   Architecture: {info.get('architecture', 'N/A')}")
-            print(f"   OS:           {info.get('os', 'N/A')}")
-            print(f"   Size:         {info.get('size', 'N/A')}")
-            print(f"   Layers:       {info.get('layers', 'N/A')}")
+            logger.info("\n  IMAGE DETAILS:")
+            logger.info(f"   Architecture: {info.get('architecture', 'N/A')}")
+            logger.info(f"   OS:           {info.get('os', 'N/A')}")
+            logger.info(f"   Size:         {info.get('size', 'N/A')}")
+            logger.info(f"   Layers:       {info.get('layers', 'N/A')}")
 
         patch_details = summary.get('patch_details', [])
         if patch_details:
-            print(f"\n PATCH DETAILS:")
-            
+            logger.info("\n PATCH DETAILS:")
+
             for i, detail in enumerate(patch_details, 1):
                 if isinstance(detail, dict):
                     cve = detail.get('vulnerability', detail.get('id', f'PATCH-{i}'))
-                    print(f"   {cve}")
+                    logger.info(f"   {cve}")
 
                     packages = detail.get('packages', [])
                     if not packages:
@@ -161,30 +161,30 @@ class Copacetic:
                             pkg_name = pkg.get('name', pkg.get('package', 'Unknown'))
                             version = pkg.get('version', pkg.get('fixed_version', ''))
                             if version:
-                                print(f"       {pkg_name} (v{version})")
+                                logger.info(f"       {pkg_name} (v{version})")
                             else:
-                                print(f"       {pkg_name}")
+                                logger.info(f"       {pkg_name}")
                         else:
-                            print(f"       {pkg}")
+                            logger.info(f"       {pkg}")
 
                     if not packages:
-                        print(f"       No package information available")
-                    
+                        logger.info("       No package information available")
+
                 else:
-                    print(f"   {detail}")
+                    logger.info(f"   {detail}")
 
                 if i < len(patch_details):
-                    print()
-        
-        print(f"\n SUMMARY:")
+                    logger.info("")
+
+        logger.info("\n SUMMARY:")
         vex_generated = summary.get('vex_file_generated', False)
         
         if vuln_count > 0:
-            print(f"   Status: SUCCESS - {vuln_count} vulnerabilities were patched")
+            logger.info(f"   Status: SUCCESS - {vuln_count} vulnerabilities were patched")
         elif vex_generated:
-            print(f"   Status: COMPLETED - No vulnerabilities found to patch")
+            logger.info("   Status: COMPLETED - No vulnerabilities found to patch")
         else:
-            print(f"   Status: COMPLETED - Image patched successfully without vulnerability report")
-            print(f"           Use --vulnerability_report to generate detailed VEX output")
+            logger.info("   Status: COMPLETED - Image patched successfully without vulnerability report")
+            logger.info("           Use --vulnerability_report to generate detailed VEX output")
         
-        print(f"{'='*terminal_width}\n")
+        logger.info(f"{'='*terminal_width}\n")

@@ -165,8 +165,8 @@ class TestCopacetic(unittest.TestCase):
         self.devops_platform_gateway.message.assert_called_with("error", "Error in Copacetic process: Test exception")
     
     @patch('shutil.get_terminal_size')
-    @patch('builtins.print')
-    def test_summary_printing(self, mock_print, mock_terminal_size):
+    @patch('devsecops_engine_tools.engine_utilities.copacetic.src.domain.usecases.copacetic.logger')
+    def test_summary_printing(self, mock_logger, mock_terminal_size):
         """Test that summary is properly printed using table format"""
         # Arrange
         mock_terminal_size.return_value.columns = 100
@@ -199,14 +199,14 @@ class TestCopacetic(unittest.TestCase):
         self.copacetic.process(args)
         
         # Assert
-        # Check that table formatting elements were printed
-        printed_calls = [call[0][0] for call in mock_print.call_args_list if call[0]]
-        table_elements = [call for call in printed_calls if "=" in str(call)]
+        # Check that table formatting elements were logged
+        logged_calls = [call[0][0] for call in mock_logger.info.call_args_list if call[0]]
+        table_elements = [call for call in logged_calls if "=" in str(call)]
         self.assertTrue(len(table_elements) >= 2)  # At least header and footer separators
     
     @patch('shutil.get_terminal_size')
-    @patch('builtins.print')
-    def test_print_results_table_with_image_info(self, mock_print, mock_terminal_size):
+    @patch('devsecops_engine_tools.engine_utilities.copacetic.src.domain.usecases.copacetic.logger')
+    def test_print_results_table_with_image_info(self, mock_logger, mock_terminal_size):
         """Test _print_results_table method with image info"""
         # Arrange
         mock_terminal_size.return_value.columns = 80
@@ -235,19 +235,19 @@ class TestCopacetic(unittest.TestCase):
         self.copacetic._print_results_table(summary)
         
         # Assert
-        printed_calls = [str(call[0][0]) for call in mock_print.call_args_list if call[0]]
+        logged_calls = [str(call[0][0]) for call in mock_logger.info.call_args_list if call[0]]
         
         # Check for key elements
-        self.assertTrue(any("COPACETIC PATCHING RESULTS" in call for call in printed_calls))
-        self.assertTrue(any("Original Image: nginx:latest" in call for call in printed_calls))
-        self.assertTrue(any("Patched Image:  nginx:latest-patched" in call for call in printed_calls))
-        self.assertTrue(any("Vulnerabilities Patched: 2" in call for call in printed_calls))
-        self.assertTrue(any("Architecture: amd64" in call for call in printed_calls))
-        self.assertTrue(any("CVE-2023-1234" in call for call in printed_calls))
+        self.assertTrue(any("COPACETIC PATCHING RESULTS" in call for call in logged_calls))
+        self.assertTrue(any("Original Image: nginx:latest" in call for call in logged_calls))
+        self.assertTrue(any("Patched Image:  nginx:latest-patched" in call for call in logged_calls))
+        self.assertTrue(any("Vulnerabilities Patched: 2" in call for call in logged_calls))
+        self.assertTrue(any("Architecture: amd64" in call for call in logged_calls))
+        self.assertTrue(any("CVE-2023-1234" in call for call in logged_calls))
     
     @patch('shutil.get_terminal_size')
-    @patch('builtins.print')
-    def test_print_results_table_no_vulnerabilities(self, mock_print, mock_terminal_size):
+    @patch('devsecops_engine_tools.engine_utilities.copacetic.src.domain.usecases.copacetic.logger')
+    def test_print_results_table_no_vulnerabilities(self, mock_logger, mock_terminal_size):
         """Test _print_results_table with no vulnerabilities patched"""
         # Arrange
         mock_terminal_size.return_value.columns = 80
@@ -266,8 +266,8 @@ class TestCopacetic(unittest.TestCase):
         self.copacetic._print_results_table(summary)
         
         # Assert
-        printed_calls = [str(call[0][0]) for call in mock_print.call_args_list if call[0]]
-        self.assertTrue(any("Status: COMPLETED - No vulnerabilities found to patch" in call for call in printed_calls))
+        logged_calls = [str(call[0][0]) for call in mock_logger.info.call_args_list if call[0]]
+        self.assertTrue(any("Status: COMPLETED - No vulnerabilities found to patch" in call for call in logged_calls))
 
 
 if __name__ == '__main__':

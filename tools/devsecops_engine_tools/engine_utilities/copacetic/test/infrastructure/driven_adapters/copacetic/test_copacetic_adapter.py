@@ -293,9 +293,9 @@ class TestCopaceticAdapter(unittest.TestCase):
         self.assertIn("platforms_processed", result)
         self.assertIn("amd64", result["platforms_processed"])
     
-    @patch('builtins.print')
+    @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.driven_adapters.copacetic.copacetic_adapter.logger')
     @patch('os.path.exists')
-    def test_parse_copa_output_file_not_exists(self, mock_exists, mock_print):
+    def test_parse_copa_output_file_not_exists(self, mock_exists, mock_logger):
         """Test parsing Copa output when file doesn't exist"""
         # Arrange
         mock_exists.return_value = False
@@ -308,23 +308,23 @@ class TestCopaceticAdapter(unittest.TestCase):
         self.assertEqual(result["details"], [])
         self.assertEqual(result["packages_updated"], [])
         self.assertEqual(result["platforms_processed"], [])
-        mock_print.assert_called_once_with("VEX output file not found at /nonexistent/file.json")
+        mock_logger.info.assert_called_once_with("VEX output file not found at /nonexistent/file.json")
     
-    @patch('subprocess.run')
-    def test_get_image_info_success(self, mock_run):
+    @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.driven_adapters.copacetic.copacetic_adapter.docker.from_env')
+    def test_get_image_info_success(self, mock_docker):
         """Test getting image info successfully"""
         # Arrange
-        mock_docker_output = json.dumps([{
-            "Created": "2023-01-01T00:00:00Z",
+        mock_client = Mock()
+        mock_docker.return_value = mock_client
+        
+        mock_image_data = {
             "Architecture": "amd64",
             "Os": "linux",
             "Size": 1234567,
-            "RootFS": {"Layers": ["layer1", "layer2", "layer3"]},
-            "Config": {"Env": ["PATH=/usr/bin"]}
-        }])
+            "RootFS": {"Layers": ["layer1", "layer2", "layer3"]}
+        }
         
-        mock_run.return_value.returncode = 0
-        mock_run.return_value.stdout = mock_docker_output
+        mock_client.api.inspect_image.return_value = mock_image_data
         
         # Act
         result = self.adapter.get_image_info("nginx:latest")
@@ -335,11 +335,14 @@ class TestCopaceticAdapter(unittest.TestCase):
         self.assertEqual(result["os"], "linux")
         self.assertEqual(result["layers"], 3)
     
-    @patch('subprocess.run')
-    def test_get_image_info_not_found(self, mock_run):
+    @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.driven_adapters.copacetic.copacetic_adapter.docker.from_env')
+    def test_get_image_info_not_found(self, mock_docker):
         """Test getting info for non-existent image"""
         # Arrange
-        mock_run.return_value.returncode = 1
+        mock_client = Mock()
+        mock_docker.return_value = mock_client
+        from docker.errors import ImageNotFound
+        mock_client.api.inspect_image.side_effect = ImageNotFound("Image not found")
         
         # Act
         result = self.adapter.get_image_info("nonexistent:latest")
@@ -415,12 +418,12 @@ class TestCopaceticAdapter(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertIn("platforms to be patched must be provided", result["error"])
     
-    @patch('subprocess.run')
-    @patch('builtins.print')
-    def test_get_image_info_exception(self, mock_print, mock_run):
+    @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.driven_adapters.copacetic.copacetic_adapter.docker.from_env')
+    @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.driven_adapters.copacetic.copacetic_adapter.logger')
+    def test_get_image_info_exception(self, mock_logger, mock_docker):
         """Test get_image_info with exception"""
         # Arrange
-        mock_run.side_effect = Exception("Docker not available")
+        mock_docker.side_effect = Exception("Docker not available")
         
         # Act
         result = self.adapter.get_image_info("nginx:latest")
@@ -428,7 +431,7 @@ class TestCopaceticAdapter(unittest.TestCase):
         # Assert
         self.assertFalse(result["exists"])
         self.assertIn("error", result)
-        mock_print.assert_called_once()
+        mock_logger.error.assert_called_once()
 
     @patch('subprocess.run')
     @patch('os.path.exists')

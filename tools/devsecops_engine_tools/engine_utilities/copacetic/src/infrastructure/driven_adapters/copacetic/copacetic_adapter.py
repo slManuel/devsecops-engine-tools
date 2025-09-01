@@ -5,6 +5,7 @@ import platform
 import requests
 import tarfile
 import tempfile
+import docker
 from typing import Dict, Optional
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
 from devsecops_engine_tools.engine_utilities import settings
@@ -132,7 +133,9 @@ class CopaceticAdapter:
             if platform:
                 copa_cmd.extend(["--platform", platform])
             elif not vulnerability_report:
-                raise ValueError(f"If a vulnerability report is not provided, the platforms to be patched must be provided.")
+                raise ValueError(
+                    "If a vulnerability report is not provided, the platforms to be patched must be provided."
+                )
 
             timeout_duration = config.get("TIMEOUT", 5)
             copa_cmd.extend(["--timeout", f"{timeout_duration}m"])
@@ -146,16 +149,14 @@ class CopaceticAdapter:
                 text=True
             )
             
-            if result.returncode == 0:
-                print("Copacetic patching completed successfully")
-                
+            if result.returncode == 0:                
                 if os.path.exists(output_file):
                     subprocess.run(["chmod", "644", f"./{output_file}"])
                     patch_details = self._parse_copa_output(output_file)
                 else:
                     if not vulnerability_report:
-                        print("Note: VEX report file not generated (no vulnerability report provided)")
-                        print("Image patching completed successfully without VEX output")
+                        logger.info("Note: VEX report file not generated (no vulnerability report provided)")
+                        logger.info("Image patching completed successfully without VEX output")
                     patch_details = {
                         "vulnerabilities_patched": 0,
                         "details": [],
@@ -208,11 +209,29 @@ class CopaceticAdapter:
                 "success": False,
                 "error": error_msg
             }
-
+        
+    def get_image_info(self, image: str) -> Dict:
+        try:
+            client = docker.from_env()
+            image_data = client.api.inspect_image(image)
+            rootfs = image_data.get("RootFS", {})
+            
+            return {
+                "exists": True,
+                "architecture": image_data.get("Architecture"),
+                "os": image_data.get("Os"),
+                "size": image_data.get("Size"),
+                "layers": len(rootfs.get("Layers", []))
+            }
+            
+        except Exception as e:
+            logger.error(f"Unexpected error while getting image info for '{image}': {str(e)}")
+            return {"exists": False, "error": str(e)}
+        
     def _parse_copa_output(self, output_path: str) -> Dict:
         try:
             if not os.path.exists(output_path):
-                print(f"VEX output file not found at {output_path}")
+                logger.info(f"VEX output file not found at {output_path}")
                 return {
                     "vulnerabilities_patched": 0,
                     "details": [],
@@ -230,6 +249,7 @@ class CopaceticAdapter:
             with open(output_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
+            arch_str = "?arch="
             for stmt in data.get("statements", []):
                 vuln_id = stmt.get("vulnerability", {}).get("@id")
                 status = stmt.get("status")
@@ -242,11 +262,11 @@ class CopaceticAdapter:
                     for product in products:
                         for sub in product.get("subcomponents", []):
                             pkg_id = sub.get("@id", "")
-                            packages.append(pkg_id.split("?arch=")[0])
+                            packages.append(pkg_id.split(arch_str)[0])
                             details["packages_updated"].add(pkg_id)
 
-                            if "?arch=" in pkg_id:
-                                arch = pkg_id.split("?arch=")[-1]
+                            if arch_str in pkg_id:
+                                arch = pkg_id.split(arch_str)[-1]
                                 details["platforms_processed"].add(arch)
 
                     details["details"].append({
@@ -262,7 +282,7 @@ class CopaceticAdapter:
             return details
             
         except FileNotFoundError:
-            print(f"VEX output file not found: {output_path}")
+            logger.info(f"VEX output file not found: {output_path}")
             return {
                 "vulnerabilities_patched": 0,
                 "details": [],
@@ -270,7 +290,7 @@ class CopaceticAdapter:
                 "platforms_processed": []
             }
         except json.JSONDecodeError as e:
-            print(f"Error parsing VEX JSON file: {e}")
+            logger.info(f"Error parsing VEX JSON file: {e}")
             return {
                 "vulnerabilities_patched": 0,
                 "details": [],
@@ -278,7 +298,7 @@ class CopaceticAdapter:
                 "platforms_processed": []
             }
         except Exception as e:
-            print(f"Error processing VEX output file {output_path}: {e}")
+            logger.info(f"Error processing VEX output file {output_path}: {e}")
             return {
                 "vulnerabilities_patched": 0,
                 "details": [],
@@ -286,31 +306,4 @@ class CopaceticAdapter:
                 "platforms_processed": []
             }
 
-    def get_image_info(self, image: str) -> Dict:
-        try:
-            result = subprocess.run(
-                ["docker", "inspect", image],
-                capture_output=True,
-                text=True,
-                timeout=30
-            )
-            
-            if result.returncode == 0:
-                import json
-                image_data = json.loads(result.stdout)
-                
-                if image_data:
-                    info = image_data[0]
-                    return {
-                        "exists": True,
-                        "architecture": info.get("Architecture"),
-                        "os": info.get("Os"),
-                        "size": info.get("Size"),
-                        "layers": len(info.get("RootFS", {}).get("Layers", []))
-                    }
-            
-            return {"exists": False}
-            
-        except Exception as e:
-            print(f"Could not get image info for {image}: {str(e)}")
-            return {"exists": False, "error": str(e)}
+

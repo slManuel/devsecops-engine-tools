@@ -32,9 +32,9 @@ def runner_copacetic(
 
     except Exception as e:
         logger.error("Error copacetic: {0} ".format(str(e)))
-        print(
+        logger.info(
             devops_platform_gateway.message(
                 "error", "Error copacetic: {0} ".format(str(e))
             )
         )
-        print(devops_platform_gateway.result_pipeline("failed"))
+        logger.info(devops_platform_gateway.result_pipeline("failed"))

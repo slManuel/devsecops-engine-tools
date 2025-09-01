@@ -103,8 +103,8 @@ class TestEntryPointCopacetic(unittest.TestCase):
         mock_metrics_instance.process.assert_called_once()
     
     @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.entry_points.entry_point_copacetic.Copacetic')
-    @patch('builtins.print')
-    def test_init_copacetic_disabled(self, mock_print, mock_copacetic):
+    @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.entry_points.entry_point_copacetic.logger')
+    def test_init_copacetic_disabled(self, mock_logger, mock_copacetic):
         """Test init_copacetic when disabled"""
         # Arrange
         self.config_tool["COPACETIC"]["ENABLED"] = False
@@ -126,11 +126,11 @@ class TestEntryPointCopacetic(unittest.TestCase):
         self.devops_platform_gateway.message.assert_called_once_with(
             "warning", "DevSecOps Engine Tool - copacetic in maintenance..."
         )
-        mock_print.assert_called_once()
+        mock_logger.info.assert_called_once()
     
     @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.entry_points.entry_point_copacetic.Copacetic')
-    @patch('builtins.print')
-    def test_init_copacetic_excluded_pipeline(self, mock_print, mock_copacetic):
+    @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.entry_points.entry_point_copacetic.logger')
+    def test_init_copacetic_excluded_pipeline(self, mock_logger, mock_copacetic):
         """Test init_copacetic with excluded pipeline"""
         # Arrange
         self.devops_platform_gateway.get_variable.side_effect = lambda var: {
@@ -155,11 +155,11 @@ class TestEntryPointCopacetic(unittest.TestCase):
         self.devops_platform_gateway.message.assert_called_once_with(
             "warning", "Tool skipped by DevSecOps policy"
         )
-        mock_print.assert_called_once()
+        mock_logger.info.assert_called_once()
     
     @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.entry_points.entry_point_copacetic.Copacetic')
-    @patch('builtins.print')
-    def test_init_copacetic_invalid_branch(self, mock_print, mock_copacetic):
+    @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.entry_points.entry_point_copacetic.logger')
+    def test_init_copacetic_invalid_branch(self, mock_logger, mock_copacetic):
         """Test init_copacetic with invalid branch"""
         # Arrange
         self.devops_platform_gateway.get_variable.side_effect = lambda var: {
@@ -184,7 +184,7 @@ class TestEntryPointCopacetic(unittest.TestCase):
         self.devops_platform_gateway.message.assert_called_once_with(
             "warning", "Tool skipped by DevSecOps policy"
         )
-        mock_print.assert_called_once()
+        mock_logger.info.assert_called_once()
     
     @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.entry_points.entry_point_copacetic.logger')
     @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.entry_points.entry_point_copacetic.Copacetic')

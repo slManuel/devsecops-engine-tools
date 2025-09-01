@@ -19,15 +19,17 @@ The `engine_integrations` module enables the integration of DevSecOps Engine Too
 
 - `runner_engine_integrations.py`: Main entry point for running integrations via CLI.
 - `entry_point_integrations.py`: Initializes the integration engine and triggers the appropriate workflow.
-- `handle_integrations.py`: Core use case for executing the selected integration (e.g., SonarQube report).
+- `handle_integrations.py`: Core use case for executing the selected integration (e.g., SonarQube report, Copacetic patching).
 - **Adapters:** Integrations for DevOps platforms, secrets management, vulnerability management, and metrics.
 
 ## Supported Integrations
 
 - **report_sonar:** Automates the collection and reporting of SonarQube analysis results, integrating with vulnerability management and metrics systems.
+- **copacetic:** Integrates with the Copacetic tool to automatically patch container images by fixing known vulnerabilities, applies security patches to container images.
 
 ## Example CLI Usage
 
+### SonarQube Report Integration
 ```sh
 devsecops-engine-tools-integrations \
 	--integration report_sonar \
@@ -37,6 +39,18 @@ devsecops-engine-tools-integrations \
 	--sonar_url https://sonarqube.example.com \
 	--sonar_instance my-sonar-instance \
 	--token_sonar <SONAR_TOKEN>
+```
+
+### Copacetic Container Patching Integration
+```sh
+devsecops-engine-tools-integrations \
+	--integration copacetic \
+	--remote_config_repo my-org/devsecops-config \
+	--platform_devops github \
+	--use_secrets_manager true \
+	--image nginx:latest \
+	--vulnerability_report /path/to/trivy-report.json \
+	--patch_format trivy
 ```
 
 ## Extensibility
