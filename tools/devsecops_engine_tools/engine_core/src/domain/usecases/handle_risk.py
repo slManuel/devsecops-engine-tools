@@ -112,9 +112,6 @@ class HandleRisk:
                 in [service.lower() for service in services_to_exclude]
             ]
 
-            print(
-                f"Services to exclude: {[engagement.name for engagement in excluded_engagements]}"
-            )
             logger.info(
                 f"Services to exclude: {[engagement.name for engagement in excluded_engagements]}"
             )
@@ -218,7 +215,6 @@ class HandleRisk:
         )
 
         for engagement in new_service_list:
-            print(f"Service to analyze: {engagement.name}, URL: {engagement.vm_url}")
             logger.info(
                 f"Service to analyze: {engagement.name}, URL: {engagement.vm_url}"
             )

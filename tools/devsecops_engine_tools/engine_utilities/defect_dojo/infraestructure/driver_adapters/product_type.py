@@ -52,7 +52,7 @@ class ProductTypeRestConsumer:
             response = self.__session.get(url, headers=headers, data={}, verify=VERIFY_CERTIFICATE)
             if response.status_code != 200:
                 raise ApiError(response.json())
-            logger.info(response)
+            logger.debug(response)
             product_type_object = ProductType.from_dict(response.json())
         except Exception as e:
             raise ApiError(e)

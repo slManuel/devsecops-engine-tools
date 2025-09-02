@@ -44,7 +44,6 @@ def init_engine_risk(
     pipeline_name = devops_platform_gateway.get_variable("pipeline_name")
 
     if not findings:
-        print("No findings found in Vulnerability Management Platform")
         logger.info("No findings found in Vulnerability Management Platform")
         return
 

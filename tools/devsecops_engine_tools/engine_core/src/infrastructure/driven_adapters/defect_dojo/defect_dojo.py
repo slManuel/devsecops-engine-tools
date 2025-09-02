@@ -571,7 +571,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
             response = Component.create_component(
                 session=session_manager, request=request
             )
-            logger.info(
+            logger.debug(
                 f"Component created: {response.name} - {response.version} found with id: {response.id}"
             )
 

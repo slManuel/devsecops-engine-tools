@@ -48,7 +48,7 @@ class ImportScanUserCase:
         response = None
         if api_scan_bool:
             response = self.__rest_import_scan.import_scan_api(request)
-            logger.info(f"End process Succesfull!!!: {response}")
+            logger.debug(f"End process Succesfull!!!: {response}")
         else:
             try:
                 file_type = self.get_file_type(request.file)
@@ -56,7 +56,7 @@ class ImportScanUserCase:
                     raise ApiError("File format not allowed")
 
                 with open(request.file, "rb") as file:
-                    logger.info(f"read {file_type} file successful !!!")
+                    logger.debug(f"read {file_type} file successful !!!")
                     files = [("file", (request.file, file, file_type))]
                     response = self.__rest_import_scan.import_scan(request, files)
 
@@ -74,7 +74,7 @@ class ImportScanUserCase:
             logger.error(log)
             raise ApiError(log)
 
-        logger.info(f"Match {request.scan_type}")
+        logger.debug(f"Match {request.scan_type}")
         products = self.__rest_product.get_products({"name": request.product_name})
         if len(products.results) == 0 and request.product_name != "Orphan_Product":
             products = self.__rest_product.get_products({"name": request.code_app})
@@ -82,27 +82,27 @@ class ImportScanUserCase:
             product_id = products.results[0].id
             request.product_name = products.results[0].name
             request.product_type_name = self.__rest_product_type.get_product_type_id(products.results[0].prod_type).name
-            logger.info(f"product found: {request.product_name} with id: {product_id}")
+            logger.debug(f"product found: {request.product_name} with id: {product_id}")
         else:
             product_type_id = None
             product_types = self.__rest_product_type.get_product_types(request.product_type_name)
             if product_types.results == []:
                 product_type = self.__rest_product_type.post_product_type(request.product_type_name)
                 product_type_id = product_type.id
-                logger.info(f"product_type created: {product_type.name} with id {product_type.id}")
+                logger.debug(f"product_type created: {product_type.name} with id {product_type.id}")
             else:
                 if len(product_types.results) != 1:
                     logger.warning(f"there is more than one product type with the name: {product_types.results}")
 
                 product_type_id = product_types.results[0].id
-                logger.info(
+                logger.debug(
                     f"product_type found: {product_types.results[0].name}\
                         with id {product_type_id}"
                 )
 
             product = self.__rest_product.post_product(request, product_type_id)
             product_id = product.id
-            logger.info(
+            logger.debug(
                 f"product created: {product.name}\
                     found with id: {product.id}"
             )

@@ -76,6 +76,7 @@
     "METRICS_MANAGER": {
         "AWS": {
             "BUCKET": "",
+            "TYPE_FORMAT_BUCKET_FILE": "parquet|json",
             "USE_ROLE": false,
             "ROLE_ARN": "",
             "REGION_NAME": ""
