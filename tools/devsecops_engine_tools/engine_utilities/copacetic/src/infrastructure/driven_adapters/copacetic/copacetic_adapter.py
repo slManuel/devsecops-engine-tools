@@ -282,7 +282,7 @@ class CopaceticAdapter:
             return details
             
         except FileNotFoundError:
-            logger.info(f"VEX output file not found: {output_path}")
+            logger.error(f"VEX output file not found: {output_path}")
             return {
                 "vulnerabilities_patched": 0,
                 "details": [],
@@ -290,7 +290,7 @@ class CopaceticAdapter:
                 "platforms_processed": []
             }
         except json.JSONDecodeError as e:
-            logger.info(f"Error parsing VEX JSON file: {e}")
+            logger.error(f"Error parsing VEX JSON file: {e}")
             return {
                 "vulnerabilities_patched": 0,
                 "details": [],
@@ -298,7 +298,7 @@ class CopaceticAdapter:
                 "platforms_processed": []
             }
         except Exception as e:
-            logger.info(f"Error processing VEX output file {output_path}: {e}")
+            logger.error(f"Error processing VEX output file {output_path}: {e}")
             return {
                 "vulnerabilities_patched": 0,
                 "details": [],

@@ -190,7 +190,7 @@ def runner_engine_integrations():
 
         is_valid, error_message = validate_integration_requirements(args)
         if not is_valid:
-            logger.info(f"Error: {error_message}")
+            logger.error(f"Error: {error_message}")
             sys.exit(1)
 
         vulnerability_management_gateway = DefectDojoPlatform()
@@ -218,12 +218,12 @@ def runner_engine_integrations():
 
     except Exception as e:
         logger.error("Error engine_integrations: {0} ".format(str(e)))
-        logger.info(
+        print(
             devops_platform_gateway.message(
                 "error", "Error engine_integrations: {0} ".format(str(e))
             )
         )
-        logger.info(devops_platform_gateway.result_pipeline("failed"))
+        print(devops_platform_gateway.result_pipeline("failed"))
 
 
 if __name__ == "__main__":

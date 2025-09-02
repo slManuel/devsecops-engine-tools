@@ -73,6 +73,6 @@ def init_copacetic(
         else:
             message = "Tool skipped by DevSecOps policy"
 
-        logger.info(
+        print(
             devops_platform_gateway.message("warning", message),
         )

@@ -78,7 +78,7 @@ class Copacetic:
                 if patch_result.get("copa_error"):
                     detailed_error += f"\nCopa stderr: {patch_result['copa_error']}"
                 
-                logger.info(
+                print(
                     self.devops_platform_gateway.message("error", detailed_error)
                 )
 
@@ -94,7 +94,7 @@ class Copacetic:
 
         except Exception as e:
             logger.error(f"Error in Copacetic process: {str(e)}")
-            logger.info(
+            print(
                 self.devops_platform_gateway.message(
                     "error",
                     f"Error in Copacetic process: {str(e)}"

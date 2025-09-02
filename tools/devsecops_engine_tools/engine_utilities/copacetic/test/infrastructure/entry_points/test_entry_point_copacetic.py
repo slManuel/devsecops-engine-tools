@@ -126,7 +126,6 @@ class TestEntryPointCopacetic(unittest.TestCase):
         self.devops_platform_gateway.message.assert_called_once_with(
             "warning", "DevSecOps Engine Tool - copacetic in maintenance..."
         )
-        mock_logger.info.assert_called_once()
     
     @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.entry_points.entry_point_copacetic.Copacetic')
     @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.entry_points.entry_point_copacetic.logger')
@@ -155,7 +154,6 @@ class TestEntryPointCopacetic(unittest.TestCase):
         self.devops_platform_gateway.message.assert_called_once_with(
             "warning", "Tool skipped by DevSecOps policy"
         )
-        mock_logger.info.assert_called_once()
     
     @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.entry_points.entry_point_copacetic.Copacetic')
     @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.entry_points.entry_point_copacetic.logger')
@@ -184,7 +182,6 @@ class TestEntryPointCopacetic(unittest.TestCase):
         self.devops_platform_gateway.message.assert_called_once_with(
             "warning", "Tool skipped by DevSecOps policy"
         )
-        mock_logger.info.assert_called_once()
     
     @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.entry_points.entry_point_copacetic.logger')
     @patch('devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.entry_points.entry_point_copacetic.Copacetic')
