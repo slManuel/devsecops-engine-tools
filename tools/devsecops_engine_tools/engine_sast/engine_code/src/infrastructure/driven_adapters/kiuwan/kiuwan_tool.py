@@ -8,7 +8,6 @@ import urllib.request
 import zipfile
 import stat
 import shutil
-import json
 from typing import Dict, Any, List, Optional, Union
 from urllib.parse import urlparse
 
@@ -99,10 +98,9 @@ class KiuwanTool(ToolGateway):
             last_analysis = self._fetch_last_analysis()
         defects = self._fetch_defects_for_analysis(last_analysis.get("analysisCode", ""))
         findings= self._map_defects_to_findings(last_analysis, defects, last_analysis.get("analysisCode", ""), config_tool.data["KIUWAN"]["SEVERITY"])
-        parsed_defects = self._transform_kiuwan_defects_for_defectdojo(
-            defects
-        )
-        defects_file_path = self._save_json_file(parsed_defects)
+
+        defects_file_path = self._download_kiuwan_csv_official(last_analysis.get("analysisCode", ""), "kiuwan_findings.csv")
+
         return findings, defects_file_path
 
     def _validate_target_branch(self, config_tool: ConfigTool) -> bool:
@@ -371,50 +369,47 @@ class KiuwanTool(ToolGateway):
         except (requests.RequestException, ValueError) as e:
             raise RuntimeError(f"Failed to fetch defects: {e}") from e
 
-    def _transform_kiuwan_defects_for_defectdojo(self, kiuwan_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _download_kiuwan_csv_official(self, analysis_code: str, output_path: str = "kiuwan_findings.csv") -> str:
         """
-        Transform Kiuwan /defects response into DefectDojo-compatible findings.
-        Filters only 'Security' defects and maps fields.
+        Download the official Kiuwan SAST CSV report using the vulnerabilities/export API.
+        Compatible with DefectDojo's 'Kiuwan Scan' parser.
+
+        Args:
+            analysis_code (str): The analysis code to export.
+            output_path (str): Path to save the CSV file.
+
+        Returns:
+            str: Path to the downloaded CSV file.
         """
-        findings = []
-        security_defects = [
-            d for d in kiuwan_data.get("defects", [])
-            if d.get("characteristic") == "Security"
-        ]
+        csv_url = (
+            f"{self.base_url}/applications/analysis/vulnerabilities/export?"
+            f"application={self.repository_name}&code={analysis_code}&type=CSV"
+        )
 
-        for defect in security_defects:
-            # Mapeo de prioridad a severidad
-            priority_to_severity = {
-                "Critical": "Critical",
-                "High": "High",
-                "Normal": "Medium",
-                "Low": "Low"
-            }
-            severity = priority_to_severity.get(defect.get("priority"), "Medium")
+        try:
+            logger.info("Downloading official Kiuwan CSV from: %s", csv_url)
+            response = requests.get(
+                csv_url,
+                auth=(self.user, self.password),
+                headers=self.headers,
+                timeout=60,
+                stream=True
+            )
+            response.raise_for_status()
 
-            finding = {
-                "title": defect.get("rule", "Unknown vulnerability"),
-                "description": (
-                    f"**Rule:** {defect.get('rule')}\n"
-                    f"**Code:** `{defect.get('code', 'N/A')}`\n"
-                    f"**File:** {defect.get('file')}\n"
-                    f"**Line:** {defect.get('line')}\n"
-                    f"**Rule Code:** {defect.get('ruleCode')}"
-                ),
-                "severity": severity,
-                "file_path": defect.get("file"),
-                "line": defect.get("line"),
-                "cwe": defect.get("cweId"),
-                "vuln_id_from_tool": defect.get("ruleCode"),
-                "mitigation": "Review the code and apply secure coding practices.",
-                "active": True,
-                "verified": False,
-                "static_finding": True,
-                "test": {}  # Se llenará en DefectDojo
-            }
-            findings.append(finding)
+            if 'text/csv' not in response.headers.get('Content-Type', ''):
+                logger.warning("Response Content-Type is not CSV: %s", response.headers.get('Content-Type'))
 
-        return findings
+            with open(output_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+
+            logger.info("Official Kiuwan CSV downloaded successfully: %s", output_path)
+            return output_path
+
+        except RequestException as e:
+            logger.error("Failed to download Kiuwan CSV: %s", e)
+            raise RuntimeError(f"Error downloading Kiuwan CSV from {csv_url}: {e}") from e
     
     def _map_defects_to_findings(
         self,
@@ -515,23 +510,6 @@ class KiuwanTool(ToolGateway):
         
         return extracted_files
     
-
-    def _save_json_file(self, data: Dict[str, Any]):
-
-        """
-        Create a file with the content passed by argument
-
-        Arguments:
-            data (Dict): Content that will be save in json file
-        Returns: 
-         
-            defects_json_path (str): json path with vulnerabilities
-                retrieved from kiuwan
-        """
-        path = "kiuwan_vuls_file.json"
-        with open(path, "w", encoding="utf-8") as defects_file:
-            defects_file.write(json.dumps(data, indent=4))
-        return path
 
 def get_kiuwan_instance(dict_args: Dict, devops_platform_gateway) -> KiuwanTool:
     """
