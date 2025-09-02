@@ -11,6 +11,7 @@ The `engine_utilities` module provides a set of shared utilities, helpers, and a
 ## Main Responsibilities
 
 - **Azure Devops:** Utilities and adapters for integrating with [Azure DevOps](https://azure.microsoft.com/en-us/services/devops/), including helpers for authenticating with Azure DevOps services, managing pipelines, retrieving build and release information, and automating repository operations. These utilities enable seamless interaction with Azure DevOps APIs to support CI/CD workflows and project automation.
+- **Copacetic Integration:** Utilities and adapters for integrating with [Copacetic](https://github.com/project-copacetic/copacetic), including automated binary installation, container image patching, vulnerability report processing, and VEX (Vulnerability Exploitability eXchange) report generation. These utilities enable automated security patching of container images without requiring source code changes.
 - **Defect Dojo:** Utilities and adapters for integrating with [Defect Dojo](https://www.defectdojo.org/), including methods for sending scan results, managing connections, and automating vulnerability imports.
 - **Data Transformation:** Utilities for converting JSON responses to Python objects and vice versa, using domain language and dataclasses.
 - **Git Operations:** Utilities for interacting with Git repositories, including pull request file discovery.
@@ -31,6 +32,7 @@ The `engine_utilities` module provides a set of shared utilities, helpers, and a
 - `sonarqube/`: SonarQube integration and reporting.
 - `input_validations/`: Input validation helpers.
 - `trivy_utils/`: Utilities for Trivy output parsing and management.
+- `copacetic/`: Copacetic image patching, and VEX report generation.
 - `settings.py`: Centralized configuration for utility modules.
 
 ## Example Usage

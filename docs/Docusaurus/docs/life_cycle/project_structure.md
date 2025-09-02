@@ -133,6 +133,7 @@ Documenting the project structure is crucial so that anyone, whether a new devel
     |           input_validations
     |           sbom
     |           sonarqube -> report_sonar integration
+    |           copacetic -> copacetic patch images integration
     |           ssh
     |           utils
     ```

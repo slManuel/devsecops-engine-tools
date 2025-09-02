@@ -13,6 +13,9 @@ from devsecops_engine_tools.engine_core.src.domain.model.gateway.metrics_manager
 from devsecops_engine_tools.engine_utilities.sonarqube.src.applications.runner_report_sonar import (
     runner_report_sonar
 )
+from devsecops_engine_tools.engine_utilities.copacetic.src.applications.runner_copacetic import (
+    runner_copacetic
+)
 
 class Integrations():
     def __init__(
@@ -33,6 +36,15 @@ class Integrations():
         integration = args.get("integration")
         if integration == "report_sonar":
             return runner_report_sonar(
+                vulnerability_management_gateway=self.vulnerability_management_gateway,
+                secrets_manager_gateway=self.secrets_manager_gateway,
+                devops_platform_gateway=self.devops_platform_gateway,
+                remote_config_source_gateway=self.remote_config_source_gateway,
+                metrics_manager_gateway=self.metrics_manager_gateway,
+                args=args,
+            )
+        elif integration == "copacetic":
+            return runner_copacetic(
                 vulnerability_management_gateway=self.vulnerability_management_gateway,
                 secrets_manager_gateway=self.secrets_manager_gateway,
                 devops_platform_gateway=self.devops_platform_gateway,

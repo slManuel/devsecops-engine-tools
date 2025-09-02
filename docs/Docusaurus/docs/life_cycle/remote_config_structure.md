@@ -16,6 +16,9 @@ sidebar_position: 2
    ┃ ┗ 📂report_sonar
    ┃   ┗ 📜ConfigTool.json
    ┃   ┗ 📜Exclusions.json
+   ┃ ┗ 📂copacetic
+   ┃   ┗ 📜ConfigTool.json
+   ┃   ┗ 📜Exclusions.json
    ┣ 📂engine_risk
    ┃ ┗ 📜ConfigTool.json
    ┃ ┗ 📜Exclusions.json
@@ -664,6 +667,74 @@ The engine_integrations module enables the integration of DevSecOps Engine Tools
 #### Exclusions
 
 > /engine_integrations/report_sonar/Exclusions.json
+##### **By Component**
+
+The key of each element in the JSON is the name of the build pipeline. This can be composed of the following properties:
+ > PIPELINE_BUILD:
+    - create_date: creation date (daymonthyear)
+    - expired_date: expiration date (daymonthyear)
+    - hu: User Story identifier supporting the configured exception.
+    - reason: reason for the exclusion
+
+
+
+```json
+{
+    "PIPELINE_NAME": {
+        "create_date": "18112023",
+        "expired_date": "18032024",
+        "hu": "0000000"
+    }
+}
+```
+
+##### **By BY_PATTERN_SEARCH Policy**
+
+The key of the element in the JSON is the regex. It can be composed of the following properties:
+
+ > REGEX:
+    - create_date: creation date (daymonthyear)
+    - expired_date: expiration date (daymonthyear)
+    - hu: User Story identifier supporting the configured exception.
+    - reason: reason for the exclusion
+
+
+```json
+{
+    "BY_PATTERN_SEARCH": {
+      ".*test.*": {
+          "create_date": "24012025",
+          "expired_date": "31032025",
+          "hu": "6032053"
+      }
+    }
+}
+```
+
+### **copacetic**
+
+#### Configuration
+
+> /engine_integrations/copacetic/ConfigTool.json
+```json
+{
+    "VERSION": "0.11.1",
+    "IGNORE_SEARCH_PATTERN": "(?i).*(?:test|demo|sample).*",
+    "TARGET_BRANCHES": ["main", "master", "develop", "release"],
+    "TIMEOUT": 1800,
+    "DEFAULT_OUTPUT_SUFFIX": "-patched",
+    "BUILDKIT_CONFIG": {
+        "DEFAULT_ADDR": "docker-container://buildkit",
+        "PROGRESS": "auto",
+        "IGNORE_ERRORS": false
+    }
+}
+
+```
+
+#### Exclusions
+
+> /engine_integrations/copacetic/Exclusions.json
 ##### **By Component**
 
 The key of each element in the JSON is the name of the build pipeline. This can be composed of the following properties:
