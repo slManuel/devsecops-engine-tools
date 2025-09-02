@@ -56,6 +56,7 @@ class RuntimeLocal(DevopsPlatformGateway):
             "branch_name" : "DET_BRANCH_NAME",
             "build_id" : "DET_BUILD_ID",
             "build_execution_id" : "DET_BUILD_EXECUTION_ID",
+            "definition_name" : "DET_DEFINITION_NAME",
             "commit_hash" : "DET_COMMIT_HASH",
             "environment" : "DET_ENVIRONMENT",
             "release_id" : "DET_RELEASE_ID",

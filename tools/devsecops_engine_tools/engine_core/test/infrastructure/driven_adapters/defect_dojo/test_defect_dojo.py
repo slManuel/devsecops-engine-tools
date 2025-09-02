@@ -1043,6 +1043,7 @@ class TestDefectDojoPlatform(unittest.TestCase):
             "VULNERABILITY_MANAGER": {
                 "DEFECT_DOJO": {
                     "HOST_DEFECT_DOJO": "host_defect_dojo",
+                    "PRINT_DOMAIN": "",
                     "LIMITS_QUERY": 999,
                     "REIMPORT_SCAN": True,
                 }
@@ -1157,6 +1158,7 @@ class TestDefectDojoPlatform(unittest.TestCase):
             "VULNERABILITY_MANAGER": {
                 "DEFECT_DOJO": {
                     "HOST_DEFECT_DOJO": "http://defectdojo",
+                    "PRINT_DOMAIN": "",
                     "MAX_RETRIES_QUERY": 3,
                     "LIMITS_QUERY": 100,
                     "REIMPORT_SCAN": True,

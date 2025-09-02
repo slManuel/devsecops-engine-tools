@@ -29,11 +29,33 @@ from devsecops_engine_tools.engine_utilities import settings
 
 logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
+def validate_integration_requirements(args):
+    integration = args.get("integration")
+    missing_args = []
+    
+    if integration == "report_sonar":
+        if not args.get("sonar_url"):
+            missing_args.append("--sonar_url")
+            
+    elif integration == "copacetic":
+        if not args.get("image"):
+            missing_args.append("--image")
+            
+        if not args.get("vulnerability_report") and not args.get("platform"):
+            missing_args.append("--vulnerability_report or --platform")
+            
+    if missing_args:
+        error_msg = f"Missing required arguments for {integration} integration: {', '.join(missing_args)}"
+        return False, error_msg
+        
+    return True, None
+
 def get_inputs_from_cli(args):
     parser = argparse.ArgumentParser()
+    # General flags
     parser.add_argument(
         "--integration",
-        choices=["report_sonar"],
+        choices=["report_sonar", "copacetic"],
         type=str,
         required=True,
         help="Name of the integration to run",
@@ -109,6 +131,35 @@ def get_inputs_from_cli(args):
         required=False,
         help="Token to access sonar server",
     )
+    # copacetic flags
+    parser.add_argument(
+        "--image",
+        required=False,
+        help="Container image to patch with Copacetic",
+    )
+    parser.add_argument(
+        "--vulnerability_report",
+        required=False,
+        help="Path to vulnerability report file for Copacetic",
+    )
+    parser.add_argument(
+        "--patch_format",
+        choices=["trivy", "grype"],
+        type=str,
+        required=False,
+        default="trivy",
+        help="Vulnerability report format for Copacetic (default: trivy)",
+    )
+    parser.add_argument(
+        "--output_image",
+        required=False,
+        help="Output tag name for patched image",
+    )
+    parser.add_argument(
+        "--platform",
+        required=False,
+        help="Target(s) platform(s) for multi-arch images when no report directory is provided",
+    )
 
     args = parser.parse_args()
     return {
@@ -124,6 +175,11 @@ def get_inputs_from_cli(args):
         "token_cmdb": args.token_cmdb,
         "token_vulnerability_management": args.token_vulnerability_management,
         "token_sonar": args.token_sonar,
+        "image": args.image,
+        "vulnerability_report": args.vulnerability_report,
+        "patch_format": args.patch_format,
+        "output_image": args.output_image,
+        "platform": args.platform
     }
 
 def runner_engine_integrations():
@@ -131,6 +187,11 @@ def runner_engine_integrations():
         args = get_inputs_from_cli(sys.argv[1:])
         if not args["remote_config_source"]: 
             args["remote_config_source"] = args["platform_devops"]
+
+        is_valid, error_message = validate_integration_requirements(args)
+        if not is_valid:
+            logger.error(f"Error: {error_message}")
+            sys.exit(1)
 
         vulnerability_management_gateway = DefectDojoPlatform()
         secrets_manager_gateway = SecretsManager()

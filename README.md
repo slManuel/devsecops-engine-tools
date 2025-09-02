@@ -13,9 +13,6 @@
 
 Tool that unifies the evaluation of the different devsecops practices being agnostic to the devops platform, using both open source and market tools.
 
-# Component
-
-📦 [tools](https://github.com/bancolombia/devsecops-engine-tools/tree/trunk/tools): DevSecOps Practice Modules
 
 # Communications channel
 
@@ -275,7 +272,8 @@ With the flag **--send_metrics true** and the configuration of the AWS-METRICS_M
 
 To generate the ConfigTool.json file in a simple way, a web interface was created where you can configure each necessary parameter individually or use a base template that you want to modify. In the [config tool generator](https://github.com/bancolombia/devsecops-engine-tools/tree/trunk/remote_config_generator/config-tool-generator) folder you will find the code for the SPA created in Angular to run it local environment.
 
-![Config Tool Generator](docs/config_tool_generator.gif)
+
+Please follow our [Getting Started Guide](https://bancolombia.github.io/devsecops-engine-tools/)
 
 # How can I help?
 
