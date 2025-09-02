@@ -136,7 +136,7 @@ For more information visit [here](https://github.com/bancolombia/devsecops-engin
     <td><a href="https://owasp.org/www-project-dependency-check/">DEPENDENCY CHECK</a></td>
     <td>Free</td>
   </tr>
-  <tr>
+   <tr>
     <td rowspan="2">ENGINE_CODE</td>
     <td><a href="https://docs.bearer.com/quickstart/">BEARER</a></td>
     <td>Free</td>
@@ -144,8 +144,8 @@ For more information visit [here](https://github.com/bancolombia/devsecops-engin
   <tr>
     <td><a href="https://support.kiuwan.com/hc/en-us">KIUWAN</a></td>
     <td>Paid</td>
-  </tr>
- 
+   </tr>
+  
 </table>
 
 ### Scan running sample (CLI) - Local

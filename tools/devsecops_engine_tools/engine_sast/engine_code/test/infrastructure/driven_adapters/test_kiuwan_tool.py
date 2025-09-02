@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, mock_open, patch
 import os
 import tempfile
 import shutil
@@ -7,9 +7,10 @@ import subprocess
 import zipfile
 from pathlib import Path
 
-from devsecops_engine_tools.engine_sast.engine_code.src.domain.model.config_tool import ConfigTool
-from devsecops_engine_tools.engine_sast.engine_code.src.infrastructure.driven_adapters.kiuwan.kiuwan_tool import KiuwanTool, get_kiuwan_instance
+import requests
 
+from devsecops_engine_tools.engine_sast.engine_code.src.domain.model.config_tool import ConfigTool
+from devsecops_engine_tools.engine_sast.engine_code.src.infrastructure.driven_adapters.kiuwan import kiuwan_tool
 
 class TestKiuwanToolBase(unittest.TestCase):
     
@@ -39,15 +40,15 @@ class TestKiuwanToolBase(unittest.TestCase):
             shutil.rmtree(self.temp_directory)
     
     def create_kiuwan_tool(self, config=None, path_mock="/path/to/agent.sh"):
-        with patch.object(KiuwanTool, '_find_or_download_kiuwan_agent', return_value=path_mock):
-            return KiuwanTool(config or self.config)
+        with patch.object(kiuwan_tool.KiuwanTool, '_find_or_download_kiuwan_agent', return_value=path_mock):
+            return kiuwan_tool.KiuwanTool(config or self.config)
 
 
 class TestKiuwanToolInit(TestKiuwanToolBase):
     
     def test_init_with_complete_config(self):
-        with patch.object(KiuwanTool, '_find_or_download_kiuwan_agent', return_value='/path/to/agent.sh'):
-            tool = KiuwanTool(self.config)
+        with patch.object(kiuwan_tool.KiuwanTool, '_find_or_download_kiuwan_agent', return_value='/path/to/agent.sh'):
+            tool = kiuwan_tool.KiuwanTool(self.config)
             
             self.assertEqual(tool.user, "test_user")
             self.assertEqual(tool.password, "test_token")
@@ -66,8 +67,8 @@ class TestKiuwanToolInit(TestKiuwanToolBase):
             "user_engine_code": "user",
             "host_engine_code": "https://test.com"
         }
-        with patch.object(KiuwanTool, '_find_or_download_kiuwan_agent', return_value='/path/to/agent.sh'):
-            tool = KiuwanTool(partial_config)
+        with patch.object(kiuwan_tool.KiuwanTool, '_find_or_download_kiuwan_agent', return_value='/path/to/agent.sh'):
+            tool = kiuwan_tool.KiuwanTool(partial_config)
             
             self.assertEqual(tool.user, "user")
             self.assertEqual(tool.password, "")
@@ -115,7 +116,7 @@ class TestFindOrDownloadKiuwanAgent(TestKiuwanToolBase):
         mock_system.return_value = "UnsupportedOS"
         
         with self.assertRaises(RuntimeError) as context:
-            KiuwanTool(self.config)
+            kiuwan_tool.KiuwanTool(self.config)
         
         self.assertIn("Unsupported OS", str(context.exception))
     
@@ -716,25 +717,6 @@ class TestMapDefectsToFindings(TestKiuwanToolBase):
         )
 
 
-class TestGetAnalysisDefects(TestKiuwanToolBase):
-    
-    def test_get_analysis_defects(self):
-        last_analysis = {"analysisCode": "123"}
-        defects_data = {"defects": []}
-        severity_mapper = {"HIGH": "Critical"}
-        expected_findings = [Mock()]
-        
-        tool = self.create_kiuwan_tool()
-        tool._fetch_last_analysis = Mock(return_value=last_analysis)
-        tool._fetch_defects_for_analysis = Mock(return_value=defects_data)
-        tool._map_defects_to_findings = Mock(return_value=expected_findings)
-        
-        result = tool._get_analysis_defects(severity_mapper, None)
-        
-        self.assertEqual(result, expected_findings)
-        tool._fetch_last_analysis.assert_called_once()
-        tool._fetch_defects_for_analysis.assert_called_once_with("123")
-
 
 class TestGetKiuwanInstance(unittest.TestCase):
     
@@ -775,7 +757,7 @@ class TestGetKiuwanInstance(unittest.TestCase):
         mock_instance = Mock()
         mock_kiuwan_tool.return_value = mock_instance
         
-        result = get_kiuwan_instance(dict_args, devops_platform_gateway)
+        result = kiuwan_tool.get_kiuwan_instance(dict_args, devops_platform_gateway)
         
         self.assertEqual(result, mock_instance)
         devops_platform_gateway.get_remote_config.assert_called_once()
@@ -786,3 +768,90 @@ class TestGetKiuwanInstance(unittest.TestCase):
         self.assertEqual(call_args["host_engine_code"], "https://test.kiuwan.com")
         self.assertEqual(call_args["user_engine_code"], "test_user")
         self.assertEqual(call_args["token_engine_code"], "test_token")
+
+
+class TestDownloadKiuwanCsvOfficial(TestKiuwanToolBase):
+
+    def setUp(self):
+        super().setUp()
+        self.tool = kiuwan_tool.KiuwanTool(self.config)
+
+    @patch("requests.get")
+    @patch("builtins.open", new_callable=mock_open)
+    def test_download_csv_success(self, mock_file, mock_requests_get):
+        # Configurar respuesta simulada
+        mock_response = Mock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.headers = {"Content-Type": "text/csv"}
+        mock_response.iter_content = Mock(return_value=[b"sep=,\n", b"Vulnerability,Line\n", b"XSS,42\n"])
+
+        mock_requests_get.return_value = mock_response
+
+        analysis_code = "ANALYSIS123"
+        output_path = "kiuwan_findings.csv"
+
+        # Ejecutar el método
+        result = self.tool._download_kiuwan_csv_official(analysis_code, output_path)
+
+        # Construir URL esperada
+        expected_url = (
+            f"{self.tool.base_url}/applications/analysis/vulnerabilities/export?"
+            f"application={self.tool.repository_name}&code=ANALYSIS123&type=CSV"
+        )
+
+        # Verificaciones
+        mock_requests_get.assert_called_once()
+        call_args = mock_requests_get.call_args
+        self.assertEqual(call_args.args[0], expected_url)
+        self.assertEqual(call_args.kwargs["auth"], (self.tool.user, self.tool.password))
+        self.assertIn("stream", call_args.kwargs)
+        self.assertTrue(call_args.kwargs["stream"])
+
+        # Verificar que se abrió el archivo y se escribió
+        mock_file.assert_called_once_with(output_path, "wb")
+        mock_file().write.assert_any_call(b"sep=,\n")
+        mock_file().write.assert_any_call(b"Vulnerability,Line\n")
+        mock_file().write.assert_any_call(b"XSS,42\n")
+
+        # Verificar retorno
+        self.assertEqual(result, output_path)
+
+    @patch("requests.get")
+    def test_download_csv_non_csv_content_type_warning(self, mock_requests_get):
+        # Simular respuesta sin Content-Type CSV
+        mock_response = Mock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.headers = {"Content-Type": "application/octet-stream"}  # No es CSV
+        mock_response.iter_content = Mock(return_value=[b"data"])
+
+        mock_requests_get.return_value = mock_response
+
+        with patch("builtins.open", mock_open()) as mock_file:
+            with patch.object(kiuwan_tool.logger,"warning") as mock_warn:
+                result = self.tool._download_kiuwan_csv_official("ANALYSIS123", "kiuwan_findings.csv")
+                mock_warn.assert_called_once()
+                self.assertEqual(result, "kiuwan_findings.csv")
+
+    @patch("requests.get")
+    def test_download_csv_request_failed(self, mock_requests_get):
+        # Simular error en la solicitud
+        mock_requests_get.side_effect = requests.RequestException("Connection timeout")
+
+        with self.assertRaises(RuntimeError) as context:
+            self.tool._download_kiuwan_csv_official("ANALYSIS123", "kiuwan_findings.csv")
+
+        self.assertIn("Error downloading Kiuwan CSV", str(context.exception))
+        self.assertIn("Connection timeout", str(context.exception))
+
+    @patch("requests.get")
+    def test_download_csv_http_error(self, mock_requests_get):
+        # Simular error 404
+        mock_response = Mock()
+        mock_response.raise_for_status.side_effect = requests.HTTPError("404 Not Found")
+        mock_requests_get.return_value = mock_response
+
+        with self.assertRaises(RuntimeError) as context:
+            self.tool._download_kiuwan_csv_official("ANALYSIS123", "kiuwan_findings.csv")
+
+        self.assertIn("Error downloading Kiuwan CSV", str(context.exception))
+        self.assertIn("404 Not Found", str(context.exception))

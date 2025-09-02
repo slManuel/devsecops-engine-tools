@@ -11,8 +11,8 @@ import shutil
 from typing import Dict, Any, List, Optional, Union
 from urllib.parse import urlparse
 
-
 import requests
+from requests.exceptions import RequestException, Timeout, ConnectionError
 
 from devsecops_engine_tools.engine_sast.engine_code.src.domain.model.config_tool import ConfigTool
 from devsecops_engine_tools.engine_sast.engine_code.src.domain.model.gateways.tool_gateway import ToolGateway
@@ -90,13 +90,18 @@ class KiuwanTool(ToolGateway):
         logger.info("Analysis selected: %s\n", analysis_type)
         logger.info("Analysis %s started", analysis_type)
         
-        # Ejecutar el escaneo con el directorio preparado
         self._execute_kiuwan_scan(analysis_type, scan_directory)
         self._validate_results(analysis_type)
         last_analysis = self._fetch_last_analysis()
         self._promote_to_baseline(last_analysis)
-        findings = self._get_analysis_defects(config_tool.data["KIUWAN"]["SEVERITY"], last_analysis)
-        return findings, None
+        if not last_analysis:
+            last_analysis = self._fetch_last_analysis()
+        defects = self._fetch_defects_for_analysis(last_analysis.get("analysisCode", ""))
+        findings= self._map_defects_to_findings(last_analysis, defects, last_analysis.get("analysisCode", ""), config_tool.data["KIUWAN"]["SEVERITY"])
+
+        defects_file_path = self._download_kiuwan_csv_official(last_analysis.get("analysisCode", ""), "kiuwan_findings.csv")
+
+        return findings, defects_file_path
 
     def _validate_target_branch(self, config_tool: ConfigTool) -> bool:
         """Validate if the target branch is allowed for analysis."""
@@ -309,21 +314,6 @@ class KiuwanTool(ToolGateway):
         else:
             logger.info("No promotion needed")
 
-    def _get_analysis_defects(self, severity_mapper: Dict[str,str], last_analysis:Dict[str, str]) -> List[EngineCodeFinding]:
-        """
-        Retrieve the last analysis defects for a repository and map them to KiuwanFinding objects.
-
-        Returns:
-            List of KiuwanFinding objects representing the defects found in the analysis.
-
-        Raises:
-            RuntimeError: If there's an error fetching the analysis or defects from the Kiuwan API.
-        """
-        if not last_analysis:
-            last_analysis = self._fetch_last_analysis()
-        analysis_code = last_analysis.get("analysisCode")
-        defects_data = self._fetch_defects_for_analysis(analysis_code)
-        return self._map_defects_to_findings(last_analysis, defects_data, analysis_code, severity_mapper)
 
     def _fetch_defects_for_analysis(self, analysis_code: str) -> Dict[str, Any]:
         """
@@ -379,6 +369,48 @@ class KiuwanTool(ToolGateway):
         except (requests.RequestException, ValueError) as e:
             raise RuntimeError(f"Failed to fetch defects: {e}") from e
 
+    def _download_kiuwan_csv_official(self, analysis_code: str, output_path: str = "kiuwan_findings.csv") -> str:
+        """
+        Download the official Kiuwan SAST CSV report using the vulnerabilities/export API.
+        Compatible with DefectDojo's 'Kiuwan Scan' parser.
+
+        Args:
+            analysis_code (str): The analysis code to export.
+            output_path (str): Path to save the CSV file.
+
+        Returns:
+            str: Path to the downloaded CSV file.
+        """
+        csv_url = (
+            f"{self.base_url}/applications/analysis/vulnerabilities/export?"
+            f"application={self.repository_name}&code={analysis_code}&type=CSV"
+        )
+
+        try:
+            logger.info("Downloading official Kiuwan CSV from: %s", csv_url)
+            response = requests.get(
+                csv_url,
+                auth=(self.user, self.password),
+                headers=self.headers,
+                timeout=60,
+                stream=True
+            )
+            response.raise_for_status()
+
+            if 'text/csv' not in response.headers.get('Content-Type', ''):
+                logger.warning("Response Content-Type is not CSV: %s", response.headers.get('Content-Type'))
+
+            with open(output_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+
+            logger.info("Official Kiuwan CSV downloaded successfully: %s", output_path)
+            return output_path
+
+        except RequestException as e:
+            logger.error("Failed to download Kiuwan CSV: %s", e)
+            raise RuntimeError(f"Error downloading Kiuwan CSV from {csv_url}: {e}") from e
+    
     def _map_defects_to_findings(
         self,
         last_analysis: Dict[str, Any],
@@ -477,6 +509,7 @@ class KiuwanTool(ToolGateway):
                     extracted_files.append(target_path)
         
         return extracted_files
+    
 
 def get_kiuwan_instance(dict_args: Dict, devops_platform_gateway) -> KiuwanTool:
     """
