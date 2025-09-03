@@ -145,7 +145,8 @@ class S3Manager(MetricsManagerGateway):
         date = datetime.datetime.now()
         type_format = config_tool["METRICS_MANAGER"]["AWS"]["TYPE_FORMAT_BUCKET_FILE"]
         filename = file_path.split("/")[-1]
-        path_bucket = f'engine_tools/{module}/{date:%Y}/{date:%m}/{date:%d}/{filename.rsplit(".", 1)[0]}.{type_format}'
+        base_path = f"engine_tools/module={module}/year={date:%Y}/month={date:%m}" if type_format == "parquet" else f"engine_tools/{module}/{date:%Y}/{date:%m}/{date:%d}"
+        path_bucket = f"{base_path}/{filename.rsplit('.', 1)[0]}.{type_format}"
 
         existing_data = self._get_s3_data(
             client, config_tool["METRICS_MANAGER"]["AWS"]["BUCKET"], path_bucket
