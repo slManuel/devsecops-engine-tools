@@ -858,5 +858,6 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                 return result
             result = finding.file_path
         else:
+
             return finding.file_path
         
