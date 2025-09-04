@@ -110,7 +110,7 @@ def test_download_twistcli_failure(twistcli_instance, mock_requests_get):
 def test_scan_image_success(mock_remoteconfig):
     mock_file_data = '{"scanned_data": {"vulnerabilities": []}}'
 
-    with patch("devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.logger") as mock_logger, \
+    with patch("builtins.print") as mock_print, \
          patch("devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.subprocess.run") as mock_run, \
          patch("builtins.open", mock_open(read_data=mock_file_data)) as mock_file, \
          patch("json.dump") as mock_json_dump:
@@ -157,7 +157,7 @@ def test_scan_image_success(mock_remoteconfig):
             errors="replace"
         )
        
-        mock_logger.info.assert_called_once_with("The image image_name was scanned")
+        mock_print.assert_any_call("The image image_name was scanned")
 
 
 def test_run_tool_container_sca_success(mock_remoteconfig, mock_scan_image):

@@ -49,8 +49,7 @@ class TestTrivyScanSBOM(unittest.TestCase):
         }
 
     @patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.subprocess.run')
-    @patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.logger')
-    def test_scan_dependencies_sbom_success(self, mock_logger, mock_subprocess_run):
+    def test_scan_dependencies_sbom_success(self, mock_subprocess_run):
         # Arrange
         command_prefix = "/usr/bin/trivy"
         sbom_path = self.sample_sbom_path
@@ -59,7 +58,8 @@ class TestTrivyScanSBOM(unittest.TestCase):
         mock_subprocess_run.return_value = Mock(returncode=0)
         
         # Act
-        result = self.trivy_scanner._scan_dependencies_sbom(command_prefix, sbom_path)
+        with patch('builtins.print') as mock_print:
+            result = self.trivy_scanner._scan_dependencies_sbom(command_prefix, sbom_path)
         
         # Assert
         self.assertEqual(result, expected_result_file)
@@ -70,7 +70,7 @@ class TestTrivyScanSBOM(unittest.TestCase):
             stderr=unittest.mock.ANY,
             text=True
         )
-        mock_logger.info.assert_called_once_with(f"The SBOM {sbom_path} was scanned")
+        mock_print.assert_called_once_with(f"The SBOM {sbom_path} was scanned")
 
     @patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.logger')
     @patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.subprocess.run')

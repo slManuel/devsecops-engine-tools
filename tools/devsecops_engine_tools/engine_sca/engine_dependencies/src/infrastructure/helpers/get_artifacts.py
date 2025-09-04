@@ -126,12 +126,12 @@ class GetArtifacts:
             file_to_scan = os.path.join(dir_to_scan_path, "file_to_scan.tar")
             self.compress_and_mv(file_to_scan, dir_to_scan_path)
             files_string = ", ".join(files)
-            logger.info(f"Files to scan: {files_string}")
+            print(f"Files to scan: {files_string}")
 
             if ignore_files and len(filtered_files_list) < len(files_list):
                 ignored_files = set([os.path.basename(f) for f in files_list if f not in filtered_files_list])
                 files_ignore_string = ", ".join(ignored_files)
-                logger.info(f"Files ignored: {files_ignore_string}")
+                print(f"Files ignored: {files_ignore_string}")
         else:
             logger.warning("No artifacts found")
 

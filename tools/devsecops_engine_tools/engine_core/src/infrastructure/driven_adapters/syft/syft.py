@@ -74,7 +74,7 @@ class Syft(SbomManagerGateway):
                 stderr=subprocess.PIPE,
                 text=True,
             )
-            logger.info(f"SBOM generated and saved to: {result_file}")
+            print(f"SBOM generated and saved to: {result_file}")
             return result_file
         except Exception as e:
             logger.error(f"Error running syft: {e}")

@@ -114,7 +114,7 @@ class HandleRisk:
                 in [service.lower() for service in services_to_exclude]
             ]
 
-            logger.info(
+            print(
                 f"Services to exclude: {[engagement.name for engagement in excluded_engagements]}"
             )
 
@@ -153,7 +153,7 @@ class HandleRisk:
         )
 
         if self._should_skip_analysis(risk_config, pipeline_name, risk_exclusions):
-            logger.info("Tool skipped by DevSecOps Policy.")
+            print("Tool skipped by DevSecOps Policy.")
             dict_args["send_metrics"] = "false"
             return [], input_core
 
@@ -223,7 +223,7 @@ class HandleRisk:
         )
 
         for engagement in new_service_list:
-            logger.info(
+            print(
                 f"Service to analyze: {engagement.name}, URL: {engagement.vm_url}"
             )
 

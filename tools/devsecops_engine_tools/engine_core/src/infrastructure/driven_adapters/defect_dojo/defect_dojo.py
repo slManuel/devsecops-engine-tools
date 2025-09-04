@@ -152,8 +152,9 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                         ], vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["PRINT_DOMAIN"])
                     url_parts = response.url.split("//")
                     test_string = "//".join([url_parts[0] + "/", url_parts[1]])
-                    logger.info(
-                        f"Report sent to vulnerability management: {test_string}?tags={vulnerability_management.dict_args['module']}",
+                    print(
+                        "Report sent to vulnerability management: ",
+                        f"{test_string}?tags={vulnerability_management.dict_args['module']}",
                     )
                 else:
                     raise ExceptionVulnerabilityManagement(response)

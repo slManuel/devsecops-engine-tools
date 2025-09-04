@@ -10,10 +10,6 @@ from devsecops_engine_tools.engine_sca.engine_container.src.domain.model.gateway
 
 import os
 
-from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
-from devsecops_engine_tools.engine_utilities import settings
-
-logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
 class ContainerScaScan:
     def __init__(
@@ -64,16 +60,16 @@ class ContainerScaScan:
         
         if is_compressed_file:
             if not os.path.exists(self.image_to_scan):
-                logger.info(f"Compressed file not found: {self.image_to_scan}. Tool skipped.")
+                print(f"Compressed file not found: {self.image_to_scan}. Tool skipped.")
                 return image_scanned, base_image, sbom_components
                 
             matching_image = None
             image_name = self.image_to_scan
-            logger.info(f"Processing compressed file: {image_name}")
+            print(f"Processing compressed file: {image_name}")
         else:
             matching_image = self._get_image(self.image_to_scan)
             if not matching_image:
-                logger.info(f"'Not image found for {self.image_to_scan}'. Tool skipped.")
+                print(f"'Not image found for {self.image_to_scan}'. Tool skipped.")
                 return image_scanned, base_image, sbom_components
                 
             image_name = matching_image.tags[0]
@@ -106,7 +102,7 @@ class ContainerScaScan:
         result_file = image_name.replace("/", "_").replace(".", "_") + "_scan_result.json"
         
         if not is_compressed_file and image_name in self._get_images_already_scanned():
-            logger.info(f"The image {image_name} has already been scanned previously.")
+            print(f"The image {image_name} has already been scanned previously.")
             return image_scanned, base_image, sbom_components
             
         image_scanned, sbom_components = self.tool_run.run_tool_container_sca(

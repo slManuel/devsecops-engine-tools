@@ -24,7 +24,7 @@ class SonarAdapter(SonarGateway):
             project_key_found = self.parse_project_key(metadata_file_path)
             
             if project_key_found:
-                logger.info(f"ProjectKey scanner params: {project_key_found}")
+                print(f"ProjectKey scanner params: {project_key_found}")
                 project_keys = [project_key_found]
         
         return project_keys
@@ -33,7 +33,7 @@ class SonarAdapter(SonarGateway):
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 file_content = f.read()
-                logger.info(f"[SQ] Parse Task report file:\n{file_content}")
+                print(f"[SQ] Parse Task report file:\n{file_content}")
                 if not file_content or len(file_content) <= 0:
                     logger.warning("[SQ] Error reading file")
                     return None
@@ -41,7 +41,6 @@ class SonarAdapter(SonarGateway):
                     settings = self.create_task_report_from_string(file_content)
                     return settings.get("projectKey")
                 except Exception as err:
-                    logger.info(f"[SQ] Parse Task report error: {err}")
                     logger.warning(f"[SQ] Parse Task report error: {err}")
                     return None
         except Exception as err:
@@ -80,7 +79,7 @@ class SonarAdapter(SonarGateway):
 
                     info = f"{data['status']}{resolution_info}"
 
-                logger.info(f"The state of the {finding_type} {data[finding_type]} was changed to {info}.")
+                print(f"The state of the {finding_type} {data[finding_type]} was changed to {info}.")
 
             Utils().retries_requests(request_func, sonar_max_retry, retry_delay=5)
                 

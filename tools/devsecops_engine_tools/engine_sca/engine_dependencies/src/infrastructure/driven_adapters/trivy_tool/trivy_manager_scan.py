@@ -109,7 +109,7 @@ class TrivyScanSBOM(ToolGateway):
                 stderr=subprocess.PIPE,
                 text=True,
             )
-            logger.info(f"The SBOM {sbom_path} was scanned")
+            print(f"The SBOM {sbom_path} was scanned")
 
             return result_file
 

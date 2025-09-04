@@ -144,9 +144,8 @@ class TestCdxGen(unittest.TestCase):
         self.assertIsNone(result)
         mock_logger.error.assert_called_once_with(f"Error generating SBOM: {error_message}")
 
-    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.logger')
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.subprocess.run')
-    def test_run_cdxgen_success(self, mock_subprocess, mock_logger):
+    def test_run_cdxgen_success(self, mock_subprocess):
         # Arrange
         command_prefix = "/usr/local/bin/cdxgen"
         mock_subprocess.return_value = Mock(returncode=0)
@@ -154,7 +153,8 @@ class TestCdxGen(unittest.TestCase):
         expected_command = [command_prefix, self.artifact, "-o", expected_result_file]
         
         # Act
-        result = self.cdxgen._run_cdxgen(command_prefix, self.artifact, self.service_name)
+        with patch('builtins.print') as mock_print:
+            result = self.cdxgen._run_cdxgen(command_prefix, self.artifact, self.service_name)
 
         # Assert
         self.assertEqual(result, expected_result_file)
@@ -165,7 +165,7 @@ class TestCdxGen(unittest.TestCase):
             stderr=unittest.mock.ANY,
             text=True
         )
-        mock_logger.info.assert_called_once_with(f"SBOM generated and saved to: {expected_result_file}")
+        mock_print.assert_called_once_with(f"SBOM generated and saved to: {expected_result_file}")
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.logger')
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.subprocess.run')
