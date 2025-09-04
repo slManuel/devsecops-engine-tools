@@ -70,6 +70,7 @@ class GithubActions(DevopsPlatformGateway):
             "branch_name": BuildVariables.github_ref,
             "build_id": BuildVariables.github_run_number,
             "build_execution_id": BuildVariables.github_run_id,
+            "definition_name": BuildVariables.github_workflow,
             "commit_hash": BuildVariables.github_sha,
             "environment": ReleaseVariables.github_env,
             "release_id": ReleaseVariables.github_run_number,

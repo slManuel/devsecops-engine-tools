@@ -11,6 +11,7 @@ export default interface IScannerGateway {
     dependenciesToken?: string,
     xrayMode?: string,
     dependenciesTool?: string,
-    dependencyCheckDatabase?: string
+    dependencyCheckDatabase?: string,
+    scanLoader?: any
   ): Promise<ScannerRes>;
 }

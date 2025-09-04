@@ -93,6 +93,7 @@ class AzureDevops(DevopsPlatformGateway):
             "branch_name": BuildVariables.Build_SourceBranchName,
             "build_id": BuildVariables.Build_BuildNumber,
             "build_execution_id": BuildVariables.Build_BuildId,
+            "definition_name": BuildVariables.Build_DefinitionName,
             "commit_hash": BuildVariables.Build_SourceVersion,
             "environment": ReleaseVariables.Environment,
             "release_id": ReleaseVariables.Release_Releaseid,

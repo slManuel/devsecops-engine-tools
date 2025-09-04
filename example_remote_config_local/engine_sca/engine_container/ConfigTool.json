@@ -7,7 +7,9 @@
     },
     "TRIVY": {
         "TRIVY_VERSION": "0.62.1",
-        "SBOM_FORMAT": "cyclonedx"
+        "SBOM_FORMAT": "cyclonedx",
+        "VULN_TYPE": "all",
+        "IGNORE_UNFIXED": false
     },
     "SBOM": {
         "ENABLED": false,

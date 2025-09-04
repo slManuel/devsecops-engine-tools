@@ -1,0 +1,8 @@
+{
+  "label": "Modules Documentation",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "description": "This section contains comprehensive documentation for all modules in the DevSecOps Engine Tools system."
+  }
+}
