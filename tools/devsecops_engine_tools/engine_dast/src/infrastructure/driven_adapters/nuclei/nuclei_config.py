@@ -47,6 +47,9 @@ class NucleiConfig:
                 if "payload" in new_template_data["operation"]:
                     body = json_dumps(new_template_data["operation"]["payload"])
                     template_data["http"][0]["body"] = body
+                if "parm" in new_template_data["operation"]:
+                    parm_path = f"?{'&'.join([str(key) + '=' + str(value) for key, value in new_template_data['operation']['parm'].items()])}"
+                    template_data["http"][0]["path"] = f"{template_data['http'][0]['path']}{parm_path}"
 
         new_template_path = os.path.join(dest_folder, new_template_name)
 
