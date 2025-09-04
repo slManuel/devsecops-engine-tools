@@ -129,5 +129,8 @@
     },
     "REPORT_SONAR": {
         "ENABLED": true
+    },
+    "COPACETIC": {
+        "ENABLED": true
     }
 }

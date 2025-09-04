@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import re
+import os
 from devsecops_engine_tools.engine_core.src.domain.model.gateway.vulnerability_management_gateway import (
     VulnerabilityManagementGateway,
 )
@@ -114,6 +115,12 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                         vulnerability_management.dict_args["image_to_scan"],
                     )
                     tags.append(match.group(1) if match else None)
+                if vulnerability_management.dict_args["module"] == "engine_dast":
+                    dast_file_path = vulnerability_management.dict_args["dast_file_path"]
+                    tag_suffix = os.path.splitext(os.path.basename(dast_file_path))[0].replace('-', '_')
+                    tags = [
+                        f"{vulnerability_management.dict_args['module']}_{tag_suffix}"
+                    ]
 
                 use_cmdb = vulnerability_management.config_tool[
                     "VULNERABILITY_MANAGER"
@@ -841,3 +848,4 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
             return finding.file_path
         else:
             return finding.file_path
+        

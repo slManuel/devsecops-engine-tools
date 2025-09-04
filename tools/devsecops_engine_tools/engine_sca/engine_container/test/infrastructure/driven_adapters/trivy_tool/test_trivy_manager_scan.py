@@ -17,7 +17,7 @@ def test_scan_image_success(trivy_scan_instance):
     with patch("subprocess.run") as mock_run, patch(
         "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.logger.info"
     ) as mock_logger:
-        result = trivy_scan_instance.scan_image("prefix", "image_name", "result.json","base_image")
+        result = trivy_scan_instance.scan_image("prefix", "image_name", "result.json","base_image", "os,library")
 
         assert mock_logger.call_count == 1
         assert result == 'result.json'
@@ -29,7 +29,7 @@ def test_scan_image_exception(trivy_scan_instance):
         ) as mock_logger:
         mock_run.side_effect = Exception("custom error")
 
-        trivy_scan_instance.scan_image("prefix", "image_name", "result.json","base_image")
+        trivy_scan_instance.scan_image("prefix", "image_name", "result.json","base_image", "os,library")
 
         mock_logger.assert_called_with("Error during image scan of image_name: custom error")
 
@@ -92,9 +92,10 @@ def test_generate_sbom_success(mock_get_list_component, mock_subprocess_run):
             "SBOM_FORMAT": "json"
         }
     }
+    vuln_type = "os,library"
 
     # Llamar a la función
-    result = trivy_scan._generate_sbom(prefix, image_name, remoteconfig)
+    result = trivy_scan._generate_sbom(prefix, image_name, remoteconfig, vuln_type)
 
     # Verificar que se llamaron las funciones esperadas
     mock_subprocess_run.assert_called_once_with(
@@ -105,6 +106,8 @@ def test_generate_sbom_success(mock_get_list_component, mock_subprocess_run):
             "json",
             "--output",
             f"{image_name.replace('/', '_')}_SBOM.json",
+            "--pkg-types",
+            vuln_type,
             "--quiet",
             image_name,
         ],
@@ -134,9 +137,10 @@ def test_generate_sbom_failure(mock_logger, mock_subprocess_run):
             "SBOM_FORMAT": "json"
         }
     }
+    vuln_type = "os,library"
 
     # Llamar a la función y verificar que se lanza la excepción esperada
-    trivy_scan._generate_sbom(prefix, image_name, remoteconfig)
+    trivy_scan._generate_sbom(prefix, image_name, remoteconfig, vuln_type)
 
     mock_logger.error.assert_called_once_with("Error generating SBOM: Test exception")
 
@@ -151,8 +155,9 @@ def test_scan_image_compressed_file(mock_subprocess_run):
     image_name = "/path/to/image.tar.gz"
     result_file = "result.json"
     base_image = None
+    vuln_type = "os,library"
 
-    result = trivy_scan.scan_image(prefix, image_name, result_file, base_image, is_compressed_file=True)
+    result = trivy_scan.scan_image(prefix, image_name, result_file, base_image, vuln_type, is_compressed_file=True)
 
     assert result == result_file
     mock_subprocess_run.assert_called_once_with(
@@ -164,6 +169,8 @@ def test_scan_image_compressed_file(mock_subprocess_run):
             "json",
             "-o",
             result_file,
+            "--pkg-types",
+            vuln_type,
             "--quiet",
             "image",
             "--input",
@@ -186,8 +193,9 @@ def test_scan_image_regular_image(mock_subprocess_run):
     image_name = "nginx:latest"
     result_file = "result.json"
     base_image = None
+    vuln_type = "os,library"
 
-    result = trivy_scan.scan_image(prefix, image_name, result_file, base_image, is_compressed_file=False)
+    result = trivy_scan.scan_image(prefix, image_name, result_file, base_image, vuln_type, is_compressed_file=False)
 
     assert result == result_file
     mock_subprocess_run.assert_called_once_with(
@@ -199,6 +207,8 @@ def test_scan_image_regular_image(mock_subprocess_run):
             "json",
             "-o",
             result_file,
+            "--pkg-types",
+            vuln_type,
             "--quiet",
             "image",
             image_name,
@@ -225,8 +235,9 @@ def test_generate_sbom_compressed_file(mock_subprocess_run, mock_get_list_compon
             "SBOM_FORMAT": "json"
         }
     }
+    vuln_type = "os,library"
 
-    result = trivy_scan._generate_sbom(prefix, image_name, remoteconfig, is_compressed_file=True)
+    result = trivy_scan._generate_sbom(prefix, image_name, remoteconfig, vuln_type, is_compressed_file=True)
 
     mock_subprocess_run.assert_called_once_with(
         [
@@ -236,6 +247,8 @@ def test_generate_sbom_compressed_file(mock_subprocess_run, mock_get_list_compon
             "json",
             "--output",
             f"{image_name.replace('/', '_')}_SBOM.json",
+            "--pkg-types",
+            "os,library",
             "--quiet",
             "--input",
             image_name,
@@ -280,9 +293,9 @@ def test_run_tool_container_sca_compressed_file(mock_identify_os, mock_generate_
 
     mock_identify_os.assert_called_once_with("0.48.1")
     mock_scan_image.assert_called_once_with(
-        "trivy", "/path/to/image.tar.gz", "result.json", None, True
+        "trivy", "/path/to/image.tar.gz", "result.json", None, "os,library", False, True
     )
     mock_generate_sbom.assert_called_once_with(
-        "trivy", "/path/to/image.tar.gz", remoteconfig, True
+        "trivy", "/path/to/image.tar.gz", remoteconfig, "os,library", False, True
     )
     assert result == ("result.json", ["component1"])
