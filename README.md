@@ -128,7 +128,7 @@ For more information visit [here](https://github.com/bancolombia/devsecops-engin
     <td>Free</td>
   </tr>
   <tr>
-    <td rowspan="3">ENGINE_DEPENDENCIES</td>
+    <td rowspan="2">ENGINE_DEPENDENCIES</td>
     <td><a href="https://jfrog.com/help/r/get-started-with-the-jfrog-platform/jfrog-xray">XRAY</a></td>
     <td>Paid</td>
   </tr>
@@ -147,10 +147,10 @@ For more information visit [here](https://github.com/bancolombia/devsecops-engin
     <td>Free</td>
   </tr>
   <tr>
-    <td><a href="https://support.kiuwan.com/hc/en-us">KIUWAN</a></td>
-    <td>Paid</td>
-  </tr>
- 
+       <td><a href="https://support.kiuwan.com/hc/en-us">KIUWAN</a></td>
+       <td>Free</td>
+   </tr>
+  
 </table>
 
 ### Scan running sample (CLI) - Local
