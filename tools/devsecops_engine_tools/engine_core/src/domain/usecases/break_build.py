@@ -140,6 +140,7 @@ class BreakBuild:
             counts["high"] >= threshold.vulnerability.high or
             counts["medium"] >= threshold.vulnerability.medium or
             counts["low"] >= threshold.vulnerability.low):
+            
             print("Below are all vulnerabilities detected.")
             printer_table_gateway.print_table_findings(vulnerabilities_list)
             print(devops_platform_gateway.message(
