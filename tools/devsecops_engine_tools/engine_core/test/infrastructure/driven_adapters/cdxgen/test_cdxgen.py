@@ -155,7 +155,7 @@ class TestCdxGen(unittest.TestCase):
         # Act
         with patch('builtins.print') as mock_print:
             result = self.cdxgen._run_cdxgen(command_prefix, self.artifact, self.service_name)
-
+        
         # Assert
         self.assertEqual(result, expected_result_file)
         mock_subprocess.assert_called_once_with(

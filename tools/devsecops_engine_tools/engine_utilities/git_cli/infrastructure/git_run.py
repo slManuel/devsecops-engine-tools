@@ -37,7 +37,7 @@ class GitRun(GitGateway):
                 diff = subprocess.run(['git', 'diff', f'origin/{target_branch}..{source_branch}', '--name-only'], capture_output=True, text=True)
                 if diff.returncode == 0:
                     diff_files = diff.stdout.strip().split("\n")
-                    print("Pull Requests Associated Files: %s", diff_files)
+                    print("Pull Requests Associated Files:",diff_files)
                     return diff_files
                 return []
             base_compact_url = (
@@ -68,7 +68,7 @@ class GitRun(GitGateway):
                 diff = subprocess.run(['git', 'diff', '--name-only', f'{source_branch}..{target_branch}'], capture_output=True, text=True)
                 if diff:
                     diff_files = diff.stdout.strip().split("\n")
-                print("Pull Requests Associated Files:  %s", len(diff_files))
+                print("Pull Requests Associated Files:",len(diff_files))
                 return diff_files
         except Exception as e:
             logger.warning(f"Error getting files PullRequest: {e}")

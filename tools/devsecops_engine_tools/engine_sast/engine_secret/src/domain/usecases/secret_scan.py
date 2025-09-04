@@ -13,7 +13,6 @@ from devsecops_engine_tools.engine_utilities.git_cli.model.gateway.git_gateway i
     GitGateway
 )
 
-
 class SecretScan:
     def __init__(
         self,

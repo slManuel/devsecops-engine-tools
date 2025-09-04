@@ -424,7 +424,6 @@ class BreakBuild:
                 )
             print(f"Findings count: {len(report_list)}")
 
-
         else:
             print(
                 self.devops_platform_gateway.message(

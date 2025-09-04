@@ -92,7 +92,7 @@ class DockerImages(ImagesGateway):
                     specific_use_value = label_keys["specific_use"]
                     is_uso_especifico = labels.get("repository") == specific_use_value
                 if source_image and matching_image:
-                    logger.info(f"Base image for '{matching_image}' found: {source_image}")
+                    print(f"Base image for '{matching_image}' found: {source_image}")
                 elif matching_image:
                     logger.warning(f"Base image not found for '{matching_image}'.")
                 return source_image, is_uso_especifico
