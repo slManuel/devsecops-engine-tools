@@ -3,6 +3,10 @@ from devsecops_engine_tools.engine_core.src.domain.model.exclusions import Exclu
 from devsecops_engine_tools.engine_core.src.domain.model.threshold import Threshold
 from devsecops_engine_tools.engine_utilities.utils.utils import Utils
 
+from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
+from devsecops_engine_tools.engine_utilities import settings
+
+logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
 class SetInputCore:
     def __init__(self, remote_config, exclusions, pipeline_name, tool, stage):
@@ -15,7 +19,7 @@ class SetInputCore:
     def get_exclusions(self, exclusions_data, pipeline_name, tool, base_image):
         list_exclusions = []
         base_image_list = base_image[0][0] if base_image else None
-        print("The base image used is:", base_image_list)
+        logger.info("The base image used is: %s", base_image_list)
         for key, value in exclusions_data.items():
             if key not in {"All", pipeline_name} or not value.get(tool):
                 continue

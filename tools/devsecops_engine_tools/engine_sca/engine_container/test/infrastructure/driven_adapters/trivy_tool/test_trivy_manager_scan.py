@@ -15,11 +15,11 @@ def trivy_scan_instance():
 
 def test_scan_image_success(trivy_scan_instance):
     with patch("subprocess.run") as mock_run, patch(
-        "builtins.print"
-    ) as mock_print:
+        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.logger.info"
+    ) as mock_logger:
         result = trivy_scan_instance.scan_image("prefix", "image_name", "result.json","base_image")
 
-        assert mock_print.call_count == 1
+        assert mock_logger.call_count == 1
         assert result == 'result.json'
 
 

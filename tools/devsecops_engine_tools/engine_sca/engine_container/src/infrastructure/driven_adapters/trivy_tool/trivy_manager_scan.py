@@ -40,7 +40,7 @@ class TrivyScan(ToolGateway):
                 stderr=subprocess.PIPE,
                 text=True,
             )
-            print(f"The image {image_name} was scanned")
+            logger.info(f"The image {image_name} was scanned")
 
             return result_file
 
@@ -69,7 +69,7 @@ class TrivyScan(ToolGateway):
                 stderr=subprocess.PIPE,
                 text=True,
             )
-            print(f"SBOM generated and saved to: {result_sbom}")
+            logger.info(f"SBOM generated and saved to: {result_sbom}")
 
             return get_list_component(result_sbom, remoteconfig["TRIVY"]["SBOM_FORMAT"])
 

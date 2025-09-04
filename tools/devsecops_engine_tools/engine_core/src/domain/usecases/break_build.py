@@ -19,6 +19,10 @@ from collections import Counter
 from datetime import timedelta, datetime
 import pytz
 
+from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
+from devsecops_engine_tools.engine_utilities import settings
+
+logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
 @dataclass
 class BreakBuild:
@@ -141,7 +145,7 @@ class BreakBuild:
             counts["medium"] >= threshold.vulnerability.medium or
             counts["low"] >= threshold.vulnerability.low):
             
-            print("Below are all vulnerabilities detected.")
+            logger.info("Below are all vulnerabilities detected.")
             printer_table_gateway.print_table_findings(vulnerabilities_list)
             print(devops_platform_gateway.message(
                 "error",
@@ -159,7 +163,7 @@ class BreakBuild:
                 "found": [{"id": item.id, "severity": item.severity} for item in vulnerabilities_list],
             }
         else:
-            print("Below are all vulnerabilities detected.")
+            logger.info("Below are all vulnerabilities detected.")
             printer_table_gateway.print_table_findings(vulnerabilities_list)
             print(devops_platform_gateway.message(
                 "warning",
@@ -200,7 +204,7 @@ class BreakBuild:
         print()
 
         if compliances_list:
-            print("Below are all compliances issues detected.")
+            logger.info("Below are all compliances issues detected.")
             printer_table_gateway.print_table_findings(compliances_list)
             status = "succeeded"
             if counts["critical"] >= threshold.compliance.critical:
@@ -251,4 +255,4 @@ class BreakBuild:
             printer_table_gateway.print_table_exclusions(exclusions_list)
             
             for reason, total in Counter(x["reason"] for x in exclusions_list).items():
-                print("{0} findings count: {1}".format(reason, total))
+                logger.info("%s findings count: %d", reason, total)

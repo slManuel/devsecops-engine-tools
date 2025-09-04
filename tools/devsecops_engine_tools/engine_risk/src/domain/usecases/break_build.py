@@ -18,6 +18,11 @@ import math
 from datetime import datetime, timedelta
 import holidays
 
+from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
+from devsecops_engine_tools.engine_utilities import settings
+
+logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
+
 
 class BreakBuild:
     def __init__(
@@ -175,7 +180,7 @@ class BreakBuild:
             and not report.mitigated
         )
         all_findings_count = len(all_report)
-        print(
+        logger.info(
             f"Mitigated: {mitigated_count}   AllFindings: {all_findings_count}   BaseImage: {base_image_count}   NewFindings: {self.policy_excluded}   Transferred: {transferred_list_count}   WhiteList: {white_list_count}\n\n"
         )
         total = (
@@ -403,7 +408,7 @@ class BreakBuild:
                     break_build = True
                     report.reason = "Risk Score"
                     self.report_breaker.append(copy.deepcopy(report))
-            print("Below are open findings from Vulnerability Management Platform")
+            logger.info("Below are open findings from Vulnerability Management Platform")
             self.printer_table_gateway.print_table_report(
                 report_list,
             )
@@ -422,7 +427,7 @@ class BreakBuild:
                         f"There are no findings with risk score greater than {risk_score_threshold}",
                     )
                 )
-            print(f"Findings count: {len(report_list)}")
+            logger.info("Findings count: %d", len(report_list))
 
         else:
             print(
@@ -443,4 +448,4 @@ class BreakBuild:
             for reason, total in Counter(
                 map(lambda x: x["reason"], applied_exclusions)
             ).items():
-                print("{0} findings count: {1}".format(reason, total))
+                logger.info("%s findings count: %d", reason, total)

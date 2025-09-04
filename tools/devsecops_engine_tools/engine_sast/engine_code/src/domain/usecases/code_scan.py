@@ -121,7 +121,7 @@ class CodeScan:
             )
 
         else:
-            print("Tool skipped by DevSecOps policy")
+            logger.info("Tool skipped by DevSecOps policy")
             dict_args["send_metrics"] = "false"
             dict_args["use_vulnerability_management"] = "false"
 

@@ -133,7 +133,7 @@ class XrayScan(ToolGateway):
             if  not build_info_result.stdout:
                logger.error(f"Build info  NOT  successfully deployed to Jfrog Arifactory.: {build_info_result.stderr}")
                return None
-            print("##[info]Build info successfully deployed.")
+            logger.info("##[info]Build info successfully deployed.")
             #build-scan execution command
             command = [
                 prefix,

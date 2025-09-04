@@ -31,7 +31,6 @@ class FirstCsv(AddEpssGateway):
             else:
                 date -= datetime.timedelta(days=1)
                 attempts += 1
-        print("Could not find EPSS data from de last 2 days. Skipping add EPS data...")
         logger.error(
             "Could not find EPSS data from de last 2 days. Skipping add EPS data..."
         )

@@ -13,6 +13,11 @@ from devsecops_engine_tools.engine_utilities.git_cli.model.gateway.git_gateway i
     GitGateway
 )
 
+from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
+from devsecops_engine_tools.engine_utilities import settings
+
+logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
+
 class SecretScan:
     def __init__(
         self,
@@ -64,7 +69,7 @@ class SecretScan:
                 self.devops_platform_gateway.get_variable("path_directory")
                 )
         else:
-            print("Tool skipped by DevSecOps policy")
+            logger.info("Tool skipped by DevSecOps policy")
             dict_args["send_metrics"] = "false"
             dict_args["use_vulnerability_management"] = "false"
         return finding_list, file_path_findings

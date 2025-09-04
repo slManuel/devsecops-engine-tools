@@ -96,7 +96,7 @@ def init_engine_dependencies(
         else:
             logger.error(f"Path {to_scan} does not exist")
     else:
-        print("Tool skipped by DevSecOps policy")
+        logger.info("Tool skipped by DevSecOps policy")
         dict_args["send_metrics"] = "false"
         dict_args["use_vulnerability_management"] = "false"
 

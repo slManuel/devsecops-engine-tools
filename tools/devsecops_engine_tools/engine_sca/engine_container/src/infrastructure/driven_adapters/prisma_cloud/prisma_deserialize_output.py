@@ -9,6 +9,10 @@ from datetime import datetime
 from dataclasses import dataclass
 import json
 
+from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
+from devsecops_engine_tools.engine_utilities import settings
+
+logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
 @dataclass
 class PrismaDeserealizator(DeseralizatorGateway):
@@ -32,7 +36,7 @@ class PrismaDeserealizator(DeseralizatorGateway):
             json_data = json.loads(image_object)
             console_url = json_data.get("consoleURL", False)
             if console_url:
-                print(f"Console URL: {console_url}")
+                logger.info(f"Console URL: {console_url}")
             vulnerabilities_data = (
                 json_data["results"][0]["vulnerabilities"]
                 if "vulnerabilities" in json_data["results"][0]

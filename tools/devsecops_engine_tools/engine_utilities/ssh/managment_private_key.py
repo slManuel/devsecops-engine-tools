@@ -2,6 +2,10 @@ import os
 import pexpect
 import base64
 
+from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
+from devsecops_engine_tools.engine_utilities import settings
+
+logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
 def decode_base64(secret_data):
     return base64.b64decode(secret_data).decode("utf-8")
@@ -22,7 +26,7 @@ def config_knowns_hosts(host, ssh_key):
             with open(known_hosts_file_path, "a") as known_hosts_file:
                 known_hosts_file.write(line_to_add)
     except Exception as e:
-        print(f"An error ocurred while configuring file: {e}")
+        logger.error(f"An error ocurred while configuring file: {e}")
 
 
 def create_ssh_private_file(ssh_key_file_path, ssh_key_content):
@@ -33,7 +37,7 @@ def create_ssh_private_file(ssh_key_file_path, ssh_key_content):
 
         os.chmod(ssh_key_file_path, permisos)
     except Exception as e:
-        print(f"An error ocurred creating file: {e}")
+        logger.error(f"An error ocurred creating file: {e}")
 
 
 def add_ssh_private_key(ssh_key_file_path, ssh_key_password):
@@ -63,4 +67,4 @@ def add_ssh_private_key(ssh_key_file_path, ssh_key_password):
 
         return agent_env
     except Exception as e:
-        print(f"An error ocurred adding private key: {e}")
+        logger.error(f"An error ocurred adding private key: {e}")

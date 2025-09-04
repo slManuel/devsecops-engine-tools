@@ -91,7 +91,7 @@ class PrismaCloudManagerScan(ToolGateway):
                 encoding="utf-8",
                 errors="replace",
             )
-            print(f"The image {image_name} was scanned")
+            logger.info(f"The image {image_name} was scanned")
             return result_file
 
         except subprocess.CalledProcessError as e:
@@ -139,7 +139,7 @@ class PrismaCloudManagerScan(ToolGateway):
                 json_data = json.loads(image_object)
 
             if not json_data["results"]:
-                print("No results found in the scan, SBOM not generated")
+                logger.info("No results found in the scan, SBOM not generated")
                 return None
 
             response = requests.get(
@@ -156,7 +156,7 @@ class PrismaCloudManagerScan(ToolGateway):
             with open(result_sbom, "wb") as file:
                 file.write(response.content)
             
-            print(f"SBOM generated and saved to: {result_sbom}")
+            logger.info(f"SBOM generated and saved to: {result_sbom}")
 
             return get_list_component(result_sbom, remoteconfig["PRISMA_CLOUD"]["SBOM_FORMAT"])
         except Exception as e:

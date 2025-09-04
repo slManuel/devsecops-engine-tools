@@ -74,7 +74,7 @@ class CdxGen(SbomManagerGateway):
                 stderr=subprocess.PIPE,
                 text=True,
             )
-            print(f"SBOM generated and saved to: {result_file}")
+            logger.info(f"SBOM generated and saved to: {result_file}")
             return result_file
         except Exception as e:
             logger.error(f"Error running cdxgen: {e}")

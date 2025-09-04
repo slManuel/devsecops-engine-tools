@@ -23,9 +23,9 @@ class DockerImages(ImagesGateway):
                     break
 
             if matching_image:
-                print("ID matching image:", matching_image.id)
-                print("Tag matching image:", matching_image.tags)
-                print("Created date matching image:", matching_image.attrs["Created"])
+                logger.info("ID matching image: %s", matching_image.id)
+                logger.info("Tag matching image: %s", matching_image.tags)
+                logger.info("Created date matching image: %s", matching_image.attrs["Created"])
                 return matching_image
 
         except Exception as e:

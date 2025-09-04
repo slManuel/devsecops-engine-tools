@@ -59,7 +59,7 @@ class GitleaksTool(ToolGateway):
             with open(file_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         else:
-            print(f"File {file_path} does not exist")
+            logger.info(f"File {file_path} does not exist")
             return []
 
     def _create_report(self, output_file, combined_data):        
