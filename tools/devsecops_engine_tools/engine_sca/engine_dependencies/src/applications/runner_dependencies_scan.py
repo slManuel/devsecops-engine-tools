@@ -13,8 +13,8 @@ from devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.dr
 from devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan import (
     TrivyScanSBOM,
 )
-from devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.driven_adapters.trivy_tool.trivy_deserialize_output import (
-    TrivyDeserializatorSBOM,
+from devsecops_engine_tools.engine_utilities.trivy_utils.infrastructure.driven_adapters.trivy_deserialize_output import (
+    TrivyDeserializator,
 )
 from devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool import (
     init_engine_dependencies,
@@ -38,7 +38,7 @@ def runner_engine_dependencies(
             },
             "TRIVY": {
                 "tool_run": TrivyScanSBOM,
-                "tool_deserializator": TrivyDeserializatorSBOM,
+                "tool_deserializator": TrivyDeserializator,
                 "tool_sbom": sbom_tool_gateway
             }
         }
