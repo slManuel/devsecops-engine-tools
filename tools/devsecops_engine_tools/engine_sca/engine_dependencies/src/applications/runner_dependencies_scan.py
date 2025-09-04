@@ -10,6 +10,12 @@ from devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.dr
 from devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.driven_adapters.dependency_check.dependency_check_deserialize import (
     DependencyCheckDeserialize,
 )
+from devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan import (
+    TrivyScanSBOM,
+)
+from devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.driven_adapters.trivy_tool.trivy_deserialize_output import (
+    TrivyDeserializatorSBOM,
+)
 from devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool import (
     init_engine_dependencies,
 )
@@ -30,6 +36,11 @@ def runner_engine_dependencies(
                 "tool_deserializator": DependencyCheckDeserialize,
                 "tool_sbom": sbom_tool_gateway
             },
+            "TRIVY": {
+                "tool_run": TrivyScanSBOM,
+                "tool_deserializator": TrivyDeserializatorSBOM,
+                "tool_sbom": sbom_tool_gateway
+            }
         }
 
         selected_tool = config_tool["ENGINE_DEPENDENCIES"]["TOOL"]
