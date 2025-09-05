@@ -121,7 +121,7 @@ class CmdbRestConsumer:
 
         data = self.get_nested_data(response, response_format)
         data_map = self.mapping_cmdb(data)
-        logger.info(data_map)
+        logger.debug(data_map)
         cmdb_object = Cmdb.from_dict(data_map)
         cmdb_object.codigo_app = code_app
         return cmdb_object

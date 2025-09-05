@@ -98,7 +98,7 @@ class BreakBuild:
                             else item.id
                         ),
                         "severity": item.severity,
-                        "risk_score": item.risk_score,
+                        "risk_score": str(item.risk_score),
                         "reason": item.reason,
                     },
                     self.report_breaker,

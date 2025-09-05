@@ -126,6 +126,8 @@ Configuration of the driven adapters in the main layer and management of on/off 
     "METRICS_MANAGER": {
         "AWS": {
             "BUCKET": "",
+            "TYPE_FORMAT_BUCKET_FILE": "parquet|json",
+            "PATH_BUCKET": "engine_tools",
             "USE_ROLE": false,
             "ROLE_ARN": "",
             "REGION_NAME": ""
