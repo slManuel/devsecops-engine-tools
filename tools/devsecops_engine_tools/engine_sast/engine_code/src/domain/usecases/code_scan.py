@@ -1,4 +1,5 @@
 import re
+from typing import Any, Dict, List, Tuple
 from devsecops_engine_tools.engine_sast.engine_code.src.domain.model.gateways.tool_gateway import (
     ToolGateway,
 )
@@ -33,9 +34,9 @@ class CodeScan:
         self.remote_config_source_gateway = remote_config_source_gateway
         self.git_gateway = git_gateway
 
-    def set_config_tool(self, dict_args):
+    def set_config_tool(self, dict_args: Dict[str, Any], config_tool_path: str):
         init_config_tool = self.remote_config_source_gateway.get_remote_config(
-            dict_args["remote_config_repo"], "engine_sast/engine_code/ConfigTool.json", dict_args["remote_config_branch"]
+            dict_args["remote_config_repo"], config_tool_path, dict_args["remote_config_branch"]
         )
         scope_pipeline = self.devops_platform_gateway.get_variable("pipeline_name")
         return ConfigTool(json_data=init_config_tool, scope=scope_pipeline)
@@ -88,44 +89,66 @@ class CodeScan:
                 return True
         return False
 
-    def process(self, dict_args, tool):
-        config_tool = self.set_config_tool(dict_args)
+    def _get_config_tool_and_exclusions_data(self, dict_args, tool) -> Tuple[Dict[str, Any], Dict[str, str]]:
+        
+        """
+            Get the information related to configuracion and exclusiones for the selected tool.
+            
+            Parameters:
+                dict_args: Dictionary with properties setting up from the extension.
+                tool: String name of the tool that will be used to run scan.    
+
+            Returns:
+                config_tool: Dictionary with the configuration of the tool.
+                excusions_data: Dictionary with the exclusions configured for an specific tool and pipelines.
+        """
+        logger.info("Getting kiuwan config tool and exclusions...")
+        config_tool = self.set_config_tool(dict_args, "engine_sast/engine_code/ConfigTool.json")
         exclusions_data = self.remote_config_source_gateway.get_remote_config(
-            dict_args["remote_config_repo"], "engine_sast/engine_code/Exclusions.json"
+            dict_args["remote_config_repo"], "engine_sast/engine_code/Exclusions.json", dict_args["remote_config_branch"]
         )
-        list_exclusions, skip_tool = self.get_exclusions(tool, exclusions_data)
-        findings_list, path_file_results = [], ""
-
-        if not skip_tool:
-            pull_request_files = []
-            if not dict_args["folder_path"]:
-                pull_request_files = self.get_pull_request_files(
-                    config_tool.target_branches
-                )
-                pull_request_files = [
-                    pf
-                    for pf in pull_request_files
-                    if not self.apply_exclude_path(
-                        config_tool.exclude_folder,
-                        config_tool.ignore_search_pattern,
-                        pf,
-                    )
-                ]
-
-            findings_list, path_file_results = self.tool_gateway.run_tool(
-                dict_args["folder_path"],
-                pull_request_files,
-                self.devops_platform_gateway.get_variable("path_directory"),
-                self.devops_platform_gateway.get_variable("repository"),
-                config_tool,
+        return config_tool, exclusions_data
+    
+    def _get_filtered_pr_files(self, dict_args: Dict[str,str], config_tool: Dict[str, Any]) -> List[str]:
+        """
+        Retrieve and filter pull request files based on exclusion rules.
+        
+        Parameters:
+            config_tool: Configuration dictionary for the SAST tool.
+        
+        Returns:
+            List of filtered pull request file paths.
+        """
+        pull_request_files = []
+        if not dict_args["folder_path"]:
+            pull_request_files = self.get_pull_request_files(
+                config_tool.target_branches
             )
-
-        else:
-            print("Tool skipped by DevSecOps policy")
-            dict_args["send_metrics"] = "false"
-            dict_args["use_vulnerability_management"] = "false"
-
-        input_core = InputCore(
+            pull_request_files = [
+                pf
+                for pf in pull_request_files
+                if not self.apply_exclude_path(
+                    config_tool.exclude_folder,
+                    config_tool.ignore_search_pattern,
+                    pf,
+                )
+            ]
+        return pull_request_files
+    
+    def _create_input_core(self, list_exclusions: List[str], config_tool: Dict[str, Any], exclusions_data: Dict[str, str], path_file_results: str) -> 'InputCore':
+        """
+        Create an InputCore object with pipeline and tool configuration.
+        
+        Parameters:
+            list_exclusions: List of excluded files or patterns.
+            config_tool: Configuration dictionary for the SAST tool.
+            exclusions_data: Exclusion data for the tool.
+            path_file_results: Path to the results file.
+        
+        Returns:
+            InputCore object with pipeline and tool configuration.
+        """
+        return InputCore(
             totalized_exclusions=list_exclusions,
             threshold_defined=Utils.update_threshold(
                 self,
@@ -137,9 +160,49 @@ class CodeScan:
             custom_message_break_build=config_tool.message_info_engine_code,
             scope_pipeline=config_tool.scope_pipeline,
             scope_service=config_tool.scope_pipeline,
-            stage_pipeline=self.devops_platform_gateway.get_variable(
-                "stage"
-            ).capitalize(),
+            stage_pipeline=self.devops_platform_gateway.get_variable("stage").capitalize(),
         )
+    
+    def process(self, dict_args, tool):
+        
+        """
+        This function process the request to a new scan code. 
+        
+        Parameters:
+            dict_args: Dictionary with properties setting up from the extension.
+            tool: String name of the tool that will be used to run scan.    
+
+        Returns:
+            findings_list: List with the defects founded during analysis.
+            input_core: InputCore instance with properties related to scan proccess.
+        """
+        
+        # Retrieve the config tool and exclusions data for the tool used during scan
+        config_tool, exclusions_data = self._get_config_tool_and_exclusions_data(
+            dict_args, tool
+        )
+        
+        list_exclusions, skip_tool = self.get_exclusions(tool, exclusions_data)
+        findings_list, path_file_results = [], ""
+
+        if not skip_tool:
+            # Retrieve the pull requests files
+            # If folder path was not added in dict args, the pr files will be downloaded excluding the paths excluded 
+            pull_request_files = self._get_filtered_pr_files(dict_args, config_tool)
+
+            findings_list, path_file_results = self.tool_gateway.run_tool(
+                dict_args["folder_path"],
+                pull_request_files,
+                self.devops_platform_gateway.get_variable("path_directory"),
+                dict_args.get("repo_name", False) if dict_args.get("repo_name", False) else self.devops_platform_gateway.get_variable("repository"),
+                config_tool,
+            )
+
+        else:
+            print("Tool skipped by DevSecOps policy")
+            dict_args["send_metrics"] = "false"
+            dict_args["use_vulnerability_management"] = "false"
+
+        input_core = self._create_input_core(list_exclusions, config_tool, exclusions_data, path_file_results)
 
         return findings_list, input_core
