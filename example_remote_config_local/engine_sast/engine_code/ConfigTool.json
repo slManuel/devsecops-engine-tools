@@ -1,22 +1,50 @@
 {
-    "IGNORE_SEARCH_PATTERN": [
-      ".git"
-    ],
-    "EXCLUDE_FOLDER": [],
-    "MESSAGE_INFO_ENGINE_CODE": "engine_code run successfully",
-    "THRESHOLD": {
-        "VULNERABILITY": {
-            "Critical": 999,
-            "High": 999,
-            "Medium": 999,
-            "Low": 999
-        },
-        "COMPLIANCE": {
-            "Critical": 0
-        }
+  "IGNORE_SEARCH_PATTERN": [
+    ".git"
+  ],
+  "EXCLUDE_FOLDER": [],
+  "MESSAGE_INFO_ENGINE_CODE": "test message",
+  "THRESHOLD": {
+    "VULNERABILITY": {
+      "Critical": 999,
+      "High": 999,
+      "Medium": 999,
+      "Low": 999
     },
-    "BEARER": {
-      "NUMBER_THREADS": 4
+    "COMPLIANCE": {
+      "Critical": 999
+    }
+  },
+  "TARGET_BRANCHES": [
+    "trunk",
+    "develop"
+  ],
+  "BEARER": {
+    "NUMBER_THREADS": 4
+  },
+  "KIUWAN": {
+    "SERVER": {
+      "BASE_URL": "https://api.kiuwan.com",
+      "USER": "user",
+      "DOMAIN_ID": "12345678910111213141516171819"
     },
-    "TARGET_BRANCHES": ["trunk", "develop"]
+    "MODELOS": {
+      "Maven": "Reglas Java",
+      "Gradle": "Reglas Java",
+      "Npm": "Reglas Node",
+      "Python": "Reglas Python",
+      "Angular": "Reglas Angular",
+      ".Net": "ReglasNet",
+      "PHP": "PHP Symfony",
+      "General": "CQM",
+      "OWASP": "OWASP-benchmark"
+    },
+    "SEVERITY": {
+      "Very High": "critical",
+      "High": "high",
+      "Normal": "medium",
+      "Low": "low",
+      "Very Low": "low"
+    }
+  }
 }
