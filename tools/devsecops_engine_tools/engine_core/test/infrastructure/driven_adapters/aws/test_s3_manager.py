@@ -30,7 +30,8 @@ class S3ManagerTests(unittest.TestCase):
                     "ROLE_ARN": "arn:aws:iam::123456789012:role/MyRole",
                     "REGION_NAME": "us-west-2",
                     "BUCKET": "my-bucket",
-                    "TYPE_FORMAT_BUCKET_FILE": "json"
+                    "TYPE_FORMAT_BUCKET_FILE": "json",
+                    "PATH_BUCKET": "engine_tools"
                 }
             }
         }
@@ -67,7 +68,8 @@ class S3ManagerTests(unittest.TestCase):
                     "ROLE_ARN": "arn:aws:iam::123456789012:role/MyRole",
                     "REGION_NAME": "us-ueast-2",
                     "BUCKET": "my-bucket",
-                    "TYPE_FORMAT_BUCKET_FILE": "json"
+                    "TYPE_FORMAT_BUCKET_FILE": "json",
+                    "PATH_BUCKET": "engine_tools"
                 }
             }
         }
@@ -109,7 +111,8 @@ class S3ManagerTests(unittest.TestCase):
                     "ROLE_ARN": "arn:aws:iam::123456789012:role/MyRole",
                     "REGION_NAME": "us-west-2",
                     "BUCKET": "my-bucket",
-                    "TYPE_FORMAT_BUCKET_FILE": "parquet"
+                    "TYPE_FORMAT_BUCKET_FILE": "parquet",
+                    "PATH_BUCKET": "engine_tools_parquet"
                 }
             }
         }
@@ -155,7 +158,8 @@ class S3ManagerTests(unittest.TestCase):
                     "ROLE_ARN": "arn:aws:iam::123456789012:role/MyRole",
                     "REGION_NAME": "us-west-2",
                     "BUCKET": "my-bucket",
-                    "TYPE_FORMAT_BUCKET_FILE": "json"
+                    "TYPE_FORMAT_BUCKET_FILE": "json",
+                    "PATH_BUCKET": "engine_tools"
                 }
             }
         }
@@ -191,7 +195,8 @@ class S3ManagerTests(unittest.TestCase):
                     "ROLE_ARN": "arn:aws:iam::123456789012:role/MyRole",
                     "REGION_NAME": "us-west-2",
                     "BUCKET": "my-bucket",
-                    "TYPE_FORMAT_BUCKET_FILE": "csv"
+                    "TYPE_FORMAT_BUCKET_FILE": "csv",
+                    "PATH_BUCKET": "engine_tools"
                 }
             }
         }

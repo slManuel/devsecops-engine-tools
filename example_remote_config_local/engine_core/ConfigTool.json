@@ -77,6 +77,7 @@
         "AWS": {
             "BUCKET": "",
             "TYPE_FORMAT_BUCKET_FILE": "parquet|json",
+            "PATH_BUCKET": "engine_tools",
             "USE_ROLE": false,
             "ROLE_ARN": "",
             "REGION_NAME": ""
