@@ -67,7 +67,7 @@ class GitleaksTool(ToolGateway):
             json.dump(combined_data, f, ensure_ascii=False, indent=4)
 
     def _check_path(self, path, excluded_paths):
-        parts = path.split(os.sep)
+        parts = [p for p in path.replace('\\', '/').split('/') if p]
         for part in parts:
             if part in excluded_paths: return True
         return False
