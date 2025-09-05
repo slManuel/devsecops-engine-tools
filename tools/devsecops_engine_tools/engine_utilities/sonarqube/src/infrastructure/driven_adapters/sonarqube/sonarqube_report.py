@@ -35,14 +35,12 @@ class SonarAdapter(SonarGateway):
                 file_content = f.read()
                 print(f"[SQ] Parse Task report file:\n{file_content}")
                 if not file_content or len(file_content) <= 0:
-                    print("[SQ] Error reading file")
                     logger.warning("[SQ] Error reading file")
                     return None
                 try:
                     settings = self.create_task_report_from_string(file_content)
                     return settings.get("projectKey")
                 except Exception as err:
-                    print(f"[SQ] Parse Task report error: {err}")
                     logger.warning(f"[SQ] Parse Task report error: {err}")
                     return None
         except Exception as err:

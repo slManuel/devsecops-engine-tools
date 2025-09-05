@@ -64,7 +64,7 @@ class GenericOauth(AuthenticationGateway):
                 result = response.json()["access_token"]
                 return ("Authorization",f"Bearer {result}")
             else:
-                print(
+                logger.warning(
                     "OAuth: Can't obtain access token"
                     "token Unknown status "
                     "code {0}: -> {1}".format(response.status_code, response.text)

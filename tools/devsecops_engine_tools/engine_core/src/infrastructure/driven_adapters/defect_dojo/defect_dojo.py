@@ -583,6 +583,9 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
             response = Component.create_component(
                 session=session_manager, request=request
             )
+            logger.debug(
+                f"Component created: {response.name} - {response.version} found with id: {response.id}"
+            )
 
     def _get_session_manager(self, dict_args, secret_tool, config_tool):
         token_dd = dict_args.get("token_vulnerability_management") or secret_tool.get(

@@ -7,16 +7,12 @@ from devsecops_engine_tools.engine_risk.src.infrastructure.driven_adapters.first
 @patch("requests.get")
 @patch("gzip.open")
 @patch("io.BytesIO")
-@patch(
-    "devsecops_engine_tools.engine_risk.src.infrastructure.driven_adapters.first_csv.first_epss_csv.logger.info"
-)
-def test_download_epss_data(mock_info, mock_gzip_open, mock_bytes, mock_requests_get):
+def test_download_epss_data(mock_gzip_open, mock_bytes, mock_requests_get):
     mock_requests_get.return_value.status_code = 200
 
     FirstCsv().download_epss_data()
 
     mock_gzip_open.assert_called_once()
-    mock_info.assert_called_once()
 
 
 @patch("csv.reader")

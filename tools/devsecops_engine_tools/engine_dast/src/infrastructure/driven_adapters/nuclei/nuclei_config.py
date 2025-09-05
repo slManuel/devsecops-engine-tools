@@ -33,9 +33,12 @@ class NucleiConfig:
         with open(template_name, "r") as template_file:  # abrir  archivo
             template_data = self.yaml.load(template_file)
             if "http" in template_data:
+                parm_path = ""
+                if "parm" in new_template_data["operation"]:
+                    parm_path = f"?{'&'.join([str(key) + '=' + str(value) for key, value in new_template_data['operation']['parm'].items()])}" 
                 template_data["http"][0]["method"] = new_template_data["operation"]["method"]
                 template_data["http"][0]["path"] = [
-                    "{{BaseURL}}" + new_template_data["operation"]["path"]
+                    "{{BaseURL}}" + new_template_data["operation"]["path"] + parm_path
                 ]
                 if "headers" in new_template_data["operation"]:
                     if "headers" not in template_data["http"][0]:

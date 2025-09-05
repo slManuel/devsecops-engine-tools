@@ -90,7 +90,6 @@ class ReportSonar:
         if get_components:
             project_keys = [f"{pipeline_name}_{component}" for component in get_components]
             print(f"Multiple project keys detected: {project_keys}")
-            logger.info(f"Multiple project keys detected: {project_keys}")
         else:
             project_keys = self.sonar_gateway.get_project_keys(pipeline_name)
 
