@@ -102,7 +102,7 @@ class CodeScan:
                 config_tool: Dictionary with the configuration of the tool.
                 excusions_data: Dictionary with the exclusions configured for an specific tool and pipelines.
         """
-        logger.info("Getting kiuwan config tool and exclusions...")
+        logger.info("Getting engine_code config tool and exclusions...")
         config_tool = self.set_config_tool(dict_args, "engine_sast/engine_code/ConfigTool.json")
         exclusions_data = self.remote_config_source_gateway.get_remote_config(
             dict_args["remote_config_repo"], "engine_sast/engine_code/Exclusions.json", dict_args["remote_config_branch"]
