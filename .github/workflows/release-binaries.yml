@@ -2,10 +2,15 @@ name: Build and Release Binaries
 
 on:
   pull_request:
-    types: [closed]
-    branches: [trunk]
-  push:
-    branches: [trunk]
+    branches:
+      - trunk
+    paths-ignore:
+      - 'ide_extension/**'
+      - '.github/workflows/intellij-build.yml'
+      - '.github/workflows/intellij-release.yml'
+      - '.github/workflows/intellij-updater.yml'
+      - '.github/workflows/vscode-build.yml'
+      - '.github/workflows/vscode-release.yml'
   release:
     types: [published]
 
@@ -30,13 +35,16 @@ jobs:
     env:
       PYTHON_VERSION: "3.10"
     steps:
+      - uses: actions/checkout@v4
+
       - name: Checkout Repository
+        if: github.event.action == 'published'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: ${{ github.event.release.tag_name || github.ref_name }}
-
+      
       # Linux: Build inside Docker container with Ubuntu 20.04
       - name: Build binary on Ubuntu 20.04 container
         if: matrix.name == 'linux'
