@@ -2,8 +2,7 @@ name: Build and Release Binaries
 
 on:
   pull_request:
-    branches:
-      - trunk
+    branches: [trunk]
     paths-ignore:
       - 'ide_extension/**'
       - '.github/workflows/intellij-build.yml'
