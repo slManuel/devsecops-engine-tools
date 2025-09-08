@@ -4,10 +4,6 @@ on:
   pull_request:
     types: [closed]
     branches: [trunk]
-  push:
-    branches:
-      - trunk
-      - feature/*
   release:
     types: [published]
 
@@ -85,19 +81,12 @@ jobs:
 
       # Zip artifacts
       - name: Zip Artifact (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/heads/trunk')
         run: tar.exe -a -c -f devsecops-engine-tools-${{ matrix.name }}.zip dist\devsecops-engine-tools${{ matrix.suffix }}
 
       - name: Zip Artifact (Linux/macOS)
-        if: matrix.os != 'windows-latest'
+        if: matrix.os != 'windows-latest' && startsWith(github.ref, 'refs/heads/trunk')
         run: zip devsecops-engine-tools-${{ matrix.name }}.zip dist/devsecops-engine-tools${{ matrix.suffix }}
-
-      - name: Upload Artifact
-        if: startsWith(github.ref, 'refs/heads/trunk')
-        uses: actions/upload-artifact@v4
-        with:
-          name: devsecops-engine-tools-${{ matrix.os }}
-          path: dist/devsecops-engine-tools*
 
       - name: Upload Release Asset
         if: github.event_name == 'release' && github.event.action == 'published'
