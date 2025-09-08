@@ -80,11 +80,11 @@ jobs:
 
       # Zip artifacts
       - name: Zip Artifact (Windows)
-        if: matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/heads/trunk')
+        if: matrix.os == 'windows-latest' && github.event.action == 'published'
         run: tar.exe -a -c -f devsecops-engine-tools-${{ matrix.name }}.zip dist\devsecops-engine-tools${{ matrix.suffix }}
 
       - name: Zip Artifact (Linux/macOS)
-        if: matrix.os != 'windows-latest' && startsWith(github.ref, 'refs/heads/trunk')
+        if: matrix.os != 'windows-latest' && github.event.action == 'published'
         run: zip devsecops-engine-tools-${{ matrix.name }}.zip dist/devsecops-engine-tools${{ matrix.suffix }}
 
       - name: Upload Release Asset
