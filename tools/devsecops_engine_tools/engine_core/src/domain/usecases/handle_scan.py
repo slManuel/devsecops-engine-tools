@@ -194,7 +194,10 @@ class HandleScan:
                         )
                     )
 
-                    if sbom_components:
+                    if sbom_components and any(
+                        branch in str(self.devops_platform_gateway.get_variable("branch_tag"))
+                        for branch in config_tool.get("VULNERABILITY_MANAGER", {}).get("BRANCH_FILTER", [])
+                    ):
                         self.vulnerability_management.send_sbom_components(
                             sbom_components,
                             input_core.scope_pipeline,
