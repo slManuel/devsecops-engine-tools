@@ -200,6 +200,7 @@ export class IacScanUseCase implements IIacScanUseCase {
           outputChannel.append(`✅ Variable ${variableName} replaced in file ${file}\n`);
         } else {
           outputChannel.append(`⚠️ Variable ${variableName} not found in library for file ${file}\n`);
+          replacedFile = replacedFile + "\n" + line;
         }
       } else {
         replacedFile = replacedFile + "\n" + line;
