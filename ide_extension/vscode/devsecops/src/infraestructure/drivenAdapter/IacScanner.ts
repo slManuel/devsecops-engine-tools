@@ -15,7 +15,6 @@ export class IacScanner implements IScannerGateway {
     toolVersion: string,
     dockerPath: string
   ): Promise<ScannerRes> {
-    outputChannel.clear();
     outputChannel.show();
     return new Promise((resolve, _reject) => {
       let scanResult: boolean = false;

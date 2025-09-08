@@ -4,7 +4,7 @@
   "displayName": "DevSecOps Engine Tools",
   "publisher": "GrupoBancolombiaOSPO",
   "description": "",
-  "version": "1.7.0",
+  "version": "1.9.0",
   "engines": {
     "vscode": "^1.95.0"
   },
@@ -339,7 +339,6 @@
   "dependencies": {
     "docker-cli-js": "^2.10.0",
     "generator-code": "^1.11.9",
-    "keytar": "^7.9.0",
     "lodash": "^4.17.21"
   }
 }
