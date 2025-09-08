@@ -88,7 +88,9 @@ class HandleRisk:
 
     def _exclude_services(self, dict_args, pipeline_name, service_list):
         risk_exclusions = self.remote_config_source_gateway.get_remote_config(
-            dict_args["remote_config_repo"], "engine_risk/Exclusions.json", dict_args["remote_config_branch"]
+            dict_args["remote_config_repo"],
+            "engine_risk/Exclusions.json",
+            dict_args["remote_config_branch"],
         )
         if (
             pipeline_name in risk_exclusions
@@ -115,9 +117,6 @@ class HandleRisk:
             print(
                 f"Services to exclude: {[engagement.name for engagement in excluded_engagements]}"
             )
-            logger.info(
-                f"Services to exclude: {[engagement.name for engagement in excluded_engagements]}"
-            )
 
             return remaining_engagements
         return service_list
@@ -131,12 +130,17 @@ class HandleRisk:
 
     def process(self, dict_args: any, remote_config: any):
         risk_config = self.remote_config_source_gateway.get_remote_config(
-            dict_args["remote_config_repo"], "engine_risk/ConfigTool.json", dict_args["remote_config_branch"]
+            dict_args["remote_config_repo"],
+            "engine_risk/ConfigTool.json",
+            dict_args["remote_config_branch"],
         )
         risk_exclusions = self.remote_config_source_gateway.get_remote_config(
-            dict_args["remote_config_repo"], "engine_risk/Exclusions.json", dict_args["remote_config_branch"]
+            dict_args["remote_config_repo"],
+            "engine_risk/Exclusions.json",
+            dict_args["remote_config_branch"],
         )
         pipeline_name = self.devops_platform_gateway.get_variable("pipeline_name")
+        definition_name = self.devops_platform_gateway.get_variable("definition_name")
 
         input_core = InputCore(
             [],
@@ -204,13 +208,22 @@ class HandleRisk:
                         service_list += [engagement]
                         break
 
+        if definition_name and definition_name.lower() not in [
+            service.name.lower() for service in service_list
+        ]:
+            build_engagements = self.vulnerability_management.get_active_engagements(
+                definition_name, dict_args, secret_tool, remote_config
+            )
+            for build_engagement in build_engagements:
+                if build_engagement.name.lower() == definition_name.lower():
+                    service_list += [build_engagement]
+
         new_service_list = self._exclude_services(
             dict_args, pipeline_name, service_list
         )
 
         for engagement in new_service_list:
-            print(f"Service to analyze: {engagement.name}, URL: {engagement.vm_url}")
-            logger.info(
+            print(
                 f"Service to analyze: {engagement.name}, URL: {engagement.vm_url}"
             )
 

@@ -123,7 +123,7 @@ class ImportScanRestConsumer:
                 logger.error(response.json())
                 logger.error(response)
                 raise ApiError(response.json())
-            logger.info(f"Sucessfull {response}")
+            logger.debug(f"Sucessfull {response}")
             response = ImportScanRequest.from_dict(response.json())
         except Exception as e:
             logger.error(f"from dict import Scan: {response.json()}")

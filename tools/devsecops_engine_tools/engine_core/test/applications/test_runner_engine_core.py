@@ -110,6 +110,8 @@ def test_get_inputs_from_cli(mock_parse_args):
     mock_args.image_to_scan = "image"
     mock_args.dast_file_path = "dast_file_path"
     mock_args.context = "false"
+    mock_args.repo_name = None
+    mock_args.token_engine_code=None
     
     # Mock the parse_args method
     mock_parse_args.return_value = mock_args
@@ -140,6 +142,8 @@ def test_get_inputs_from_cli(mock_parse_args):
         "image_to_scan": "image",
         "dast_file_path": "dast_file_path",
         "context": "false",
+        "repo_name" : None,
+        "token_engine_code": None
     }
 
 

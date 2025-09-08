@@ -90,6 +90,7 @@ PYTHONPATH=tools/
                 "DET_ACCESS_TOKEN": "[DET_ACCESS_TOKEN]",
                 "DET_BUILD_EXECUTION_ID": "2688",
                 "DET_BUILD_ID": "2688",
+                "DET_DEFINITION_NAME": "[DET_DEFINITION_NAME]",
                 "DET_BRANCH_TAG": "refs/heads/trunk",
                 "DET_COMMIT_HASH": "2d545969a76516156d76e1c88f8e699537e889bd",
                 "DET_ENVIRONMENT": "dev",
@@ -123,7 +124,9 @@ PYTHONPATH=tools/
                 "RUNNER_WORKSPACE": "",
                 "RUNNER_OS": "Linux",
                 "GITHUB_SOURCE_CODE_MANAGEMENT_URI": "https://github.com/Owner/repository",
-                "RUNNER_TOOL_CACHE": ""
+                "RUNNER_TOOL_CACHE": "",
+                //engine risk
+                "TAG_EXCLUSION_DAYS": "{\"tag1\": 5, \"tag2\": 10}"
             },
             "justMyCode": true
         }

@@ -18,3 +18,11 @@ class Finding:
     category: Category
     requirements: str
     tool: str
+
+@dataclass
+class EngineCodeFinding(Finding):
+    analysis_url: str
+    analysis_code: str
+    label: str
+    application_business_value: str
+    defect_type: str

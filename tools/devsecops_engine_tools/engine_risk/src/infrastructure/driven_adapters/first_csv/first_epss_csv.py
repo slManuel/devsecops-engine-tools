@@ -26,12 +26,11 @@ class FirstCsv(AddEpssGateway):
             if response.status_code == 200:
                 with gzip.open(io.BytesIO(response.content), "rt") as f:
                     data = f.read()
-                logger.info(f"EPSS data downloaded for date: {formatted_date}")
+                print(f"EPSS data downloaded for date: {formatted_date}")
                 return data
             else:
                 date -= datetime.timedelta(days=1)
                 attempts += 1
-        print("Could not find EPSS data from de last 2 days. Skipping add EPS data...")
         logger.error(
             "Could not find EPSS data from de last 2 days. Skipping add EPS data..."
         )

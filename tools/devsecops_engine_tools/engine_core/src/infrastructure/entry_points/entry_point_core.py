@@ -14,7 +14,6 @@ from devsecops_engine_tools.engine_utilities.utils.printers import (
     Printers,
 )
 
-
 def init_engine_core(
     vulnerability_management_gateway: any,
     secrets_manager_gateway: any,
@@ -29,6 +28,7 @@ def init_engine_core(
         args["remote_config_repo"], "/engine_core/ConfigTool.json", args["remote_config_branch"]
     )
     Printers.print_logo_tool(config_tool["BANNER"])
+    sbom_tool_gateway = sbom_tool_gateway.get(config_tool["SBOM_MANAGER"]["TOOL"].lower())
 
     if config_tool[args["module"].upper()]["ENABLED"]:
         if args["module"] == "engine_risk":

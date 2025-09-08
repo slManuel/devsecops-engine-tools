@@ -59,7 +59,7 @@ class GitleaksTool(ToolGateway):
             with open(file_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         else:
-            print(f"File {file_path} does not exist")
+            logger.warning(f"File {file_path} does not exist")
             return []
 
     def _create_report(self, output_file, combined_data):        
@@ -67,7 +67,7 @@ class GitleaksTool(ToolGateway):
             json.dump(combined_data, f, ensure_ascii=False, indent=4)
 
     def _check_path(self, path, excluded_paths):
-        parts = path.split(os.sep)
+        parts = [p for p in path.replace('\\', '/').split('/') if p]
         for part in parts:
             if part in excluded_paths: return True
         return False

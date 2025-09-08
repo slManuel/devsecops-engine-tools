@@ -5,13 +5,14 @@ import { ScanConfiguration } from "../../domain/model/ScanConfiguration";
 
 export class ImageScanRequest {
 
-    constructor(private imageScanUseCase: IImageScanUseCase){}
+    constructor(private imageScanUseCase: IImageScanUseCase) { }
 
-    makeScan(elementToScan: string, outputChannel: OutputChannel, scanConfiguration: ScanConfiguration): Promise<ScannerRes> {
+    makeScan(elementToScan: string, outputChannel: OutputChannel, scanConfiguration: ScanConfiguration, scanLoader: any): Promise<ScannerRes> {
         return this.imageScanUseCase.scan(
             elementToScan,
             outputChannel,
-            scanConfiguration
+            scanConfiguration,
+            scanLoader
         );
     }
 

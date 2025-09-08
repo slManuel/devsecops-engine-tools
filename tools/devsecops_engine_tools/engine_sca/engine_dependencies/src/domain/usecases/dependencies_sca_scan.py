@@ -61,4 +61,4 @@ class DependenciesScan:
         Process the results deserializer.
         Terun: list: Deserialized list of findings.
         """
-        return self.tool_deserializator.get_list_findings(dependencies_scanned, self.remote_config)
+        return self.tool_deserializator.get_list_findings(dependencies_scanned, remote_config=self.remote_config, module="engine_dependencies")

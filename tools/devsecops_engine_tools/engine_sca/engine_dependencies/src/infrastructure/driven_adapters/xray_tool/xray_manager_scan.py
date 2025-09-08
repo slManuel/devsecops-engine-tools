@@ -1,7 +1,7 @@
 from devsecops_engine_tools.engine_sca.engine_dependencies.src.domain.model.gateways.tool_gateway import (
     ToolGateway,
 )
-from devsecops_engine_tools.engine_sca.engine_dependencies.src.domain.model.ContextDependencies import (
+from devsecops_engine_tools.engine_sca.engine_dependencies.src.domain.model.context_dependencies import (
     ContextDependencies,
 )
 

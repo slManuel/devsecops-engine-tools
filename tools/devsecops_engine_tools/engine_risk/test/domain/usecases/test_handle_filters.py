@@ -1,3 +1,5 @@
+import json
+import os
 import unittest
 from unittest.mock import MagicMock, patch
 from devsecops_engine_tools.engine_risk.src.domain.usecases.handle_filters import (
@@ -59,7 +61,13 @@ class TestHandleFilters(unittest.TestCase):
         assert len(result) == 2
 
     def test_filter_tags_days(self):
-        remote_config = {"TAG_EXCLUSION_DAYS": {"tag1": 5, "tag2": 10}}
+        remote_config = {
+            "RUNTIME_TAG_EXCLUSION_DAYS": {
+                "ENABLED": False,
+                "ERROR_ON_FAILED": False
+            },
+            "TAG_EXCLUSION_DAYS": {"tag1": 5, "tag2": 10}
+        }
         findings = [
             Report(
                 id=["CVE-2021-1234"],
@@ -80,6 +88,59 @@ class TestHandleFilters(unittest.TestCase):
                 severity="low",
                 active=None,
                 age=11,
+            ),
+            Report(
+                id=["vuln_id"],
+                date="21022024",
+                status="stat3",
+                where="path3",
+                tags=["tag3"],
+                severity="info",
+                active=True,
+                age=5,
+            ),
+        ]
+        devops_platform_gateway = MagicMock()
+
+        result = self.handle_filters.filter_tags_days(
+            devops_platform_gateway, remote_config, findings
+        )
+
+        devops_platform_gateway.message.assert_called_once()
+        assert len(result) == 2
+
+    def test_filter_tags_days_runtime(self):
+        remote_config = {
+            "RUNTIME_TAG_EXCLUSION_DAYS": {
+                "ENABLED": True,
+                "ERROR_ON_FAILED": True
+            },
+            "TAG_EXCLUSION_DAYS": {"tag1": 5, "tag2": 10}
+        }
+        runtime_exclusions_days = {"tag1": 7, "tag2": 14}
+        json_str = json.dumps(runtime_exclusions_days)
+        os.environ["TAG_EXCLUSION_DAYS"] = json_str
+
+        findings = [
+            Report(
+                id=["CVE-2021-1234"],
+                date="21022024",
+                status="stat2",
+                where="path2",
+                tags=["tag1"],
+                severity="low",
+                active=True,
+                age=6,
+            ),
+            Report(
+                id=["CVE-2021-1234"],
+                date="21022024",
+                status="stat2",
+                where="path2",
+                tags=["tag2"],
+                severity="low",
+                active=True,
+                age=15,
             ),
             Report(
                 id=["vuln_id"],

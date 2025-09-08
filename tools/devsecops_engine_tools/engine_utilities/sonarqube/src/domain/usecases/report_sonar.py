@@ -33,11 +33,13 @@ class ReportSonar:
         vulnerability_management_gateway: VulnerabilityManagementGateway,
         secrets_manager_gateway: SecretsManagerGateway,
         devops_platform_gateway: DevopsPlatformGateway,
+        remote_config_source_gateway: DevopsPlatformGateway,
         sonar_gateway: SonarGateway
     ):
         self.vulnerability_management_gateway = vulnerability_management_gateway
         self.secrets_manager_gateway = secrets_manager_gateway
         self.devops_platform_gateway = devops_platform_gateway
+        self.remote_config_source_gateway = remote_config_source_gateway
         self.sonar_gateway = sonar_gateway
 
     def process(self, args):
@@ -58,7 +60,7 @@ class ReportSonar:
             pipeline_name,
             self.devops_platform_gateway.get_source_code_management_uri()
         )
-        config_tool = self.devops_platform_gateway.get_remote_config(
+        config_tool = self.remote_config_source_gateway.get_remote_config(
             args["remote_config_repo"],
             "/engine_core/ConfigTool.json",
             args["remote_config_branch"]
@@ -78,9 +80,9 @@ class ReportSonar:
             secret = args
             secret_tool = None
 
-        report_config_tool = self.devops_platform_gateway.get_remote_config(
+        report_config_tool = self.remote_config_source_gateway.get_remote_config(
             args["remote_config_repo"],
-            "/report_sonar/ConfigTool.json",
+            "/engine_integrations/report_sonar/ConfigTool.json",
             args["remote_config_branch"]
         )
 
@@ -88,7 +90,6 @@ class ReportSonar:
         if get_components:
             project_keys = [f"{pipeline_name}_{component}" for component in get_components]
             print(f"Multiple project keys detected: {project_keys}")
-            logger.info(f"Multiple project keys detected: {project_keys}")
         else:
             project_keys = self.sonar_gateway.get_project_keys(pipeline_name)
 

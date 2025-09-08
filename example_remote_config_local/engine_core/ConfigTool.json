@@ -76,6 +76,8 @@
     "METRICS_MANAGER": {
         "AWS": {
             "BUCKET": "",
+            "TYPE_FORMAT_BUCKET_FILE": "parquet|json",
+            "PATH_BUCKET": "engine_tools",
             "USE_ROLE": false,
             "ROLE_ARN": "",
             "REGION_NAME": ""
@@ -83,6 +85,7 @@
     },
     "SBOM_MANAGER": {
         "ENABLED": false,
+        "TOOL": "SYFT|CDXGEN",
         "BRANCH_FILTER": [
             "trunk",
             "main"
@@ -90,6 +93,11 @@
         "SYFT": {
             "SYFT_VERSION": "1.17.0",
             "OUTPUT_FORMAT": "cyclonedx-json"
+        },
+        "CDXGEN": {
+            "CDXGEN_VERSION": "11.6.0",
+            "OUTPUT_FORMAT": "cyclonedx-json",
+            "SLIM_BINARY": false
         }
     },
     "ENGINE_IAC": {
@@ -111,16 +119,19 @@
     },
     "ENGINE_DEPENDENCIES": {
         "ENABLED": true,
-        "TOOL": "XRAY|DEPENDENCY_CHECK"
+        "TOOL": "XRAY|DEPENDENCY_CHECK|TRIVY"
     },
     "ENGINE_CODE": {
         "ENABLED": true,
-        "TOOL": "BEARER"
+        "TOOL": "BEARER|KIUWAN"
     },
     "ENGINE_RISK": {
         "ENABLED": false
     },
     "REPORT_SONAR": {
+        "ENABLED": true
+    },
+    "COPACETIC": {
         "ENABLED": true
     }
 }

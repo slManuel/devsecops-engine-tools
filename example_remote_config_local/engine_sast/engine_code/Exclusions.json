@@ -9,6 +9,16 @@
 				"severity": "Low",
 				"hu": "0000000"
 			}
+		],
+        "KIUWAN": [
+			{
+				"id": "test_id",
+				"where": "all",
+				"create_date": "18112023",
+				"expired_date": "18032024",
+				"severity": "Low",
+				"hu": "0000000"
+			}
 		]
 	},
 	"Repository_Test": {
@@ -19,6 +29,18 @@
 				"create_date": "18112023",
 				"expired_date": "18032024",
 				"severity": "Low",
+				"hu": "0000000"
+			}
+		]
+	},
+    "Repository_Test_2": {
+		"KIUWAN": [
+			{
+				"id": "35278412059",
+				"where": "all",
+				"create_date": "01082025",
+				"expired_date": "10082025",
+				"severity": "high",
 				"hu": "0000000"
 			}
 		]

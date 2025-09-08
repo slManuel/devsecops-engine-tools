@@ -4,7 +4,7 @@
   "displayName": "DevSecOps Engine Tools",
   "publisher": "GrupoBancolombiaOSPO",
   "description": "",
-  "version": "1.9.0",
+  "version": "1.15.0",
   "engines": {
     "vscode": "^1.95.0"
   },
@@ -49,12 +49,11 @@
           "devsecops.general.imageToUse": {
             "type": "string",
             "default": "bancolombia/devsecops-engine-tools",
-            "description": "Docker image to use for scanning"
+            "description": "Container image to use for scanning"
           },
           "devsecops.general.imageVersion": {
             "type": "string",
-            "default": "1.75.3",
-            "description": "Docker image version to use for scanning"
+            "description": "Container image version to use for scanning"
           }
         }
       },
@@ -135,6 +134,17 @@
           "devsecops.dependencies.dependencyCheckDatabase": {
             "type": "string",
             "description": "Dependency Check Database path (if using dependency_check tool, will increase performance)"
+          }
+        }
+      },
+      {
+        "title": "IaC Scan Settings",
+        "properties": {
+          "devsecops.iac.iacTool": {
+            "type": "string",
+            "default": "checkov",
+            "enum": ["checkov", "kics"],
+            "description": "IaC Scan Tool to use (Checkov to scan Terraform, CloudFormation, Kubernetes, Dockerfile and OpenAPI; KICS to scan OpenAPI)"
           }
         }
       }
@@ -337,7 +347,6 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "docker-cli-js": "^2.10.0",
     "generator-code": "^1.11.9",
     "lodash": "^4.17.21"
   }

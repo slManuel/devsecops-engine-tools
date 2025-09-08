@@ -56,6 +56,7 @@ class RuntimeLocal(DevopsPlatformGateway):
             "branch_name" : "DET_BRANCH_NAME",
             "build_id" : "DET_BUILD_ID",
             "build_execution_id" : "DET_BUILD_EXECUTION_ID",
+            "definition_name" : "DET_DEFINITION_NAME",
             "commit_hash" : "DET_COMMIT_HASH",
             "environment" : "DET_ENVIRONMENT",
             "release_id" : "DET_RELEASE_ID",
@@ -75,5 +76,6 @@ class RuntimeLocal(DevopsPlatformGateway):
             "vm_product_type_name" : "DET_VM_PRODUCT_TYPE_NAME",
             "vm_product_name" : "DET_VM_PRODUCT_NAME",
             "vm_product_description" : "DET_VM_PRODUCT_DESCRIPTION",
+            "build_task":  "DET_APPLICATION_BUILD_TASK",
         }
         return os.environ.get(env_variables[variable], None)

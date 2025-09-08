@@ -8,6 +8,7 @@ from devsecops_engine_tools.engine_utilities.azuredevops.models.AzurePredefinedV
     ReleaseVariables,
     AgentVariables,
     VMVariables,
+    ApplicationVariables,
 )
 from devsecops_engine_tools.engine_utilities.azuredevops.infrastructure.azure_devops_api import (
     AzureDevopsApi,
@@ -92,6 +93,7 @@ class AzureDevops(DevopsPlatformGateway):
             "branch_name": BuildVariables.Build_SourceBranchName,
             "build_id": BuildVariables.Build_BuildNumber,
             "build_execution_id": BuildVariables.Build_BuildId,
+            "definition_name": BuildVariables.Build_DefinitionName,
             "commit_hash": BuildVariables.Build_SourceVersion,
             "environment": ReleaseVariables.Environment,
             "release_id": ReleaseVariables.Release_Releaseid,
@@ -116,6 +118,7 @@ class AzureDevops(DevopsPlatformGateway):
             "vm_product_type_name": VMVariables.Vm_Product_Type_Name,
             "vm_product_name": VMVariables.Vm_Product_Name,
             "vm_product_description": VMVariables.Vm_Product_Description,
+            "build_task": ApplicationVariables.Application_Build_Task,
         }
         try:
             return variable_map.get(variable).value()

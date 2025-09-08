@@ -121,7 +121,7 @@ class CmdbRestConsumer:
 
         data = self.get_nested_data(response, response_format)
         data_map = self.mapping_cmdb(data)
-        logger.info(data_map)
+        logger.debug(data_map)
         cmdb_object = Cmdb.from_dict(data_map)
         cmdb_object.codigo_app = code_app
         return cmdb_object
@@ -129,7 +129,7 @@ class CmdbRestConsumer:
     def initialize_cmdb_object(self, request: ImportScanRequest) -> Cmdb:
         return Cmdb(
             product_type_name="ORPHAN_PRODUCT_TYPE",
-            product_name=f"{request.code_app}_Product",
+            product_name=f"{request.code_app}_Product" if request.code_app else "Orphan_Product",
             tag_product="ORPHAN",
             product_description="Orphan Product Description",
             codigo_app=str(request.code_app),

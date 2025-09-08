@@ -33,13 +33,14 @@ export class IacScanUseCase implements IIacScanUseCase {
     private iacScanner: IacScanner,
     private restClient: IRestClientGateway,
     private toolVersion: string,
-    private dockerPath: string
-  ) {}
+    private containerEnginePath: string
+  ) { }
 
   public async scan(
     folderToScan: string,
     outputChannel: OutputChannel,
-    scanConfiguration: ScanConfiguration
+    scanConfiguration: ScanConfiguration,
+    scanLoader: any
   ): Promise<ScannerRes> {
     let releaseIdData: IReleaseIdData;
     let variablesFromLibrary: { [key: string]: IVariableData } = {};
@@ -49,7 +50,7 @@ export class IacScanUseCase implements IIacScanUseCase {
     let variableReplace: boolean = false;
 
     if (!scanConfiguration.isValidAdReplace()) {
-      outputChannel.append("Configuration values are missing≤ avoiding variable replace");
+      outputChannel.appendLine("Configuration values are missing≤ avoiding variable replace");
     } else {
       variableReplace = true;
       releaseIdData = (await this.restClient.get(
@@ -125,9 +126,11 @@ export class IacScanUseCase implements IIacScanUseCase {
     const scannerRes: ScannerRes = await this.iacScanner.scan(
       scanLocation,
       outputChannel,
-      scanConfiguration.getDockerImageName(),
+      scanConfiguration.getContainerImageName(),
+      scanConfiguration.getIacTool(),
       this.toolVersion,
-      this.dockerPath
+      this.containerEnginePath,
+      scanLoader
     ).finally( () => {
       if(variableReplace) {
         this.cleanFolder(folderToScan);
@@ -136,8 +139,8 @@ export class IacScanUseCase implements IIacScanUseCase {
 
     const findingsWithRuleCode: Finding[] = scannerRes.getFindings().map((finding: Finding) => {
       return this.iacScanner.getRuleCode(
-        this.dockerPath,
-        scanConfiguration.getDockerImageName(),
+        this.containerEnginePath,
+        scanConfiguration.getContainerImageName(),
         this.toolVersion,
         finding.getId(),
         finding

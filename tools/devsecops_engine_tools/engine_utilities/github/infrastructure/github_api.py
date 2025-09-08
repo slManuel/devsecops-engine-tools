@@ -4,6 +4,10 @@ import json
 from github import Github, GithubIntegration
 from devsecops_engine_tools.engine_utilities.utils.api_error import ApiError
 
+from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
+from devsecops_engine_tools.engine_utilities import settings
+
+logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
 class GithubApi:
 
@@ -40,11 +44,11 @@ class GithubApi:
                             file.write(chunk)
                     self.unzip_file(f"{download_path}/{asset_name}", download_path)
                 else:
-                    print(
+                    logger.warning(
                         f"Error downloading asset {asset_name}. status code: {response.status_code}"
                     )
         else:
-            print(
+            logger.warning(
                 f"Error getting the assets of the last release. Status code: {response.status_code}"
             )
 

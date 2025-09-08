@@ -130,7 +130,7 @@ class TrufflehogRun(ToolGateway):
         command = f"{trufflehog_command} filesystem {path_folder} --include-paths {include_path} --exclude-paths {exclude_path} --no-verification --no-update --json"
         if enable_custom_rules:
             command = command.replace("--no-verification --no-update --json", f"--config {path}//rules//trufflehog//custom-rules.yaml --no-verification --no-update --json" if "Windows" in agent_os else
-                                      f"--config {path}/rules/trufflehog/custom-rules.yaml --no-verification --no-update --json" if "Linux" in agent_os else
+                                      f"--config {path}/rules/trufflehog/custom-rules.yaml --no-verification --no-update --json" if "Linux" or "Darwin" in agent_os else
                                       "--no-verification --no-update --json")
             
         result = subprocess.run(command, capture_output=True, shell=True, text=True, encoding='utf-8')
@@ -159,4 +159,5 @@ class TrufflehogRun(ToolGateway):
                 find["Mitigation"] = config_tool[tool]["RULES"][find["Id"]]["Mitigation"] if "SECRET_SCANNING" not in find["Id"] else "N.A"
                 json_str = json.dumps(find)
                 file.write(json_str + '\n')
+
         return findings, file_findings
