@@ -8,7 +8,7 @@ from devsecops_engine_tools.engine_utilities.github.models.GithubPredefinedVaria
     ReleaseVariables,
     AgentVariables,
     VMVariables,
-    ApplicationVariables
+    CustomVariables
 )
 from devsecops_engine_tools.engine_utilities.github.infrastructure.github_api import (
     GithubApi,
@@ -78,8 +78,8 @@ class GithubActions(DevopsPlatformGateway):
             "access_token": SystemVariables.github_access_token,
             "organization": f"{SystemVariables.github_server_url}/{SystemVariables.github_repository}",
             "project_name": SystemVariables.github_repository,
-            "repository": BuildVariables.github_repository,
-            "pipeline_name": (
+            "repository": CustomVariables.Repository_Name or BuildVariables.github_repository,
+            "pipeline_name": CustomVariables.Pipeline_Name or (
                 BuildVariables.github_workflow
                 if SystemVariables.github_job.value() == "build"
                 else ReleaseVariables.github_workflow
@@ -95,7 +95,7 @@ class GithubActions(DevopsPlatformGateway):
             "vm_product_type_name": VMVariables.Vm_Product_Type_Name,
             "vm_product_name": VMVariables.Vm_Product_Name,
             "vm_product_description": VMVariables.Vm_Product_Description,
-            "build_task":  ApplicationVariables.Application_Build_Task,
+            "build_task":  CustomVariables.Build_Task,
         }
         try:
             return variable_map.get(variable).value()

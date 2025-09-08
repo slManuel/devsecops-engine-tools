@@ -8,7 +8,7 @@ from devsecops_engine_tools.engine_utilities.azuredevops.models.AzurePredefinedV
     ReleaseVariables,
     AgentVariables,
     VMVariables,
-    ApplicationVariables,
+    CustomVariables,
 )
 from devsecops_engine_tools.engine_utilities.azuredevops.infrastructure.azure_devops_api import (
     AzureDevopsApi,
@@ -101,8 +101,8 @@ class AzureDevops(DevopsPlatformGateway):
             "access_token": SystemVariables.System_AccessToken,
             "organization": SystemVariables.System_TeamFoundationCollectionUri,
             "project_name": SystemVariables.System_TeamProject,
-            "repository": BuildVariables.Build_Repository_Name,
-            "pipeline_name": (
+            "repository": CustomVariables.Repository_Name or BuildVariables.Build_Repository_Name,
+            "pipeline_name": CustomVariables.Pipeline_Name or (
                 BuildVariables.Build_DefinitionName
                 if SystemVariables.System_HostType.value() == "build"
                 else ReleaseVariables.Release_Definitionname
@@ -118,7 +118,7 @@ class AzureDevops(DevopsPlatformGateway):
             "vm_product_type_name": VMVariables.Vm_Product_Type_Name,
             "vm_product_name": VMVariables.Vm_Product_Name,
             "vm_product_description": VMVariables.Vm_Product_Description,
-            "build_task": ApplicationVariables.Application_Build_Task,
+            "build_task": CustomVariables.Build_Task,
         }
         try:
             return variable_map.get(variable).value()
