@@ -68,3 +68,6 @@ class VMVariables(BaseEnum):
     Vm_Product_Type_Name = "Vm.Product.Type.Name"
     Vm_Product_Name = "Vm.Product.Name"
     Vm_Product_Description = "Vm.Product.Description"
+
+class ApplicationVariables(BaseEnum):
+    Application_Build_Task = "BUILDTASK"

@@ -1,3 +1,4 @@
+import os
 import unittest
 from unittest.mock import Mock, patch, mock_open
 from devsecops_engine_tools.engine_dast.src.infrastructure.driven_adapters.nuclei.nuclei_config import NucleiConfig
@@ -80,5 +81,6 @@ class TestNucleiConfig(unittest.TestCase):
     def test_customize_templates(self, mock_process_templates_folder):
         directory = "dummy_directory"
         self.nuclei_api.customize_templates(directory)
-        self.assertEqual(self.nuclei_api.custom_templates_dir, "dummy_directory/customized-nuclei-templates")
+        self.assertEqual(self.nuclei_api.custom_templates_dir, os.path.join("dummy_directory","customized-nuclei-templates"))
         mock_process_templates_folder.assert_any_call(base_folder=directory)
+        
