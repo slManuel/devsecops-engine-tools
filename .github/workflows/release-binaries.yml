@@ -2,6 +2,7 @@ name: Build and Release Binaries
 
 on:
   pull_request:
+    types: [closed]
     branches: [trunk]
   push:
     branches: [trunk]
