@@ -7,7 +7,11 @@ class EnvVariables:
     @staticmethod
     def get_value(env_name):
         env_var = os.environ.get(env_name)
-        if env_var is None:
+        is_env_var_none = env_var is None
+        if (env_name == "CUSTOM_REPOSITORY_NAME" or env_name == "CUSTOM_PIPELINE_NAME") and is_env_var_none:
+            return None
+            
+        if is_env_var_none:
             raise ValueError(f"La variable de entorno {env_name} no está definida")
         return env_var
 
