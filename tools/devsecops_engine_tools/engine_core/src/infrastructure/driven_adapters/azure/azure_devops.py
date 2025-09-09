@@ -102,11 +102,19 @@ class AzureDevops(DevopsPlatformGateway):
             "access_token": SystemVariables.System_AccessToken,
             "organization": SystemVariables.System_TeamFoundationCollectionUri,
             "project_name": SystemVariables.System_TeamProject,
-            "repository": CustomVariables.Repository_Name.value() or BuildVariables.Build_Repository_Name,
-            "pipeline_name": CustomVariables.Pipeline_Name.value() or (
-                BuildVariables.Build_DefinitionName
-                if SystemVariables.System_HostType.value() == "build"
-                else ReleaseVariables.Release_Definitionname
+            "repository": (
+                CustomVariables.Repository_Name 
+                if CustomVariables.Repository_Name.value() 
+                else BuildVariables.Build_Repository_Name
+            ),
+            "pipeline_name": (
+                CustomVariables.Pipeline_Name 
+                if CustomVariables.Pipeline_Name.value() 
+                else (
+                    BuildVariables.Build_DefinitionName
+                    if SystemVariables.System_HostType.value() == "build"
+                    else ReleaseVariables.Release_Definitionname
+                )
             ),
             "stage": SystemVariables.System_HostType,
             "path_directory": SystemVariables.System_DefaultWorkingDirectory,

@@ -78,11 +78,19 @@ class GithubActions(DevopsPlatformGateway):
             "access_token": SystemVariables.github_access_token,
             "organization": f"{SystemVariables.github_server_url}/{SystemVariables.github_repository}",
             "project_name": SystemVariables.github_repository,
-            "repository": CustomVariables.Repository_Name.value() or BuildVariables.github_repository,
-            "pipeline_name": CustomVariables.Pipeline_Name.value() or (
-                BuildVariables.github_workflow
-                if SystemVariables.github_job.value() == "build"
-                else ReleaseVariables.github_workflow
+            "repository": (
+                CustomVariables.Repository_Name 
+                if CustomVariables.Repository_Name.value() 
+                else BuildVariables.Build_Repository_Name
+            ),
+            "pipeline_name": (
+                CustomVariables.Pipeline_Name 
+                if CustomVariables.Pipeline_Name.value() 
+                else (
+                    BuildVariables.Build_DefinitionName
+                    if SystemVariables.System_HostType.value() == "build"
+                    else ReleaseVariables.Release_Definitionname
+                )
             ),
             "stage": SystemVariables.github_job,
             "path_directory": SystemVariables.github_workspace,
