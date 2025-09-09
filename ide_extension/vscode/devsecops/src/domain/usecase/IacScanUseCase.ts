@@ -92,46 +92,50 @@ export class IacScanUseCase implements IIacScanUseCase {
     const regex = /#{|}#/g;
     let replacedFile: string = "";
 
-    while (this.files.length > 0) {
+
+    const replacedFilesDir = path.join(folderToScan, 'replacedFiles');
+    try {
+      await fs.mkdir(replacedFilesDir, { recursive: true });
+    } catch (error) {
+      outputChannel.append(`Error creating replacedFiles directory: ${error}\n`);
+    }
+
+    while (this.files.length > 0 && variableReplace) {
       const file = this.files[0];
       replacedFile = "";
 
       const filePath = path.join(folderToScan, file);
       const fileStats = await fs.stat(filePath);
       if (fileStats.isDirectory()) {
+        this.files = this.files.filter((value) => value !== file);
         continue;
       }
       const fileContent = await fs.readFile(filePath, "utf-8");
       const lines = fileContent.split("\n");
-      lines.forEach((line, _) => {
-        if (regex.test(line)) {
-          const variableName = line.split("#{")[1].split("}#")[0];
-          if (variablesFromLibrary[variableName] && variableReplace) {
-            replacedFile =
-              replacedFile +
-              "\n" +
-              line.replace(`#{${variableName}}#`, variablesFromLibrary[variableName].value);
-          }
-        } else {
-          replacedFile = replacedFile + "\n" + line;
-        }
-      });
-      const newFilePath = path.join(folderToScan, `modified_${file}`);
+      replacedFile = this.processVariablesInLines(
+        lines, regex, variablesFromLibrary, variableReplace, file, outputChannel
+      );
+      const newFilePath = path.join(replacedFilesDir, file);
       await fs.writeFile(newFilePath, replacedFile, "utf-8");
       this.files = this.files.filter((value) => value !== file);
     }
 
-    await this.cleanFolder(folderToScan);
 
+    const scanLocation = variableReplace ? path.join(folderToScan, 'replacedFiles') : folderToScan;
+    
     const scannerRes: ScannerRes = await this.iacScanner.scan(
-      folderToScan,
+      scanLocation,
       outputChannel,
       scanConfiguration.getContainerImageName(),
       scanConfiguration.getIacTool(),
       this.toolVersion,
       this.containerEnginePath,
       scanLoader
-    );
+    ).finally( () => {
+      if(variableReplace) {
+        this.cleanFolder(folderToScan);
+      }
+    });
 
     const findingsWithRuleCode: Finding[] = scannerRes.getFindings().map((finding: Finding) => {
       return this.iacScanner.getRuleCode(
@@ -147,15 +151,63 @@ export class IacScanUseCase implements IIacScanUseCase {
   }
 
   private async cleanFolder(folderToScan: string): Promise<void> {
-    const files = await fs.readdir(folderToScan);
-    for (const file of files) {
-      if (file.startsWith("modified_")) {
-        const filePath = path.join(folderToScan, file);
-        const fileStats = await fs.stat(filePath);
-        if (fileStats.isFile()) {
-          await fs.unlink(filePath);
+    const replacedFilesDir = path.join(folderToScan, 'replacedFiles');
+    
+    try {
+      const stats = await fs.stat(replacedFilesDir);
+      
+      if (stats.isDirectory()) {
+        const files = await fs.readdir(replacedFilesDir);
+        
+        for (const file of files) {
+          const filePath = path.join(replacedFilesDir, file);
+          const fileStats = await fs.stat(filePath);
+          
+          if (fileStats.isFile()) {
+            await fs.unlink(filePath);
+          } else if (fileStats.isDirectory()) {
+            await this.cleanFolder(filePath);
+          }
         }
+        
+        await fs.rmdir(replacedFilesDir);
+      }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        console.error(`Error cleaning replacedFiles directory: ${error}`);
       }
     }
   }
+
+  private processVariablesInLines(
+    lines: string[], 
+    regex: RegExp, 
+    variablesFromLibrary: { [key: string]: IVariableData }, 
+    variableReplace: boolean, 
+    file: string, 
+    outputChannel: OutputChannel
+  ): string {
+    let replacedFile = "";
+    
+    lines.forEach((line, _) => {
+      if (regex.test(line)) {
+        const variableName = line.split("#{")[1].split("}#")[0];
+        if (variablesFromLibrary[variableName] && variableReplace) {
+          replacedFile =
+            replacedFile +
+            "\n" +
+            line.replace(`#{${variableName}}#`, variablesFromLibrary[variableName].value);
+          outputChannel.append(`✅ Variable ${variableName} replaced in file ${file}\n`);
+        } else {
+          outputChannel.append(`⚠️ Variable ${variableName} not found in library for file ${file}\n`);
+          replacedFile = replacedFile + "\n" + line;
+        }
+      } else {
+        replacedFile = replacedFile + "\n" + line;
+      }
+    });
+    
+    return replacedFile;
+  }
+
 }
