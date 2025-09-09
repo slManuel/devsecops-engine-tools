@@ -54,7 +54,7 @@ class GithubActions(DevopsPlatformGateway):
         return results.get(type)
 
     def get_source_code_management_uri(self):
-        return f"{SystemVariables.github_server_url.value()}/{SystemVariables.github_repository.value()}"
+        return f"{SystemVariables.github_server_url.value()}/{self.get_variable("repository").value()}"
 
     def get_base_compact_remote_config_url(self, remote_config_repo):
         github_repository = SystemVariables.github_repository.value()
@@ -78,8 +78,8 @@ class GithubActions(DevopsPlatformGateway):
             "access_token": SystemVariables.github_access_token,
             "organization": f"{SystemVariables.github_server_url}/{SystemVariables.github_repository}",
             "project_name": SystemVariables.github_repository,
-            "repository": CustomVariables.Repository_Name or BuildVariables.github_repository,
-            "pipeline_name": CustomVariables.Pipeline_Name or (
+            "repository": CustomVariables.Repository_Name.value() or BuildVariables.github_repository,
+            "pipeline_name": CustomVariables.Pipeline_Name.value() or (
                 BuildVariables.github_workflow
                 if SystemVariables.github_job.value() == "build"
                 else ReleaseVariables.github_workflow
