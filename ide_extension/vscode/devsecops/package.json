@@ -50,7 +50,6 @@
             "type": "string",
             "default": "bancolombia/devsecops-engine-tools",
             "description": "Container image to use for scanning"
-            "description": "Container image to use for scanning"
           },
           "devsecops.general.imageVersion": {
             "type": "string",
