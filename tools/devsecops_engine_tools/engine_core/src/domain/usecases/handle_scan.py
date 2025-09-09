@@ -194,9 +194,10 @@ class HandleScan:
                         )
                     )
 
+                    branch_filter = [branch for branch in config_tool.get("VULNERABILITY_MANAGER", {}).get("BRANCH_FILTER", []) if branch is not None]
                     if sbom_components and any(
                         branch in str(self.devops_platform_gateway.get_variable("branch_tag"))
-                        for branch in config_tool.get("VULNERABILITY_MANAGER", {}).get("BRANCH_FILTER", [])
+                        for branch in branch_filter
                     ):
                         self.vulnerability_management.send_sbom_components(
                             sbom_components,
