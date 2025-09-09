@@ -109,7 +109,7 @@ class BreakBuild:
         return {
             "id": item.id,
             "severity": item.severity,
-            "category": item.category,
+            "category": item.category.value,
         }
 
     def _count_severities(self, findings_list):
