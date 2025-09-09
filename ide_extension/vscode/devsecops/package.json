@@ -50,6 +50,7 @@
             "type": "string",
             "default": "bancolombia/devsecops-engine-tools",
             "description": "Container image to use for scanning"
+            "description": "Container image to use for scanning"
           },
           "devsecops.general.imageVersion": {
             "type": "string",
@@ -134,6 +135,17 @@
           "devsecops.dependencies.dependencyCheckDatabase": {
             "type": "string",
             "description": "Dependency Check Database path (if using dependency_check tool, will increase performance)"
+          }
+        }
+      },
+      {
+        "title": "IaC Scan Settings",
+        "properties": {
+          "devsecops.iac.iacTool": {
+            "type": "string",
+            "default": "checkov",
+            "enum": ["checkov", "kics"],
+            "description": "IaC Scan Tool to use (Checkov to scan Terraform, CloudFormation, Kubernetes, Dockerfile and OpenAPI; KICS to scan OpenAPI)"
           }
         }
       },

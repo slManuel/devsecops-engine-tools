@@ -35,14 +35,10 @@ export class IacScanUseCase implements IIacScanUseCase {
     private toolVersion: string,
     private containerEnginePath: string
   ) { }
-    private containerEnginePath: string
-  ) { }
 
   public async scan(
     folderToScan: string,
     outputChannel: OutputChannel,
-    scanConfiguration: ScanConfiguration,
-    scanLoader: any
     scanConfiguration: ScanConfiguration,
     scanLoader: any
   ): Promise<ScannerRes> {
@@ -54,7 +50,6 @@ export class IacScanUseCase implements IIacScanUseCase {
     let variableReplace: boolean = false;
 
     if (!scanConfiguration.isValidAdReplace()) {
-      outputChannel.appendLine("Configuration values are missing≤ avoiding variable replace");
       outputChannel.appendLine("Configuration values are missing≤ avoiding variable replace");
     } else {
       variableReplace = true;
@@ -133,8 +128,6 @@ export class IacScanUseCase implements IIacScanUseCase {
       outputChannel,
       scanConfiguration.getContainerImageName(),
       scanConfiguration.getIacTool(),
-      scanConfiguration.getContainerImageName(),
-      scanConfiguration.getIacTool(),
       this.toolVersion,
       this.containerEnginePath,
       scanLoader
@@ -146,8 +139,6 @@ export class IacScanUseCase implements IIacScanUseCase {
 
     const findingsWithRuleCode: Finding[] = scannerRes.getFindings().map((finding: Finding) => {
       return this.iacScanner.getRuleCode(
-        this.containerEnginePath,
-        scanConfiguration.getContainerImageName(),
         this.containerEnginePath,
         scanConfiguration.getContainerImageName(),
         this.toolVersion,
