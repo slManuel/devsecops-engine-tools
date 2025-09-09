@@ -59,17 +59,18 @@ class AzureDevops(DevopsPlatformGateway):
 
     def get_source_code_management_uri(self):
         try:
+            repository_variable = self.get_variable("repository").value()
             source_code_management_uri = {
                 "tfsgit": (
                     f"{SystemVariables.System_TeamFoundationCollectionUri.value()}"
-                    f"{SystemVariables.System_TeamProject.value()}/_git/{BuildVariables.Build_Repository_Name.value()}"
+                    f"{SystemVariables.System_TeamProject.value()}/_git/{repository_variable}"
                 ).replace(" ", "%20"),
                 "github": (
-                    f"https://github.com/{BuildVariables.Build_Repository_Name.value()}"
+                    f"https://github.com/{repository_variable}"
                 ),
                 "git": (
                     f"{SystemVariables.System_TeamFoundationCollectionUri.value()}"
-                    f"{SystemVariables.System_TeamProject.value()}/_git/{BuildVariables.Build_Repository_Name.value()}"
+                    f"{SystemVariables.System_TeamProject.value()}/_git/{repository_variable}"
                 ).replace(" ", "%20")
             }
             return source_code_management_uri.get(BuildVariables.Build_Repository_Provider.value().lower())
@@ -101,8 +102,8 @@ class AzureDevops(DevopsPlatformGateway):
             "access_token": SystemVariables.System_AccessToken,
             "organization": SystemVariables.System_TeamFoundationCollectionUri,
             "project_name": SystemVariables.System_TeamProject,
-            "repository": CustomVariables.Repository_Name or BuildVariables.Build_Repository_Name,
-            "pipeline_name": CustomVariables.Pipeline_Name or (
+            "repository": CustomVariables.Repository_Name.value() or BuildVariables.Build_Repository_Name,
+            "pipeline_name": CustomVariables.Pipeline_Name.value() or (
                 BuildVariables.Build_DefinitionName
                 if SystemVariables.System_HostType.value() == "build"
                 else ReleaseVariables.Release_Definitionname
