@@ -8,7 +8,7 @@ import urllib.request
 import zipfile
 import stat
 import shutil
-from typing import Dict, Any, List, Optional, Union
+from typing import Dict, Any, List, Optional, Union, Tuple
 from urllib.parse import urlparse
 
 import requests
@@ -53,7 +53,7 @@ class KiuwanTool(ToolGateway):
         agent_work_folder: str,
         repository: str,
         config_tool: ConfigTool
-    ) -> tuple[List[Any], Optional[str]]:
+    ) -> Tuple[List[Any], Optional[str]]:
         """
         Run the code scan tool.
         """
