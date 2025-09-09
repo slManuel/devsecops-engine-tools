@@ -2,12 +2,14 @@ name: Build and Release Binaries
 
 on:
   pull_request:
-    types: [closed]
     branches: [trunk]
-  push:
-    branches:
-      - trunk
-      - feature/*
+    paths-ignore:
+      - 'ide_extension/**'
+      - '.github/workflows/intellij-build.yml'
+      - '.github/workflows/intellij-release.yml'
+      - '.github/workflows/intellij-updater.yml'
+      - '.github/workflows/vscode-build.yml'
+      - '.github/workflows/vscode-release.yml'
   release:
     types: [published]
 
@@ -31,13 +33,17 @@ jobs:
     env:
       PYTHON_VERSION: "3.10"
     steps:
+      - uses: actions/checkout@v4
+        if: github.event_name == 'pull_request'
+
       - name: Checkout Repository
+        if: github.event.action == 'published'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: ${{ github.event.release.tag_name || github.ref_name }}
-
+      
       # Linux: Build inside Docker container with Ubuntu 20.04
       - name: Build binary on Ubuntu 20.04 container
         if: matrix.name == 'linux'
@@ -84,19 +90,12 @@ jobs:
 
       # Zip artifacts
       - name: Zip Artifact (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-latest' && github.event.action == 'published'
         run: tar.exe -a -c -f devsecops-engine-tools-${{ matrix.name }}.zip dist\devsecops-engine-tools${{ matrix.suffix }}
 
       - name: Zip Artifact (Linux/macOS)
-        if: matrix.os != 'windows-latest'
+        if: matrix.os != 'windows-latest' && github.event.action == 'published'
         run: zip devsecops-engine-tools-${{ matrix.name }}.zip dist/devsecops-engine-tools${{ matrix.suffix }}
-
-      - name: Upload Artifact
-        if: startsWith(github.ref, 'refs/heads/trunk')
-        uses: actions/upload-artifact@v4
-        with:
-          name: devsecops-engine-tools-${{ matrix.os }}
-          path: dist/devsecops-engine-tools*
 
       - name: Upload Release Asset
         if: github.event_name == 'release' && github.event.action == 'published'
