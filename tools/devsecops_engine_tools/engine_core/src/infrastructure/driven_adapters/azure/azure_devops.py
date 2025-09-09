@@ -59,7 +59,7 @@ class AzureDevops(DevopsPlatformGateway):
 
     def get_source_code_management_uri(self):
         try:
-            repository_variable = self.get_variable("repository").value()
+            repository_variable = self.get_variable("repository")
             source_code_management_uri = {
                 "tfsgit": (
                     f"{SystemVariables.System_TeamFoundationCollectionUri.value()}"
