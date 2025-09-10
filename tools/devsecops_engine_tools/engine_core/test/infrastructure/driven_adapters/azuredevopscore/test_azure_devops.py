@@ -1,7 +1,10 @@
+import os
 import unittest
 from unittest.mock import MagicMock
 from unittest import mock
+
 from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.azure.azure_devops import AzureDevops
+from tools.devsecops_engine_tools.engine_utilities.azuredevops.models import AzurePredefinedVariables
 
 class TestAzureDevops(unittest.TestCase):
 
@@ -116,3 +119,78 @@ class TestAzureDevops(unittest.TestCase):
 
         result = azure_devops.get_variable("access_token")
         assert result == "System_AccessToken"
+
+class TestEnvVariables(unittest.TestCase):
+    @mock.patch('os.environ.get')
+    def test_get_value_variable_exists(self, mock_env_get):
+        # Arrange
+        mock_env_get.return_value = "test_value"
+        
+        # Act
+        result = AzurePredefinedVariables.EnvVariables.get_value("TEST_VARIABLE")
+        
+        # Assert
+        self.assertEqual(result, "test_value")
+        mock_env_get.assert_called_once_with("TEST_VARIABLE")
+
+    @mock.patch('os.environ.get')
+    def test_get_value_variable_not_exists(self, mock_env_get):
+        # Arrange
+        mock_env_get.return_value = None
+        
+        # Act & Assert
+        with self.assertRaises(ValueError) as context:
+            AzurePredefinedVariables.EnvVariables.get_value("TEST_VARIABLE")
+        self.assertEqual(str(context.exception), "La variable de entorno TEST_VARIABLE no está definida")
+        mock_env_get.assert_called_once_with("TEST_VARIABLE")
+
+    @mock.patch('os.environ.get')
+    def test_get_value_custom_repository_name_none(self, mock_env_get):
+        # Arrange
+        mock_env_get.return_value = None
+        
+        # Act
+        result = AzurePredefinedVariables.EnvVariables.get_value("CUSTOM_REPOSITORY_NAME")
+        
+        # Assert
+        self.assertIsNone(result)
+        mock_env_get.assert_called_once_with("CUSTOM_REPOSITORY_NAME")
+
+    @mock.patch('os.environ.get')
+    def test_get_value_custom_pipeline_name_none(self, mock_env_get):
+        # Arrange
+        mock_env_get.return_value = None
+        
+        # Act
+        result = AzurePredefinedVariables.EnvVariables.get_value("CUSTOM_PIPELINE_NAME")
+        
+        # Assert
+        self.assertIsNone(result)
+        mock_env_get.assert_called_once_with("CUSTOM_PIPELINE_NAME")
+
+    @mock.patch('os.environ.get')
+    def test_get_value_custom_repository_name_exists(self, mock_env_get):
+        # Arrange
+        mock_env_get.return_value = "repo_name"
+        
+        # Act
+        result = AzurePredefinedVariables.EnvVariables.get_value("CUSTOM_REPOSITORY_NAME")
+        
+        # Assert
+        self.assertEqual(result, "repo_name")
+        mock_env_get.assert_called_once_with("CUSTOM_REPOSITORY_NAME")
+
+    @mock.patch('os.environ.get')
+    def test_get_value_custom_pipeline_name_exists(self, mock_env_get):
+        # Arrange
+        mock_env_get.return_value = "pipeline_name"
+        
+        # Act
+        result = AzurePredefinedVariables.EnvVariables.get_value("CUSTOM_PIPELINE_NAME")
+        
+        # Assert
+        self.assertEqual(result, "pipeline_name")
+        mock_env_get.assert_called_once_with("CUSTOM_PIPELINE_NAME")
+
+if __name__ == '__main__':
+    unittest.main()
