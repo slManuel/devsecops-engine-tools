@@ -81,15 +81,15 @@ class GithubActions(DevopsPlatformGateway):
             "repository": (
                 CustomVariables.Repository_Name 
                 if CustomVariables.Repository_Name.value() 
-                else BuildVariables.Build_Repository_Name
+                else BuildVariables.github_repository
             ),
             "pipeline_name": (
                 CustomVariables.Pipeline_Name 
                 if CustomVariables.Pipeline_Name.value() 
                 else (
-                    BuildVariables.Build_DefinitionName
-                    if SystemVariables.System_HostType.value() == "build"
-                    else ReleaseVariables.Release_Definitionname
+                    BuildVariables.github_workflow
+                    if SystemVariables.github_job.value() == "build"
+                    else ReleaseVariables.github_workflow
                 )
             ),
             "stage": SystemVariables.github_job,
