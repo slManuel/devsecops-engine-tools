@@ -125,43 +125,43 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                         f"{vulnerability_management.dict_args['module']}_{tag_suffix}"
                     ]
 
-            use_cmdb = vulnerability_management.config_tool[
-                "VULNERABILITY_MANAGER"
-            ]["DEFECT_DOJO"]["CMDB"]["USE_CMDB"]
+                use_cmdb = vulnerability_management.config_tool[
+                    "VULNERABILITY_MANAGER"
+                ]["DEFECT_DOJO"]["CMDB"]["USE_CMDB"]
 
-            request = self._build_request_importscan(
-                vulnerability_management,
-                token_cmdb,
-                token_dd,
-                tags,
-                use_cmdb,
-            )
-
-            def request_func():
-                return DefectDojo.send_import_scan(request)
-
-            response = Utils().retries_requests(
-                request_func,
-                vulnerability_management.config_tool["VULNERABILITY_MANAGER"][
-                    "DEFECT_DOJO"
-                ]["MAX_RETRIES_QUERY"],
-                retry_delay=5,
-            )
-
-            if hasattr(response, "url"):
-                if vulnerability_management.config_tool.get("VULNERABILITY_MANAGER").get("DEFECT_DOJO").get("PRINT_DOMAIN"):
-                    response.url = response.url.replace(
-                        vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["HOST_DEFECT_DOJO"],
-                        vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["PRINT_DOMAIN"]
-                    )
-                url_parts = response.url.split("//")
-                test_string = "//".join([url_parts[0] + "/", url_parts[1]])
-                print(
-                    "Report sent to vulnerability management: ",
-                    f"{test_string}?tags={vulnerability_management.dict_args['module']}",
+                request = self._build_request_importscan(
+                    vulnerability_management,
+                    token_cmdb,
+                    token_dd,
+                    tags,
+                    use_cmdb,
                 )
-            else:
-                raise ExceptionVulnerabilityManagement(response)
+
+                def request_func():
+                    return DefectDojo.send_import_scan(request)
+
+                response = Utils().retries_requests(
+                    request_func,
+                    vulnerability_management.config_tool["VULNERABILITY_MANAGER"][
+                        "DEFECT_DOJO"
+                    ]["MAX_RETRIES_QUERY"],
+                    retry_delay=5,
+                )
+
+                if hasattr(response, "url"):
+                    if vulnerability_management.config_tool.get("VULNERABILITY_MANAGER").get("DEFECT_DOJO").get("PRINT_DOMAIN"):
+                        response.url = response.url.replace(
+                            vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["HOST_DEFECT_DOJO"],
+                            vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["PRINT_DOMAIN"]
+                        )
+                    url_parts = response.url.split("//")
+                    test_string = "//".join([url_parts[0] + "/", url_parts[1]])
+                    print(
+                        "Report sent to vulnerability management: ",
+                        f"{test_string}?tags={vulnerability_management.dict_args['module']}",
+                    )
+                else:
+                    raise ExceptionVulnerabilityManagement(response)
         except Exception as ex:
             raise ExceptionVulnerabilityManagement(
                 f"Error sending report to vulnerability management with the following error: {str(ex)}"
