@@ -147,7 +147,10 @@ Configuration of the driven adapters in the main layer and management of on/off 
         "CDXGEN": {
             "CDXGEN_VERSION": "11.6.0",
             "OUTPUT_FORMAT": "cyclonedx-json",
-            "SLIM_BINARY": false
+            "SLIM_BINARY": false,
+            "EXCLUDE_TYPES": "",
+            "RECURSE": true,
+            "DEBUG_PIPELINES": ["pipeline_name1", "pipeline_name2"]
         }
     },
     "ENGINE_IAC": {
