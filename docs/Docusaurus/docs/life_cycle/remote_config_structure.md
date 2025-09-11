@@ -1447,6 +1447,7 @@ Secret scanning is a process that detects vulnerabilities in the application's s
         "VERSION": "3.88.31",
         "EXCLUDE_PATH": [".git", "_venv"],
         "NUMBER_THREADS": 4,
+        "FILTER_ENTROPY": 3.0, // Optional: Filter unverified results with Shannon entropy. Start with 3.0.
         "ENABLE_CUSTOM_RULES" : false,
         "EXTERNAL_DIR_OWNER": "ExternalOrg",
         "EXTERNAL_DIR_REPOSITORY": "DevSecOps_Checks",
