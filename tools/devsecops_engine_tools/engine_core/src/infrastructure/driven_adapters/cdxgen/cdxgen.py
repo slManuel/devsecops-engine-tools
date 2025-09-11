@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import requests
 import subprocess
 import platform
+import os
 
 from devsecops_engine_tools.engine_core.src.domain.model.gateway.sbom_manager import (
     SbomManagerGateway,
@@ -26,6 +27,15 @@ class CdxGen(SbomManagerGateway):
         try:
             cdxgen_version = config["CDXGEN"]["CDXGEN_VERSION"]
             slim = "-slim" if config["CDXGEN"]["SLIM_BINARY"] else ""
+            exclude_types = config["CDXGEN"].get("EXCLUDE_TYPES", "")
+            recurse = config["CDXGEN"].get("RECURSE", True)
+            debug_pipelines = config["CDXGEN"].get("DEBUG_PIPELINES", [])
+            
+            enable_debug = service_name in debug_pipelines if debug_pipelines else False
+            if enable_debug:
+                logger.info(f"Enabling debug mode for pipeline: {service_name}")
+                os.environ["CDXGEN_DEBUG_MODE"] = "debug"
+
             os_platform = platform.system()
             base_url = (
                 f"https://github.com/CycloneDX/cdxgen/releases/download/v{cdxgen_version}/"
@@ -51,31 +61,51 @@ class CdxGen(SbomManagerGateway):
                 logger.warning(f"{os_platform} is not supported.")
                 return None
 
-            result_sbom = self._run_cdxgen(command_prefix, artifact, service_name)
+            result_sbom = self._run_cdxgen(command_prefix, artifact, service_name, exclude_types, recurse, enable_debug)
             return get_list_component(result_sbom, config["CDXGEN"]["OUTPUT_FORMAT"])
         except Exception as e:
             logger.error(f"Error generating SBOM: {e}")
             return None
 
-    def _run_cdxgen(self, command_prefix, artifact, service_name):
+    def _run_cdxgen(self, command_prefix, artifact, service_name, exclude_types, recurse, enable_debug=False):
         result_file = f"{service_name}_SBOM.json"
         command = [
             command_prefix,
             artifact,
             "-o",
-            result_file,
+            result_file
         ]
 
+        if exclude_types:
+            command.extend(
+                ["--exclude-type", exclude_types]
+            )
+        
+        if not recurse:
+            command.append(
+                "--no-recurse"
+            )
+
         try:
-            subprocess.run(
+            result = subprocess.run(
                 command,
-                check=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True,
+                text=True
             )
-            print(f"SBOM generated and saved to: {result_file}")
-            return result_file
+            
+            if enable_debug:
+                if result.stdout:
+                    logger.info(f"CDXGEN stdout: {result.stdout}")
+                if result.stderr:
+                    logger.info(f"CDXGEN stderr: {result.stderr}")
+            
+            if result.returncode == 0:
+                print(f"SBOM generated and saved to: {result_file}")
+                return result_file
+            else:
+                raise Exception(f"CDXGEN command failed with return code: {result.returncode}")
+
         except Exception as e:
             logger.error(f"Error running cdxgen: {e}")
 
