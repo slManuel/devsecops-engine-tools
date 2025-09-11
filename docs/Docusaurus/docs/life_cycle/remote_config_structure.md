@@ -1446,6 +1446,7 @@ Secret scanning is a process that detects vulnerabilities in the application's s
     "trufflehog": {
         "VERSION": "3.88.31",
         "EXCLUDE_PATH": [".git", "_venv"],
+        "EXCLUDE_DETECTORS": ["aws", "userflow"], // Value can be []
         "NUMBER_THREADS": 4,
         "ENABLE_CUSTOM_RULES" : false,
         "EXTERNAL_DIR_OWNER": "ExternalOrg",
