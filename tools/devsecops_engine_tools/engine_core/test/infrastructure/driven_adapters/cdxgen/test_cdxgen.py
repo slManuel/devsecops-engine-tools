@@ -170,7 +170,6 @@ class TestCdxGen(unittest.TestCase):
         self.assertEqual(result, expected_result_file)
         mock_subprocess.assert_called_once_with(
             expected_command,
-            check=True,
             stdout=unittest.mock.ANY,
             stderr=unittest.mock.ANY,
             text=True

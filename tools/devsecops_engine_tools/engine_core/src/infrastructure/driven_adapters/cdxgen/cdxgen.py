@@ -89,7 +89,6 @@ class CdxGen(SbomManagerGateway):
         try:
             result = subprocess.run(
                 command,
-                check=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True
@@ -101,8 +100,12 @@ class CdxGen(SbomManagerGateway):
                 if result.stderr:
                     logger.info(f"CDXGEN stderr: {result.stderr}")
             
-            print(f"SBOM generated and saved to: {result_file}")
-            return result_file
+            if result.returncode == 0:
+                print(f"SBOM generated and saved to: {result_file}")
+                return result_file
+            else:
+                raise Exception(f"CDXGEN command failed with return code: {result.returncode}")
+
         except Exception as e:
             logger.error(f"Error running cdxgen: {e}")
 
