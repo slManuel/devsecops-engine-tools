@@ -26,6 +26,9 @@ class CdxGen(SbomManagerGateway):
         try:
             cdxgen_version = config["CDXGEN"]["CDXGEN_VERSION"]
             slim = "-slim" if config["CDXGEN"]["SLIM_BINARY"] else ""
+            exclude_types = config["CDXGEN"].get("EXCLUDE_TYPES", "")
+            recurse = config["CDXGEN"].get("RECURSE", True)
+
             os_platform = platform.system()
             base_url = (
                 f"https://github.com/CycloneDX/cdxgen/releases/download/v{cdxgen_version}/"
@@ -51,20 +54,30 @@ class CdxGen(SbomManagerGateway):
                 logger.warning(f"{os_platform} is not supported.")
                 return None
 
-            result_sbom = self._run_cdxgen(command_prefix, artifact, service_name)
+            result_sbom = self._run_cdxgen(command_prefix, artifact, service_name, exclude_types, recurse)
             return get_list_component(result_sbom, config["CDXGEN"]["OUTPUT_FORMAT"])
         except Exception as e:
             logger.error(f"Error generating SBOM: {e}")
             return None
 
-    def _run_cdxgen(self, command_prefix, artifact, service_name):
+    def _run_cdxgen(self, command_prefix, artifact, service_name, exclude_types, recurse):
         result_file = f"{service_name}_SBOM.json"
         command = [
             command_prefix,
             artifact,
             "-o",
-            result_file,
+            result_file
         ]
+
+        if exclude_types:
+            command.extend(
+                ["--exclude-type", exclude_types]
+            )
+        
+        if not recurse:
+            command.append(
+                "--no-recurse"
+            )
 
         try:
             subprocess.run(

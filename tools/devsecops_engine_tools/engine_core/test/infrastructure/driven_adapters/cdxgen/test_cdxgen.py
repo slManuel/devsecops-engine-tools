@@ -16,7 +16,9 @@ class TestCdxGen(unittest.TestCase):
             "CDXGEN": {
                 "CDXGEN_VERSION": "10.2.0",
                 "SLIM_BINARY": False,
-                "OUTPUT_FORMAT": "json"
+                "OUTPUT_FORMAT": "json",
+                "EXCLUDE_TYPES": "",
+                "RECURSE": True
             }
         }
         
@@ -24,7 +26,9 @@ class TestCdxGen(unittest.TestCase):
             "CDXGEN": {
                 "CDXGEN_VERSION": "10.2.0",
                 "SLIM_BINARY": True,
-                "OUTPUT_FORMAT": "json"
+                "OUTPUT_FORMAT": "json",
+                "EXCLUDE_TYPES": "",
+                "RECURSE": True
             }
         }
         
@@ -53,7 +57,7 @@ class TestCdxGen(unittest.TestCase):
             "https://github.com/CycloneDX/cdxgen/releases/download/v10.2.0/cdxgen-linux-amd64",
             "cdxgen"
         )
-        mock_run.assert_called_once_with('/usr/local/bin/cdxgen', self.artifact, self.service_name)
+        mock_run.assert_called_once_with('/usr/local/bin/cdxgen', self.artifact, self.service_name, "", True)
         mock_get_list_component.assert_called_once_with('test_service_SBOM.json', 'json')
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.get_list_component')
@@ -148,13 +152,15 @@ class TestCdxGen(unittest.TestCase):
     def test_run_cdxgen_success(self, mock_subprocess):
         # Arrange
         command_prefix = "/usr/local/bin/cdxgen"
+        exclude_types = ""
+        recurse = True
         mock_subprocess.return_value = Mock(returncode=0)
         expected_result_file = f"{self.service_name}_SBOM.json"
         expected_command = [command_prefix, self.artifact, "-o", expected_result_file]
         
         # Act
         with patch('builtins.print') as mock_print:
-            result = self.cdxgen._run_cdxgen(command_prefix, self.artifact, self.service_name)
+            result = self.cdxgen._run_cdxgen(command_prefix, self.artifact, self.service_name, exclude_types, recurse)
         
         # Assert
         self.assertEqual(result, expected_result_file)
@@ -172,11 +178,13 @@ class TestCdxGen(unittest.TestCase):
     def test_run_cdxgen_failure(self, mock_subprocess, mock_logger):
         # Arrange
         command_prefix = "/usr/local/bin/cdxgen"
+        exclude_types = ""
+        recurse = True
         error_message = "Command execution failed"
         mock_subprocess.side_effect = Exception(error_message)
         
         # Act
-        result = self.cdxgen._run_cdxgen(command_prefix, self.artifact, self.service_name)
+        result = self.cdxgen._run_cdxgen(command_prefix, self.artifact, self.service_name, exclude_types, recurse)
         
         # Assert
         self.assertIsNone(result)
