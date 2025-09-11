@@ -16,6 +16,7 @@
     "trufflehog": {
         "VERSION": "3.88.31",
         "EXCLUDE_PATH": [".git", "_venv"],
+        "EXCLUDE_DETECTORS": ["aws", "userflow"],
         "NUMBER_THREADS": 4,
         "FILTER_ENTROPY": 3.0,
         "ENABLE_CUSTOM_RULES" : false,

@@ -76,6 +76,9 @@ class TrufflehogRun(ToolGateway):
         enable_custom_rules = config_tool[tool]["ENABLE_CUSTOM_RULES"]
         if enable_custom_rules:
             Utils().configurate_external_checks(tool, config_tool, secret_tool, secret_external_checks, path)
+        exclude_detectors = config_tool[tool]["EXCLUDE_DETECTORS"]
+        if exclude_detectors:
+            exclude_detectors = ",".join(exclude_detectors)
         filter_entropy = config_tool[tool].get("FILTER_ENTROPY")
 
 
@@ -90,6 +93,7 @@ class TrufflehogRun(ToolGateway):
                 [enable_custom_rules] * len(include_paths),
                 [agent_os] * len(include_paths),
                 [folder_path] * len(include_paths),
+                [exclude_detectors] * len(include_paths),
                 [filter_entropy] * len(include_paths)
             )
         findings, file_findings = self.create_file(self.decode_output(results), path, config_tool, tool)
@@ -128,6 +132,7 @@ class TrufflehogRun(ToolGateway):
         enable_custom_rules,
         agent_os,
         folder_path,
+        exclude_detectors,
         filter_entropy
     ):
         path_folder = folder_path if folder_path is not None else f"{path}/{repository_name}"
@@ -137,6 +142,9 @@ class TrufflehogRun(ToolGateway):
             command = command.replace("--no-verification --no-update --json", f"--config {path}//rules//trufflehog//custom-rules.yaml --no-verification --no-update --json" if "Windows" in agent_os else
                                       f"--config {path}/rules/trufflehog/custom-rules.yaml --no-verification --no-update --json" if "Linux" or "Darwin" in agent_os else
                                       "--no-verification --no-update --json")  
+            
+        if exclude_detectors:
+            command = f"{command} --exclude-detectors {exclude_detectors}"
             
         if filter_entropy:
             command = f"{command} --filter-entropy={filter_entropy}"

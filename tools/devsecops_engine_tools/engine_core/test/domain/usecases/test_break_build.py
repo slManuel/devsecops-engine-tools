@@ -329,8 +329,8 @@ class BreakBuildTests(unittest.TestCase):
 
         result_compare = {
             "findings_excluded": [
-                {"id": "CKV_DOCKER_3", "severity": "high", "category": Category.VULNERABILITY},
-                {"id": "CKV_K8S_20", "severity": "high", "category": Category.VULNERABILITY},
+                {"id": "CKV_DOCKER_3", "severity": "high", "category": Category.VULNERABILITY.value},
+                {"id": "CKV_K8S_20", "severity": "high", "category": Category.VULNERABILITY.value},
             ],
             "vulnerabilities": {},
             "compliances": {},
