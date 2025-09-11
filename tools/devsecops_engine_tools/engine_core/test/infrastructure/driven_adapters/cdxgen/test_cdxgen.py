@@ -18,7 +18,8 @@ class TestCdxGen(unittest.TestCase):
                 "SLIM_BINARY": False,
                 "OUTPUT_FORMAT": "json",
                 "EXCLUDE_TYPES": "",
-                "RECURSE": True
+                "RECURSE": True,
+                "DEBUG_PIPELINES": []
             }
         }
         
@@ -28,7 +29,8 @@ class TestCdxGen(unittest.TestCase):
                 "SLIM_BINARY": True,
                 "OUTPUT_FORMAT": "json",
                 "EXCLUDE_TYPES": "",
-                "RECURSE": True
+                "RECURSE": True,
+                "DEBUG_PIPELINES": []
             }
         }
         
@@ -57,7 +59,7 @@ class TestCdxGen(unittest.TestCase):
             "https://github.com/CycloneDX/cdxgen/releases/download/v10.2.0/cdxgen-linux-amd64",
             "cdxgen"
         )
-        mock_run.assert_called_once_with('/usr/local/bin/cdxgen', self.artifact, self.service_name, "", True)
+        mock_run.assert_called_once_with('/usr/local/bin/cdxgen', self.artifact, self.service_name, "", True, False)
         mock_get_list_component.assert_called_once_with('test_service_SBOM.json', 'json')
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.get_list_component')
@@ -154,13 +156,15 @@ class TestCdxGen(unittest.TestCase):
         command_prefix = "/usr/local/bin/cdxgen"
         exclude_types = ""
         recurse = True
-        mock_subprocess.return_value = Mock(returncode=0)
+        enable_debug = False
+        mock_result = Mock(returncode=0, stdout="", stderr="")
+        mock_subprocess.return_value = mock_result
         expected_result_file = f"{self.service_name}_SBOM.json"
         expected_command = [command_prefix, self.artifact, "-o", expected_result_file]
         
         # Act
         with patch('builtins.print') as mock_print:
-            result = self.cdxgen._run_cdxgen(command_prefix, self.artifact, self.service_name, exclude_types, recurse)
+            result = self.cdxgen._run_cdxgen(command_prefix, self.artifact, self.service_name, exclude_types, recurse, enable_debug)
         
         # Assert
         self.assertEqual(result, expected_result_file)
@@ -180,15 +184,99 @@ class TestCdxGen(unittest.TestCase):
         command_prefix = "/usr/local/bin/cdxgen"
         exclude_types = ""
         recurse = True
+        enable_debug = False
         error_message = "Command execution failed"
         mock_subprocess.side_effect = Exception(error_message)
         
         # Act
-        result = self.cdxgen._run_cdxgen(command_prefix, self.artifact, self.service_name, exclude_types, recurse)
+        result = self.cdxgen._run_cdxgen(command_prefix, self.artifact, self.service_name, exclude_types, recurse, enable_debug)
         
         # Assert
         self.assertIsNone(result)
         mock_logger.error.assert_called_once_with(f"Error running cdxgen: {error_message}")
+
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.subprocess.run')
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.logger')
+    def test_run_cdxgen_debug_mode_enabled(self, mock_logger, mock_subprocess):
+        # Arrange
+        command_prefix = "/usr/local/bin/cdxgen"
+        exclude_types = ""
+        recurse = True
+        enable_debug = True
+        mock_result = Mock(returncode=0, stdout="Debug stdout output", stderr="Debug stderr output")
+        mock_subprocess.return_value = mock_result
+        expected_result_file = f"{self.service_name}_SBOM.json"
+        
+        # Act
+        with patch('builtins.print') as mock_print:
+            result = self.cdxgen._run_cdxgen(command_prefix, self.artifact, self.service_name, exclude_types, recurse, enable_debug)
+        
+        # Assert
+        self.assertEqual(result, expected_result_file)
+        # Verify that debug info is logged (based on actual implementation)
+        mock_logger.info.assert_any_call("CDXGEN stdout: Debug stdout output")
+        mock_logger.info.assert_any_call("CDXGEN stderr: Debug stderr output")
+        
+        # Verify the final print call
+        mock_print.assert_called_with(f"SBOM generated and saved to: {expected_result_file}")
+
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.get_list_component')
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.platform.system')
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.logger')
+    def test_get_components_debug_mode_service_in_list(self, mock_logger, mock_platform, mock_get_list_component):
+        # Arrange
+        mock_platform.return_value = "Linux"
+        mock_get_list_component.return_value = self.mock_components
+        
+        # Config with DEBUG_PIPELINES containing our service
+        debug_config = {
+            "CDXGEN": {
+                "CDXGEN_VERSION": "10.2.0",
+                "SLIM_BINARY": False,
+                "OUTPUT_FORMAT": "json",
+                "EXCLUDE_TYPES": "",
+                "RECURSE": True,
+                "DEBUG_PIPELINES": ["test_service", "another_service"]
+            }
+        }
+        
+        with patch.object(self.cdxgen, '_install_tool_unix', return_value='/usr/local/bin/cdxgen') as mock_install:
+            with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
+                # Act
+                result = self.cdxgen.get_components(self.artifact, debug_config, self.service_name)
+        
+        # Assert
+        self.assertEqual(result, self.mock_components)
+        mock_logger.info.assert_called_with(f"Enabling debug mode for pipeline: {self.service_name}")
+        mock_run.assert_called_once_with('/usr/local/bin/cdxgen', self.artifact, self.service_name, "", True, True)
+
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.get_list_component')
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.platform.system')
+    def test_get_components_debug_mode_service_not_in_list(self, mock_platform, mock_get_list_component):
+        # Arrange
+        mock_platform.return_value = "Linux"
+        mock_get_list_component.return_value = self.mock_components
+        
+        # Config with DEBUG_PIPELINES not containing our service
+        debug_config = {
+            "CDXGEN": {
+                "CDXGEN_VERSION": "10.2.0",
+                "SLIM_BINARY": False,
+                "OUTPUT_FORMAT": "json",
+                "EXCLUDE_TYPES": "",
+                "RECURSE": True,
+                "DEBUG_PIPELINES": ["other_service", "another_service"]
+            }
+        }
+        
+        with patch.object(self.cdxgen, '_install_tool_unix', return_value='/usr/local/bin/cdxgen') as mock_install:
+            with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
+                # Act
+                result = self.cdxgen.get_components(self.artifact, debug_config, self.service_name)
+        
+        # Assert
+        self.assertEqual(result, self.mock_components)
+        mock_run.assert_called_once_with('/usr/local/bin/cdxgen', self.artifact, self.service_name, "", True, False)
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.subprocess.run')
     def test_install_tool_unix_already_installed(self, mock_subprocess):
