@@ -55,16 +55,23 @@ export class DependenciesScanner implements IScannerGateway {
           resolve(new ScannerRes(false, []));
         }, 12000000);
 
-        if (!dependenciesToken) {
-          outputChannel.appendLine("No Dependencies Token to scan provided\n Go to Settings to configure it!");
+        // Token is only required for xray and dependency_check tools, not for trivy
+        if ((dependenciesTool === "xray" || dependenciesTool === "dependency_check") && !dependenciesToken) {
+          outputChannel.appendLine(`No Dependencies Token provided for ${dependenciesTool} tool\n Go to Settings to configure it!`);
           resolve(new ScannerRes(false, []));
           return;
         }
+        
         if (dependenciesTool === "dependency_check" && dependencyCheckDatabase) {
           dependencyCheckDatabaseVolume = `-v ${dependencyCheckDatabase}:/root/dependency-check`;
         }
 
-        const containerCommand = `${containerEnginePath} run --rm ${dependencyCheckDatabaseVolume} -v ${elementToScan}:/ms_artifact ${containerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --xray_mode ${xrayMode} --remote_config_repo docker_default_remote_config --module engine_dependencies --tool ${dependenciesTool} --token_engine_dependencies ${dependenciesToken} --folder_path /ms_artifact --context true"`;
+        let tokenParameter = "";
+        if (dependenciesToken && (dependenciesTool === "xray" || dependenciesTool === "dependency_check")) {
+          tokenParameter = `--token_engine_dependencies ${dependenciesToken}`;
+        }
+
+        const containerCommand = `${containerEnginePath} run --rm ${dependencyCheckDatabaseVolume} -v ${elementToScan}:/ms_artifact ${containerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --xray_mode ${xrayMode} --remote_config_repo docker_default_remote_config --module engine_dependencies --tool ${dependenciesTool} ${tokenParameter} --folder_path /ms_artifact --context true"`;
 
         const childProcess = exec(containerCommand, (error, stdout, stderr) => {
           clearTimeout(timeout);

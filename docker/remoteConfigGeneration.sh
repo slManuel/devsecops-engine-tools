@@ -9,3 +9,6 @@ sed -i 's/"TOOL": "PRISMA|TRIVY"/"TOOL": "TRIVY"/' "$json_file_container"
 
 json_file_dependencies="/app/docker_default_remote_config/engine_core/ConfigTool.json"
 sed -i 's/"TOOL": "XRAY|DEPENDENCY_CHECK"/"TOOL": "XRAY"/' "$json_file_dependencies"
+
+json_file_sbom="/app/docker_default_remote_config/engine_core/ConfigTool.json"
+sed -i 's/"TOOL": "SYFT|CDXGEN"/"TOOL": "CDXGEN"/' "$json_file_sbom"

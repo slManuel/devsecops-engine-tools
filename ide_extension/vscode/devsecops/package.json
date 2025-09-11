@@ -124,10 +124,11 @@
           },
           "devsecops.dependencies.dependenciesTool": {
             "type": "string",
-            "default": "xray",
+            "default": "trivy",
             "enum": [
               "xray",
-              "dependency_check"
+              "dependency_check",
+              "trivy"
             ],
             "description": "Dependency Scan Tool to use"
           },

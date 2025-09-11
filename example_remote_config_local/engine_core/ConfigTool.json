@@ -84,7 +84,7 @@
         }
     },
     "SBOM_MANAGER": {
-        "ENABLED": false,
+        "ENABLED": true,
         "TOOL": "SYFT|CDXGEN",
         "BRANCH_FILTER": [
             "trunk",
