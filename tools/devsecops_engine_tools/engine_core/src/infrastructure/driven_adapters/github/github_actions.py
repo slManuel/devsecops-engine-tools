@@ -8,7 +8,7 @@ from devsecops_engine_tools.engine_utilities.github.models.GithubPredefinedVaria
     ReleaseVariables,
     AgentVariables,
     VMVariables,
-    ApplicationVariables
+    CustomVariables
 )
 from devsecops_engine_tools.engine_utilities.github.infrastructure.github_api import (
     GithubApi,
@@ -54,7 +54,7 @@ class GithubActions(DevopsPlatformGateway):
         return results.get(type)
 
     def get_source_code_management_uri(self):
-        return f"{SystemVariables.github_server_url.value()}/{SystemVariables.github_repository.value()}"
+        return f"{SystemVariables.github_server_url.value()}/{self.get_variable('repository')}"
 
     def get_base_compact_remote_config_url(self, remote_config_repo):
         github_repository = SystemVariables.github_repository.value()
@@ -78,11 +78,19 @@ class GithubActions(DevopsPlatformGateway):
             "access_token": SystemVariables.github_access_token,
             "organization": f"{SystemVariables.github_server_url}/{SystemVariables.github_repository}",
             "project_name": SystemVariables.github_repository,
-            "repository": BuildVariables.github_repository,
+            "repository": (
+                CustomVariables.Repository_Name 
+                if CustomVariables.Repository_Name.value() 
+                else BuildVariables.github_repository
+            ),
             "pipeline_name": (
-                BuildVariables.github_workflow
-                if SystemVariables.github_job.value() == "build"
-                else ReleaseVariables.github_workflow
+                CustomVariables.Pipeline_Name 
+                if CustomVariables.Pipeline_Name.value() 
+                else (
+                    BuildVariables.github_workflow
+                    if SystemVariables.github_job.value() == "build"
+                    else ReleaseVariables.github_workflow
+                )
             ),
             "stage": SystemVariables.github_job,
             "path_directory": SystemVariables.github_workspace,
@@ -95,7 +103,7 @@ class GithubActions(DevopsPlatformGateway):
             "vm_product_type_name": VMVariables.Vm_Product_Type_Name,
             "vm_product_name": VMVariables.Vm_Product_Name,
             "vm_product_description": VMVariables.Vm_Product_Description,
-            "build_task":  ApplicationVariables.Application_Build_Task,
+            "build_task":  CustomVariables.Build_Task,
         }
         try:
             return variable_map.get(variable).value()

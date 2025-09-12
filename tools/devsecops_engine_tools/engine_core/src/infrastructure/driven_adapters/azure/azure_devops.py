@@ -8,7 +8,7 @@ from devsecops_engine_tools.engine_utilities.azuredevops.models.AzurePredefinedV
     ReleaseVariables,
     AgentVariables,
     VMVariables,
-    ApplicationVariables,
+    CustomVariables,
 )
 from devsecops_engine_tools.engine_utilities.azuredevops.infrastructure.azure_devops_api import (
     AzureDevopsApi,
@@ -59,17 +59,18 @@ class AzureDevops(DevopsPlatformGateway):
 
     def get_source_code_management_uri(self):
         try:
+            repository_variable = self.get_variable("repository")
             source_code_management_uri = {
                 "tfsgit": (
                     f"{SystemVariables.System_TeamFoundationCollectionUri.value()}"
-                    f"{SystemVariables.System_TeamProject.value()}/_git/{BuildVariables.Build_Repository_Name.value()}"
+                    f"{SystemVariables.System_TeamProject.value()}/_git/{repository_variable}"
                 ).replace(" ", "%20"),
                 "github": (
-                    f"https://github.com/{BuildVariables.Build_Repository_Name.value()}"
+                    f"https://github.com/{repository_variable}"
                 ),
                 "git": (
                     f"{SystemVariables.System_TeamFoundationCollectionUri.value()}"
-                    f"{SystemVariables.System_TeamProject.value()}/_git/{BuildVariables.Build_Repository_Name.value()}"
+                    f"{SystemVariables.System_TeamProject.value()}/_git/{repository_variable}"
                 ).replace(" ", "%20")
             }
             return source_code_management_uri.get(BuildVariables.Build_Repository_Provider.value().lower())
@@ -101,11 +102,19 @@ class AzureDevops(DevopsPlatformGateway):
             "access_token": SystemVariables.System_AccessToken,
             "organization": SystemVariables.System_TeamFoundationCollectionUri,
             "project_name": SystemVariables.System_TeamProject,
-            "repository": BuildVariables.Build_Repository_Name,
+            "repository": (
+                CustomVariables.Repository_Name 
+                if CustomVariables.Repository_Name.value() 
+                else BuildVariables.Build_Repository_Name
+            ),
             "pipeline_name": (
-                BuildVariables.Build_DefinitionName
-                if SystemVariables.System_HostType.value() == "build"
-                else ReleaseVariables.Release_Definitionname
+                CustomVariables.Pipeline_Name 
+                if CustomVariables.Pipeline_Name.value() 
+                else (
+                    BuildVariables.Build_DefinitionName
+                    if SystemVariables.System_HostType.value() == "build"
+                    else ReleaseVariables.Release_Definitionname
+                )
             ),
             "stage": SystemVariables.System_HostType,
             "path_directory": SystemVariables.System_DefaultWorkingDirectory,
@@ -118,7 +127,7 @@ class AzureDevops(DevopsPlatformGateway):
             "vm_product_type_name": VMVariables.Vm_Product_Type_Name,
             "vm_product_name": VMVariables.Vm_Product_Name,
             "vm_product_description": VMVariables.Vm_Product_Description,
-            "build_task": ApplicationVariables.Application_Build_Task,
+            "build_task": CustomVariables.Build_Task,
         }
         try:
             return variable_map.get(variable).value()

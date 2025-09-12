@@ -18,6 +18,7 @@
         "EXCLUDE_PATH": [".git", "_venv"],
         "EXCLUDE_DETECTORS": ["aws", "userflow"],
         "NUMBER_THREADS": 4,
+        "FILTER_ENTROPY": 3.0,
         "ENABLE_CUSTOM_RULES" : false,
         "EXTERNAL_DIR_OWNER": "ExternalOrg",
         "EXTERNAL_DIR_REPOSITORY": "DevSecOps_Checks",
