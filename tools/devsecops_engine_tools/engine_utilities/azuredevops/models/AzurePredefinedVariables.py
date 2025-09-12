@@ -10,7 +10,11 @@ class EnvVariables:
     @staticmethod
     def get_value(env_name):
         env_var = os.environ.get(env_name)
-        if env_var is None:
+        is_env_var_none = env_var is None
+        if env_name in ("CUSTOM_REPOSITORY_NAME", "CUSTOM_PIPELINE_NAME") and is_env_var_none:
+            return None
+            
+        if is_env_var_none:
             raise ValueError(f"La variable de entorno {env_name} no está definida")
         return env_var
 
@@ -69,5 +73,7 @@ class VMVariables(BaseEnum):
     Vm_Product_Name = "Vm.Product.Name"
     Vm_Product_Description = "Vm.Product.Description"
 
-class ApplicationVariables(BaseEnum):
-    Application_Build_Task = "BUILDTASK"
+class CustomVariables(BaseEnum):
+    Build_Task = "BUILDTASK"
+    Pipeline_Name = "Custom.Pipeline.Name"
+    Repository_Name  = "Custom.Repository.Name"

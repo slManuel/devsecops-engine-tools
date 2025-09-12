@@ -147,7 +147,11 @@ Configuration of the driven adapters in the main layer and management of on/off 
         "CDXGEN": {
             "CDXGEN_VERSION": "11.6.0",
             "OUTPUT_FORMAT": "cyclonedx-json",
-            "SLIM_BINARY": false
+            "SLIM_BINARY": false,
+            "EXCLUDE_TYPES": ["jar"],
+            "EXCLUDE_PATHS": ["**/test/**"],
+            "RECURSE": true,
+            "DEBUG_PIPELINES": ["pipeline_name1", "pipeline_name2"]
         }
     },
     "ENGINE_IAC": {
@@ -1446,7 +1450,9 @@ Secret scanning is a process that detects vulnerabilities in the application's s
     "trufflehog": {
         "VERSION": "3.88.31",
         "EXCLUDE_PATH": [".git", "_venv"],
+        "EXCLUDE_DETECTORS": ["aws", "userflow"], // Value can be []
         "NUMBER_THREADS": 4,
+        "FILTER_ENTROPY": 3.0, // Optional: Filter unverified results with Shannon entropy. Start with 3.0.
         "ENABLE_CUSTOM_RULES" : false,
         "EXTERNAL_DIR_OWNER": "ExternalOrg",
         "EXTERNAL_DIR_REPOSITORY": "DevSecOps_Checks",

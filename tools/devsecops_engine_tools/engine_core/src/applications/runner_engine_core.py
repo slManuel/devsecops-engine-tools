@@ -233,13 +233,6 @@ def get_inputs_from_cli(args):
         help="Enable or disable context creation. Applies to engine_iac, engine_container and engine_dependencies. Default is false."
     )
     parser.add_argument(
-        "-repo",
-        "--repo_name",
-        type=str,
-        required=False,
-        help="Repository name, used when the repository name should not be taken from environment variable. Apply to kiuwan"
-    )
-    parser.add_argument(
         "--docker_address",
         required=False,
         help="Address of the Docker daemon to connect to."
@@ -287,7 +280,6 @@ def get_inputs_from_cli(args):
         "image_to_scan": args.image_to_scan,
         "dast_file_path": args.dast_file_path,
         "context": args.context,
-        "repo_name": args.repo_name,
         "docker_address": args.docker_address
     }
 

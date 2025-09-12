@@ -78,11 +78,12 @@ def init_engine_dependencies(
                 build_id,
                 build_url
             )
+            branch_filter = [branch for branch in config_sbom["BRANCH_FILTER"] if branch is not None]
             if config_sbom["ENABLED"] and (
-                not config_sbom["BRANCH_FILTER"] or 
+                not branch_filter or 
                 any(
                     branch in str(tool_remote.get_variable("branch_tag"))
-                    for branch in config_sbom["BRANCH_FILTER"]
+                    for branch in branch_filter
                 )
             ):
                 sbom_components = tool_sbom.get_components(

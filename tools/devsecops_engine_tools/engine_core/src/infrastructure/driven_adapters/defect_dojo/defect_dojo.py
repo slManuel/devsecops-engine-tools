@@ -125,43 +125,43 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                         f"{vulnerability_management.dict_args['module']}_{tag_suffix}"
                     ]
 
-            use_cmdb = vulnerability_management.config_tool[
-                "VULNERABILITY_MANAGER"
-            ]["DEFECT_DOJO"]["CMDB"]["USE_CMDB"]
+                use_cmdb = vulnerability_management.config_tool[
+                    "VULNERABILITY_MANAGER"
+                ]["DEFECT_DOJO"]["CMDB"]["USE_CMDB"]
 
-            request = self._build_request_importscan(
-                vulnerability_management,
-                token_cmdb,
-                token_dd,
-                tags,
-                use_cmdb,
-            )
-
-            def request_func():
-                return DefectDojo.send_import_scan(request)
-
-            response = Utils().retries_requests(
-                request_func,
-                vulnerability_management.config_tool["VULNERABILITY_MANAGER"][
-                    "DEFECT_DOJO"
-                ]["MAX_RETRIES_QUERY"],
-                retry_delay=5,
-            )
-
-            if hasattr(response, "url"):
-                if vulnerability_management.config_tool.get("VULNERABILITY_MANAGER").get("DEFECT_DOJO").get("PRINT_DOMAIN"):
-                    response.url = response.url.replace(
-                        vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["HOST_DEFECT_DOJO"],
-                        vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["PRINT_DOMAIN"]
-                    )
-                url_parts = response.url.split("//")
-                test_string = "//".join([url_parts[0] + "/", url_parts[1]])
-                print(
-                    "Report sent to vulnerability management: ",
-                    f"{test_string}?tags={vulnerability_management.dict_args['module']}",
+                request = self._build_request_importscan(
+                    vulnerability_management,
+                    token_cmdb,
+                    token_dd,
+                    tags,
+                    use_cmdb,
                 )
-            else:
-                raise ExceptionVulnerabilityManagement(response)
+
+                def request_func():
+                    return DefectDojo.send_import_scan(request)
+
+                response = Utils().retries_requests(
+                    request_func,
+                    vulnerability_management.config_tool["VULNERABILITY_MANAGER"][
+                        "DEFECT_DOJO"
+                    ]["MAX_RETRIES_QUERY"],
+                    retry_delay=5,
+                )
+
+                if hasattr(response, "url"):
+                    if vulnerability_management.config_tool.get("VULNERABILITY_MANAGER").get("DEFECT_DOJO").get("PRINT_DOMAIN"):
+                        response.url = response.url.replace(
+                            vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["HOST_DEFECT_DOJO"],
+                            vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["PRINT_DOMAIN"]
+                        )
+                    url_parts = response.url.split("//")
+                    test_string = "//".join([url_parts[0] + "/", url_parts[1]])
+                    print(
+                        "Report sent to vulnerability management: ",
+                        f"{test_string}?tags={vulnerability_management.dict_args['module']}",
+                    )
+                else:
+                    raise ExceptionVulnerabilityManagement(response)
         except Exception as ex:
             raise ExceptionVulnerabilityManagement(
                 f"Error sending report to vulnerability management with the following error: {str(ex)}"
@@ -304,14 +304,13 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                 white_list=white_list,
             )
 
-            result = (
+            return (
                 list(exclusions_risk_accepted)
                 + list(exclusions_false_positive)
                 + list(exclusions_out_of_scope)
                 + list(exclusions_transfer_finding)
                 + list(exclusions_white_list)
             )
-            return result
 
         except Exception as ex:
             raise ExceptionFindingsExcepted(
@@ -463,8 +462,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                 },
             )
 
-            result = [entry.unique_id_from_tool for entry in exclusions_black_list]
-            return result
+            return [entry.unique_id_from_tool for entry in exclusions_black_list]
 
         except Exception as ex:
             raise ExceptionVulnerabilityManagement(
@@ -672,7 +670,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
             session_manager, service, max_retries, query_params
         )
         
-        result = map(
+        return map(
             partial(
                 self._create_exclusion,
                 date_fn=date_fn,
@@ -682,7 +680,6 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
             ),
             findings,
         )
-        return result
 
     def _get_findings(self, session_manager, service, max_retries, query_params):
         def request_func():
@@ -690,8 +687,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                 session=session_manager, service=service, **query_params
             ).results
 
-        findings = Utils().retries_requests(request_func, max_retries, retry_delay=5)
-        return findings
+        return Utils().retries_requests(request_func, max_retries, retry_delay=5)
 
     def _get_finding_exclusion(self, session_manager, max_retries, query_params):
         def request_func():
@@ -699,33 +695,29 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                 session=session_manager, **query_params
             ).results
 
-        exclusions = Utils().retries_requests(request_func, max_retries, retry_delay=5)
-        return exclusions
+        return Utils().retries_requests(request_func, max_retries, retry_delay=5)
 
     def _date_reason_based(self, finding, date_fn, reason, tool, **kwargs):
         def get_vuln_id(finding, tool):
             if tool == "engine_risk":
-                vuln_id = (
+                return (
                     finding.id[0]["vulnerability_id"]
                     if finding.id
                     else finding.vuln_id_from_tool
                 )
             else:
-                vuln_id = (
+                return (
                     finding.vulnerability_ids[0]["vulnerability_id"]
                     if finding.vulnerability_ids
                     else finding.vuln_id_from_tool
                 )
-            return vuln_id
 
         def get_dates_from_whitelist(vuln_id, white_list):
             matching_finding = next(
                 filter(lambda x: x.unique_id_from_tool == vuln_id, white_list), None
             )
             if matching_finding:
-                create_date = date_fn(matching_finding.create_date)
-                expiration_date = date_fn(matching_finding.expiration_date)
-                return create_date, expiration_date
+                return date_fn(matching_finding.create_date), date_fn(matching_finding.expiration_date)
             return date_fn(None), date_fn(None)
 
         reason_to_dates = {
@@ -759,7 +751,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
         create_date, expired_date = self._date_reason_based(
             finding, date_fn, reason, tool, **kwargs
         )
-        exclusion = Exclusions(
+        return Exclusions(
             id=(
                 finding.vuln_id_from_tool
                 if finding.vuln_id_from_tool
@@ -775,7 +767,6 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
             severity=finding.severity.lower(),
             reason=reason,
         )
-        return exclusion
 
     def _create_report_exclusion(
         self, finding, date_fn, tool, reason, host_dd, **kwargs
@@ -783,7 +774,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
         create_date, expired_date = self._date_reason_based(
             finding, date_fn, reason, tool, **kwargs
         )
-        exclusion = Exclusions(
+        return Exclusions(
             id=(
                 finding.vuln_id_from_tool
                 if finding.vuln_id_from_tool
@@ -799,10 +790,9 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
             service=finding.service,
             tags=finding.tags,
         )
-        return exclusion
 
     def _create_report(self, finding, host_dd):
-        report = Report(
+        return Report(
             vm_id=str(finding.id),
             vm_id_url=f"{host_dd}/finding/{finding.id}",
             id=finding.vulnerability_ids,
@@ -834,33 +824,29 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
             service=finding.service,
             unique_id_from_tool=finding.unique_id_from_tool,
         )
-        return report
 
     def _format_date_to_dd_format(self, date_string):
-        result = (
+        return (
             format_date(date_string.split("T")[0], "%Y-%m-%d", "%d%m%Y")
             if date_string
             else None
         )
-        return result
 
     def _get_where(self, finding, tool):
         if tool == "engine_dependencies":
-            result = (
+            return (
                 finding.component_name.replace("_", ":")
                 + ":"
                 + finding.component_version
             )
         elif tool == "engine_container":
-            result = finding.component_name + ":" + finding.component_version
+            return finding.component_name + ":" + finding.component_version
         elif tool == "engine_dast":
-            result = finding.endpoints
+            return finding.endpoints
         elif tool == "engine_risk":
             for tag in finding.tags:
-                result = self._get_where(finding, tag)
-                return result
-            result = finding.file_path
+                return self._get_where(finding, tag)
+            return finding.file_path
         else:
-
             return finding.file_path
         
