@@ -21,36 +21,40 @@ class TrivyDeserializator(DeseralizatorGateway):
         with open(image_scanned, "rb") as file:
             image_object = file.read()
             json_data = json.loads(image_object)
-            vulnerabilities_data = json_data.get("Results", [{}])[0].get("Vulnerabilities", [])
-            vulnerabilities = [
-                Finding(
-                    id=vul.get("VulnerabilityID", ""),
-                    cvss=str(
-                        next(
-                            (
-                                v["V3Score"]
-                                for v in vul["CVSS"].values()
-                                if "V3Score" in v
-                            ),
-                            None,
-                        )
-                    ),
-                    where=vul.get("PkgName", "")
-                    + ":"
-                    + vul.get("InstalledVersion", ""),
-                    description=vul.get("Description", "").replace("\n", "")[:150],
-                    severity=vul.get("Severity", "").lower(),
-                    identification_date=datetime.now().strftime("%Y-%m-%dT%H:%M:%S%z"),
-                    published_date_cve=self._check_date_format(vul),
-                    module=module,
-                    category=Category.VULNERABILITY,
-                    requirements=vul.get("FixedVersion") or vul.get("Status", ""),
-                    tool="Trivy",
-                )
-                for vul in vulnerabilities_data
-                if vul.get("CVSS") and vul.get("PublishedDate")
-            ]
-            list_open_vulnerabilities.extend(vulnerabilities)
+            results = json_data.get("Results", [{}])
+
+            for result in results:
+                vulnerabilities_data = result.get("Vulnerabilities", [])
+                vulnerabilities = [
+                    Finding(
+                        id=vul.get("VulnerabilityID", ""),
+                        cvss=str(
+                            next(
+                                (
+                                    v["V3Score"]
+                                    for v in vul["CVSS"].values()
+                                    if "V3Score" in v
+                                ),
+                                None,
+                            )
+                        ),
+                        where=vul.get("PkgName", "")
+                        + ":"
+                        + vul.get("InstalledVersion", ""),
+                        description=vul.get("Description", "").replace("\n", "")[:150],
+                        severity=vul.get("Severity", "").lower(),
+                        identification_date=datetime.now().strftime("%Y-%m-%dT%H:%M:%S%z"),
+                        published_date_cve=self._check_date_format(vul),
+                        module=module,
+                        category=Category.VULNERABILITY,
+                        requirements=vul.get("FixedVersion") or vul.get("Status", ""),
+                        tool="Trivy",
+                    )
+                    for vul in vulnerabilities_data
+                    if vul.get("CVSS") and vul.get("PublishedDate")
+                ]
+                list_open_vulnerabilities.extend(vulnerabilities)
+        
         return list_open_vulnerabilities
 
     def get_container_context_from_results(
