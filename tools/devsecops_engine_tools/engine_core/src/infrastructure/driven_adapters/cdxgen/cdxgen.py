@@ -27,7 +27,8 @@ class CdxGen(SbomManagerGateway):
         try:
             cdxgen_version = config["CDXGEN"]["CDXGEN_VERSION"]
             slim = "-slim" if config["CDXGEN"]["SLIM_BINARY"] else ""
-            exclude_types = config["CDXGEN"].get("EXCLUDE_TYPES", "")
+            exclude_types = config["CDXGEN"].get("EXCLUDE_TYPES", [])
+            exclude_paths = config["CDXGEN"].get("EXCLUDE_PATHS", [])
             recurse = config["CDXGEN"].get("RECURSE", True)
             debug_pipelines = config["CDXGEN"].get("DEBUG_PIPELINES", [])
             
@@ -61,13 +62,13 @@ class CdxGen(SbomManagerGateway):
                 logger.warning(f"{os_platform} is not supported.")
                 return None
 
-            result_sbom = self._run_cdxgen(command_prefix, artifact, service_name, exclude_types, recurse, enable_debug)
+            result_sbom = self._run_cdxgen(command_prefix, artifact, service_name, exclude_types, exclude_paths, recurse, enable_debug)
             return get_list_component(result_sbom, config["CDXGEN"]["OUTPUT_FORMAT"])
         except Exception as e:
             logger.error(f"Error generating SBOM: {e}")
             return None
 
-    def _run_cdxgen(self, command_prefix, artifact, service_name, exclude_types, recurse, enable_debug=False):
+    def _run_cdxgen(self, command_prefix, artifact, service_name, exclude_types, exclude_paths, recurse, enable_debug=False):
         result_file = f"{service_name}_SBOM.json"
         command = [
             command_prefix,
@@ -77,9 +78,16 @@ class CdxGen(SbomManagerGateway):
         ]
 
         if exclude_types:
-            command.extend(
-                ["--exclude-type", exclude_types]
-            )
+            for ex in exclude_types:
+                command.extend(
+                    ["--exclude-type", ex]
+                )
+
+        if exclude_paths:
+            for ex in exclude_paths:
+                command.extend(
+                    ["--exclude", ex]
+                )
         
         if not recurse:
             command.append(
