@@ -136,18 +136,15 @@ Configuration of the driven adapters in the main layer and management of on/off 
     "SBOM_MANAGER": {
         "ENABLED": false,
         "TOOL": "SYFT|CDXGEN",
-        "BRANCH_FILTER": [
-            "trunk",
-            "main"
-        ],
+        "BRANCH_FILTER": [],
         "SYFT": {
             "SYFT_VERSION": "1.17.0",
             "OUTPUT_FORMAT": "cyclonedx-json"
         },
         "CDXGEN": {
-            "CDXGEN_VERSION": "11.6.0",
+            "CDXGEN_VERSION": "11.7.0",
             "OUTPUT_FORMAT": "cyclonedx-json",
-            "SLIM_BINARY": false,
+            "SLIM_BINARY": true,
             "EXCLUDE_TYPES": ["jar"],
             "EXCLUDE_PATHS": ["**/test/**"],
             "RECURSE": true,

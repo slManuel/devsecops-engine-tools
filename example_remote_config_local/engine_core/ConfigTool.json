@@ -92,9 +92,9 @@
             "OUTPUT_FORMAT": "cyclonedx-json"
         },
         "CDXGEN": {
-            "CDXGEN_VERSION": "11.6.0",
+            "CDXGEN_VERSION": "11.7.0",
             "OUTPUT_FORMAT": "cyclonedx-json",
-            "SLIM_BINARY": false,
+            "SLIM_BINARY": true,
             "EXCLUDE_TYPES": ["jar"],
             "EXCLUDE_PATHS": ["**/test/**"],
             "RECURSE": true,
