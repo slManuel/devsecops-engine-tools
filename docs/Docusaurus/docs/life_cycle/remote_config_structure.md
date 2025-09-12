@@ -162,7 +162,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
         "TOOL": "PRISMA|TRIVY"
     },
     "ENGINE_DAST": {
-        "ENABLED": "true",
+        "ENABLED": true,
         "TOOL": "NUCLEI",
         "EXTRA_TOOLS": ["JWT"]
     },
