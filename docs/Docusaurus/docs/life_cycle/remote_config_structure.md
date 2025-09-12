@@ -134,7 +134,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
         }
     },
     "SBOM_MANAGER": {
-        "ENABLED": false,
+        "ENABLED": true,
         "TOOL": "SYFT|CDXGEN",
         "BRANCH_FILTER": [],
         "SYFT": {
