@@ -111,7 +111,8 @@ def test_get_inputs_from_cli(mock_parse_args):
     mock_args.dast_file_path = "dast_file_path"
     mock_args.context = "false"
     mock_args.token_engine_code=None
-    
+    mock_args.docker_address = "unix:///var/run/docker.sock"
+
     # Mock the parse_args method
     mock_parse_args.return_value = mock_args
 
@@ -141,7 +142,8 @@ def test_get_inputs_from_cli(mock_parse_args):
         "image_to_scan": "image",
         "dast_file_path": "dast_file_path",
         "context": "false",
-        "token_engine_code": None
+        "token_engine_code": None,
+        "docker_address": "unix:///var/run/docker.sock",
     }
 
 

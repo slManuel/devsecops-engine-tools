@@ -232,6 +232,11 @@ def get_inputs_from_cli(args):
         default="false",
         help="Enable or disable context creation. Applies to engine_iac, engine_container and engine_dependencies. Default is false."
     )
+    parser.add_argument(
+        "--docker_address",
+        required=False,
+        help="Address of the Docker daemon to connect to."
+    )
 
     TOOLS = {
         "engine_iac": ["checkov", "kics", "kubescape"],
@@ -275,6 +280,7 @@ def get_inputs_from_cli(args):
         "image_to_scan": args.image_to_scan,
         "dast_file_path": args.dast_file_path,
         "context": args.context,
+        "docker_address": args.docker_address
     }
 
 
