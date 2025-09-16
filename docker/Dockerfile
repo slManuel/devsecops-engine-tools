@@ -11,16 +11,10 @@ RUN apt-get update && apt-get install -y bash
 RUN apt-get update && apt-get install -y dos2unix
 
 COPY $REMOTE_CONFIG /app/example_remote_config_local
-COPY ./docker/remoteConfigGeneration.sh /app/remoteConfigGeneration.sh
 COPY ./rules* /tmp/rules
 COPY ./docs* /tmp/docs
 COPY ./certificates* /tmp/certificates
 COPY ./kics_binary* /tmp/kics
-
-RUN dos2unix /app/remoteConfigGeneration.sh
-
-RUN chmod +x /app/remoteConfigGeneration.sh
-RUN /bin/bash remoteConfigGeneration.sh
 
 RUN apt-get update && \
     apt-get install -y \
