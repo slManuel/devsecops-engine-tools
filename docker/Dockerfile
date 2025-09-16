@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y bash
 RUN apt-get update && apt-get install -y dos2unix
 
 COPY $REMOTE_CONFIG /app/example_remote_config_local
+RUN mv /app/example_remote_config_local /app/docker_default_remote_config
 COPY ./rules* /tmp/rules
 COPY ./docs* /tmp/docs
 COPY ./certificates* /tmp/certificates
