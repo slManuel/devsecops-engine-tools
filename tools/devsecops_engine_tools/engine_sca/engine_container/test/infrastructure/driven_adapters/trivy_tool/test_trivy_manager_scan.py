@@ -42,7 +42,7 @@ def test_run_tool_container_sca_success(trivy_scan_instance):
         trivy_scan_instance.scan_image.return_value = "result.json"
         version = remote_config["TRIVY"]["TRIVY_VERSION"]
 
-        result = trivy_scan_instance.run_tool_container_sca(remote_config, None, None, "image_name", "result.json", "base_image", "exclusions", False)
+        result = trivy_scan_instance.run_tool_container_sca(remote_config, None, None, "image_name", "result.json", "base_image", "exclusions", False, None)
 
         mock_identify.assert_called_with(version)
         assert result == ("result.json", None)
@@ -58,7 +58,7 @@ def test_run_tool_container_sca_with_sbom(trivy_scan_instance):
         trivy_scan_instance._generate_sbom.return_value = [Component("component1", "version1")]
         version = remote_config["TRIVY"]["TRIVY_VERSION"]
 
-        result = trivy_scan_instance.run_tool_container_sca(remote_config, None, None, "image_name", "result.json", "base_image","exclusions", True)
+        result = trivy_scan_instance.run_tool_container_sca(remote_config, None, None, "image_name", "result.json", "base_image","exclusions", True, None)
 
         mock_identify.assert_called_with(version)
         assert result == ("result.json", [Component("component1", "version1")])
@@ -69,7 +69,7 @@ def test_run_tool_container_sca_none(trivy_scan_instance):
         remote_config = {"TRIVY":{"TRIVY_VERSION": "1.2.3"}}
         mock_identify.return_value = None
 
-        result = trivy_scan_instance.run_tool_container_sca(remote_config, None, None, "image_name", "result.json", "base_image","exclusions", False)
+        result = trivy_scan_instance.run_tool_container_sca(remote_config, None, None, "image_name", "result.json", "base_image","exclusions", False, None)
 
         assert result == None
 
@@ -288,6 +288,7 @@ def test_run_tool_container_sca_compressed_file(mock_identify_os, mock_generate_
         base_image=None,
         exclusions={},
         generate_sbom=True,
+        docker_address=None,
         is_compressed_file=True
     )
 
