@@ -32,6 +32,7 @@ steps:
     python3 docker/get_files_ad.py $(repo-owner-ad) "$(project-ad)" $(remote-config-repo) /engine_sast/engine_iac/ConfigTool.json $(ad-at) path
     python3 docker/get_files_ad.py $(repo-owner-ad) "$(project-ad)" $(remote-config-repo) /engine_sca/engine_container/ConfigTool.json $(ad-at) path
     python3 docker/get_files_ad.py $(repo-owner-ad) "$(project-ad)" $(remote-config-repo) /engine_sca/engine_dependencies/ConfigTool.json $(ad-at) path
+    python3 docker/get_files_ad.py $(repo-owner-ad) "$(project-ad)" $(remote-config-repo) /engine_core/ConfigTool.json $(ad-at) path
   displayName: 'Get Custom Remote Config'
 
 - script: python3 docker/get_files_gh.py $(repo-owner) $(project) rules $(gh-at) rules
