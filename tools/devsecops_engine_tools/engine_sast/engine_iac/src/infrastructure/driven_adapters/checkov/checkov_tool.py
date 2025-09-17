@@ -381,8 +381,18 @@ class CheckovTool(ToolGateway):
 
     def _async_scan(self, queue, checkov_config: CheckovConfig, command_prefix):
         result = []
-        output = self._execute(checkov_config, command_prefix)
-        result.append(json.loads(output))
+        try:
+            output = self._execute(checkov_config, command_prefix)
+            result.append(json.loads(output))
+        except json.JSONDecodeError as e:
+            error_msg = f"Failed to parse Checkov output as JSON: {e}"
+            logger.error(error_msg)
+            result.append({"error": error_msg, "checkov_config": checkov_config.config_file_name})
+        except Exception as e:
+            error_msg = f"Error during Checkov scan: {e}"
+            logger.error(error_msg)
+            result.append({"error": error_msg, "checkov_config": checkov_config.config_file_name})
+        
         queue.put(result)
 
     def _execute(self, checkov_config: CheckovConfig, command_prefix):
@@ -395,9 +405,31 @@ class CheckovTool(ToolGateway):
         env_modified = dict(os.environ)
         if checkov_config.env is not None:
             env_modified = {**dict(os.environ), **checkov_config.env}
-        result = subprocess.run(
-            command, capture_output=True, text=True, shell=True, env=env_modified
-        )
-        output = result.stdout.strip()
-        error = result.stderr.strip()
-        return output
+        
+        try:
+            result = subprocess.run(
+                command, capture_output=True, text=True, shell=True, env=env_modified
+            )
+            output = result.stdout.strip()
+            error = result.stderr.strip()
+            
+            if result.returncode != 0:
+                error_msg = f"Checkov execution failed with return code {result.returncode}"
+                if error:
+                    error_msg += f": {error}"
+                logger.error(error_msg)
+                raise Exception(error_msg)
+            
+            if error and "error" in error.lower():
+                logger.warning(f"Checkov execution completed with warnings: {error}")
+            
+            return output
+            
+        except subprocess.TimeoutExpired as e:
+            error_msg = f"Checkov execution timed out: {e}"
+            logger.error(error_msg)
+            raise Exception(error_msg)
+        except Exception as e:
+            error_msg = f"Error executing Checkov command: {e}"
+            logger.error(error_msg)
+            raise

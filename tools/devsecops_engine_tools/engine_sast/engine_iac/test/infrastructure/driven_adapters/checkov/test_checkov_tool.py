@@ -41,13 +41,16 @@ def test_execute(checkov_tool):
     checkov_config = MagicMock()
     checkov_config.path_config_file = "/path/to/config/"
     checkov_config.config_file_name = "checkov_config"
+    checkov_config.env = None
 
-    subprocess_mock = MagicMock()
-    subprocess_mock.run.return_value.stdout = "Output"
-    subprocess_mock.run.return_value.stderr = "Error"
+    # Mock the subprocess.run return value properly
+    mock_result = MagicMock()
+    mock_result.returncode = 0
+    mock_result.stdout = "Output"
+    mock_result.stderr = ""
 
-    with patch("subprocess.run", return_value=subprocess_mock) as mock_run:
-        checkov_tool._execute(checkov_config, "checkov")
+    with patch("subprocess.run", return_value=mock_result) as mock_run:
+        result = checkov_tool._execute(checkov_config, "checkov")
 
         mock_run.assert_called_once_with(
             "checkov --config-file /path/to/config/checkov_configcheckov_config.yaml",
@@ -56,6 +59,42 @@ def test_execute(checkov_tool):
             shell=True,
             env=dict(os.environ),
         )
+        assert result == "Output"
+
+def test_execute_with_error(checkov_tool):
+    checkov_config = MagicMock()
+    checkov_config.path_config_file = "/path/to/config/"
+    checkov_config.config_file_name = "checkov_config"
+    checkov_config.env = None
+
+    # Mock the subprocess.run return value with error
+    mock_result = MagicMock()
+    mock_result.returncode = 1
+    mock_result.stdout = ""
+    mock_result.stderr = "Some error occurred"
+
+    with patch("subprocess.run", return_value=mock_result):
+        with pytest.raises(Exception) as exc_info:
+            checkov_tool._execute(checkov_config, "checkov")
+        
+        assert "Checkov execution failed with return code 1" in str(exc_info.value)
+        assert "Some error occurred" in str(exc_info.value)
+
+def test_execute_with_warning(checkov_tool):
+    checkov_config = MagicMock()
+    checkov_config.path_config_file = "/path/to/config/"
+    checkov_config.config_file_name = "checkov_config"
+    checkov_config.env = None
+
+    # Mock the subprocess.run return value with warning in stderr
+    mock_result = MagicMock()
+    mock_result.returncode = 0
+    mock_result.stdout = "Output"
+    mock_result.stderr = "Warning: some error detected"
+
+    with patch("subprocess.run", return_value=mock_result):
+        result = checkov_tool._execute(checkov_config, "checkov")
+        assert result == "Output"
 
 @patch(
     "devsecops_engine_tools.engine_sast.engine_iac.src.infrastructure.driven_adapters.checkov.checkov_tool.CheckovTool._execute",
@@ -73,6 +112,50 @@ def test_async_scan(mock_checkov_tool, checkov_tool):
     checkov_tool._async_scan(output_queue, checkov_config, "checkov")
 
     assert output_queue.get() == [{"key": "value"}]
+
+@patch(
+    "devsecops_engine_tools.engine_sast.engine_iac.src.infrastructure.driven_adapters.checkov.checkov_tool.CheckovTool._execute",
+    autospec=True,
+)
+def test_async_scan_with_execution_error(mock_checkov_tool, checkov_tool):
+    checkov_config = MagicMock()
+    checkov_config.path_config_file = "/path/to/config/"
+    checkov_config.config_file_name = "test_config"
+
+    output_queue = Queue()
+
+    # Mock _execute to raise an exception
+    mock_checkov_tool.side_effect = Exception("Execution failed")
+
+    checkov_tool._async_scan(output_queue, checkov_config, "checkov")
+
+    result = output_queue.get()
+    assert len(result) == 1
+    assert "error" in result[0]
+    assert "Execution failed" in result[0]["error"]
+    assert result[0]["checkov_config"] == "test_config"
+
+@patch(
+    "devsecops_engine_tools.engine_sast.engine_iac.src.infrastructure.driven_adapters.checkov.checkov_tool.CheckovTool._execute",
+    autospec=True,
+)
+def test_async_scan_with_json_error(mock_checkov_tool, checkov_tool):
+    checkov_config = MagicMock()
+    checkov_config.path_config_file = "/path/to/config/"
+    checkov_config.config_file_name = "test_config"
+
+    output_queue = Queue()
+
+    # Mock _execute to return invalid JSON
+    mock_checkov_tool.return_value = "invalid json"
+
+    checkov_tool._async_scan(output_queue, checkov_config, "checkov")
+
+    result = output_queue.get()
+    assert len(result) == 1
+    assert "error" in result[0]
+    assert "Failed to parse Checkov output as JSON" in result[0]["error"]
+    assert result[0]["checkov_config"] == "test_config"
 
 def test_scan_folders(checkov_tool):
     folders_to_scan = ["/path/to/folder"]
