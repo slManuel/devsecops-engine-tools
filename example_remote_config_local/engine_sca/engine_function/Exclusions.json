@@ -1,0 +1,11 @@
+{
+  "SKIP": [
+    { "type": "release_name", "pattern": ".*-legacy$" },
+    { "type": "branch_name", "pattern": "^hotfix/.*" }
+  ],
+  "PATHS": {
+    "EXCLUDE": ["**/node_modules/**", "**/.git/**", "**/dist/**", "**/build/**"],
+    "INCLUDE": ["**/*.zip"]
+  },
+  "MAX_FILE_SIZE_MB": 200
+}

@@ -1,0 +1,25 @@
+{
+  "FUNCTION": {
+    "TOOL": "PRISMA",
+    "GENERAL": {
+      "BREAK_BUILD": false,
+      "SEVERITY_THRESHOLD": "high",
+      "INCLUDE_ZIP_GLOBS": ["**/*.zip"],
+      "EXCLUDE_ZIP_GLOBS": []
+    },
+    "PRISMA_CLOUD": {
+      "PRISMA_CONSOLE_URL": "https://<tu-prisma-console>",
+      "PRISMA_ACCESS_KEY_VAR": "PRISMA_ACCESS_KEY",
+      "PRISMA_SECRET_KEY_VAR": "PRISMA_SECRET_KEY",
+      "PRISMA_API_VERSION": "v1",
+      "DOWNLOAD_TWISTCLI": true,
+      "TWISTCLI_URL_OVERRIDE": ""
+    },
+    "OUTPUT": {
+      "FORMAT": "json",
+      "SAVE_RAW": true,
+      "RAW_DIR": "reports/engine_function/raw",
+      "NORMALIZED_DIR": "reports/engine_function"
+    }
+  }
+}
