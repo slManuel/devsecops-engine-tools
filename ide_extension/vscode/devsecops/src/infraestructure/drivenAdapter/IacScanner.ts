@@ -120,18 +120,39 @@ export class IacScanner implements IScannerGateway {
     });
   }
 
-  getRuleCode(
+  async getRuleCode(
     dockerPath: string,
     containerImageName: string,
     toolVersion: string,
     ruleId: string,
     finding: Finding
-  ): Finding {
-    const containerCommand = `${dockerPath} run --rm ${containerImageName}:${toolVersion}  python3 rules_context_extract.py ${ruleId}`;
-    const rulePrint = execSync(containerCommand, { encoding: "utf-8" }).trim();
-    finding.setValidationRuleCode(rulePrint);
+  ): Promise<Finding> {
+    // Solo procesar ruleIDs que contengan "_BC_"
+    if (!ruleId.includes('_BC_')) {
+      return finding;
+    }
+
+    try {
+      const url = `https://devsecops-dev.apps.ambientesbc.com/engine-backend/context/rules/${ruleId}`;
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': 'b9941d8718fc767dcef4dd7114a0a81b8451a1e0'
+        }
+      });
+      
+      if (response.status === 200) {
+        const rulePrint = await response.text();
+        finding.setValidationRuleCode(rulePrint);
+      }
+    } catch (error) {
+      console.error(`Error fetching rule code for ${ruleId}:`, error);
+    }
+    
     return finding;
   }
+
 
   private errorHandler(outputChannel: OutputChannel, error: Error, stderr: string): void {
     outputChannel.appendLine(`Error: ${error.message}`);
