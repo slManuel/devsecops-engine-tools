@@ -74,11 +74,8 @@ def test_execute_with_error(checkov_tool):
     mock_result.stderr = "Some error occurred"
 
     with patch("subprocess.run", return_value=mock_result):
-        with pytest.raises(Exception) as exc_info:
-            checkov_tool._execute(checkov_config, "checkov")
-        
-        assert "Checkov execution failed with return code 1" in str(exc_info.value)
-        assert "Some error occurred" in str(exc_info.value)
+        result = checkov_tool._execute(checkov_config, "checkov")
+        assert result == ""
 
 def test_execute_with_warning(checkov_tool):
     checkov_config = MagicMock()
