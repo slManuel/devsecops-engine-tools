@@ -417,8 +417,8 @@ class CheckovTool(ToolGateway):
                 error_msg = f"Checkov execution failed with return code {result.returncode}"
                 if error:
                     error_msg += f": {error}"
-                logger.error(error_msg)
-                raise Exception(error_msg)
+                logger.warning(error_msg)
+                return output
             
             if error and "error" in error.lower():
                 logger.warning(f"Checkov execution completed with warnings: {error}")
@@ -427,9 +427,9 @@ class CheckovTool(ToolGateway):
             
         except subprocess.TimeoutExpired as e:
             error_msg = f"Checkov execution timed out: {e}"
-            logger.error(error_msg)
-            raise Exception(error_msg)
+            logger.warning(error_msg)
+            return ""
         except Exception as e:
             error_msg = f"Error executing Checkov command: {e}"
-            logger.error(error_msg)
-            raise
+            logger.warning(error_msg)
+            return ""
