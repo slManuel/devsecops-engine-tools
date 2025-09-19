@@ -8,12 +8,15 @@ import { Finding } from "../../domain/model/Finding";
 import { ScannerRes } from "../../domain/model/ScannerRes";
 import {
   IImageScanContext,
+  ISeverityCounts,
   Mappers,
 } from "../../domain/model/mappers/Mappers";
 import ContainerEngineManager from "../helper/ContainerEngineManager";
 import { ScannerImageManager } from "../helper/ScannerImageManager";
+import { ScannerMetricsHelper } from "../helper/ScannerMetricsHelper";
 
 export class ImageScanner implements IScannerGateway {
+  private metricsHelper = new ScannerMetricsHelper();
   async scan(
     elementToScan: string,
     outputChannel: OutputChannel,
@@ -25,10 +28,14 @@ export class ImageScanner implements IScannerGateway {
     outputChannel.clear();
     outputChannel.show();
 
+    // Initialize metrics collection
+    this.metricsHelper.clearLogs();
+
     return new Promise(async (resolve, _reject) => {
       let scanResult: boolean = false;
       let findings: Finding[] = [];
-      let imageTarPath: string | null = null;
+      let severityCounts: ISeverityCounts | null = null;
+      let imageTarPath: string = "";
 
       try {
         const scannerImageAvailable = await ScannerImageManager.ensureScannerImageExists(
@@ -39,8 +46,8 @@ export class ImageScanner implements IScannerGateway {
         );
 
         if (!scannerImageAvailable) {
-          outputChannel.appendLine("Failed to ensure scanner image is available. Aborting scan.");
-          resolve(new ScannerRes(false, []));
+          this.metricsHelper.captureLog(outputChannel, "Failed to ensure scanner image is available. Aborting scan.");
+          resolve(new ScannerRes(false, [], null));
           return;
         }
 
@@ -48,8 +55,8 @@ export class ImageScanner implements IScannerGateway {
 
         const exportSuccess = await ContainerEngineManager.exportImageToTar(elementToScan, imageTarPath);
         if (!exportSuccess) {
-          outputChannel.appendLine(`Failed to export image ${elementToScan}`);
-          resolve(new ScannerRes(false, []));
+          this.metricsHelper.captureLog(outputChannel, `Failed to export image ${elementToScan}`);
+          resolve(new ScannerRes(false, [], null));
           return;
         }
 
@@ -71,7 +78,7 @@ export class ImageScanner implements IScannerGateway {
           if (imageTarPath) {
             ContainerEngineManager.removeFile(imageTarPath).catch(console.error);
           }
-          resolve(new ScannerRes(false, []));
+          resolve(new ScannerRes(false, [], null));
         }, 600000);
 
         const childProcess = exec(containerCommand, (error, stdout, stderr) => {
@@ -107,8 +114,15 @@ export class ImageScanner implements IScannerGateway {
                     Mappers.mapImageScanContextToFinding(finding)
                 );
 
+                // Calculate severity counts directly from context data
+                severityCounts = this.calculateRawSeverityCounts(contextJson.container_context);
+
                 scanResult = true;
-                outputChannel.appendLine(`Successfully extracted context data with ${findings.length} findings`);
+                this.metricsHelper.captureLog(outputChannel, `Successfully extracted context data with ${findings.length} findings`);
+                this.metricsHelper.captureLog(outputChannel,
+                  `Severity counts: Critical: ${severityCounts.critical}, High: ${severityCounts.high}, Medium: ${severityCounts.medium}, Low: ${severityCounts.low}`
+                );
+
               } catch (jsonError: unknown) {
                 let errorMsg = "Unknown error";
                 if (jsonError instanceof Error) {
@@ -128,27 +142,86 @@ export class ImageScanner implements IScannerGateway {
             const cleanedOutput = OutputManager.removeAnsiEscapeCodes(normalOutput);
             outputChannel.appendLine("SCAN OUTPUT:");
             outputChannel.appendLine(cleanedOutput);
-            outputChannel.appendLine(`Found ${findings.length} issues in scan`);
+            this.metricsHelper.captureLog(outputChannel, `Found ${findings.length} issues in scan`);
           } else {
             outputChannel.appendLine("Container command completed with no output");
           }
 
-          resolve(new ScannerRes(scanResult, findings));
+          // Collect metrics before resolving
+          this.collectAndStoreMetrics(
+            elementToScan,
+            findings,
+            severityCounts,
+            scanResult,
+            outputChannel
+          );
+
+          resolve(new ScannerRes(scanResult, findings, severityCounts));
         });
 
         childProcess.on("exit", (code) => {
           if (code !== 0 && code !== null) {
-            outputChannel.appendLine(`Container process exited with code ${code}`);
+            this.metricsHelper.captureExitCode(outputChannel, code);
           }
         });
 
       } catch (error) {
-        outputChannel.appendLine(`Error during image scanning: ${error instanceof Error ? error.message : String(error)}`);
+        this.metricsHelper.captureError(outputChannel, error, "during image scanning");
         if (imageTarPath) {
           ContainerEngineManager.removeFile(imageTarPath).catch(console.error);
         }
-        resolve(new ScannerRes(false, []));
+        resolve(new ScannerRes(false, [], null));
       }
     });
+  }
+
+  private calculateRawSeverityCounts(contexts: IImageScanContext[]): ISeverityCounts {
+    let counts = {
+      critical: 0,
+      high: 0,
+      medium: 0,
+      low: 0
+    };
+
+    contexts.forEach((context) => {
+      const severity = context.severity?.toLowerCase();
+
+      if (severity === 'critical') {
+        counts.critical++;
+      } else if (severity === 'high') {
+        counts.high++;
+      } else if (severity === 'medium') {
+        counts.medium++;
+      } else if (severity === 'low') {
+        counts.low++;
+      }
+    });
+
+    return {
+      critical: counts.critical.toString(),
+      high: counts.high.toString(),
+      medium: counts.medium.toString(),
+      low: counts.low.toString()
+    };
+  }
+
+  /**
+   * Collect and store metrics data from the scan results using the metrics helper
+   */
+  private async collectAndStoreMetrics(
+    elementToScan: string,
+    findings: Finding[],
+    severityCounts: ISeverityCounts | null,
+    scanResult: boolean,
+    outputChannel: OutputChannel
+  ): Promise<void> {
+    await this.metricsHelper.collectAndStoreMetrics(
+      elementToScan,
+      findings,
+      severityCounts,
+      scanResult,
+      outputChannel,
+      "engine_container"
+    );
   }
 }
