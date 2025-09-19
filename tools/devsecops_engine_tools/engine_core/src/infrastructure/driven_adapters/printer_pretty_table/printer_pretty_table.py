@@ -34,6 +34,9 @@ class PrinterPrettyTable(PrinterTableGateway):
             elif finding.module == "engine_code":
                 row_data.append(finding.cvss)
                 row_data.append(finding.defect_type)
+            elif finding.module == "engine_function":
+                row_data.append(finding.function_name)
+                row_data.append(finding.function_version)
             table.add_row(row_data)
 
         severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "unknown": 4}
