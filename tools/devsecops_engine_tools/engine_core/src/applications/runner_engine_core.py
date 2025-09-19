@@ -125,6 +125,7 @@ def get_inputs_from_cli(args):
             "engine_dependencies",
             "engine_container",
             "engine_risk",
+            "engine_function",
         ],
         type=str,
         required=True,
@@ -246,6 +247,7 @@ def get_inputs_from_cli(args):
         "engine_code": ["bearer", "kiuwan"],
         "engine_dast": ["nuclei"],
         "engine_risk": None,
+        "engine_function": ["prisma", "trivy"],
     }
 
     args = parser.parse_args()
