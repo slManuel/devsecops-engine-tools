@@ -10,8 +10,8 @@ import traceback
 from devsecops_engine_tools.engine_sca.engine_function.src.domain.model.gateways.tool_gateway import (
     ToolGateway,
 )
-from devsecops_engine_utilities.utils.logger_info import MyLogger
-from devsecops_engine_utilities import settings
+from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
+from devsecops_engine_tools.engine_utilities import settings
 
 from devsecops_engine_tools.engine_sca.engine_function.src.infrastructure.driven_adapters.azure_devops.azure_devops import (
     AzureDevops
