@@ -38,6 +38,9 @@ sidebar_position: 2
    ┃ ┗ 📂engine_dependencies
    ┃   ┗ 📜ConfigTool.json
    ┃   ┗ 📜Exclusions.json
+   ┃ ┗ 📂engine_container
+   ┃   ┗ 📜ConfigTool.json
+   ┃   ┗ 📜Exclusions.json
 ```
 
 ## **engine_core**
@@ -179,6 +182,10 @@ Configuration of the driven adapters in the main layer and management of on/off 
     "ENGINE_RISK": {
         "ENABLED": false
     },
+    "ENGINE_CONTAINER": {
+        "ENABLED": true,
+        "TOOL": "PRISMA"
+    },
     "REPORT_SONAR": {
         "ENABLED": true
     }
@@ -306,6 +313,11 @@ Configuration of the driven adapters in the main layer and management of on/off 
 
 - **REPORT_SONAR**: Configuration for the report_sonar tool
     - ENABLED: true or false
+
+- **ENGINE_FUNTION**: Configuration for the engine_function tool
+    - ENABLED: true or false
+    - TOOL: PRISMA
+
 
 ### Use Cases CMDB for vulnerability management
 
@@ -2112,6 +2124,155 @@ The key of the element in the JSON is the regex. It can include the following pr
     }
 }
 ```
+
+## **engine_sca/engine_function**
+
+Function SCA scans the packaged code of serverless functions (.zip files) for AWS Lambda and Azure Functions to identify vulnerabilities (CVEs) and compliance findings.
+This capability uses Prisma Cloud (twistcli) and is part of Bancolombia’s DevSecOps practices to assess security, quality, and compliance.
+
+### Configuration
+
+> /engine_sca/engine_function/ConfigTool.json
+```json
+{
+  "FUNCTION": {
+    "TOOL": "PRISMA",
+    "PRISMA_CLOUD": {
+      "PRISMA_CONSOLE_URL": "https://<your-console>",
+      "PRISMA_ACCESS_KEY": "PRISMA_ACCESS_KEY",            // Pipeline variable name
+      "PRISMA_API_VERSION": "v1",
+      "TWISTCLI_PATH": "twistcli.exe"                      // Relative path to save/read twistcli
+    }
+  },
+  "IGNORE_ANALYSIS_PATTERN": "(.*_legacy|.*_skip)",        // Optional: regex to skip analysis
+  "MESSAGE_INFO_ENGINE_FUNCTION": "message custom",
+  "THRESHOLD": {
+    "VULNERABILITY": {
+      "Critical": 1,
+      "High": 3,
+      "Medium": 10,
+      "Low": 999
+    },
+    "COMPLIANCE": {
+      "Critical": 1
+    },
+    "CVE": ["CVE-2024-0001"]
+  }
+}
+```
+Required pipeline variables
+
+* PRISMA_ACCESS_KEY: Access Key (plaintext).
+
+* PRISMA_SECRET_KEY: Secret Key (stored as a secret variable or in Secret Manager).
+
+* (Optional) PRISMA_CONSOLE_URL to override the value in config.
+
+The engine reads the Access Key using the variable name configured in PRISMA_ACCESS_KEY, and obtains the Secret Key either from parameters or your pipeline’s secrets (depending on your implementation).
+
+### Exclusions
+
+> /engine_sca/engine_function/Exclusions.json
+#### **By Component**
+
+The object key is the pipeline name (Build/Release). You can declare:
+ > TOOL:
+    - id: Prisma rule
+    - cve_id: CVE
+    - where: all or dependency to be excluded
+    - create_date: creation date (daymonthyear)
+    - expired_date: expiration date (daymonthyear)
+    - severity: Severity of the finding
+    - hu: User Story identifier supporting the configured exception.
+ 
+ > SKIP_TOOL
+    - create_date: creation date (daymonthyear)
+    - expired_date: expiration date (daymonthyear)
+    - hu: User Story identifier supporting the configured exception.
+
+ > SKIP_FILES
+    - files: Array of file extensions to exclude
+    - create_date: creation date (daymonthyear)
+    - expired_date: expiration date (daymonthyear)
+    - hu: User Story identifier supporting the configured exception.
+
+ > THRESHOLD
+    - VULNERABILITY: new defined levels (Critical, High, Medium, Low)
+    - Compliance: new defined levels (Critical)
+    - CVE: List of CVEs
+    - create_date: creation date (daymonthyear)
+    - expired_date: expiration date (daymonthyear)
+    - reason: reason for the threshold exclusion
+    - hu: User Story identifier supporting the configured exception.
+
+
+
+```json
+{
+  "NU0000_Build_Functions": {
+    "SKIP_TOOL": {
+      "create_date": "24012024",
+      "expired_date": "30012024",
+      "hu": "HU-12345"
+    },
+    "PRISMA": [
+      {
+        "id": "RULE-PRISMA-0001",
+        "cve_id": "CVE-2024-1111",
+        "where": "all",
+        "create_date": "18112023",
+        "expired_date": "18032024",
+        "severity": "HIGH",
+        "hu": "HU-67890",
+        "reason": "False Positive"
+      }
+    ],
+    "SKIP_FILES": {
+      "files": ["zip"],
+      "create_date": "19022024",
+      "expired_date": "undefined",
+      "hu": "HU-99999"
+    },
+    "THRESHOLD": {
+      "VULNERABILITY": {
+        "Critical": 2,
+        "High": 5,
+        "Medium": 10,
+        "Low": 999
+      },
+      "COMPLIANCE": { "Critical": 1 },
+      "CVE": [],
+      "create_date": "26092024",
+      "expired_date": "30062025",
+      "reason": "Context-specific threshold",
+      "hu": "HU-55555"
+    }
+  }
+}
+```
+#### **By All Policy**
+
+The object key is All and it applies to all pipelines.
+
+```json
+{
+  "All": {
+    "PRISMA": [
+      {
+        "id": "RULE-PRISMA-GLOBAL-01",
+        "cve_id": "CVE-2023-6378",
+        "where": "all",
+        "create_date": "18112023",
+        "expired_date": "18032024",
+        "hu": "HU-43210",
+        "reason": "False Positive"
+      }
+    ]
+  }
+}
+
+```
+
 
 ## **vulnerability_management/cmdb_mapping**
 
