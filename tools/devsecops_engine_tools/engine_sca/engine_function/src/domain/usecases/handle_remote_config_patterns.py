@@ -18,7 +18,7 @@ class HandleRemoteConfigPatterns:
         Return: dict: Remote configuration
         """
         return self.tool_remote.get_remote_config(
-            self.dict_args["remote_config_repo"], file_path
+            self.dict_args["remote_config_repo"], file_path, self.dict_args["remote_config_branch"]
         )
 
     def get_variable(self, variable):
@@ -50,6 +50,6 @@ class HandleRemoteConfigPatterns:
         Return: bool: True -> skip tool, False -> not skip tool.
         """
         return self.handle_skip_tool(
-            self.get_remote_config("SCA/FUNCTION/Exclusions/Exclusions.json"),
-            self.get_variable("release_name"),
+            self.get_remote_config("engine_sca/engine_function/Exclusions.json"),
+            self.get_variable("pipeline_name"),
         )

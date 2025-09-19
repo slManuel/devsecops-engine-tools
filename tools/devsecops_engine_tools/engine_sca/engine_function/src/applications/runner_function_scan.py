@@ -9,10 +9,9 @@ from devsecops_engine_tools.engine_sca.engine_function.src.infrastructure.driven
 )
 
 
-def runner_engine_function(dict_args, config_tool, token,tool_remote):
+def runner_engine_function(dict_args, config_tool, tool_remote):
     try:
-        engine_type = dict_args["tool"].upper()
-        if config_tool[engine_type]["TOOL"].lower() == "prisma":
+        if config_tool["TOOL"].lower() == "prisma":
             tool_run = PrismaCloudManagerScan(config_tool, dict_args)
             tool_deseralizator = PrismaDeserealizator()
         return init_engine_sca_rm(
@@ -20,7 +19,7 @@ def runner_engine_function(dict_args, config_tool, token,tool_remote):
             tool_remote,
             tool_deseralizator,
             dict_args,
-            token,
+            dict_args["token_engine_container"],
             config_tool,
         )
 

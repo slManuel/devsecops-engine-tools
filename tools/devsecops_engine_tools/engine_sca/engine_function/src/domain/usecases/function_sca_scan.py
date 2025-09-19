@@ -33,7 +33,7 @@ class FunctionScaScan:
         Returns:
             dict: Remote configuration.
         """
-        return self.tool_remote.get_remote_config(self.dict_args["remote_config_repo"], file_path)
+        return self.tool_remote.get_remote_config(self.dict_args["remote_config_repo"], file_path, self.dict_args["remote_config_branch"])
 
 
     def get_variable(self, variable):
@@ -54,7 +54,7 @@ class FunctionScaScan:
         """
 
         return self.tool_run.run_tool_function_sca(
-            self.get_remote_config("SCA/FUNCTION/ConfigTool.json"),
+            self.get_remote_config("engine_sca/engine_function/ConfigTool.json"),
             self.token,
             self.skip_flag
         )

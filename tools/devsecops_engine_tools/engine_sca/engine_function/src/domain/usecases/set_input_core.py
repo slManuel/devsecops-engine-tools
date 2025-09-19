@@ -70,15 +70,15 @@ class SetInputCore:
         
         return InputCore(
             self.get_exclusions(
-                self.get_remote_config("SCA/FUNCTION/Exclusions/Exclusions.json"),
+                self.get_remote_config("engine_sca/engine_function/Exclusions.json"),
                 release_name if release_name else self.get_variable("pipeline_name"),
                 self.config_tool,
             ),
             Threshold(
-                self.get_remote_config("SCA/FUNCTION/ConfigTool.json")["THRESHOLD"]
+                self.get_remote_config("engine_sca/engine_function/ConfigTool.json")["THRESHOLD"]
             ),
             None,
-            self.get_remote_config("SCA/CONTAINER/ConfigTool.json")[
+            self.get_remote_config("engine_sca/engine_container/ConfigTool.json")[
                 "MESSAGE_INFO_SCA_RM"
             ],
             scope_pipeline,

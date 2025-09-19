@@ -1,4 +1,4 @@
-from devsecops_engine_tools.engine_sca.engine_container.src.domain.model.gateways.deserealizator_gateway import (
+from devsecops_engine_tools.engine_sca.engine_function.src.domain.model.gateways.deserealizator_gateway import (
     DeseralizatorGateway,
 )
 from devsecops_engine_tools.engine_core.src.domain.model.finding import (

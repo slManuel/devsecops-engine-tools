@@ -26,7 +26,7 @@ class AzureDevops:
     remote_pat: str = ""
     remote_proj: str = ""
 
-    def get_remote_config(self, remote_config_repo: str, remote_config_path: str) -> Any:
+    def get_remote_config(self, remote_config_repo: str, remote_config_path: str, branch="") -> Any:
         """
         Lee un JSON de configuración remota (Azure DevOps Repos) usando la URL compacta.
         Respeta el modo 'use_remote_org' para apuntar a otra organización/proyecto.
@@ -56,7 +56,7 @@ class AzureDevops:
             compact_remote_config_url=base_compact_remote_config_url,
         )
         connection = utils_azure.get_azure_connection()
-        return utils_azure.get_remote_json_config(connection=connection)
+        return utils_azure.get_remote_json_config(connection=connection, branch=branch)
 
     def get_variable(self, variable: str) -> Optional[str]:
         """
