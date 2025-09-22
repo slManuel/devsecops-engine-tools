@@ -148,12 +148,13 @@ export class ImageScanner implements IScannerGateway {
           }
 
           // Collect metrics before resolving
-          this.collectAndStoreMetrics(
+          this.metricsHelper.collectAndStoreMetrics(
             elementToScan,
             findings,
             severityCounts,
             scanResult,
-            outputChannel
+            outputChannel,
+            "engine_container"
           );
 
           resolve(new ScannerRes(scanResult, findings, severityCounts));
@@ -205,23 +206,4 @@ export class ImageScanner implements IScannerGateway {
     };
   }
 
-  /**
-   * Collect and store metrics data from the scan results using the metrics helper
-   */
-  private async collectAndStoreMetrics(
-    elementToScan: string,
-    findings: Finding[],
-    severityCounts: ISeverityCounts | null,
-    scanResult: boolean,
-    outputChannel: OutputChannel
-  ): Promise<void> {
-    await this.metricsHelper.collectAndStoreMetrics(
-      elementToScan,
-      findings,
-      severityCounts,
-      scanResult,
-      outputChannel,
-      "engine_container"
-    );
-  }
 }
