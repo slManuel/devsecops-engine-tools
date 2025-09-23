@@ -120,12 +120,13 @@ export class IacScanner implements IScannerGateway {
           }
 
           // Collect metrics before resolving
-          this.collectAndStoreMetrics(
+          this.metricsHelper.collectAndStoreMetrics(
             elementToScan,
             findings,
             severityCounts,
             scanResult,
-            outputChannel
+            outputChannel,
+            "engine_iac"
           );
 
           resolve(new ScannerRes(scanResult, findings, severityCounts));
@@ -196,25 +197,5 @@ export class IacScanner implements IScannerGateway {
       medium: counts.medium.toString(),
       low: counts.low.toString()
     };
-  }
-
-  /**
-   * Collect and store metrics data from the scan results using the metrics helper
-   */
-  private async collectAndStoreMetrics(
-    elementToScan: string,
-    findings: Finding[],
-    severityCounts: ISeverityCounts | null,
-    scanResult: boolean,
-    outputChannel: OutputChannel
-  ): Promise<void> {
-    await this.metricsHelper.collectAndStoreMetrics(
-      elementToScan,
-      findings,
-      severityCounts,
-      scanResult,
-      outputChannel,
-      "engine_iac"
-    );
   }
 }

@@ -68,8 +68,8 @@ export class ScannerMetricsHelper {
             // Collect structured metrics using the service
             const metricsData = MetricsCollectorService.collectMetrics(metricsInput);
 
-            // Store metrics to JSON file
-            const filePath = await MetricsStorageService.storeMetrics(metricsData);
+            // Store metrics to JSON file and upload to S3
+            const filePath = await MetricsStorageService.storeMetrics(metricsData, outputChannel);
 
             // Log metrics collection success
             const metricsMessage = `📊 Metrics collected and stored to: ${filePath}`;

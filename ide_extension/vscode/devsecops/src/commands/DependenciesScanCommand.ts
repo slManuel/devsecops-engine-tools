@@ -43,10 +43,7 @@ export function registerDependenciesScanCommand(
                     // Show severity counts if available
                     const severityCounts = scanResult.getSeverityCounts();
                     let message = "Dependencies Scan completed successfully";
-                    if (severityCounts) {
-                        message += ` - Critical: ${severityCounts.critical}, High: ${severityCounts.high}, Medium: ${severityCounts.medium}, Low: ${severityCounts.low}`;
-                    }
-
+                    
                     void vscode.window.showInformationMessage(message);
                     treeDataProvider.addScanResult(
                         "DEPENDENCIES SCAN RESULT",
