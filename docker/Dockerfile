@@ -7,6 +7,10 @@ ENV APP_VERSION=$VERSION
 ARG REMOTE_CONFIG="./example_remote_config_local"
 ENV REMOTE_CONFIG_PATH=$REMOTE_CONFIG
 
+
+ARG DEFECT_DOJO_SECRET
+ENV DEFECT_DOJO_SECRET=$DEFECT_DOJO_SECRET
+
 RUN apt-get update && apt-get install -y bash
 RUN apt-get update && apt-get install -y dos2unix
 

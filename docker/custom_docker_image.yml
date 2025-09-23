@@ -5,14 +5,14 @@ trigger:
     - v*
 
 pool:
-  name: Release-cloud
+  name: Azure Pipelines
 
 steps:
 
-# - task: connect-agent@2
-#   displayName: 'Hosted agent'
-#   inputs:
-#     hostedAgentService: $(agent-id)
+- task: connect-agent@2
+  displayName: 'Hosted agent'
+  inputs:
+    hostedAgentService: $(agent-id)
 
 - script: |
     branch_name=$(Build.SourceBranchName)
@@ -49,6 +49,16 @@ steps:
 
 - script: python3 docker/get_kics_binary.py $(repo-owner-ad) "$(project-ad)" $(artifact_name) $(ad-at) $(pipeline_id)
   displayName: 'Get KICS Binary'
+
+- task: AWSCLI@1
+  displayName: 'Get DefectDojo Secret from AWS'
+  inputs:
+    awsCredentials: $(aws-service-connection)
+    regionName: $(aws-region)
+    awsCommand: 'secretsmanager'
+    awsSubCommand: 'get-secret-value'
+    awsArguments: '--secret-id $(defect-dojo-secret-name) --query SecretString --output text | jq -r ".$(defect-dojo-secret-field)"'
+    outputVariable: 'DEFECT_DOJO_SECRET'
 
 - script: docker build --build-arg VERSION=$(RELEASE_VERSION) -t $(artifactory-url)/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG) -f docker/Dockerfile . && docker tag artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG) artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG)
   displayName: 'Build Docker Image'
