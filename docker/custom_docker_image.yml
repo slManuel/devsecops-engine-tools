@@ -5,7 +5,7 @@ trigger:
     - v*
 
 pool:
-  name: Build
+  name: release-cloud
 
   variables:
     - group: base_images
