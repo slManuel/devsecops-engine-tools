@@ -39,7 +39,7 @@ RUN python3 -m pip install -i https://pypi.org/simple devsecops-engine-tools==$A
 
 ENV PATH="/opt/venv/bin:/usr/local/go/bin:$PATH"
 
-FROM debian:stable-20250520-slim
+FROM #{ubuntu_24.04}#
 WORKDIR /app
 
 ARG VERSION
