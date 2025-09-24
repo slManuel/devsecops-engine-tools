@@ -4,11 +4,11 @@ trigger:
     include:
     - v*
 
+variables:
+    - group: base_images
+
 pool:
   name: release-cloud
-
-  variables:
-    - group: base_images
 
 steps:
 
