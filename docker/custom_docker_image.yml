@@ -31,7 +31,7 @@ steps:
 - script: echo "Release version is $(RELEASE_VERSION)"
   displayName: 'Use the release version'
 
-- replaceTokens@5:
+- task: replacetokens@5
   displayName: 'Replace Tokens in Dockerfile'
   inputs:
     targetFiles: 'docker/Dockerfile'
