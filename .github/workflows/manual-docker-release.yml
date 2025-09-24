@@ -64,6 +64,15 @@ jobs:
           cp /tmp/kics/bin/kics ./kics_binary/kics-devsecops/
           ls -la ./kics_binary
           ls -la ./kics_binary/kics-devsecops
+      
+      - name: Replace tokens in Dockerfile
+        uses: cschleiden/replace-tokens@v1
+        with:
+          files: 'docker/Dockerfile'
+          tokenPrefix: '#{'
+          tokenSuffix: '}#'
+        env:
+          ubuntu_24_04: 'ubuntu:24.04'    
           
       - name: Build and tag Docker image
         timeout-minutes: 3
@@ -90,6 +99,6 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name: Publish a Docker image to Dockerhub
-        run: |
-          docker image push bancolombia/devsecops-engine-tools:${{ github.event.inputs.version }}
+      # - name: Publish a Docker image to Dockerhub
+      #   run: |
+      #     docker image push bancolombia/devsecops-engine-tools:${{ github.event.inputs.version }}
