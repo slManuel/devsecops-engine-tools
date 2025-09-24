@@ -5,14 +5,17 @@ trigger:
     - v*
 
 pool:
-  name: Azure Pipelines
+  name: Build
+
+  variables:
+    - group: base_images
 
 steps:
 
-- task: connect-agent@2
-  displayName: 'Hosted agent'
-  inputs:
-    hostedAgentService: $(agent-id)
+# - task: connect-agent@2
+#   displayName: 'Hosted agent'
+#   inputs:
+#     hostedAgentService: $(agent-id)
 
 - script: |
     branch_name=$(Build.SourceBranchName)
@@ -27,6 +30,17 @@ steps:
 
 - script: echo "Release version is $(RELEASE_VERSION)"
   displayName: 'Use the release version'
+
+- replaceTokens@5:
+  displayName: 'Replace Tokens in Dockerfile'
+  inputs:
+    targetFiles: 'docker/Dockerfile'
+    encoding: 'auto'
+    writeBOM: true
+    actionOnMissing: 'warn'
+    keepToken: false
+    tokenPrefix: '#{'
+    tokenSuffix: '}#'
 
 - script: | 
     python3 docker/get_files_ad.py $(repo-owner-ad) "$(project-ad)" $(remote-config-repo) /engine_sast/engine_iac/ConfigTool.json $(ad-at) path
