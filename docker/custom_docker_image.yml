@@ -31,6 +31,12 @@ steps:
 - script: echo "Release version is $(RELEASE_VERSION)"
   displayName: 'Use the release version'
 
+- script: |
+    echo "=== Available variables from base_images group ==="
+    env | grep -E '^[A-Z_]+=' | sort
+    echo "=== End of variables ==="
+  displayName: 'Print available base_images variables'
+
 - task: replacetokens@5
   displayName: 'Replace Tokens in Dockerfile'
   inputs:
