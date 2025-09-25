@@ -8,7 +8,7 @@ variables:
     - group: base_images
 
 pool:
-  name: release-cloud
+  name: DevSecOps-Engine
 
 steps:
 
