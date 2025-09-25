@@ -97,11 +97,11 @@ stages:
     - script: docker build --build-arg VERSION=$(RELEASE_VERSION) --build-arg DEFECT_DOJO_SECRET=$(defectDojoSecret) -t $(artifactory-url)/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG) -f docker/Dockerfile . && docker tag artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG) artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG)
       displayName: 'Build Docker Image'
 
-# - task: ArtifactoryDocker@1
-#   displayName: Docker Push
-#   inputs:
-#     command: 'push'
-#     repository: 'devops/devsecops-engine-tools'
-#     artifactoryService: 'Artifactory'
-#     targetRepo: 'devops/devsecops-engine-tools'
-#     imageName: 'artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG)'
+    - task: ArtifactoryDocker@1
+      displayName: Docker Push
+      inputs:
+        command: 'push'
+        repository: 'devops/devsecops-engine-tools'
+        artifactoryService: 'Artifactory'
+        targetRepo: 'devops/devsecops-engine-tools'
+        imageName: 'artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG)'
