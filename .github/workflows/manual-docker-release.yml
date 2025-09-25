@@ -96,6 +96,6 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      # - name: Publish a Docker image to Dockerhub
-      #   run: |
-      #     docker image push bancolombia/devsecops-engine-tools:${{ github.event.inputs.version }}
+      - name: Publish a Docker image to Dockerhub
+        run: |
+          docker image push bancolombia/devsecops-engine-tools:${{ github.event.inputs.version }}
