@@ -163,7 +163,6 @@ export class DependenciesScanner implements IScannerGateway {
             findings,
             severityCounts,
             scanResult,
-            outputChannel,
             "engine_dependencies"
           );
 

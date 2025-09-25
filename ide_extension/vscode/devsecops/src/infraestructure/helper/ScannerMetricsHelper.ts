@@ -42,7 +42,6 @@ export class ScannerMetricsHelper {
      * @param findings Array of security findings discovered
      * @param severityCounts Severity count breakdown
      * @param scanResult Whether the scan completed successfully
-     * @param outputChannel VS Code output channel for logging
      * @param scanType The type of scan being performed (used as fallback when findings are empty)
      */
     async collectAndstoreMetricsData(
@@ -50,7 +49,6 @@ export class ScannerMetricsHelper {
         findings: Finding[],
         severityCounts: ISeverityCounts | null,
         scanResult: boolean,
-        outputChannel: OutputChannel,
         scanType: "engine_iac" | "engine_container" | "engine_dependencies"
     ): Promise<void> {
         try {
@@ -68,20 +66,11 @@ export class ScannerMetricsHelper {
             // Collect structured metrics using the service
             const metricsData = MetricsCollectorService.collectMetrics(metricsInput);
 
-            // Store metrics to JSON file and upload to S3
-            const filePath = await MetricsStorageService.storeMetricsData(metricsData, outputChannel);
-
-            // Log metrics collection success
-            const metricsMessage = `📊 Metrics collected and stored to: ${filePath}`;
-            outputChannel.appendLine("");
-            outputChannel.appendLine(metricsMessage);
-
-            // Log basic metrics info for debugging
-            outputChannel.appendLine(`📈 Metrics Summary: Tool=${metricsData.tool}, Component=${metricsData.scan_component}, Status=${metricsData.scan_status}`);
+            // Upload metrics to server
+            await MetricsStorageService.storeMetricsData(metricsData);
 
         } catch (error) {
             const errorMessage = `Failed to collect metrics: ${error instanceof Error ? error.message : String(error)}`;
-            outputChannel.appendLine(errorMessage);
             this.outputLogs.push(errorMessage);
         }
     }

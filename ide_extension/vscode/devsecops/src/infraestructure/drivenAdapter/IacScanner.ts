@@ -21,10 +21,10 @@ export class IacScanner implements IScannerGateway {
     scanLoader?: any
   ): Promise<ScannerRes> {
     outputChannel.show();
-    
+
     // Initialize metrics collection
     this.metricsHelper.clearLogs();
-    
+
     return new Promise(async (resolve, _reject) => {
       let scanResult: boolean = false;
       let findings: Finding[] = [];
@@ -88,7 +88,7 @@ export class IacScanner implements IScannerGateway {
                 outputChannel.appendLine(
                   `Successfully extracted context data with ${findings.length} findings`
                 );
-                
+
                 outputChannel.appendLine(
                   `Severity counts: Critical: ${severityCounts.critical}, High: ${severityCounts.high}, Medium: ${severityCounts.medium}, Low: ${severityCounts.low}`
                 );
@@ -125,7 +125,6 @@ export class IacScanner implements IScannerGateway {
             findings,
             severityCounts,
             scanResult,
-            outputChannel,
             "engine_iac"
           );
 

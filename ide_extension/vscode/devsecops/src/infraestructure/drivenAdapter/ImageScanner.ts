@@ -153,7 +153,6 @@ export class ImageScanner implements IScannerGateway {
             findings,
             severityCounts,
             scanResult,
-            outputChannel,
             "engine_container"
           );
 

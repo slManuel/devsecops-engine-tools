@@ -1,50 +1,32 @@
-import * as fs from 'fs';
-import * as path from 'path';
 import * as https from 'https';
 import { IMetricsData } from "../../domain/model/metrics/IMetricsData";
-import { OutputChannel } from 'vscode';
 import { METRICS_DATA_UPLOAD_URL } from '../../application/appService/Constants';
 
 /**
- * Service responsible for storing metrics data to JSON files and uploading to AWS S3
+ * Service responsible for uploading metrics data to remote server
  */
 export class MetricsStorageService {
 
     private static readonly REQUEST_TIMEOUT = 30000;
+
     /**
-     * Store metrics data locally and upload to S3
+     * Upload metrics data to server
      * @param metricsData
-     * @param outputChannel 
      * @returns 
      */
-    public static async storeMetricsData(metricsData: IMetricsData, outputChannel?: OutputChannel): Promise<string> {
+    public static async storeMetricsData(metricsData: IMetricsData): Promise<void> {
         try {
-            const timestamp = new Date().toLocaleString().replace(/[\/,:\s]/g, '-');
-            const fileName = `devsecops-metrics-${metricsData.tool}-${timestamp}.json`;
-
-            const filePath = path.join(process.cwd(), fileName);
-
-            const jsonContent = JSON.stringify(metricsData, null, 2);
-            await fs.promises.writeFile(filePath, jsonContent, 'utf8');
-
-            this.uploadMetricsDataToServer(metricsData, outputChannel).catch((error: Error) => {
-                if (outputChannel) {
-                    outputChannel.appendLine(`⚠️  Failed to upload metrics to remote service: ${error.message}`);
-                }
-            });
-
-            return filePath;
+            await this.uploadMetricsDataToServer(metricsData);
         } catch (error) {
-            throw new Error(`Failed to store metrics: ${error instanceof Error ? error.message : String(error)}`);
+            throw new Error(`Failed to upload metrics: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
     /**
      * Upload metrics data to remote service via the backend API
      * @param metricsData 
-     * @param outputChannel 
      */
-    private static async uploadMetricsDataToServer(metricsData: IMetricsData, outputChannel?: OutputChannel): Promise<void> {
+    private static async uploadMetricsDataToServer(metricsData: IMetricsData): Promise<void> {
         return new Promise((resolve, reject) => {
             const url = new URL(METRICS_DATA_UPLOAD_URL);
             const jsonPayload = JSON.stringify(metricsData);
@@ -71,9 +53,6 @@ export class MetricsStorageService {
 
                 response.on('end', () => {
                     if (response.statusCode && response.statusCode >= 200 && response.statusCode < 300) {
-                        if (outputChannel) {
-                            outputChannel.appendLine('✅ Metrics successfully uploaded to remote service');
-                        }
                         resolve();
                     } else {
                         const error = new Error(`Remote upload failed with status ${response.statusCode}: ${responseData}`);
