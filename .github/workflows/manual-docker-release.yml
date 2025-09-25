@@ -67,7 +67,7 @@ jobs:
       
       - name: Replace tokens in Dockerfile
         run: |
-          sed -i 's/#{ubuntu_24_04}#/ubuntu:24.04/g' docker/Dockerfile
+          sed -i 's/#{ubuntu_24\.04}#/ubuntu:24.04/g' docker/Dockerfile
           echo "Content of Dockerfile after replacement:"
           cat docker/Dockerfile | head -5
           
