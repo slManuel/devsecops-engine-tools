@@ -66,13 +66,10 @@ jobs:
           ls -la ./kics_binary/kics-devsecops
       
       - name: Replace tokens in Dockerfile
-        uses: cschleiden/replace-tokens@v1
-        with:
-          files: 'docker/Dockerfile'
-          tokenPrefix: '#{'
-          tokenSuffix: '}#'
-        env:
-          ubuntu_24_04: 'ubuntu:24.04'    
+        run: |
+          sed -i 's/#{ubuntu_24_04}#/ubuntu:24.04/g' docker/Dockerfile
+          echo "Content of Dockerfile after replacement:"
+          cat docker/Dockerfile | head -5
           
       - name: Build and tag Docker image
         timeout-minutes: 3
