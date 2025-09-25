@@ -7,15 +7,40 @@ trigger:
 variables:
     - group: base_images
 
-pool:
-  name: DevSecOps-Engine
+stages:
+- stage: GetSecrets
+  displayName: 'Get Secrets'
+  pool:
+    name: DevSecOps-Engine
+  jobs:
+  - job: GetSecrets
+    displayName: 'Get DefectDojo Secret'
+    steps:
+    - script: |
+        DEFECT_DOJO_SECRET=$(aws secretsmanager get-secret-value --region $(aws-region) --secret-id $(defect-dojo-secret-name) --query SecretString --output text | jq -r ".$(defect-dojo-secret-field)")
+        
+        # Validar que el secreto no esté vacío
+        if [ -z "$DEFECT_DOJO_SECRET" ] || [ "$DEFECT_DOJO_SECRET" = "null" ]; then
+          echo "Error: DEFECT_DOJO_SECRET is empty or null"
+          exit 1
+        fi
+        
+        echo "DefectDojo secret retrieved successfully"
+        echo "##vso[task.setvariable variable=DEFECT_DOJO_SECRET;isOutput=true]$DEFECT_DOJO_SECRET"
+      name: getSecret
+      displayName: 'Get DefectDojo Secret from AWS'
 
-steps:
-
-# - task: connect-agent@2
-#   displayName: 'Hosted agent'
-#   inputs:
-#     hostedAgentService: $(agent-id)
+- stage: BuildImage
+  displayName: 'Build Docker Image'
+  dependsOn: GetSecrets
+  pool:
+    name: build
+  variables:
+    defectDojoSecret: $[ stageDependencies.GetSecrets.GetSecrets.outputs['getSecret.DEFECT_DOJO_SECRET'] ]
+  jobs:
+  - job: BuildDockerImage
+    displayName: 'Build and Configure Docker Image'
+    steps:
 
 - script: |
     branch_name=$(Build.SourceBranchName)
@@ -70,12 +95,7 @@ steps:
 - script: python3 docker/get_kics_binary.py $(repo-owner-ad) "$(project-ad)" $(artifact_name) $(ad-at) $(pipeline_id)
   displayName: 'Get KICS Binary'
 
-- script: |
-    DEFECT_DOJO_SECRET=$(aws secretsmanager get-secret-value --region $(aws-region) --secret-id $(defect-dojo-secret-name) --query SecretString --output text | jq -r ".$(defect-dojo-secret-field)")
-    echo "##vso[task.setvariable variable=DEFECT_DOJO_SECRET]$DEFECT_DOJO_SECRET"
-  displayName: 'Get DefectDojo Secret from AWS'
-
-- script: docker build --build-arg VERSION=$(RELEASE_VERSION) --build-arg DEFECT_DOJO_SECRET=$(DEFECT_DOJO_SECRET) -t $(artifactory-url)/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG) -f docker/Dockerfile . && docker tag artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG) artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG)
+- script: docker build --build-arg VERSION=$(RELEASE_VERSION) --build-arg DEFECT_DOJO_SECRET=$(defectDojoSecret) -t $(artifactory-url)/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG) -f docker/Dockerfile . && docker tag artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG) artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG)
   displayName: 'Build Docker Image'
 
 # - task: ArtifactoryDocker@1
