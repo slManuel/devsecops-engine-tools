@@ -158,7 +158,7 @@ export class DependenciesScanner implements IScannerGateway {
           }
 
           // Collect metrics before resolving
-          this.metricsHelper.collectAndStoreMetrics(
+          this.metricsHelper.collectAndstoreMetricsData(
             elementToScan,
             findings,
             severityCounts,

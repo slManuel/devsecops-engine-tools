@@ -45,7 +45,7 @@ export class ScannerMetricsHelper {
      * @param outputChannel VS Code output channel for logging
      * @param scanType The type of scan being performed (used as fallback when findings are empty)
      */
-    async collectAndStoreMetrics(
+    async collectAndstoreMetricsData(
         elementToScan: string,
         findings: Finding[],
         severityCounts: ISeverityCounts | null,
@@ -69,7 +69,7 @@ export class ScannerMetricsHelper {
             const metricsData = MetricsCollectorService.collectMetrics(metricsInput);
 
             // Store metrics to JSON file and upload to S3
-            const filePath = await MetricsStorageService.storeMetrics(metricsData, outputChannel);
+            const filePath = await MetricsStorageService.storeMetricsData(metricsData, outputChannel);
 
             // Log metrics collection success
             const metricsMessage = `📊 Metrics collected and stored to: ${filePath}`;

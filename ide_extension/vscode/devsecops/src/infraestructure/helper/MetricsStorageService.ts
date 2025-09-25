@@ -3,22 +3,21 @@ import * as path from 'path';
 import * as https from 'https';
 import { IMetricsData } from "../../domain/model/metrics/IMetricsData";
 import { OutputChannel } from 'vscode';
+import { METRICS_DATA_UPLOAD_URL } from '../../application/appService/Constants';
 
 /**
  * Service responsible for storing metrics data to JSON files and uploading to AWS S3
  */
 export class MetricsStorageService {
-    
-    private static readonly S3_UPLOAD_URL = 'https://devsecops-dev.apps.ambientesbc.com/engine-backend/metrics/api/uploadMetrics?folder=devsecops_ide_extension';
-    private static readonly REQUEST_TIMEOUT = 30000; // 30 seconds
 
+    private static readonly REQUEST_TIMEOUT = 30000;
     /**
      * Store metrics data locally and upload to S3
      * @param metricsData
      * @param outputChannel 
      * @returns 
      */
-    public static async storeMetrics(metricsData: IMetricsData, outputChannel?: OutputChannel): Promise<string> {
+    public static async storeMetricsData(metricsData: IMetricsData, outputChannel?: OutputChannel): Promise<string> {
         try {
             const timestamp = new Date().toLocaleString().replace(/[\/,:\s]/g, '-');
             const fileName = `devsecops-metrics-${metricsData.tool}-${timestamp}.json`;
@@ -28,9 +27,9 @@ export class MetricsStorageService {
             const jsonContent = JSON.stringify(metricsData, null, 2);
             await fs.promises.writeFile(filePath, jsonContent, 'utf8');
 
-            this.uploadToS3(metricsData, outputChannel).catch((error: Error) => {
+            this.uploadMetricsDataToServer(metricsData, outputChannel).catch((error: Error) => {
                 if (outputChannel) {
-                    outputChannel.appendLine(`⚠️  Failed to upload metrics to S3: ${error.message}`);
+                    outputChannel.appendLine(`⚠️  Failed to upload metrics to remote service: ${error.message}`);
                 }
             });
 
@@ -41,13 +40,13 @@ export class MetricsStorageService {
     }
 
     /**
-     * Upload metrics data to AWS S3 via the backend API
+     * Upload metrics data to remote service via the backend API
      * @param metricsData 
      * @param outputChannel 
      */
-    private static async uploadToS3(metricsData: IMetricsData, outputChannel?: OutputChannel): Promise<void> {
+    private static async uploadMetricsDataToServer(metricsData: IMetricsData, outputChannel?: OutputChannel): Promise<void> {
         return new Promise((resolve, reject) => {
-            const url = new URL(this.S3_UPLOAD_URL);
+            const url = new URL(METRICS_DATA_UPLOAD_URL);
             const jsonPayload = JSON.stringify(metricsData);
 
             const options = {
@@ -73,23 +72,23 @@ export class MetricsStorageService {
                 response.on('end', () => {
                     if (response.statusCode && response.statusCode >= 200 && response.statusCode < 300) {
                         if (outputChannel) {
-                            outputChannel.appendLine('✅ Metrics successfully uploaded to S3');
+                            outputChannel.appendLine('✅ Metrics successfully uploaded to remote service');
                         }
                         resolve();
                     } else {
-                        const error = new Error(`S3 upload failed with status ${response.statusCode}: ${responseData}`);
+                        const error = new Error(`Remote upload failed with status ${response.statusCode}: ${responseData}`);
                         reject(error);
                     }
                 });
             });
 
             request.on('error', (error) => {
-                reject(new Error(`Network error during S3 upload: ${error.message}`));
+                reject(new Error(`Network error during remote upload: ${error.message}`));
             });
 
             request.on('timeout', () => {
                 request.destroy();
-                reject(new Error(`S3 upload timed out after ${this.REQUEST_TIMEOUT}ms`));
+                reject(new Error(`Remote upload timed out after ${this.REQUEST_TIMEOUT}ms`));
             });
 
             request.write(jsonPayload);
