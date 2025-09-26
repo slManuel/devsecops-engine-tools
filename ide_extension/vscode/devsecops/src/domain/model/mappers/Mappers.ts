@@ -53,6 +53,13 @@ export interface IDependenciesScanContext {
   source_tool: string;
 }
 
+export interface ISeverityCounts {
+  critical: string;
+  high: string;
+  medium: string;
+  low: string;
+}
+
 export class Mappers {
   public static mapIacContextToFinding(
     iacContext: IIacContext
@@ -77,15 +84,15 @@ export class Mappers {
 
   public static mapImageScanContextToFinding(
     imageScanContext: IImageScanContext
-  ):  Finding {
+  ): Finding {
     return new Finding(
       imageScanContext.cve_id || "",
       imageScanContext.severity || "unknown",
       imageScanContext.package_name +
-        " " +
-        imageScanContext.os_type +
-        ":" +
-        imageScanContext.layer_digest || "",
+      " " +
+      imageScanContext.os_type +
+      ":" +
+      imageScanContext.layer_digest || "",
       imageScanContext.description || "",
       imageScanContext.module || "engine_container",
       imageScanContext.source_tool || "",
