@@ -28,7 +28,6 @@ export class ImageScanner implements IScannerGateway {
     outputChannel.clear();
     outputChannel.show();
 
-    // Initialize metrics collection
     this.metricsHelper.clearLogs();
 
     return new Promise(async (resolve, _reject) => {
@@ -62,7 +61,6 @@ export class ImageScanner implements IScannerGateway {
 
         outputChannel.appendLine(`Image exported successfully to ${imageTarPath}`);
 
-        // Call scanLoader after all Docker operations (scanner image check + image export) are complete
         if (scanLoader) {
           scanLoader.start(`Image: ${elementToScan}`);
         }
@@ -114,14 +112,10 @@ export class ImageScanner implements IScannerGateway {
                     Mappers.mapImageScanContextToFinding(finding)
                 );
 
-                // Calculate severity counts directly from context data
                 severityCounts = this.calculateRawSeverityCounts(contextJson.container_context);
 
                 scanResult = true;
                 this.metricsHelper.captureLog(outputChannel, `Successfully extracted context data with ${findings.length} findings`);
-                this.metricsHelper.captureLog(outputChannel,
-                  `Severity counts: Critical: ${severityCounts.critical}, High: ${severityCounts.high}, Medium: ${severityCounts.medium}, Low: ${severityCounts.low}`
-                );
 
               } catch (jsonError: unknown) {
                 let errorMsg = "Unknown error";
@@ -147,7 +141,6 @@ export class ImageScanner implements IScannerGateway {
             outputChannel.appendLine("Container command completed with no output");
           }
 
-          // Collect metrics before resolving
           this.metricsHelper.collectAndstoreMetricsData(
             elementToScan,
             findings,

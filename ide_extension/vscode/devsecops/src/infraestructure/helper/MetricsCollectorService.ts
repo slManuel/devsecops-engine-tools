@@ -3,21 +3,8 @@ import { LogAnalysisService } from "./LogAnalysisService";
 import { ScanStatusService } from "./ScanStatusService";
 import { ToolIdentificationService } from "./ToolIdentificationService";
 
-/**
- * Service responsible for orchestrating the collection and structuring of metrics data.
- * This service coordinates specialized services to create comprehensive scan metrics.
- * 
- * Follows Single Responsibility Principle - only orchestrates, delegates specific tasks to specialized services.
- */
 export class MetricsCollectorService {
-
-    /**
-     * Collects and structures metrics data from scan results
-     * @param input The input data needed to generate metrics
-     * @returns Structured metrics data
-     */
     public static collectMetrics(input: IMetricsInput): IMetricsData {
-        // Delegate to specialized services
         const severityCounts = this.parseSeverityCounts(input.severityCounts);
         const hasLogErrors = LogAnalysisService.hasErrors(input.output_logs);
         const scanStatus = ScanStatusService.determineScanStatus(
@@ -35,7 +22,6 @@ export class MetricsCollectorService {
             input.tool
         );
 
-        // Orchestrate the final metrics data structure
         const metricsData: IMetricsData = {
             tool: tool,
             scan_component: input.scan_component,
@@ -52,10 +38,6 @@ export class MetricsCollectorService {
         return metricsData;
     }
 
-    /**
-     * Parse and normalize severity counts from scanner output
-     * Simple data transformation - no business logic
-     */
     private static parseSeverityCounts(severityCounts: IMetricsInput['severityCounts']) {
         if (!severityCounts) {
             return { critical: "0", high: "0", medium: "0", low: "0" };

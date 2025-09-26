@@ -40,7 +40,6 @@ export function registerDependenciesScanCommand(
                 if (scanResult) {
                     scanLoader.stop(scanResult.getFindings().length, "dependency");
 
-                    // Show severity counts if available
                     const severityCounts = scanResult.getSeverityCounts();
                     let message = "Dependencies Scan completed successfully";
                     

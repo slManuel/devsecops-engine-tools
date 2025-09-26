@@ -2,18 +2,9 @@ import * as https from 'https';
 import { IMetricsData } from "../../domain/model/metrics/IMetricsData";
 import { METRICS_DATA_UPLOAD_URL } from '../../application/appService/Constants';
 
-/**
- * Service responsible for uploading metrics data to remote server
- */
 export class MetricsStorageService {
-
     private static readonly REQUEST_TIMEOUT = 30000;
 
-    /**
-     * Upload metrics data to server
-     * @param metricsData
-     * @returns 
-     */
     public static async storeMetricsData(metricsData: IMetricsData): Promise<void> {
         try {
             await this.uploadMetricsDataToServer(metricsData);
@@ -22,10 +13,6 @@ export class MetricsStorageService {
         }
     }
 
-    /**
-     * Upload metrics data to remote service via the backend API
-     * @param metricsData 
-     */
     private static async uploadMetricsDataToServer(metricsData: IMetricsData): Promise<void> {
         return new Promise((resolve, reject) => {
             const url = new URL(METRICS_DATA_UPLOAD_URL);
@@ -74,5 +61,4 @@ export class MetricsStorageService {
             request.end();
         });
     }
-
 }

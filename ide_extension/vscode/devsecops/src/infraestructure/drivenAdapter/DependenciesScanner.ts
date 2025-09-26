@@ -26,7 +26,6 @@ export class DependenciesScanner implements IScannerGateway {
     outputChannel.clear();
     outputChannel.show();
 
-    // Initialize metrics collection
     this.metricsHelper.clearLogs();
 
     return new Promise(async (resolve, _reject) => {
@@ -49,7 +48,6 @@ export class DependenciesScanner implements IScannerGateway {
           return;
         }
 
-        // Call scanLoader after Docker operations are complete
         if (scanLoader) {
           scanLoader.start(`Dependencies for: ${elementToScan.split('/').pop() || elementToScan}`);
         }
@@ -62,7 +60,6 @@ export class DependenciesScanner implements IScannerGateway {
           resolve(new ScannerRes(false, [], null));
         }, 12000000);
 
-        // Token is only required for xray and dependency_check tools, not for trivy
         if ((dependenciesTool === "xray" || dependenciesTool === "dependency_check") && !dependenciesToken) {
           outputChannel.appendLine(`No Dependencies Token provided for ${dependenciesTool} tool\n Go to Settings to configure it!`);
           resolve(new ScannerRes(false, [], null));
@@ -117,15 +114,11 @@ export class DependenciesScanner implements IScannerGateway {
                     Mappers.mapDependenciesScanContextToFinding(finding)
                 );
 
-                // Calculate severity counts directly from context data
                 severityCounts = this.calculateRawSeverityCounts(contextJson.dependencies_context);
 
                 scanResult = true;
                 this.metricsHelper.captureLog(outputChannel,
                   `Successfully extracted context data with ${findings.length} findings`
-                );
-                this.metricsHelper.captureLog(outputChannel,
-                  `Severity counts: Critical: ${severityCounts.critical}, High: ${severityCounts.high}, Medium: ${severityCounts.medium}, Low: ${severityCounts.low}`
                 );
               } catch (jsonError: unknown) {
                 let errorMsg = "Unknown error";
@@ -157,7 +150,6 @@ export class DependenciesScanner implements IScannerGateway {
             outputChannel.appendLine("Container command completed with no output");
           }
 
-          // Collect metrics before resolving
           this.metricsHelper.collectAndstoreMetricsData(
             elementToScan,
             findings,

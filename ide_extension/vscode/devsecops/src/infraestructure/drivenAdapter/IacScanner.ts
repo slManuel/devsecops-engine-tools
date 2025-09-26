@@ -3,7 +3,6 @@ import IScannerGateway from "../../domain/model/gateways/IScannerGateway";
 import OutputManager from "../helper/OutputManager";
 import { ScannerRes } from "../../domain/model/ScannerRes";
 import { Finding } from "../../domain/model/Finding";
-
 import { exec, execSync } from "child_process";
 import { IIacContext, ISeverityCounts, Mappers } from "../../domain/model/mappers/Mappers";
 import { ScannerImageManager } from "../helper/ScannerImageManager";
@@ -21,8 +20,6 @@ export class IacScanner implements IScannerGateway {
     scanLoader?: any
   ): Promise<ScannerRes> {
     outputChannel.show();
-
-    // Initialize metrics collection
     this.metricsHelper.clearLogs();
 
     return new Promise(async (resolve, _reject) => {
@@ -73,24 +70,15 @@ export class IacScanner implements IScannerGateway {
             if (match && match[1]) {
               try {
                 contextJson = JSON.parse(match[1].trim()) as { iac_context: IIacContext[] };
-
                 normalOutput = stdout.replace(contextRegex, "");
-
                 findings = contextJson.iac_context.map(
                   (finding: IIacContext) =>
                     Mappers.mapIacContextToFinding(finding)
                 );
-
-                // Calculate severity counts directly from context data
                 severityCounts = this.calculateRawSeverityCounts(contextJson.iac_context);
-
                 scanResult = true;
                 outputChannel.appendLine(
                   `Successfully extracted context data with ${findings.length} findings`
-                );
-
-                outputChannel.appendLine(
-                  `Severity counts: Critical: ${severityCounts.critical}, High: ${severityCounts.high}, Medium: ${severityCounts.medium}, Low: ${severityCounts.low}`
                 );
               } catch (jsonError: unknown) {
                 let errorMsg = "Unknown error";
@@ -119,7 +107,6 @@ export class IacScanner implements IScannerGateway {
             outputChannel.appendLine("Docker command completed with no output");
           }
 
-          // Collect metrics before resolving
           this.metricsHelper.collectAndstoreMetricsData(
             elementToScan,
             findings,
