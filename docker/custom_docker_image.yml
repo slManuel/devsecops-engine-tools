@@ -34,13 +34,19 @@ stages:
   displayName: 'Build Docker Image'
   dependsOn: GetSecrets
   pool:
-    name: build
+    name: Azure Pipelines
   variables:
     defectDojoSecret: $[ stageDependencies.GetSecrets.GetSecrets.outputs['getSecret.DEFECT_DOJO_SECRET'] ]
   jobs:
   - job: BuildDockerImage
     displayName: 'Build and Configure Docker Image'
     steps:
+    
+    - task: connect-agent@2
+      displayName: 'Hosted agent'
+      inputs:
+      hostedAgentService: $(agent-id)
+
     - script: |
         branch_name=$(Build.SourceBranchName)
         if [[ $branch_name == v* ]]; then

@@ -1,5 +1,4 @@
-FROM #{ubuntu_24.04}# AS remote_config
-
+FROM debian:stable-20250520-slim AS remote_config
 
 WORKDIR /app
 
@@ -7,8 +6,6 @@ ARG VERSION
 ENV APP_VERSION=$VERSION
 ARG REMOTE_CONFIG="./example_remote_config_local"
 ENV REMOTE_CONFIG_PATH=$REMOTE_CONFIG
-
-
 ARG DEFECT_DOJO_SECRET
 ENV DEFECT_DOJO_SECRET=$DEFECT_DOJO_SECRET
 
@@ -34,12 +31,12 @@ RUN python3 -m venv /opt/venv
 
 ENV PATH="/opt/venv/bin:$PATH"
 
-RUN python3 -m pip install checkov==3.2.311
+RUN python3 -m pip install checkov==2.3.296
 RUN python3 -m pip install -i https://pypi.org/simple devsecops-engine-tools==$APP_VERSION
 
 ENV PATH="/opt/venv/bin:/usr/local/go/bin:$PATH"
 
-FROM #{ubuntu_24.04}#
+FROM debian:stable-20250520-slim
 WORKDIR /app
 
 ARG VERSION
@@ -93,10 +90,10 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 RUN install -m 0755 -d /etc/apt/keyrings && \
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc && \
+    curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc && \
     chmod a+r /etc/apt/keyrings/docker.asc
 
-RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable" \
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable" \
     | tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 RUN apt-get update && \
