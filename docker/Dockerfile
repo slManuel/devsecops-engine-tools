@@ -34,7 +34,7 @@ RUN python3 -m venv /opt/venv
 
 ENV PATH="/opt/venv/bin:$PATH"
 
-RUN python3 -m pip install checkov==2.3.296
+RUN python3 -m pip install checkov==3.2.311
 RUN python3 -m pip install -i https://pypi.org/simple devsecops-engine-tools==$APP_VERSION
 
 ENV PATH="/opt/venv/bin:/usr/local/go/bin:$PATH"
