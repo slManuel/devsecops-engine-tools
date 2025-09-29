@@ -1,4 +1,3 @@
-
 trigger:
   tags:
     include:
@@ -45,7 +44,7 @@ stages:
     - task: connect-agent@2
       displayName: 'Hosted agent'
       inputs:
-      hostedAgentService: $(agent-id)
+        hostedAgentService: $(agent-id)
 
     - script: |
         branch_name=$(Build.SourceBranchName)
