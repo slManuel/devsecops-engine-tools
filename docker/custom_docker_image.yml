@@ -40,7 +40,6 @@ stages:
   - job: BuildDockerImage
     displayName: 'Build and Configure Docker Image'
     steps:
-    
     - task: connect-agent@2
       displayName: 'Hosted agent'
       inputs:
@@ -59,23 +58,6 @@ stages:
 
     - script: echo "Release version is $(RELEASE_VERSION)"
       displayName: 'Use the release version'
-
-    - script: |
-        echo "=== Available variables from base_images group ==="
-        env | grep -E '^[A-Z_]+=' | sort
-        echo "=== End of variables ==="
-      displayName: 'Print available base_images variables'
-
-    - task: replacetokens@5
-      displayName: 'Replace Tokens in Dockerfile'
-      inputs:
-        targetFiles: 'docker/Dockerfile'
-        encoding: 'auto'
-        writeBOM: true
-        actionOnMissing: 'warn'
-        keepToken: false
-        tokenPrefix: '#{'
-        tokenSuffix: '}#'
 
     - script: | 
         python3 docker/get_files_ad.py $(repo-owner-ad) "$(project-ad)" $(remote-config-repo) /engine_sast/engine_iac/ConfigTool.json $(ad-at) path
