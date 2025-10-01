@@ -20,12 +20,15 @@ export class RestClient implements IRestClientGateway {
             throw new Error("Error fetching data to " + url);
         }
     }
+
     post(_url: string, _body: unknown): Promise<unknown> {
         throw new Error("Method not implemented.");
     }
+
     put(_url: string, _body: unknown): Promise<unknown> {
         throw new Error("Method not implemented.");
     }
+    
     delete(_url: string): Promise<unknown> {
         throw new Error("Method not implemented.");
     }
