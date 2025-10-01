@@ -140,7 +140,10 @@ export class IacScanUseCase implements IIacScanUseCase {
     const findingsWithRuleCode: Promise<Finding>[] = scannerRes.getFindings().map((finding: Finding) => {
       return this.iacScanner.getRuleCode(
         finding.getId(),
-        finding
+        finding,
+        this.containerEnginePath,
+        scanConfiguration.getContainerImageName(),
+        this.toolVersion
       );
     });
     scannerRes.setFindings(await Promise.all(findingsWithRuleCode));

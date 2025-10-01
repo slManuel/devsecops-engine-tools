@@ -133,22 +133,39 @@ export class IacScanner implements IScannerGateway {
 
   async getRuleCode(
     ruleId: string,
-    finding: Finding
+    finding: Finding,
+    containerEnginePath: string,
+    containerImageName: string,
+    toolVersion: string
   ): Promise<Finding> {
     if (!ruleId.includes('_BC_')) {
       return finding;
     }
 
+    let secret = "";
+    let url = "";
     try {
-      const url = `https://devsecops-qa.apps.ambientesbc.com/engine-backend/context/rules/${ruleId}`;
-      
+      const { execSync } = require("child_process");
+      secret = execSync(
+        `${containerEnginePath} run --rm ${containerImageName}:${toolVersion} sh -c 'echo $DEFECT_DOJO_SECRET'`
+      ).toString().trim();
+      url = execSync(
+        `${containerEnginePath} run --rm ${containerImageName}:${toolVersion} sh -c 'echo $CONTEXT_MANAGER'`
+      ).toString().trim();
+    } catch (error) {
+      console.error("Error obtaining context manager", error);
+      return finding;
+    }
+
+    try {
+      url = `${url}/${ruleId}`;
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'Authorization': '1b686330623d19367fc4110c1b70e38fbafa73f0'
+          'Authorization': secret
         }
       });
-      
+
       if (response.status === 200) {
         const rulePrint = (await response.text()).replace(/\\n/g, '\n');
         finding.setValidationRuleCode(rulePrint);
@@ -156,7 +173,7 @@ export class IacScanner implements IScannerGateway {
     } catch (error) {
       console.error(`Error fetching rule code for ${ruleId}:`, error);
     }
-    
+
     return finding;
   }
 
