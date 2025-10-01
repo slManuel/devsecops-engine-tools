@@ -38,7 +38,7 @@ sidebar_position: 2
    ┃ ┗ 📂engine_dependencies
    ┃   ┗ 📜ConfigTool.json
    ┃   ┗ 📜Exclusions.json
-   ┃ ┗ 📂engine_container
+   ┃ ┗ 📂engine_function
    ┃   ┗ 📜ConfigTool.json
    ┃   ┗ 📜Exclusions.json
 ```
@@ -182,7 +182,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
     "ENGINE_RISK": {
         "ENABLED": false
     },
-    "ENGINE_CONTAINER": {
+    "ENGINE_FUNCTION": {
         "ENABLED": true,
         "TOOL": "PRISMA"
     },
@@ -2128,21 +2128,21 @@ The key of the element in the JSON is the regex. It can include the following pr
 ## **engine_sca/engine_function**
 
 Function SCA scans the packaged code of serverless functions (.zip files) for AWS Lambda and Azure Functions to identify vulnerabilities (CVEs) and compliance findings.
-This capability uses Prisma Cloud (twistcli) and is part of Bancolombia’s DevSecOps practices to assess security, quality, and compliance.
+This capability uses Prisma Cloud (twistcli) and is part of DevSecOps practices to assess security, quality, and compliance.
 
 ### Configuration
 
 > /engine_sca/engine_function/ConfigTool.json
 ```json
 {
-  "FUNCTION": {
-    "TOOL": "PRISMA",
-    "PRISMA_CLOUD": {
-      "PRISMA_CONSOLE_URL": "https://<your-console>",
-      "PRISMA_ACCESS_KEY": "PRISMA_ACCESS_KEY",            // Pipeline variable name
-      "PRISMA_API_VERSION": "v1",
-      "TWISTCLI_PATH": "twistcli.exe"                      // Relative path to save/read twistcli
-    }
+
+
+  "PRISMA_CLOUD": {
+    "PRISMA_CONSOLE_URL": "https://<your-console>",
+    "PRISMA_ACCESS_KEY": "PRISMA_ACCESS_KEY",            // Pipeline variable name
+    "PRISMA_API_VERSION": "v1",
+    "TWISTCLI_PATH": "twistcli.exe"                      // Relative path to save/read twistcli
+
   },
   "IGNORE_ANALYSIS_PATTERN": "(.*_legacy|.*_skip)",        // Optional: regex to skip analysis
   "MESSAGE_INFO_ENGINE_FUNCTION": "message custom",
