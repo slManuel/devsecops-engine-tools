@@ -731,20 +731,6 @@
                     "cvss": "",
                     "category": "Vulnerability"
                 }
-            },
-            "RULES_SERVERLESS": {
-                "CKV_AWS_41": {
-                    "checkID": "Ensure no hard coded AWS access key and secret key exists in provider",
-                    "environment": {
-                        "dev": true,
-                        "pdn": true,
-                        "qa": true
-                    },
-                    "guideline": "guideline",
-                    "severity": "Medium",
-                    "cvss": "",
-                    "category": "Vulnerability"
-                }
             }
         }
     },
