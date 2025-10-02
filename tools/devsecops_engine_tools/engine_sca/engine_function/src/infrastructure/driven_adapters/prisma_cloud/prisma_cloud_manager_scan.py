@@ -46,7 +46,6 @@ class PrismaCloudManagerScan:
                 if not os.path.exists(file_path):
                     self._download_twistcli(
                         file_path,
-                        remoteconfig["PRISMA_CLOUD"]["PRISMA_ACCESS_KEY"],
                         prisma_key,
                         remoteconfig["PRISMA_CLOUD"]["PRISMA_CONSOLE_URL"],
                         remoteconfig["PRISMA_CLOUD"]["PRISMA_API_VERSION"],
@@ -68,7 +67,7 @@ class PrismaCloudManagerScan:
             print('##[info] Skipping function scan')
             return 0
 
-    def download_twistcli(
+    def _download_twistcli(
         self,
         file_path,
         prisma_key,

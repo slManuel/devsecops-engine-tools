@@ -39,6 +39,8 @@ def init_engine_sca_rm(
     handle_remote_config_patterns = HandleRemoteConfigPatterns(
         remote_config, exclusions, pipeline_name
     )
+    skip_flag = handle_remote_config_patterns.skip_from_exclusion()
+    scan_flag = handle_remote_config_patterns.ignore_analysis_pattern()
     function_sca_scan = FunctionScaScan(
         tool_run,
         remote_config,
@@ -47,7 +49,7 @@ def init_engine_sca_rm(
         dict_args,
         secret_tool,
         dict_args["token_engine_container"],
-        handle_remote_config_patterns.process_handle_skip_tool(),
+        skip_flag,
     )
     input_core = SetInputCore(tool_remote, dict_args, config_tool)
     function_scan = function_sca_scan.process()

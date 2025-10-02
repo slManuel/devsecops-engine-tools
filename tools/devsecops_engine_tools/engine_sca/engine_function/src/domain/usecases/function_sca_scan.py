@@ -59,7 +59,8 @@ class FunctionScaScan:
 
         return self.tool_run.run_tool_function_sca(
             self.get_remote_config("engine_sca/engine_function/ConfigTool.json"),
-            self.token,
+            self.secret_tool,
+            self.token_engine_container,
             self.skip_flag
         )
 
