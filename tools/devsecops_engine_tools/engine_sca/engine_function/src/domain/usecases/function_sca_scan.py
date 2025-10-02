@@ -13,17 +13,21 @@ class FunctionScaScan:
     def __init__(
         self,
         tool_run: ToolGateway,
+        remote_config,
         tool_remote: DevopsPlatformGateway,
         tool_deseralizator: DeseralizatorGateway,
         dict_args,
-        token,
+        secret_tool,
+        token_engine_container,
         skip_flag
     ):
         self.tool_run = tool_run
+        self.remote_config = remote_config
         self.tool_remote = tool_remote
         self.tool_deseralizator = tool_deseralizator
         self.dict_args = dict_args
-        self.token = token
+        self.secret_tool = secret_tool
+        self.token_engine_container = token_engine_container
         self.skip_flag = skip_flag
 
     def get_remote_config(self, file_path):

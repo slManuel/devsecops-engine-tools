@@ -168,7 +168,6 @@ class PrismaCloudManagerScan(ToolGateway):
         except Exception as e:
             logger.error(f"Error generating SBOM: {e}")
 
-
     def _split_prisma_token(self, prisma_key):
         try:
             access_prisma, token_prisma = prisma_key.split(":")

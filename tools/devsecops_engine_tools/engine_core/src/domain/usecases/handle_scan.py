@@ -107,7 +107,9 @@ class HandleScan:
             findings_list, input_core = runner_engine_function(
                 dict_args,
                 config_tool["ENGINE_FUNCTION"],
-                self.devops_platform_gateway
+                secret_tool,
+                self.devops_platform_gateway,
+                self.remote_config_source_gateway
             )
             self._use_vulnerability_management(
                 config_tool,

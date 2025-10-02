@@ -1,3 +1,4 @@
+import platform
 import stat
 import requests
 import os
@@ -13,9 +14,7 @@ from devsecops_engine_tools.engine_sca.engine_function.src.domain.model.gateways
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
 from devsecops_engine_tools.engine_utilities import settings
 
-from devsecops_engine_tools.engine_sca.engine_function.src.infrastructure.driven_adapters.azure_devops.azure_devops import (
-    AzureDevops
-    )
+
 
 logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
@@ -26,16 +25,77 @@ class PrismaCloudManagerScan:
         tool_run: ToolGateway,
         dict_args
     ):
-        self.devops_platform_gateway = AzureDevops()
         self.tool_run = tool_run
         self.dict_args = dict_args
 
-    def download_twistcli(
-        self, file_path, prisma_access_key, prisma_secret_key, prisma_console_url, prisma_api_version
+    def run_tool_function_sca(
+        self, 
+        remoteconfig, 
+        secret_tool,
+        token_engine_container,
+        skip_flag,
     ):
-        url = f"{prisma_console_url}/api/{prisma_api_version}/util/twistcli"
+        prisma_key = (
+            f"{secret_tool['access_prisma']}:{secret_tool['token_prisma']}" if secret_tool else token_engine_container
+        )
+        if not (skip_flag):
+            try:
+                file_path = os.path.join(
+                    os.getcwd(), remoteconfig["PRISMA_CLOUD"]["TWISTCLI_PATH"]
+                )
+                if not os.path.exists(file_path):
+                    self._download_twistcli(
+                        file_path,
+                        remoteconfig["PRISMA_CLOUD"]["PRISMA_ACCESS_KEY"],
+                        prisma_key,
+                        remoteconfig["PRISMA_CLOUD"]["PRISMA_CONSOLE_URL"],
+                        remoteconfig["PRISMA_CLOUD"]["PRISMA_API_VERSION"],
+                    )
+                folder_path = self.dict_args["folder_path"]
+                function_scan = self._scan_function(
+                    file_path,
+                    folder_path,
+                    remoteconfig,
+                    prisma_key,
+                )
+
+                return function_scan
+
+            except Exception as ex:
+                traceback.print_exc()
+                logger.error(f"An overall error occurred: {ex}")
+        else:
+            print('##[info] Skipping function scan')
+            return 0
+
+    def download_twistcli(
+        self,
+        file_path,
+        prisma_key,
+        prisma_console_url,
+        prisma_api_version,
+    ):
+        
+        machine = platform.machine()
+        system = platform.system()
+
+        base_url = f"{prisma_console_url}/api/{prisma_api_version}/util"
+
+        os_mapping = {
+            "Linux": "twistcli",
+            "Windows": "windows/twistcli.exe",
+            "Darwin": "osx/twistcli",
+        }
+
+        url = f"{base_url}/{os_mapping[system]}"
+
+        if system == "Linux" and machine == "aarch64":
+            url = f"{base_url}/arm64/twistcli"
+        elif system == "Darwin" and machine == "aarch64":
+            url = f"{base_url}/osx/arm64/twistcli"
+
         credentials = base64.b64encode(
-            f"{prisma_access_key}:{prisma_secret_key}".encode()
+            prisma_key.encode()
         ).decode()
         headers = {"Authorization": f"Basic {credentials}"}
         try:
@@ -46,13 +106,13 @@ class PrismaCloudManagerScan:
                 file.write(response.content)
 
             os.chmod(file_path, stat.S_IRWXU)
-            logging.info(f"twistcli downloaded and saved to: {file_path}")
+            logger.info(f"twistcli downloaded and saved to: {file_path}")
             return 0
 
         except Exception as e:
             raise ValueError(f"Error downloading twistcli: {e}")
-
-    def scan_function(self, file_path, folder_path, remoteconfig, prisma_secret_key):
+        
+    def _scan_function(self, file_path, folder_path, remoteconfig, prisma_key):
         function_path = glob.glob(os.path.join(folder_path, "*.zip"))
         if not function_path:
             print("##vso[task.logissue type=warning;code=100;] No .zip file found [Scanning skipped]")
@@ -67,7 +127,7 @@ class PrismaCloudManagerScan:
             "--user",
             remoteconfig["PRISMA_CLOUD"]["PRISMA_ACCESS_KEY"],
             "--password",
-            prisma_secret_key,
+            prisma_key,
             "--details",
             function_path[0],
         )
@@ -81,7 +141,7 @@ class PrismaCloudManagerScan:
                 errors="replace"
             )
             print(f"The function {zip_name} was scanned")
-            result = self.parse_scan_results(result.stdout)
+            result = self._parse_scan_results(result.stdout)
             return result
 
         except subprocess.CalledProcessError as e:
@@ -91,43 +151,7 @@ class PrismaCloudManagerScan:
                 f"\n output: {e.output}"
             )
 
-    def run_tool_function_sca(
-        self, 
-        remoteconfig, 
-        prisma_secret_key,
-        skip_flag,
-    ):
-        if not (skip_flag):
-            try:
-                file_path = os.path.join(
-                    os.getcwd(), remoteconfig["PRISMA_CLOUD"]["TWISTCLI_PATH"]
-                )
-                if not os.path.exists(file_path):
-                    self.download_twistcli(
-                        file_path,
-                        remoteconfig["PRISMA_CLOUD"]["PRISMA_ACCESS_KEY"],
-                        prisma_secret_key,
-                        remoteconfig["PRISMA_CLOUD"]["PRISMA_CONSOLE_URL"],
-                        remoteconfig["PRISMA_CLOUD"]["PRISMA_API_VERSION"],
-                    )
-                folder_path = self.dict_args["folder_path"]
-                function_scan = self.scan_function(
-                    file_path,
-                    folder_path,
-                    remoteconfig,
-                    prisma_secret_key,
-                )
-
-                return function_scan
-
-            except Exception as ex:
-                traceback.print_exc()
-                logger.error(f"An overall error occurred: {ex}")
-        else:
-            print('##[info] Skipping function scan')
-            return 0
-
-    def parse_scan_results(self, stdout: str) -> dict:
+    def _parse_scan_results(self, stdout: str) -> dict:
         def extract_dist(pattern: str) -> dict:
             match = re.search(pattern, stdout)
             return {

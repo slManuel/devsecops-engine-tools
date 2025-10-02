@@ -9,7 +9,7 @@ from devsecops_engine_tools.engine_sca.engine_function.src.infrastructure.driven
 )
 
 
-def runner_engine_function(dict_args, config_tool, tool_remote):
+def runner_engine_function(dict_args, config_tool, secret_tool, tool_remote, remote_config_source_gateway):
     try:
         if config_tool["TOOL"].lower() == "prisma":
             tool_run = PrismaCloudManagerScan(config_tool, dict_args)
@@ -17,9 +17,10 @@ def runner_engine_function(dict_args, config_tool, tool_remote):
         return init_engine_sca_rm(
             tool_run,
             tool_remote,
+            remote_config_source_gateway,
             tool_deseralizator,
             dict_args,
-            dict_args["token_engine_container"],
+            secret_tool,
             config_tool,
         )
 

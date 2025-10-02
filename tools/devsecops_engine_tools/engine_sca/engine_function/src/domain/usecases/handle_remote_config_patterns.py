@@ -4,13 +4,10 @@ from devsecops_engine_tools.engine_core.src.domain.model.gateway.devops_platform
 
 
 class HandleRemoteConfigPatterns:
-    def __init__(
-        self,
-        tool_remote: DevopsPlatformGateway,
-        dict_args,
-    ):
-        self.tool_remote = tool_remote
-        self.dict_args = dict_args
+    def __init__(self, remote_config, exclusions, pipeline_name):
+        self.remote_config = remote_config
+        self.exclusions = exclusions
+        self.pipeline_name = pipeline_name
 
     def get_remote_config(self, file_path):
         """
