@@ -1,25 +1,23 @@
 {
-  "FUNCTION": {
-    "TOOL": "PRISMA",
-    "GENERAL": {
-      "BREAK_BUILD": false,
-      "SEVERITY_THRESHOLD": "high",
-      "INCLUDE_ZIP_GLOBS": ["**/*.zip"],
-      "EXCLUDE_ZIP_GLOBS": []
+  "PRISMA_CLOUD": {
+    "PRISMA_CONSOLE_URL": "https://<tu-prisma-console>",
+    "PRISMA_ACCESS_KEY": "PRISMA_ACCESS_KEY",   
+    "PRISMA_API_VERSION": "v1",
+    "DOWNLOAD_TWISTCLI": true,
+    "TWISTCLI_PATH": "twistcli.exe"
+  },
+  "IGNORE_ANALYSIS_PATTERN": "(.*_legacy|.*_skip)",     
+  "MESSAGE_INFO_ENGINE_FUNCTION": "message custom",
+  "THRESHOLD": {
+    "VULNERABILITY": {
+      "Critical": 1,
+      "High": 3,
+      "Medium": 10,
+      "Low": 999
     },
-    "PRISMA_CLOUD": {
-      "PRISMA_CONSOLE_URL": "https://<tu-prisma-console>",
-      "PRISMA_ACCESS_KEY_VAR": "PRISMA_ACCESS_KEY",
-      "PRISMA_SECRET_KEY_VAR": "PRISMA_SECRET_KEY",
-      "PRISMA_API_VERSION": "v1",
-      "DOWNLOAD_TWISTCLI": true,
-      "TWISTCLI_URL_OVERRIDE": ""
+    "COMPLIANCE": {
+      "Critical": 1
     },
-    "OUTPUT": {
-      "FORMAT": "json",
-      "SAVE_RAW": true,
-      "RAW_DIR": "reports/engine_function/raw",
-      "NORMALIZED_DIR": "reports/engine_function"
-    }
+    "CVE": ["CVE-2024-0001"]
   }
 }

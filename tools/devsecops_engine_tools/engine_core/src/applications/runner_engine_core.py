@@ -247,7 +247,7 @@ def get_inputs_from_cli(args):
         "engine_code": ["bearer", "kiuwan"],
         "engine_dast": ["nuclei"],
         "engine_risk": None,
-        "engine_function": ["prisma", "trivy"],
+        "engine_function": ["prisma"],
     }
 
     args = parser.parse_args()

@@ -78,7 +78,7 @@ class SetInputCore:
                 self.get_remote_config("engine_sca/engine_function/ConfigTool.json")["THRESHOLD"]
             ),
             None,
-            self.get_remote_config("engine_sca/engine_container/ConfigTool.json")[
+            self.get_remote_config("engine_sca/engine_function/ConfigTool.json")[
                 "MESSAGE_INFO_SCA_RM"
             ],
             scope_pipeline,

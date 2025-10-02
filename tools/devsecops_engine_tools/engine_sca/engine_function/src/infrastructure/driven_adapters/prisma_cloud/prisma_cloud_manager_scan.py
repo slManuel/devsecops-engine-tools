@@ -55,7 +55,7 @@ class PrismaCloudManagerScan:
     def scan_function(self, file_path, folder_path, remoteconfig, prisma_secret_key):
         function_path = glob.glob(os.path.join(folder_path, "*.zip"))
         if not function_path:
-            print("##vso[task.logissue type=warning;code=100;] No se encontró archivo .zip [Se omite escaneo]")
+            print("##vso[task.logissue type=warning;code=100;] No .zip file found [Scanning skipped]")
             return None
         zip_name = os.path.basename(function_path[0])
         command = (
@@ -90,6 +90,42 @@ class PrismaCloudManagerScan:
                 f"\n errorcode: {e.returncode}"
                 f"\n output: {e.output}"
             )
+
+    def run_tool_function_sca(
+        self, 
+        remoteconfig, 
+        prisma_secret_key,
+        skip_flag,
+    ):
+        if not (skip_flag):
+            try:
+                file_path = os.path.join(
+                    os.getcwd(), remoteconfig["PRISMA_CLOUD"]["TWISTCLI_PATH"]
+                )
+                if not os.path.exists(file_path):
+                    self.download_twistcli(
+                        file_path,
+                        remoteconfig["PRISMA_CLOUD"]["PRISMA_ACCESS_KEY"],
+                        prisma_secret_key,
+                        remoteconfig["PRISMA_CLOUD"]["PRISMA_CONSOLE_URL"],
+                        remoteconfig["PRISMA_CLOUD"]["PRISMA_API_VERSION"],
+                    )
+                folder_path = self.dict_args["folder_path"]
+                function_scan = self.scan_function(
+                    file_path,
+                    folder_path,
+                    remoteconfig,
+                    prisma_secret_key,
+                )
+
+                return function_scan
+
+            except Exception as ex:
+                traceback.print_exc()
+                logger.error(f"An overall error occurred: {ex}")
+        else:
+            print('##[info] Skipping function scan')
+            return 0
 
     def parse_scan_results(self, stdout: str) -> dict:
         def extract_dist(pattern: str) -> dict:
@@ -159,39 +195,3 @@ class PrismaCloudManagerScan:
                 }
             ]
         }
-
-    def run_tool_function_sca(
-        self, 
-        remoteconfig, 
-        prisma_secret_key,
-        skip_flag,
-    ):
-        if not (skip_flag):
-            try:
-                file_path = os.path.join(
-                    os.getcwd(), remoteconfig["PRISMA_CLOUD"]["TWISTCLI_PATH"]
-                )
-                if not os.path.exists(file_path):
-                    self.download_twistcli(
-                        file_path,
-                        remoteconfig["PRISMA_CLOUD"]["PRISMA_ACCESS_KEY"],
-                        prisma_secret_key,
-                        remoteconfig["PRISMA_CLOUD"]["PRISMA_CONSOLE_URL"],
-                        remoteconfig["PRISMA_CLOUD"]["PRISMA_API_VERSION"],
-                    )
-                folder_path = self.dict_args["folder_path"]
-                function_scan = self.scan_function(
-                    file_path,
-                    folder_path,
-                    remoteconfig,
-                    prisma_secret_key,
-                )
-
-                return function_scan
-
-            except Exception as ex:
-                traceback.print_exc()
-                logger.error(f"An overall error occurred: {ex}")
-        else:
-            print('##[info] Skipping function scan')
-            return 0
