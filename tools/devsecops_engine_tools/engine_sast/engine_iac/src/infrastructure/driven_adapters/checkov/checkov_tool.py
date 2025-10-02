@@ -41,6 +41,7 @@ class CheckovTool(ToolGateway):
         "RULES_CLOUDFORMATION": "cloudformation",
         "RULES_OPENAPI": "openapi",
         "RULES_TERRAFORM": "terraform",
+        "RULES_SERVERLESS": "serverless",
     }
     framework_external_checks = [
         "RULES_K8S",
@@ -48,6 +49,7 @@ class CheckovTool(ToolGateway):
         "RULES_DOCKER",
         "RULES_OPENAPI",
         "RULES_TERRAFORM",
+        "RULES_SERVERLESS",
     ]
 
     def run_tool(
