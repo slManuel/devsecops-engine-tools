@@ -3,9 +3,6 @@ trigger:
     include:
     - v*
 
-variables:
-    - group: base_images
-
 stages:
 - stage: GetSecrets
   displayName: 'Get Secrets'
