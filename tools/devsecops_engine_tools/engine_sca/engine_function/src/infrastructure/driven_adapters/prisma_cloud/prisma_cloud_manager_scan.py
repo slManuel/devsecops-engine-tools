@@ -13,6 +13,7 @@ from devsecops_engine_tools.engine_sca.engine_function.src.domain.model.gateways
 )
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
 from devsecops_engine_tools.engine_utilities import settings
+from devsecops_engine_tools.engine_utilities.twistcli_utils.twistcli_utils import download_twistcli
 
 
 
@@ -44,7 +45,7 @@ class PrismaCloudManagerScan:
                     os.getcwd(), remoteconfig["PRISMA_CLOUD"]["TWISTCLI_PATH"]
                 )
                 if not os.path.exists(file_path):
-                    self._download_twistcli(
+                    download_twistcli(
                         file_path,
                         prisma_key,
                         remoteconfig["PRISMA_CLOUD"]["PRISMA_CONSOLE_URL"],
@@ -67,50 +68,6 @@ class PrismaCloudManagerScan:
             print('##[info] Skipping function scan')
             return 0
 
-    def _download_twistcli(
-        self,
-        file_path,
-        prisma_key,
-        prisma_console_url,
-        prisma_api_version,
-    ):
-        
-        machine = platform.machine()
-        system = platform.system()
-
-        base_url = f"{prisma_console_url}/api/{prisma_api_version}/util"
-
-        os_mapping = {
-            "Linux": "twistcli",
-            "Windows": "windows/twistcli.exe",
-            "Darwin": "osx/twistcli",
-        }
-
-        url = f"{base_url}/{os_mapping[system]}"
-
-        if system == "Linux" and machine == "aarch64":
-            url = f"{base_url}/arm64/twistcli"
-        elif system == "Darwin" and machine == "aarch64":
-            url = f"{base_url}/osx/arm64/twistcli"
-
-        credentials = base64.b64encode(
-            prisma_key.encode()
-        ).decode()
-        headers = {"Authorization": f"Basic {credentials}"}
-        try:
-            response = requests.get(url, headers=headers)
-            response.raise_for_status()
-
-            with open(file_path, "wb") as file:
-                file.write(response.content)
-
-            os.chmod(file_path, stat.S_IRWXU)
-            logger.info(f"twistcli downloaded and saved to: {file_path}")
-            return 0
-
-        except Exception as e:
-            raise ValueError(f"Error downloading twistcli: {e}")
-        
     def _scan_function(self, file_path, folder_path, remoteconfig, prisma_key):
         function_path = glob.glob(os.path.join(folder_path, "*.zip"))
         if not function_path:
