@@ -45,7 +45,7 @@ class PrismaCloudManagerScan:
                     os.getcwd(), remoteconfig["PRISMA_CLOUD"]["TWISTCLI_PATH"]
                 )
                 if not os.path.exists(file_path):
-                    download_twistcli(
+                    self.download_twistcli(
                         file_path,
                         prisma_key,
                         remoteconfig["PRISMA_CLOUD"]["PRISMA_CONSOLE_URL"],
@@ -106,6 +106,12 @@ class PrismaCloudManagerScan:
                 f"\n errorcode: {e.returncode}"
                 f"\n output: {e.output}"
             )
+    def download_twistcli(self, file_path, prisma_key, prisma_console_url, prisma_api_version) -> int:
+        """
+        Método de instancia separado (lo que usan los tests),
+        delega en el util compat 'basic' para no romper aserciones.
+        """
+        return download_twistcli(file_path, prisma_key, prisma_console_url, prisma_api_version)
 
     def _parse_scan_results(self, stdout: str) -> dict:
         def extract_dist(pattern: str) -> dict:

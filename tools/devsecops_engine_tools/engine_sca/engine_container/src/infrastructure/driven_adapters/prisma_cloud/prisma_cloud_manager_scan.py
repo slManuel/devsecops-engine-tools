@@ -19,7 +19,12 @@ logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
 
 class PrismaCloudManagerScan(ToolGateway):
-
+    def download_twistcli(self, file_path, prisma_key, prisma_console_url, prisma_api_version) -> int:
+        """
+        Método de instancia separado (lo que usan los tests),
+        delega en el util compat 'basic' para no romper aserciones.
+        """
+        return download_twistcli(file_path, prisma_key, prisma_console_url, prisma_api_version)
     def scan_image(
         self, file_path, image_name, result_file, remoteconfig, prisma_key, docker_address
     ):
@@ -149,7 +154,7 @@ class PrismaCloudManagerScan(ToolGateway):
         sbom_components = None
 
         if not os.path.exists(file_path):
-            download_twistcli(
+            self.download_twistcli(
                 file_path,
                 prisma_key,
                 remoteconfig["PRISMA_CLOUD"]["PRISMA_CONSOLE_URL"],
