@@ -53,39 +53,15 @@ export class IacScanUseCase implements IIacScanUseCase {
       outputChannel.appendLine("Configuration values are missing≤ avoiding variable replace");
     } else {
       variableReplace = true;
-      releaseIdData = (await this.restClient.get(
-        VARIABLE_GROUPS_AD_BY_RELEASE_DEFINITION_ID.replace(
-          "{organization}",
-          scanConfiguration.getOrganizationName()
-        )
-          .replace("{project}", scanConfiguration.getProjectName())
-          .replace("{definitionId}", scanConfiguration.getDefinitionId()),
-        AuthEncoder.encode(
-          scanConfiguration.getAdUserName(),
-          scanConfiguration.getAdPersonalAccessToken()
-        )
-      )) as IReleaseIdData;
+      releaseIdData = await this.fetchReleaseDefinitionData(scanConfiguration);
       variablesFromLibrary = releaseIdData.variables;
       releaseEnvironments = releaseIdData.environments
         .map((environment: { variableGroups: number[] }) => environment.variableGroups)
         .flat();
-      variableGroupsIds = [...new Set(releaseEnvironments)];
-      variableGroupsData = (await this.restClient.get(
-        VARIABLE_GROUPS_AD_BY_ID.replace("{organization}", scanConfiguration.getOrganizationName())
-          .replace("{project}", scanConfiguration.getProjectName())
-          .replace("{groupIds}", variableGroupsIds.join(",")),
-        AuthEncoder.encode(
-          scanConfiguration.getAdUserName(),
-          scanConfiguration.getAdPersonalAccessToken()
-        )
-      )) as IVariableGroupData;
-      variableGroupsData.value.forEach(
-        (variableGroup: { variables: { [x: string]: IVariableData } }) => {
-          Object.keys(variableGroup.variables).forEach((variableName: string) => {
-            variablesFromLibrary[variableName] = variableGroup.variables[variableName];
-          });
-        }
-      );
+      const releaseVariableGroups = (releaseIdData as any).variableGroups || [];
+      variableGroupsIds = [...new Set([...releaseEnvironments, ...releaseVariableGroups])];
+      variableGroupsData = await this.fetchGroupIdData(scanConfiguration, this.variablesIdString(variableGroupsIds));
+      variablesFromLibrary = this.combineVariables(variablesFromLibrary, variableGroupsData);
     }
 
     this.files = await fs.readdir(folderToScan);
@@ -122,7 +98,7 @@ export class IacScanUseCase implements IIacScanUseCase {
 
 
     const scanLocation = variableReplace ? path.join(folderToScan, 'replacedFiles') : folderToScan;
-    
+
     const scannerRes: ScannerRes = await this.iacScanner.scan(
       scanLocation,
       outputChannel,
@@ -131,8 +107,8 @@ export class IacScanUseCase implements IIacScanUseCase {
       this.toolVersion,
       this.containerEnginePath,
       scanLoader
-    ).finally( () => {
-      if(variableReplace) {
+    ).finally(() => {
+      if (variableReplace) {
         this.cleanFolder(folderToScan);
       }
     });
@@ -152,24 +128,24 @@ export class IacScanUseCase implements IIacScanUseCase {
 
   private async cleanFolder(folderToScan: string): Promise<void> {
     const replacedFilesDir = path.join(folderToScan, 'replacedFiles');
-    
+
     try {
       const stats = await fs.stat(replacedFilesDir);
-      
+
       if (stats.isDirectory()) {
         const files = await fs.readdir(replacedFilesDir);
-        
+
         for (const file of files) {
           const filePath = path.join(replacedFilesDir, file);
           const fileStats = await fs.stat(filePath);
-          
+
           if (fileStats.isFile()) {
             await fs.unlink(filePath);
           } else if (fileStats.isDirectory()) {
             await this.cleanFolder(filePath);
           }
         }
-        
+
         await fs.rmdir(replacedFilesDir);
       }
     } catch (error) {
@@ -180,15 +156,15 @@ export class IacScanUseCase implements IIacScanUseCase {
   }
 
   private processVariablesInLines(
-    lines: string[], 
-    regex: RegExp, 
-    variablesFromLibrary: { [key: string]: IVariableData }, 
-    variableReplace: boolean, 
-    file: string, 
+    lines: string[],
+    regex: RegExp,
+    variablesFromLibrary: { [key: string]: IVariableData },
+    variableReplace: boolean,
+    file: string,
     outputChannel: OutputChannel
   ): string {
     let replacedFile = "";
-    
+
     lines.forEach((line, _) => {
       if (regex.test(line)) {
         const variableName = line.split("#{")[1].split("}#")[0];
@@ -206,8 +182,60 @@ export class IacScanUseCase implements IIacScanUseCase {
         replacedFile = replacedFile + "\n" + line;
       }
     });
-    
+
     return replacedFile;
+  }
+
+  private combineVariables(
+    variablesFromLibrary: { [key: string]: IVariableData },
+    variableGroupsData: IVariableGroupData
+  ): { [key: string]: IVariableData } {
+    const combinedVariables = { ...variablesFromLibrary };
+    
+    variableGroupsData.value.forEach(
+      (variableGroup: { variables: { [x: string]: IVariableData } }) => {
+        Object.keys(variableGroup.variables).forEach((variableName: string) => {
+          combinedVariables[variableName] = variableGroup.variables[variableName];
+        });
+      }
+    );
+    
+    return combinedVariables;
+  }
+
+  private variablesIdString(variableGroupsIds: number[]): string {
+    let variableGroupsIdsString: string = "";
+    variableGroupsIds.forEach((id: number) => {
+      variableGroupsIdsString =
+        variableGroupsIdsString === "" ? id.toString() : variableGroupsIdsString + "," + id.toString();
+    });
+    return variableGroupsIdsString;
+  }
+
+  private async fetchReleaseDefinitionData(scanConfiguration: ScanConfiguration): Promise<IReleaseIdData> {
+    return (await this.restClient.get(
+      VARIABLE_GROUPS_AD_BY_RELEASE_DEFINITION_ID
+        .replace("{organization}", scanConfiguration.getOrganizationName())
+        .replace("{project}", scanConfiguration.getProjectName())
+        .replace("{definitionId}", scanConfiguration.getDefinitionId()),
+      AuthEncoder.encode(
+        scanConfiguration.getAdUserName(),
+        scanConfiguration.getAdPersonalAccessToken()
+      )
+    )) as IReleaseIdData;
+  }
+
+  private async fetchGroupIdData(scanConfiguration: ScanConfiguration, groupIds: string): Promise<IVariableGroupData> {
+    return (await this.restClient.get(
+      VARIABLE_GROUPS_AD_BY_ID
+        .replace("{organization}", scanConfiguration.getOrganizationName())
+        .replace("{project}", scanConfiguration.getProjectName())
+        .replace("{groupIds}", groupIds),
+      AuthEncoder.encode(
+        scanConfiguration.getAdUserName(),
+        scanConfiguration.getAdPersonalAccessToken()
+      )
+    )) as IVariableGroupData;
   }
 
 }

@@ -38,7 +38,7 @@ def generate_file_from_tool(tool, result_list, rules_doc, config_tool):
 
                 file_name = "results.json"
                 results_data = {
-                    "check_type": "Dockerfile, Kubernetes and CloudFormation",
+                    "check_type": "Dockerfile, Kubernetes, CloudFormation and Serverless",
                     "results": {
                         "failed_checks": all_failed_checks,
                     },
