@@ -40,7 +40,10 @@ export function registerDependenciesScanCommand(
                 if (scanResult) {
                     scanLoader.stop(scanResult.getFindings().length, "dependency");
 
-                    void vscode.window.showInformationMessage("Dependencies Scan completed successfully");
+                    const severityCounts = scanResult.getSeverityCounts();
+                    let message = "Dependencies Scan completed successfully";
+                    
+                    void vscode.window.showInformationMessage(message);
                     treeDataProvider.addScanResult(
                         "DEPENDENCIES SCAN RESULT",
                         scanResult.getFindings(),
