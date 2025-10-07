@@ -54,7 +54,6 @@ def test_execute(checkov_tool):
 
         mock_run.assert_called_once_with(
             "checkov --config-file /path/to/config/checkov_configcheckov_config.yaml --quiet",
-            checkov_config.env,
             capture_output=True,
             text=True,
             shell=True,
