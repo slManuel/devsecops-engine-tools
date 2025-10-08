@@ -53,7 +53,7 @@ def test_execute(checkov_tool):
         result = checkov_tool._execute(checkov_config, "checkov")
 
         mock_run.assert_called_once_with(
-            "checkov --config-file /path/to/config/checkov_configcheckov_config.yaml",
+            "checkov --config-file /path/to/config/checkov_configcheckov_config.yaml --quiet",
             capture_output=True,
             text=True,
             shell=True,

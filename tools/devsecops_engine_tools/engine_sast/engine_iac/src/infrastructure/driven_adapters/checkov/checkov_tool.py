@@ -403,6 +403,7 @@ class CheckovTool(ToolGateway):
             + checkov_config.path_config_file
             + checkov_config.config_file_name
             + self.CHECKOV_CONFIG_FILE
+            + " --quiet"
         )
         env_modified = dict(os.environ)
         if checkov_config.env is not None:
