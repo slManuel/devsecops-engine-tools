@@ -25,7 +25,7 @@
         "URL_FILE_DARWIN": "https://github.com/bridgecrewio/checkov/releases/download/2.3.321/checkov_darwin_X86_64_2.3.321.zip",
         "URL_FILE_WINDOWS": "https://github.com/bridgecrewio/checkov/releases/download/2.3.321/checkov_windows_X86_64_2.3.321.zip",
         "USE_EXTERNAL_CHECKS_GIT": false,
-        "LOG_LEVEL": "DEBUG",
+        "LOG_LEVEL": "ERROR",
         "EXTERNAL_CHECKS_GIT": "",
         "EXTERNAL_GIT_SSH_HOST": "",
         "EXTERNAL_GIT_PUBLIC_KEY_FINGERPRINT": "",
