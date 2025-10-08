@@ -305,6 +305,13 @@ class CheckovTool(ToolGateway):
         # Crea una lista para almacenar los hilos
         threads = []
         rules_run = {}
+        
+        # Incluir reglas adicionales para serverless si se especifica en la configuración SERVERLESS_ADITIONAL_CHECKS
+        ADDITIONAL_CHECKS = config_tool[self.TOOL_CHECKOV].get("SERVERLESS_ADITIONAL_CHECKS", [])
+        if any(p.lower() in ["serverless", "all"] for p in platform_to_scan) and ADDITIONAL_CHECKS:
+            for additional_check_type in ADDITIONAL_CHECKS:
+                config_tool[self.TOOL_CHECKOV]["RULES"]["RULES_SERVERLESS"].update(config_tool[self.TOOL_CHECKOV]["RULES"][additional_check_type])
+                
         for folder in folders_to_scan:
             for rule in config_tool[self.TOOL_CHECKOV]["RULES"]:
                 if "all" in platform_to_scan or any(

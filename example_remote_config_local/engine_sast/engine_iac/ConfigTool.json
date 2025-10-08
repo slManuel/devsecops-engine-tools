@@ -35,6 +35,7 @@
         "INSTALLATION_ID_GITHUB":"",
         "DEFAULT_SEVERITY": "Critical",
         "DEFAULT_CATEGORY": "Compliance",
+        "SERVERLESS_ADITIONAL_CHECKS": ["RULES_CLOUDFORMATION"],
         "REGEX_CLEAN_RESOURCE": "",
         "RULES": {
             "RULES_DOCKER": {
@@ -728,6 +729,20 @@
                     },
                     "guideline": "guideline",
                     "severity": "Medium",
+                    "cvss": "",
+                    "category": "Vulnerability"
+                }
+            },
+            "RULES_SERVERLESS":{
+                "CKV_AWS_200": {
+                    "checkID": "IAC-CKV-SERVERLESS-1 Ensure AWS Lambda function is not publicly accessible",
+                    "environment": {
+                        "dev": true,
+                        "pdn": true,
+                        "qa": true
+                    },
+                    "guideline": "guideline",
+                    "severity": "High",
                     "cvss": "",
                     "category": "Vulnerability"
                 }
