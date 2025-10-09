@@ -312,6 +312,13 @@ class CheckovTool(ToolGateway):
             for additional_check_type in ADDITIONAL_CHECKS:
                 config_tool[self.TOOL_CHECKOV]["RULES"]["RULES_SERVERLESS"].update(config_tool[self.TOOL_CHECKOV]["RULES"][additional_check_type])
                 
+        # Configurar LOG_LEVEL si está definido
+        log_level = config_tool[self.TOOL_CHECKOV].get("LOG_LEVEL")
+        if log_level:
+            if agent_env is None:
+                agent_env = {}
+            agent_env["LOG_LEVEL"] = log_level
+        
         for folder in folders_to_scan:
             for rule in config_tool[self.TOOL_CHECKOV]["RULES"]:
                 if "all" in platform_to_scan or any(
@@ -410,7 +417,6 @@ class CheckovTool(ToolGateway):
             + checkov_config.path_config_file
             + checkov_config.config_file_name
             + self.CHECKOV_CONFIG_FILE
-            + " --quiet"
         )
         env_modified = dict(os.environ)
         if checkov_config.env is not None:
