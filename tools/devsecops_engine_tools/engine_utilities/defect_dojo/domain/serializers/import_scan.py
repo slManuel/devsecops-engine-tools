@@ -207,7 +207,7 @@ class ImportScanSerializer(Schema):
     tool_scm_configuration = fields.Int(required=False)
     code_app = fields.Str(required=False)
     # defect-dojo credential
-    generate_auth_cmdb = fields.Bool(required=False, default=False)
+    generate_auth_cmdb = fields.Bool(required=False)
     auth_cmdb_request_response = fields.Dict(required=False)
     token_cmdb = fields.Str(required=False)
     host_cmdb = fields.Url(required=False)
@@ -225,7 +225,7 @@ class ImportScanSerializer(Schema):
     project_remote_config = fields.Str(required=False)
     # regulare expression
     expression = fields.Str(required=True)
-    reimport_scan = fields.Bool(required=False, default=False)
+    reimport_scan = fields.Bool(required=False)
 
     @post_load
     def make_cmdb(self, data, **kwargs):
