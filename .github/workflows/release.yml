@@ -117,8 +117,8 @@ jobs:
           ls -la ./kics_binary/kics-devsecops
           
       - name: Build and tag Docker image
-        timeout-minutes: 3
         run: |
+          sleep 5
           docker build --build-arg VERSION=${{ env.RELEASE_VERSION }} -t bancolombia/devsecops-engine-tools:${{ env.RELEASE_VERSION }} -f docker/Dockerfile .
           docker tag bancolombia/devsecops-engine-tools:${{ env.RELEASE_VERSION }} bancolombia/devsecops-engine-tools:${{ env.RELEASE_VERSION }}
 

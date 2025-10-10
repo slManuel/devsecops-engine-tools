@@ -57,8 +57,11 @@ For more information about structure remote config for this module, [engine dast
 
 The engine_integrations module enables the integration of DevSecOps Engine Tools with external systems and platforms, focusing on orchestrating and automating reporting and data exchange processes. It is designed to be extensible, allowing new integrations to be added as needed.
 
-For more information about structure remote config for this module, [engine integrations](../modules/engine_integrations.md)
+### **report_sonar**
+For more information about structure remote config for this integration, [copacetic](../modules/engine_integrations/copacetic.md)
 
+### **report_sonar**
+For more information about structure remote config for this integration, [report sonar](../modules/engine_integrations/report_sonar.md)
 
 ## **engine_risk**
 Module for prioritizing the resolution of findings reported in Vulnerability Management.
@@ -97,7 +100,7 @@ For more information about structure remote config for this module, [engine cont
 
 Software Composition Analysis (SCA) is a process that detects compromised or vulnerable open-source components used in an application's source code. This automated process is part of Bancolombia's DevSecOps practices, through which security, code quality, and compliance are evaluated.
 
-For more information about structure remote config for this module, [engine container](../modules/engine_sca/engine_dependencies.md)
+For more information about structure remote config for this module, [engine dependencies](../modules/engine_sca/engine_dependencies.md)
 
 ## **vulnerability_management**
 
