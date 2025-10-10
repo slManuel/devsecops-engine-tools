@@ -131,18 +131,52 @@ export class IacScanner implements IScannerGateway {
     });
   }
 
-  getRuleCode(
-    dockerPath: string,
-    containerImageName: string,
-    toolVersion: string,
+  async getRuleCode(
     ruleId: string,
-    finding: Finding
-  ): Finding {
-    const containerCommand = `${dockerPath} run --rm ${containerImageName}:${toolVersion}  python3 rules_context_extract.py ${ruleId}`;
-    const rulePrint = execSync(containerCommand, { encoding: "utf-8" }).trim();
-    finding.setValidationRuleCode(rulePrint);
+    finding: Finding,
+    containerEnginePath: string,
+    containerImageName: string,
+    toolVersion: string
+  ): Promise<Finding> {
+    if (!ruleId.includes('_BC_')) {
+      return finding;
+    }
+
+    let secret = "";
+    let url = "";
+    try {
+      const { execSync } = require("child_process");
+      secret = execSync(
+        `${containerEnginePath} run --rm ${containerImageName}:${toolVersion} sh -c 'echo $DEFECT_DOJO_SECRET'`
+      ).toString().trim();
+      url = execSync(
+        `${containerEnginePath} run --rm ${containerImageName}:${toolVersion} sh -c 'echo $CONTEXT_MANAGER'`
+      ).toString().trim();
+    } catch (error) {
+      console.error("Error obtaining context manager", error);
+      return finding;
+    }
+
+    try {
+      url = `${url}/${ruleId}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': secret
+        }
+      });
+
+      if (response.status === 200) {
+        const rulePrint = (await response.text()).replace(/\\n/g, '\n');
+        finding.setValidationRuleCode(rulePrint);
+      }
+    } catch (error) {
+      console.error(`Error fetching rule code for ${ruleId}:`, error);
+    }
+
     return finding;
   }
+
 
   private errorHandler(outputChannel: OutputChannel, error: Error, stderr: string): void {
     outputChannel.appendLine(`Error: ${error.message}`);

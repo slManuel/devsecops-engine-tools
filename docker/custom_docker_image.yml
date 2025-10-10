@@ -1,63 +1,91 @@
-
 trigger:
   tags:
     include:
     - v*
 
-pool:
-  name: Azure Pipelines
+stages:
+- stage: GetSecrets
+  displayName: 'Get Secrets'
+  pool:
+    name: DevSecOps-Engine
+  jobs:
+  - job: GetSecrets
+    displayName: 'Get DefectDojo Secret'
+    steps:
+    - script: |
+        DEFECT_DOJO_SECRET=$(aws secretsmanager get-secret-value --region $(aws-region) --secret-id $(defect-dojo-secret-name) --query SecretString --output text | jq -r ".$(defect-dojo-secret-field)")
+        
+        # Validar que el secreto no esté vacío
+        if [ -z "$DEFECT_DOJO_SECRET" ] || [ "$DEFECT_DOJO_SECRET" = "null" ]; then
+          echo "Error: DEFECT_DOJO_SECRET is empty or null"
+          exit 1
+        fi
+        
+        echo "DefectDojo secret retrieved successfully"
+        echo "##vso[task.setvariable variable=DEFECT_DOJO_SECRET;isOutput=true]$DEFECT_DOJO_SECRET"
+      name: getSecret
+      displayName: 'Get DefectDojo Secret from AWS'
 
-steps:
-
-- task: connect-agent@2
-  displayName: 'Hosted agent'
-  inputs:
-    hostedAgentService: $(agent-id)
-
-- script: |
-    branch_name=$(Build.SourceBranchName)
-    if [[ $branch_name == v* ]]; then
-      version=${branch_name#v}
-    else
-      version=$(python3 -c "import sys; sys.path.append('tools/devsecops_engine_tools'); import version; print(version.version)")
-      echo "Using version from version.py: $version"
-    fi
-    echo "##vso[task.setvariable variable=RELEASE_VERSION]$version"
-  displayName: 'Set release version from tag or version.py'
-
-- script: echo "Release version is $(RELEASE_VERSION)"
-  displayName: 'Use the release version'
-
-- script: | 
-    python3 docker/get_files_ad.py $(repo-owner-ad) "$(project-ad)" $(remote-config-repo) /engine_sast/engine_iac/ConfigTool.json $(ad-at) path
-    python3 docker/get_files_ad.py $(repo-owner-ad) "$(project-ad)" $(remote-config-repo) /engine_sca/engine_container/ConfigTool.json $(ad-at) path
-    python3 docker/get_files_ad.py $(repo-owner-ad) "$(project-ad)" $(remote-config-repo) /engine_sca/engine_dependencies/ConfigTool.json $(ad-at) path
-    python3 docker/get_files_ad.py $(repo-owner-ad) "$(project-ad)" $(remote-config-repo) /engine_core/ConfigTool.json $(ad-at) path
-  displayName: 'Get Custom Remote Config'
-
-- script: python3 docker/get_files_gh.py $(repo-owner) $(project) rules $(gh-at) rules
-  displayName: 'Get Custom IAC Rules'
-
-- script: python3 docker/get_files_gh.py $(repo-owner) $(project) docs $(gh-at) docs
-  displayName: 'Get Custom IAC Rules Registry'
-
-- script: python3 docker/get_certificates.py $(certificate-url)
-  displayName: 'Get Custom Certificates'
-
-- script: python3 docker/get_certificates.py $(certificate-url-ca)
-  displayName: 'Get Custom CA Certificate'
-
-- script: python3 docker/get_kics_binary.py $(repo-owner-ad) "$(project-ad)" $(artifact_name) $(ad-at) $(pipeline_id)
-  displayName: 'Get KICS Binary'
-
-- script: docker build --build-arg VERSION=$(RELEASE_VERSION) -t $(artifactory-url)/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG) -f docker/Dockerfile . && docker tag artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG) artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG)
+- stage: BuildImage
   displayName: 'Build Docker Image'
+  dependsOn: GetSecrets
+  pool:
+    name: Azure Pipelines
+  variables:
+    defectDojoSecret: $[ stageDependencies.GetSecrets.GetSecrets.outputs['getSecret.DEFECT_DOJO_SECRET'] ]
+  jobs:
+  - job: BuildDockerImage
+    displayName: 'Build and Configure Docker Image'
+    steps:
+    - task: connect-agent@2
+      displayName: 'Hosted agent'
+      inputs:
+        hostedAgentService: $(agent-id)
 
-- task: ArtifactoryDocker@1
-  displayName: Docker Push
-  inputs:
-    command: 'push'
-    repository: 'devops/devsecops-engine-tools'
-    artifactoryService: 'Artifactory'
-    targetRepo: 'devops/devsecops-engine-tools'
-    imageName: 'artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG)'
+    - script: |
+        branch_name=$(Build.SourceBranchName)
+        if [[ $branch_name == v* ]]; then
+          version=${branch_name#v}
+        else
+          version=$(python3 -c "import sys; sys.path.append('tools/devsecops_engine_tools'); import version; print(version.version)")
+          echo "Using version from version.py: $version"
+        fi
+        echo "##vso[task.setvariable variable=RELEASE_VERSION]$version"
+      displayName: 'Set release version from tag or version.py'
+
+    - script: echo "Release version is $(RELEASE_VERSION)"
+      displayName: 'Use the release version'
+
+    - script: | 
+        python3 docker/get_files_ad.py $(repo-owner-ad) "$(project-ad)" $(remote-config-repo) /engine_sast/engine_iac/ConfigTool.json $(ad-at) path
+        python3 docker/get_files_ad.py $(repo-owner-ad) "$(project-ad)" $(remote-config-repo) /engine_sca/engine_container/ConfigTool.json $(ad-at) path
+        python3 docker/get_files_ad.py $(repo-owner-ad) "$(project-ad)" $(remote-config-repo) /engine_sca/engine_dependencies/ConfigTool.json $(ad-at) path
+        python3 docker/get_files_ad.py $(repo-owner-ad) "$(project-ad)" $(remote-config-repo) /engine_core/ConfigTool.json $(ad-at) path
+      displayName: 'Get Custom Remote Config'
+
+    - script: python3 docker/get_files_gh.py $(repo-owner) $(project) rules $(gh-at) rules
+      displayName: 'Get Custom IAC Rules'
+
+    - script: python3 docker/get_files_gh.py $(repo-owner) $(project) docs $(gh-at) docs
+      displayName: 'Get Custom IAC Rules Registry'
+
+    - script: python3 docker/get_certificates.py $(certificate-url)
+      displayName: 'Get Custom Certificates'
+
+    - script: python3 docker/get_certificates.py $(certificate-url-ca)
+      displayName: 'Get Custom CA Certificate'
+
+    - script: python3 docker/get_kics_binary.py $(repo-owner-ad) "$(project-ad)" $(artifact_name) $(ad-at) $(pipeline_id)
+      displayName: 'Get KICS Binary'
+
+    - script: docker build --build-arg VERSION=$(RELEASE_VERSION) --build-arg CONTEXT_MANAGER=$(contextManager) --build-arg DEFECT_DOJO_SECRET=$(defectDojoSecret) -t $(artifactory-url)/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG) -f docker/Dockerfile . && docker tag artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG) artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG)
+      displayName: 'Build Docker Image'
+
+    - task: ArtifactoryDocker@1
+      displayName: Docker Push
+      inputs:
+        command: 'push'
+        repository: 'devops/devsecops-engine-tools'
+        artifactoryService: 'Artifactory'
+        targetRepo: 'devops/devsecops-engine-tools'
+        imageName: 'artifactory.apps.bancolombia.com/devops/devsecops-engine-tools:$(RELEASE_VERSION)$(FOR_TEST_TAG)'

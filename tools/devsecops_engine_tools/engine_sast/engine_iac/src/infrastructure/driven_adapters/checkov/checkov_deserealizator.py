@@ -46,4 +46,6 @@ class CheckovDeserealizator:
                     )
                     list_open_findings.append(finding_open)
 
+            if "'error'" in str(result):
+                raise Exception(result.get("error"))
         return list_open_findings
