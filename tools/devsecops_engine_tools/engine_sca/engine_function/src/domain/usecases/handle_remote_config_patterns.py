@@ -1,8 +1,4 @@
 import re
-from devsecops_engine_tools.engine_core.src.domain.model.gateway.devops_platform_gateway import (
-    DevopsPlatformGateway,
-)
-
 
 class HandleRemoteConfigPatterns:
     def __init__(self, remote_config, exclusions, pipeline_name):

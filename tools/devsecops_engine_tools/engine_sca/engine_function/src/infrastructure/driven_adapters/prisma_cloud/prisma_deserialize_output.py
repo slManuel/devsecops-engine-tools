@@ -40,6 +40,9 @@ class PrismaDeserealizator(DeseralizatorGateway):
                     description=vul.get("description", "")[:150],
                     severity=SEVERITY_MAP.get(vul.get("severity", ""), ""),
                     identification_date=vul.get("discoveredDate", ""),
+                    published_date_cve=vul.get("publishedDate", "").replace(
+                        "Z", "+00:00"
+                    ),
                     module="engine_function",
                     category=Category.VULNERABILITY,
                     requirements=vul.get("status", ""),

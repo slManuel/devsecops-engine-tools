@@ -1,9 +1,7 @@
 {
   "PRISMA_CLOUD": {
     "PRISMA_CONSOLE_URL": "https://<tu-prisma-console>",
-    "PRISMA_ACCESS_KEY": "PRISMA_ACCESS_KEY",   
     "PRISMA_API_VERSION": "v1",
-    "DOWNLOAD_TWISTCLI": true,
     "TWISTCLI_PATH": "twistcli.exe"
   },
   "IGNORE_ANALYSIS_PATTERN": "(.*_legacy|.*_skip)",     

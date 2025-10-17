@@ -27,16 +27,11 @@ class PrinterPrettyTable(PrinterTableGateway):
                 finding.description,
                 finding.where,
             ]
-            if (finding.module == "engine_container") or (
-                finding.module == "engine_dependencies"
-            ):
+            if finding.module in ("engine_container", "engine_dependencies", "engine_function"):
                 row_data.append(finding.requirements)
             elif finding.module == "engine_code":
                 row_data.append(finding.cvss)
                 row_data.append(finding.defect_type)
-            elif finding.module == "engine_function":
-                row_data.append(finding.function_name)
-                row_data.append(finding.function_version)
             table.add_row(row_data)
 
         severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "unknown": 4}

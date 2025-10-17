@@ -21,12 +21,12 @@ def init_engine_sca_rm(
 ):
     remote_config = remote_config_source_gateway.get_remote_config(
         dict_args["remote_config_repo"],
-        "engine_sca/engine_container/ConfigTool.json",
+        "engine_sca/engine_function/ConfigTool.json",
         dict_args["remote_config_branch"],
     )
     exclusions = remote_config_source_gateway.get_remote_config(
         dict_args["remote_config_repo"],
-        "engine_sca/engine_container/Exclusions.json",
+        "engine_sca/engine_function/Exclusions.json",
         dict_args["remote_config_branch"],
     )
     pipeline_name = tool_remote.get_variable("pipeline_name")
@@ -41,16 +41,20 @@ def init_engine_sca_rm(
     )
     skip_flag = handle_remote_config_patterns.skip_from_exclusion()
     scan_flag = handle_remote_config_patterns.ignore_analysis_pattern()
-    function_sca_scan = FunctionScaScan(
-        tool_run,
-        remote_config,
-        tool_remote,
-        tool_deseralizator,
-        dict_args,
-        secret_tool,
-        dict_args["token_engine_container"],
-        skip_flag,
-    )
+    if scan_flag and not (skip_flag):
+        function_sca_scan = FunctionScaScan(
+            tool_run,
+            remote_config,
+            tool_remote,
+            tool_deseralizator,
+            dict_args,
+            secret_tool,
+            dict_args["token_engine_container"],
+        )
+    else:
+        print("Tool skipped by DevSecOps policy")
+        dict_args["send_metrics"] = "false"
+        dict_args["use_vulnerability_management"] = "false"
     input_core = SetInputCore(tool_remote, dict_args, config_tool)
     function_scan = function_sca_scan.process()
 

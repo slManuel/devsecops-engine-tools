@@ -61,7 +61,6 @@ class FunctionScaScan:
             self.get_remote_config("engine_sca/engine_function/ConfigTool.json"),
             self.secret_tool,
             self.token_engine_container,
-            self.skip_flag
         )
 
     def deseralizator(self, function_scanned):

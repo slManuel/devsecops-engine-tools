@@ -1,13 +1,7 @@
-import platform
-import stat
-import requests
 import os
 import glob
 import subprocess
-import logging
 import re
-import base64
-import traceback
 from devsecops_engine_tools.engine_sca.engine_function.src.domain.model.gateways.tool_gateway import (
     ToolGateway,
 )
@@ -34,44 +28,41 @@ class PrismaCloudManagerScan:
         remoteconfig, 
         secret_tool,
         token_engine_container,
-        skip_flag,
     ):
         prisma_key = (
             f"{secret_tool['access_prisma']}:{secret_tool['token_prisma']}" if secret_tool else token_engine_container
         )
-        if not (skip_flag):
-            try:
-                file_path = os.path.join(
-                    os.getcwd(), remoteconfig["PRISMA_CLOUD"]["TWISTCLI_PATH"]
-                )
-                if not os.path.exists(file_path):
-                    self.download_twistcli(
-                        file_path,
-                        prisma_key,
-                        remoteconfig["PRISMA_CLOUD"]["PRISMA_CONSOLE_URL"],
-                        remoteconfig["PRISMA_CLOUD"]["PRISMA_API_VERSION"],
-                    )
-                folder_path = self.dict_args["folder_path"]
-                function_scan = self._scan_function(
-                    file_path,
-                    folder_path,
-                    remoteconfig,
-                    prisma_key,
-                )
+        file_path = os.path.join(
+            os.getcwd(), remoteconfig["PRISMA_CLOUD"]["TWISTCLI_PATH"]
+        )
+        if not os.path.exists(file_path):
+            self.download_twistcli(
+                file_path,
+                prisma_key,
+                remoteconfig["PRISMA_CLOUD"]["PRISMA_CONSOLE_URL"],
+                remoteconfig["PRISMA_CLOUD"]["PRISMA_API_VERSION"],
+            )
+        folder_path = self.dict_args["folder_path"]
+        function_scan = self._scan_function(
+            file_path,
+            folder_path,
+            remoteconfig,
+            prisma_key,
+        )
 
-                return function_scan
+        return function_scan
 
-            except Exception as ex:
-                traceback.print_exc()
-                logger.error(f"An overall error occurred: {ex}")
-        else:
-            print('##[info] Skipping function scan')
-            return 0
+    def _split_prisma_token(self, prisma_key):
+        try:
+            access_prisma, token_prisma = prisma_key.split(":")
+            return access_prisma, token_prisma
+        except ValueError:
+            raise ValueError("The string is not properly formatted. Make sure it contains a ':'.")
 
     def _scan_function(self, file_path, folder_path, remoteconfig, prisma_key):
         function_path = glob.glob(os.path.join(folder_path, "*.zip"))
         if not function_path:
-            print("##vso[task.logissue type=warning;code=100;] No .zip file found [Scanning skipped]")
+            print("No .zip file found [Scanning skipped]")
             return None
         zip_name = os.path.basename(function_path[0])
         command = (
@@ -81,9 +72,9 @@ class PrismaCloudManagerScan:
             "--address",
             remoteconfig["PRISMA_CLOUD"]["PRISMA_CONSOLE_URL"],
             "--user",
-            remoteconfig["PRISMA_CLOUD"]["PRISMA_ACCESS_KEY"],
+            self._split_prisma_token(prisma_key)[0],
             "--password",
-            prisma_key,
+            self._split_prisma_token(prisma_key)[1],
             "--details",
             function_path[0],
         )
@@ -127,6 +118,7 @@ class PrismaCloudManagerScan:
         def clean_text(text) -> str:
             cleaned_text = text.replace('\x1b[0m', '')
             cleaned_text = cleaned_text.replace('\x1b[91;1m', '')
+            cleaned_text = cleaned_text.replace('\x1b[33;1m','')
             return cleaned_text
 
         def extract_table() -> list:

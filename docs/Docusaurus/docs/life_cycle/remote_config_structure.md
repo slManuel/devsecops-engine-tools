@@ -2139,7 +2139,6 @@ This capability uses Prisma Cloud (twistcli) and is part of DevSecOps practices 
 
   "PRISMA_CLOUD": {
     "PRISMA_CONSOLE_URL": "https://<your-console>",
-    "PRISMA_ACCESS_KEY": "PRISMA_ACCESS_KEY",            // Pipeline variable name
     "PRISMA_API_VERSION": "v1",
     "TWISTCLI_PATH": "twistcli.exe"                      // Relative path to save/read twistcli
 

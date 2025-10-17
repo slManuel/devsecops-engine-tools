@@ -1,10 +1,8 @@
-import stat
 import requests
 import os
 import subprocess
 import base64
 import json
-import platform
 from devsecops_engine_tools.engine_sca.engine_container.src.domain.model.gateways.tool_gateway import (
     ToolGateway,
 )

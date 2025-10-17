@@ -110,7 +110,6 @@ class TestPrismaCloudManagerScan(unittest.TestCase):
             remoteconfig=self.remoteconfig,
             secret_tool=None,
             token_engine_container="AK:SK",
-            skip_flag=True,
         )
         self.assertEqual(ret, 0)
         mock_print.assert_called()
@@ -133,7 +132,6 @@ class TestPrismaCloudManagerScan(unittest.TestCase):
                 remoteconfig=self.remoteconfig,
                 secret_tool=None,
                 token_engine_container="AK:SK",
-                skip_flag=False,
             )
             self.assertEqual(ret, {"ok": True})
             m_dl.assert_called_once()
@@ -153,7 +151,6 @@ class TestPrismaCloudManagerScan(unittest.TestCase):
                 remoteconfig=self.remoteconfig,
                 secret_tool=None,
                 token_engine_container="AK:SK",
-                skip_flag=False,
             )
             self.assertIsNone(ret)
             m_dl.assert_called_once()

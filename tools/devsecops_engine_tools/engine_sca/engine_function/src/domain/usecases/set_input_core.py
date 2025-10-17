@@ -30,24 +30,25 @@ class SetInputCore:
         """
         return self.tool_remote.get_variable(variable)
 
-    def get_exclusions(self, exclusions_data, pipeline_name, config_tool):
+    def get_exclusions(self, exclusions_data, pipeline_name, tool):
         list_exclusions = []
         for key, value in exclusions_data.items():
             if (key == "All") or (key == pipeline_name):
-                exclusions = [
-                    Exclusions(
-                        id=item.get("id", ""),
-                        where=item.get("where", ""),
-                        cve_id=item.get("cve_id", ""),
-                        create_date=item.get("create_date", ""),
-                        expired_date=item.get("expired_date", ""),
-                        severity=item.get("severity", ""),
-                        hu=item.get("hu", ""),
-                        treatment=item.get("treatment", "Risk acceptance"),
-                    )
-                    for item in value
-                ]
-                list_exclusions.extend(exclusions)
+                if value.get(tool, 0):
+                    exclusions = [
+                        Exclusions(
+                            id=item.get("id", ""),
+                            where=item.get("where", ""),
+                            cve_id=item.get("cve_id", ""),
+                            create_date=item.get("create_date", ""),
+                            expired_date=item.get("expired_date", ""),
+                            severity=item.get("severity", ""),
+                            hu=item.get("hu", ""),
+                            reason=item.get("reason", "DevSecOps policy"),
+                        )
+                        for item in value[tool]
+                    ]
+                    list_exclusions.extend(exclusions)
         return list_exclusions
 
     def set_input_core(self):
@@ -64,7 +65,7 @@ class SetInputCore:
             stage_pipeline = "Release"
 
         else:
-            scope_pipeline = self.get_variable("pipeline_name")
+            scope_pipeline = self.get_variable("stage")
             stage_pipeline = "Build"
 
         
@@ -72,15 +73,16 @@ class SetInputCore:
             self.get_exclusions(
                 self.get_remote_config("engine_sca/engine_function/Exclusions.json"),
                 release_name if release_name else self.get_variable("pipeline_name"),
-                self.config_tool,
+                self.config_tool["TOOL"],
             ),
             Threshold(
                 self.get_remote_config("engine_sca/engine_function/ConfigTool.json")["THRESHOLD"]
             ),
             None,
             self.get_remote_config("engine_sca/engine_function/ConfigTool.json")[
-                "MESSAGE_INFO_SCA_RM"
+                "SCA scan completed. Check pipeline report for details."
             ],
             scope_pipeline,
             stage_pipeline,
+            self.get_variable("pipeline_name"),
         )
