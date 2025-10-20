@@ -18,13 +18,14 @@
         }
     },
     "CHECKOV": {
-        "VERSION": "3.2.427",
+        "VERSION": "3.2.477",
         "INSTALL_TYPE": "remote-binary",
         "URL_FILE_LINUX": "https://github.com/bridgecrewio/checkov/releases/download/2.3.321/checkov_linux_X86_64_2.3.321.zip",
         "URL_FILE_LINUX_ARM64": "https://github.com/bridgecrewio/checkov/releases/download/2.3.321/checkov_linux_arm64_2.3.321.zip",
         "URL_FILE_DARWIN": "https://github.com/bridgecrewio/checkov/releases/download/2.3.321/checkov_darwin_X86_64_2.3.321.zip",
         "URL_FILE_WINDOWS": "https://github.com/bridgecrewio/checkov/releases/download/2.3.321/checkov_windows_X86_64_2.3.321.zip",
         "USE_EXTERNAL_CHECKS_GIT": false,
+        "LOG_LEVEL": "ERROR",
         "EXTERNAL_CHECKS_GIT": "",
         "EXTERNAL_GIT_SSH_HOST": "",
         "EXTERNAL_GIT_PUBLIC_KEY_FINGERPRINT": "",
@@ -35,6 +36,7 @@
         "INSTALLATION_ID_GITHUB":"",
         "DEFAULT_SEVERITY": "Critical",
         "DEFAULT_CATEGORY": "Compliance",
+        "SERVERLESS_ADITIONAL_CHECKS": ["RULES_CLOUDFORMATION"],
         "REGEX_CLEAN_RESOURCE": "",
         "RULES": {
             "RULES_DOCKER": {
@@ -728,6 +730,20 @@
                     },
                     "guideline": "guideline",
                     "severity": "Medium",
+                    "cvss": "",
+                    "category": "Vulnerability"
+                }
+            },
+            "RULES_SERVERLESS":{
+                "CKV_AWS_200": {
+                    "checkID": "IAC-CKV-SERVERLESS-1 Ensure AWS Lambda function is not publicly accessible",
+                    "environment": {
+                        "dev": true,
+                        "pdn": true,
+                        "qa": true
+                    },
+                    "guideline": "guideline",
+                    "severity": "High",
                     "cvss": "",
                     "category": "Vulnerability"
                 }
