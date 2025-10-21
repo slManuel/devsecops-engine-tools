@@ -146,6 +146,10 @@ Configuration of the driven adapters in the main layer and management of on/off 
         "ENABLED": true,
         "TOOL": "BEARER|KIUWAN"
     },
+    "ENGINE_FUNCTION": {
+        "ENABLED": true,
+        "TOOL": "PRISMA"
+    },
     "ENGINE_RISK": {
         "ENABLED": false
     },
@@ -270,6 +274,10 @@ Configuration of the driven adapters in the main layer and management of on/off 
 - **ENGINE_DEPENDENCIES**: Configuration for the engine_dependencies tool
     - ENABLED: true or false
     - TOOL: XRAY | DEPENDENCY_CHECK | TRIVY
+
+- **ENGINE_FUNCTION**: Configuration for the engine_function tool
+    - ENABLED: true or false
+    - TOOL: PRISMA
 
 - **ENGINE_RISK**: Configuration for the engine_risk tool
     - ENABLED: true or false

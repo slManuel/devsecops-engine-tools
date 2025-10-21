@@ -57,32 +57,20 @@ class SetInputCore:
 
         Returns:
             dict: Input core.
-        """
-        release_name = self.get_variable("release_name")
-
-        if release_name:
-            scope_pipeline = release_name
-            stage_pipeline = "Release"
-
-        else:
-            scope_pipeline = self.get_variable("stage")
-            stage_pipeline = "Build"
-
+        """        
         
         return InputCore(
             self.get_exclusions(
                 self.get_remote_config("engine_sca/engine_function/Exclusions.json"),
-                release_name if release_name else self.get_variable("pipeline_name"),
+                self.get_variable("pipeline_name"),
                 self.config_tool["TOOL"],
             ),
             Threshold(
                 self.get_remote_config("engine_sca/engine_function/ConfigTool.json")["THRESHOLD"]
             ),
             None,
-            self.get_remote_config("engine_sca/engine_function/ConfigTool.json")[
-                "SCA scan completed. Check pipeline report for details."
-            ],
-            scope_pipeline,
-            stage_pipeline,
+            self.get_remote_config("engine_sca/engine_function/ConfigTool.json")["MESSAGE_INFO_ENGINE_FUNCTION"],
             self.get_variable("pipeline_name"),
+            self.get_variable("pipeline_name"),
+            self.get_variable("stage"),
         )

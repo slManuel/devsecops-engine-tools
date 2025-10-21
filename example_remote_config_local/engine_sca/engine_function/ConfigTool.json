@@ -4,7 +4,7 @@
     "PRISMA_API_VERSION": "v1",
     "TWISTCLI_PATH": "twistcli.exe"
   },
-  "IGNORE_ANALYSIS_PATTERN": "(.*_legacy|.*_skip)",     
+  "IGNORE_SEARCH_PATTERN": "(.*_legacy|.*_skip)",     
   "MESSAGE_INFO_ENGINE_FUNCTION": "message custom",
   "THRESHOLD": {
     "VULNERABILITY": {

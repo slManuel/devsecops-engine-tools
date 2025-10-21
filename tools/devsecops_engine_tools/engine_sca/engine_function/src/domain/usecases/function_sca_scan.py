@@ -18,8 +18,7 @@ class FunctionScaScan:
         tool_deseralizator: DeseralizatorGateway,
         dict_args,
         secret_tool,
-        token_engine_container,
-        skip_flag
+        token_engine_container
     ):
         self.tool_run = tool_run
         self.remote_config = remote_config
@@ -28,7 +27,6 @@ class FunctionScaScan:
         self.dict_args = dict_args
         self.secret_tool = secret_tool
         self.token_engine_container = token_engine_container
-        self.skip_flag = skip_flag
 
     def get_remote_config(self, file_path):
         """

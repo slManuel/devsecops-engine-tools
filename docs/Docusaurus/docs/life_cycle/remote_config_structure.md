@@ -513,7 +513,7 @@ This capability uses Prisma Cloud (twistcli) and is part of DevSecOps practices 
     "TWISTCLI_PATH": "twistcli.exe"                      // Relative path to save/read twistcli
 
   },
-  "IGNORE_ANALYSIS_PATTERN": "(.*_legacy|.*_skip)",        // Optional: regex to skip analysis
+  "IGNORE_SEARCH_PATTERN": "(.*_legacy|.*_skip)",        // Optional: regex to skip analysis
   "MESSAGE_INFO_ENGINE_FUNCTION": "message custom",
   "THRESHOLD": {
     "VULNERABILITY": {
