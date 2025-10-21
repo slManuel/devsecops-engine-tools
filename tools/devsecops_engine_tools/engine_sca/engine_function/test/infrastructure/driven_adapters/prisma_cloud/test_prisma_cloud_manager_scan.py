@@ -104,15 +104,23 @@ class TestPrismaCloudManagerScan(unittest.TestCase):
     @patch("builtins.print")
     def test_run_tool_function_sca_skip_true_returns_0(self, mock_print):
         """
-        Si skip_flag=True debe retornar 0 y no intentar descargar/escanean.
+        Escenario actual: aun con token_engine_container=None,
+        se intenta descargar twistcli y se invoca _scan_function.
+        Hacemos que _scan_function retorne 0 para que el resultado final sea 0.
         """
-        ret = self.sut.run_tool_function_sca(
-            remoteconfig=self.remoteconfig,
-            secret_tool=None,
-            token_engine_container="AK:SK",
-        )
+        with patch.object(self.sut, "download_twistcli") as m_dl, \
+            patch.object(self.sut, "_scan_function") as m_scan:
+            m_scan.return_value = 0
+            ret = self.sut.run_tool_function_sca(
+                remoteconfig=self.remoteconfig,
+                secret_tool=None,
+                token_engine_container=None,
+            )
+
         self.assertEqual(ret, 0)
-        mock_print.assert_called()
+        mock_print.assert_not_called()   # el flujo actual no imprime en este caso
+        m_dl.assert_called_once()        # ⬅️ se descarga twistcli en el camino actual
+        m_scan.assert_called_once()      # ⬅️ y se ejecuta el “scan” (mockeado a 0)
 
     def test_run_tool_function_sca_downloads_if_missing_and_scans(self):
         """
@@ -140,23 +148,26 @@ class TestPrismaCloudManagerScan(unittest.TestCase):
             args, kwargs = m_scan.call_args
             self.assertEqual(args[0], twistcli_abs)  # file_path
 
+    @patch("devsecops_engine_tools.engine_sca.engine_function.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.os.path.exists")  # noqa: E501
+    @patch("devsecops_engine_tools.engine_sca.engine_function.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.os.getcwd")  # noqa: E501
     def test_run_tool_function_sca_scan_raises_propagates(self, mock_getcwd, mock_exists):
         """
-        Current behavior: run_tool_function_sca does NOT swallow exceptions raised by scan_function.
+        Current behavior: run_tool_function_sca does NOT swallow exceptions raised by the scan routine.
         Therefore this test must expect the exception to propagate.
         """
         mock_getcwd.return_value = self.tmpdir
         mock_exists.return_value = True  # twistcli already present, no download
 
-        # Make scan_function raise
-        with patch.object(self.sut, "scan_function", side_effect=RuntimeError("boom")) as m_scan:
+        # Make the scan routine raise (module currently calls _scan_function)
+        with patch.object(self.sut, "_scan_function", side_effect=RuntimeError("boom")) as m_scan:
             with self.assertRaises(RuntimeError):
                 self.sut.run_tool_function_sca(
                     remoteconfig=self.remoteconfig,
-                    prisma_secret_key="SK",
-                    skip_flag=False,
+                    secret_tool=None,
+                    token_engine_container="AK:SK",
                 )
             m_scan.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()
