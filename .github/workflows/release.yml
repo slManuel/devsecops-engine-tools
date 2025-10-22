@@ -118,7 +118,7 @@ jobs:
           
       - name: Build and tag Docker image
         run: |
-          sleep 5
+          sleep 180  # Wait 3 minutes
           docker build --build-arg VERSION=${{ env.RELEASE_VERSION }} -t bancolombia/devsecops-engine-tools:${{ env.RELEASE_VERSION }} -f docker/Dockerfile .
           docker tag bancolombia/devsecops-engine-tools:${{ env.RELEASE_VERSION }} bancolombia/devsecops-engine-tools:${{ env.RELEASE_VERSION }}
 
