@@ -49,8 +49,6 @@ Module is responsible to handle core configurations
 
 For more information about structure remote config for this module, visit [engine core](../modules/engine_core.md)
 
-> /engine_core/ConfigTool.json
-
 ## **engine_dast**
 
 Module is responsible for orchestrating Dynamic Application Security Testing (DAST) within the DevSecOps Engine Tools platform. It automates the execution of DAST tools, processes scan configurations, manages authentication flows, and integrates results for further risk analysis and reporting

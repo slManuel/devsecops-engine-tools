@@ -4,6 +4,122 @@
 
 The `engine_function` module orchestrates Software Composition Analysis (SCA) for serverless functions packaged as .zip (e.g., AWS Lambda and Azure Functions) within the DevSecOps Engine Tools platform. It automates the execution of Prisma Cloud’s twistcli for serverless code, loads scan configuration, applies exclusions and thresholds, and normalizes results for risk analysis and reporting.
 
+## Configuration Structure
+
+The module is configured through two main JSON files located in `example_remote_config_local/engine_sca/engine_function/`:
+
+### ConfigTool.json
+
+Main configuration file that defines scanning behavior, tool versions, and security policies.
+
+```json
+{
+  "PRISMA_CLOUD": {
+    "PRISMA_CONSOLE_URL": "https://<tu-prisma-console>",
+    "PRISMA_API_VERSION": "v1",
+    "TWISTCLI_PATH": "twistcli.exe"
+  },
+  "IGNORE_SEARCH_PATTERN": "(.*_legacy|.*_skip)",     
+  "MESSAGE_INFO_ENGINE_FUNCTION": "message custom",
+  "THRESHOLD": {
+    "VULNERABILITY": {
+      "Critical": 1,
+      "High": 3,
+      "Medium": 10,
+      "Low": 999
+    },
+    "COMPLIANCE": {
+      "Critical": 1
+    },
+    "CVE": ["CVE-2024-0001"]
+  }
+}
+```
+
+#### Configuration Parameters
+
+**PRISMA_CLOUD**: Configuration for Prisma Cloud integration
+- **PRISMA_CONSOLE_URL**: Prisma Cloud console URL (e.g., `"https://console.prismacloud.io"`)
+- **PRISMA_API_VERSION**: Prisma Cloud API version to use (e.g., `"v1"`)
+- **TWISTCLI_PATH**: Local path to twistcli executable (e.g., `"twistcli.exe"`)
+
+**IGNORE_SEARCH_PATTERN**: Regex pattern to ignore specific functions during scanning
+- Defines functions that should be excluded from analysis
+- Example: `"(.*_legacy|.*_skip)"` will ignore functions ending with `_legacy` or `_skip`
+
+**MESSAGE_INFO_ENGINE_FUNCTION**: Custom message for engine information
+- Allows configuration of context-specific informational messages
+
+**THRESHOLD**: Security threshold configuration
+- **VULNERABILITY**: Limits by vulnerability severity
+  - `Critical`: Maximum number of critical vulnerabilities allowed
+  - `High`: Maximum number of high vulnerabilities allowed
+  - `Medium`: Maximum number of medium vulnerabilities allowed
+  - `Low`: Maximum number of low vulnerabilities allowed
+- **COMPLIANCE**: Limits for compliance issues
+  - `Critical`: Maximum number of critical compliance issues
+- **CVE**: List of specific CVEs to ignore or prioritize
+
+### Exclusions.json
+
+File that defines specific exclusions by tool and repository for function analysis.
+
+```json
+{
+  "All": {
+    "PRISMA": [
+      {
+        "id": "",
+        "where": "all",
+        "create_date": "24012023",
+        "expired_date": "22092023",
+        "hu": "345345",
+        "reason": "False Positive"
+      }
+    ]
+  },
+  "Repository_Test": {
+    "VALIDATE_BASE_IMAGE_DATE": {
+      "create_date": "21022024",
+      "expired_date": "26052024",
+      "hu": "2342342"
+    },
+    "BLACK_LIST_BASE_IMAGE": {
+      "create_date": "21022024",
+      "expired_date": "26052024",
+      "hu": "2342342"
+    },
+    "PRISMA": [
+      {
+        "id": "CVE-2023-6237",
+        "cve_id": "CVE-2023-6237",
+        "expired_date": "21092024",
+        "create_date": "24012023",
+        "hu": "345345"
+      }
+    ]
+  }
+}
+```
+
+#### Exclusion Structure
+
+**Global Exclusions (`All`)**: Applicable to all repositories
+- **PRISMA**: Prisma Cloud specific exclusions
+  - `id`: Unique identifier for the exclusion
+  - `where`: Scope of application (`"all"` for global)
+  - `create_date`: Creation date of the exclusion
+  - `expired_date`: Expiration date of the exclusion
+  - `hu`: User story or reference ticket
+  - `reason`: Justification for the exclusion
+
+**Repository-specific Exclusions**: Specific to particular repositories
+- **VALIDATE_BASE_IMAGE_DATE**: Temporary exclusion for base image date validation
+- **BLACK_LIST_BASE_IMAGE**: Exclusion for blacklisted base images
+- **PRISMA**: Prisma Cloud specific exclusions by CVE
+  - `cve_id`: CVE identifier to exclude
+  - Same metadata fields as global exclusions
+
 ## Main Responsibilities
 
 - **Serverless SCA Orchestration:** Runs Prisma Cloud twistcli serverless scan over function ZIP artifacts.
@@ -29,25 +145,6 @@ Core use case: loads config (ConfigTool.json), checks exclusions (Exclusions.jso
 - **src/infrastructure/driven_adapters/prisma_cloud/prisma_cloud_manager_scan.py**
 Wrapper around twistcli serverless scan (download, execution, stdout parsing).
 
-- **src/infrastructure/driven_adapters/azure_devops/azure_devops.py**
-Helper for Azure DevOps predefined variables, remote config URL composition, and pipeline messages.
-
-## Configuration
-
-The configuration of this module is defined in `ConfigTool.json` under the `"ENGINE_FUNCTION"` section:
-
-```json
-"ENGINE_FUNCTION": {
-  "ENABLED": true,
-  "TOOL": "PRISMA"
-}
-```
-
-### Engine Context
-The engine also defines other complementary modules that interact with `engine_function`:
-
-This ensures `engine_function` operates cohesively within the *engine_core*, maintaining uniformity in policies, reporting, and metrics.
-
 ## Supported Tools and Features
 
 - **Prisma Cloud (twistcli):** Downloads twistcli from Prisma Console via API.
@@ -60,7 +157,7 @@ This ensures `engine_function` operates cohesively within the *engine_core*, mai
 Typically invoked by the engine core in CI:
 
 ```sh
-python tools/devsecops_engine_tools/engine_core/src/applications/runner_engine_core.py \
+devsecops-engine-tools \
   --platform_devops azure \
   --remote_config_source azure \
   --remote_config_repo <your-remote-config-repo> \
@@ -75,7 +172,7 @@ python tools/devsecops_engine_tools/engine_core/src/applications/runner_engine_c
 
 ## Extensibility
 
-- Add new serverless scanners by implementing a new adapter under driven_adapters/<tool>/ and wiring it in function_scan.py.
+- Add new serverless scanners by implementing a new adapter under driven_adapters/tool/ and wiring it in function_scan.py.
 - Extend result parsing (e.g., additional compliance frameworks) by enhancing the parser and mapping to the engine’s finding model.
 
 ## Testing
@@ -86,77 +183,5 @@ Unit tests are located under the `test/` directory, covering:
 - Configuration loading (`ConfigTool.json`).
 - Exclusion and threshold handling.
 - Result processing.
-
----
-
-## Integration with Vulnerability Management (DefectDojo / CMDB)
-
-The engine can connect to a **Vulnerability Manager (DefectDojo)** and optionally to a **corporate CMDB**.  
-This is configured in `engine_core/ConfigTool.json`, under the `VULNERABILITY_MANAGER.DEFECT_DOJO` section.
-
-### Example with CMDB Enabled
-
-```json
-"DEFECT_DOJO": {
-  "HOST_DEFECT_DOJO": "http://localhost:8080",
-  "REIMPORT_SCAN": false,
-  "CMDB": {
-    "USE_CMDB": true,
-    "HOST_CMDB": "http://host_cmdb_example",
-    "REGEX_EXPRESSION_CMDB": "^([^-]+)",
-    "CMDB_MAPPING": {
-      "PRODUCT_TYPE_NAME": "ApplicationType",
-      "PRODUCT_NAME": "ApplicationName",
-      "TAG_PRODUCT": "ApplicationTag",
-      "PRODUCT_DESCRIPTION": "ApplicationDescription",
-      "CODIGO_APP": "ApplicationCode"
-    },
-    "CMDB_REQUEST_RESPONSE": {
-      "HEADERS": {
-        "Content-Type": "application/json",
-        "Api-Key": "tokenvalue"
-      },
-      "METHOD": "GET",
-      "PARAMS": {
-        "appCode": "codappvalue"
-      },
-      "RESPONSE": ["value", 0]
-    }
-  }
-}
-```
-
-### Example without CMDB
-
-```bash
-# Platform environment variables
-VM_PRODUCT_TYPE_NAME="Example product type"
-VM_PRODUCT_NAME="Example product name"
-VM_PRODUCT_DESCRIPTION="Example product description"
-```
-
-```json
-"DEFECT_DOJO": {
-  "HOST_DEFECT_DOJO": "http://localhost:8080",
-  "REIMPORT_SCAN": false,
-  "CMDB": {
-    "USE_CMDB": false
-  }
-}
-```
-
----
-
-## Summary
-
-| Component | Description |
-|------------|-------------|
-| **engine_function** | SCA module for serverless function analysis |
-| **Main Tool** | Prisma Cloud (twistcli) |
-| **Entrypoint** | `runner_function_scan.py` |
-| **Remote Configuration** | `ConfigTool.json` (`ENGINE_FUNCTION`) |
-| **Output** | Vulnerability distribution and normalized findings |
-| **Integrations** | Azure DevOps, GitHub, DefectDojo, CMDB |
-| **Testing** | Unit tests for configuration, exclusions, orchestration |
 
 ---
