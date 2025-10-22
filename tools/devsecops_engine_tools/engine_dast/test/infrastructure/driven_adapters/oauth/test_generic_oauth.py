@@ -63,7 +63,7 @@ class TestGenericOauth(unittest.TestCase):
         response_mock.json.return_value = {"unauthorized": "client_unauthorized or not subscribed"}
         mock_request.return_value = response_mock
 
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(ValueError) as context:
             self.oauth.get_access_token_client_credentials()
 
         self.assertEqual(

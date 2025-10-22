@@ -63,7 +63,7 @@ class GenericOauth(AuthenticationGateway):
             result = response.json()["access_token"]
             return ("Authorization",f"Bearer {result}")
         else:
-            raise Exception(
+            raise ValueError(
                 "OAuth: Can't obtain access token code {0}: -> {1}".format(response.status_code, response.text)
             )
             
