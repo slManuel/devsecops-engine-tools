@@ -32,6 +32,22 @@ Wrapper around twistcli serverless scan (download, execution, stdout parsing).
 - **src/infrastructure/driven_adapters/azure_devops/azure_devops.py**
 Helper for Azure DevOps predefined variables, remote config URL composition, and pipeline messages.
 
+## Configuration
+
+The configuration of this module is defined in `ConfigTool.json` under the `"ENGINE_FUNCTION"` section:
+
+```json
+"ENGINE_FUNCTION": {
+  "ENABLED": true,
+  "TOOL": "PRISMA"
+}
+```
+
+### Engine Context
+The engine also defines other complementary modules that interact with `engine_function`:
+
+This ensures `engine_function` operates cohesively within the *engine_core*, maintaining uniformity in policies, reporting, and metrics.
+
 ## Supported Tools and Features
 
 - **Prisma Cloud (twistcli):** Downloads twistcli from Prisma Console via API.
@@ -64,4 +80,83 @@ python tools/devsecops_engine_tools/engine_core/src/applications/runner_engine_c
 
 ## Testing
 
-- Unit tests are provided in the `test/` directory, covering orchestration logic, configuration parsing, and exclusion handling.
+Unit tests are located under the `test/` directory, covering:
+
+- Orchestration workflow validation.
+- Configuration loading (`ConfigTool.json`).
+- Exclusion and threshold handling.
+- Result processing.
+
+---
+
+## Integration with Vulnerability Management (DefectDojo / CMDB)
+
+The engine can connect to a **Vulnerability Manager (DefectDojo)** and optionally to a **corporate CMDB**.  
+This is configured in `engine_core/ConfigTool.json`, under the `VULNERABILITY_MANAGER.DEFECT_DOJO` section.
+
+### Example with CMDB Enabled
+
+```json
+"DEFECT_DOJO": {
+  "HOST_DEFECT_DOJO": "http://localhost:8080",
+  "REIMPORT_SCAN": false,
+  "CMDB": {
+    "USE_CMDB": true,
+    "HOST_CMDB": "http://host_cmdb_example",
+    "REGEX_EXPRESSION_CMDB": "^([^-]+)",
+    "CMDB_MAPPING": {
+      "PRODUCT_TYPE_NAME": "ApplicationType",
+      "PRODUCT_NAME": "ApplicationName",
+      "TAG_PRODUCT": "ApplicationTag",
+      "PRODUCT_DESCRIPTION": "ApplicationDescription",
+      "CODIGO_APP": "ApplicationCode"
+    },
+    "CMDB_REQUEST_RESPONSE": {
+      "HEADERS": {
+        "Content-Type": "application/json",
+        "Api-Key": "tokenvalue"
+      },
+      "METHOD": "GET",
+      "PARAMS": {
+        "appCode": "codappvalue"
+      },
+      "RESPONSE": ["value", 0]
+    }
+  }
+}
+```
+
+### Example without CMDB
+
+```bash
+# Platform environment variables
+VM_PRODUCT_TYPE_NAME="Example product type"
+VM_PRODUCT_NAME="Example product name"
+VM_PRODUCT_DESCRIPTION="Example product description"
+```
+
+```json
+"DEFECT_DOJO": {
+  "HOST_DEFECT_DOJO": "http://localhost:8080",
+  "REIMPORT_SCAN": false,
+  "CMDB": {
+    "USE_CMDB": false
+  }
+}
+```
+
+---
+
+## Summary
+
+| Component | Description |
+|------------|-------------|
+| **engine_function** | SCA module for serverless function analysis |
+| **Main Tool** | Prisma Cloud (twistcli) |
+| **Entrypoint** | `runner_function_scan.py` |
+| **Remote Configuration** | `ConfigTool.json` (`ENGINE_FUNCTION`) |
+| **Output** | Vulnerability distribution and normalized findings |
+| **Integrations** | Azure DevOps, GitHub, DefectDojo, CMDB |
+| **Testing** | Unit tests for configuration, exclusions, orchestration |
+
+---
