@@ -27,9 +27,7 @@ class PrinterPrettyTable(PrinterTableGateway):
                 finding.description,
                 finding.where,
             ]
-            if (finding.module == "engine_container") or (
-                finding.module == "engine_dependencies"
-            ):
+            if finding.module in ("engine_container", "engine_dependencies", "engine_function"):
                 row_data.append(finding.requirements)
             elif finding.module == "engine_code":
                 row_data.append(finding.cvss)
@@ -53,9 +51,8 @@ class PrinterPrettyTable(PrinterTableGateway):
         if (
             finding_list
             and (
-                (finding_list[0].module == "engine_container") 
-                or (finding_list[0].module == "engine_dependencies")
-                )
+                finding_list[0].module in ["engine_container","engine_dependencies", "engine_function"]
+            )
         ):
             headers = ["Severity", "ID", "Description", "Where", "Fixed in"]
         elif finding_list and finding_list[0].module == "engine_code":

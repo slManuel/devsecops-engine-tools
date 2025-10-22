@@ -36,6 +36,9 @@ from devsecops_engine_tools.engine_sca.engine_container.src.applications.runner_
 from devsecops_engine_tools.engine_sca.engine_dependencies.src.applications.runner_dependencies_scan import (
     runner_engine_dependencies,
 )
+from devsecops_engine_tools.engine_sca.engine_function.src.applications.runner_function_scan import (
+    runner_engine_function,
+)
 from devsecops_engine_tools.engine_dast.src.applications.runner_dast_scan import (
     runner_engine_dast,
 )
@@ -98,6 +101,22 @@ class HandleScan:
                 secret_tool,
                 env,
                 sbom_components,
+            )
+            return findings_list, input_core
+        elif "engine_function" in dict_args["module"]:
+            findings_list, input_core = runner_engine_function(
+                dict_args,
+                config_tool["ENGINE_FUNCTION"],
+                secret_tool,
+                self.devops_platform_gateway,
+                self.remote_config_source_gateway
+            )
+            self._use_vulnerability_management(
+                config_tool,
+                input_core,
+                dict_args,
+                secret_tool,
+                env
             )
             return findings_list, input_core
         elif "engine_dast" in dict_args["module"]:

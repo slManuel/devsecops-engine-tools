@@ -109,6 +109,10 @@
         "ENABLED": true,
         "TOOL": "PRISMA|TRIVY"
     },
+    "ENGINE_FUNCTION": {
+        "ENABLED": true,
+        "TOOL": "PRISMA"
+    },
     "ENGINE_DAST": {
         "ENABLED": true,
         "TOOL": "NUCLEI",
