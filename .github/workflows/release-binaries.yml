@@ -94,11 +94,11 @@ jobs:
       - name: Test Executable (Windows)
         if: matrix.os == 'windows-latest'
         shell: bash
-        run: ./dist/devsecops-engine-tools${{ matrix.suffix }} --help
+        run: ./dist/devsecops-engine-tools${{ matrix.suffix }} --version
 
       - name: Test Executable (macOS/Linux)
         if: matrix.os != 'windows-latest'
-        run: ./dist/devsecops-engine-tools${{ matrix.suffix }} --help || echo "Ignore permission errors in docker build"
+        run: ./dist/devsecops-engine-tools${{ matrix.suffix }} --version || echo "Ignore permission errors in docker build"
 
       # Zip artifacts
       - name: Zip Artifact (Windows)
