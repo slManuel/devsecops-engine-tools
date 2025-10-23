@@ -33,16 +33,22 @@ jobs:
     env:
       PYTHON_VERSION: "3.9"
     steps:
-      - uses: actions/checkout@v4
-        if: github.event_name == 'pull_request'
-
       - name: Checkout Repository
-        if: github.event.action == 'published'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-          ref: ${{ github.event.release.tag_name || github.ref_name }}
+          # For releases, checkout the specific tag/commit
+          # For PRs, checkout the PR branch
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref }}
+
+      # Verify we're on the correct commit
+      - name: Verify checkout
+        run: |
+          echo "Current commit: $(git rev-parse HEAD)"
+          echo "Tag being released: ${{ github.event.release.tag_name || 'N/A' }}"
+          echo "Event name: ${{ github.event_name }}"
+          git log --oneline -5
       
       # Linux: Build inside Docker container with Ubuntu 20.04
       - name: Build binary on Ubuntu 20.04 container
@@ -52,13 +58,14 @@ jobs:
             export DEBIAN_FRONTEND=noninteractive && \
             ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime && \
             apt-get update && \
-            apt-get install -y software-properties-common curl zip build-essential && \
+            apt-get install -y software-properties-common curl zip build-essential git && \
             add-apt-repository ppa:deadsnakes/ppa -y && \
             apt-get update && \
             apt-get install -y python3.9 python3.9-venv python3.9-dev && \
             curl -sS https://bootstrap.pypa.io/get-pip.py | python3.9 && \
             python3.9 -m pip install --no-cache-dir --upgrade pip && \
             python3.9 -m pip install --no-cache-dir pyinstaller -r tools/requirements.txt && \
+            echo 'Building version:' && python3.9 -c 'from tools.devsecops_engine_tools.version import version; print(version)' && \
             pyinstaller tools/devsecops_engine_tools/devsecops-engine-tools.spec"
 
       #macOS and Windows setup
@@ -74,6 +81,11 @@ jobs:
           python -m pip install --no-cache-dir --upgrade pip
           python -m pip install --no-cache-dir pyinstaller -r tools/requirements.txt
 
+      - name: Verify version before build (macOS/Windows)
+        if: matrix.name != 'linux'
+        run: |
+          python -c "import sys; sys.path.append('tools'); from devsecops_engine_tools.version import version; print(f'Building version: {version}')"
+
       - name: Build Executable (macOS/Windows)
         if: matrix.name != 'linux'
         run: pyinstaller tools/devsecops_engine_tools/devsecops-engine-tools.spec
@@ -82,11 +94,11 @@ jobs:
       - name: Test Executable (Windows)
         if: matrix.os == 'windows-latest'
         shell: bash
-        run: ./dist/devsecops-engine-tools${{ matrix.suffix }} --help
+        run: ./dist/devsecops-engine-tools${{ matrix.suffix }} --version
 
       - name: Test Executable (macOS/Linux)
         if: matrix.os != 'windows-latest'
-        run: ./dist/devsecops-engine-tools${{ matrix.suffix }} --help || echo "Ignore permission errors in docker build"
+        run: ./dist/devsecops-engine-tools${{ matrix.suffix }} --version || echo "Ignore permission errors in docker build"
 
       # Zip artifacts
       - name: Zip Artifact (Windows)
