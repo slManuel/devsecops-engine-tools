@@ -45,5 +45,20 @@
         "INSTALLATION_ID_GITHUB":"",
         "USE_EXTERNAL_CHECKS_GIT": false,
         "USE_EXTERNAL_CHECKS_DIR": false
+    },
+    "all_tools": {
+        "VERSION": {
+            "TRUFFLEHOG": "3.88.31",
+            "GITLEAKS": "8.21.1"
+        },
+        "EXCLUDE_PATH": [".git"],
+        "NUMBER_THREADS": 4,
+        "ENABLE_CUSTOM_RULES" : false,
+        "EXTERNAL_DIR_OWNER": "ExternalOrg",
+        "EXTERNAL_DIR_REPOSITORY": "DevSecOps_Checks",
+        "APP_ID_GITHUB":"",
+        "INSTALLATION_ID_GITHUB":"",
+        "USE_EXTERNAL_CHECKS_GIT": false,
+        "USE_EXTERNAL_CHECKS_DIR": false
     }
 }

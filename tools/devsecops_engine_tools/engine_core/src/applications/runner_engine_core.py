@@ -109,6 +109,7 @@ def get_inputs_from_cli(args):
             "xray",
             "dependency_check",
             "kiuwan",
+            "all_tools",
         ],
         type=str,
         required=False,
@@ -240,7 +241,7 @@ def get_inputs_from_cli(args):
 
     TOOLS = {
         "engine_iac": ["checkov", "kics", "kubescape"],
-        "engine_secret": ["trufflehog", "gitleaks"],
+        "engine_secret": ["trufflehog", "gitleaks", "all_tools"],
         "engine_container": ["prisma", "trivy"],
         "engine_dependencies": ["xray", "dependency_check", "trivy"],
         "engine_code": ["bearer", "kiuwan"],

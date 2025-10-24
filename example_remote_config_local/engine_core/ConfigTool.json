@@ -116,7 +116,7 @@
     },
     "ENGINE_SECRET": {
         "ENABLED": true,
-        "TOOL": "TRUFFLEHOG|GITLEAKS"
+        "TOOL": "TRUFFLEHOG|GITLEAKS|ALL_TOOLS"
     },
     "ENGINE_DEPENDENCIES": {
         "ENABLED": true,
