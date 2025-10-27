@@ -118,7 +118,10 @@ Configuration of the driven adapters in the main layer and management of on/off 
             "EXCLUDE_TYPES": ["jar"],
             "EXCLUDE_PATHS": ["**/test/**"],
             "RECURSE": true,
-            "DEBUG_PIPELINES": ["pipeline_name1", "pipeline_name2"]
+            "DEBUG_PIPELINES": ["pipeline_name1", "pipeline_name2"],
+            "LIFECYCLE_PIPELINES": {
+                "pipeline_name1": "pre-build"
+            }
         }
     },
     "ENGINE_IAC": {
