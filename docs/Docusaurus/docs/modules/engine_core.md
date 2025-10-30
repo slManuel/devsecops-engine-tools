@@ -88,7 +88,9 @@ Configuration of the driven adapters in the main layer and management of on/off 
                     "BODY": {
                         "appCode": "codappvalue"
                     },
-                    "RESPONSE": [0]
+                    "RESPONSE": [0],
+                    "MAX_RETRIES": 3,
+                    "RETRY_DELAY": 5
                 }
             }
         }
@@ -244,6 +246,8 @@ Configuration of the driven adapters in the main layer and management of on/off 
                 - **PARAMS**: Parameters for the CMDB query (used for `GET`).
                 - **BODY**: Body for the CMDB query (used for `POST`).
                 - **RESPONSE**: Path or keys to extract the relevant data from the CMDB response.
+                - **MAX_RETRIES**: Specifies the maximum number of retry attempts allowed for a given operation
+                - **RETRY_DELAY**: Specifies the amount of time in seconds, to wait before retrying a failed operation
 
         This section allows you to configure how the vulnerability management module interacts with your organization's CMDB, including authentication, data extraction, and field mapping, to ensure seamless integration and accurate data synchronization.
 
