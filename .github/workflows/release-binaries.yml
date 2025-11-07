@@ -65,10 +65,10 @@ jobs:
             apt update && \
             apt-get install -y python3.10 && \
             curl -sS https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
-            python3.10 get-pip.py && \
-            python3.10 -m pip install --no-cache-dir --upgrade pip && \
-            python3.10 -m pip install --no-cache-dir pyinstaller -r tools/requirements.txt && \
-            echo 'Building version:' && python3.10 -c 'from tools.devsecops_engine_tools.version import version; print(version)' && \
+            python3 get-pip.py && \
+            python3 -m pip install --no-cache-dir --upgrade pip && \
+            python3 -m pip install --no-cache-dir pyinstaller -r tools/requirements.txt && \
+            echo 'Building version:' && python3 -c 'from tools.devsecops_engine_tools.version import version; print(version)' && \
             pyinstaller tools/devsecops_engine_tools/devsecops-engine-tools.spec"
 
       #macOS and Windows setup
