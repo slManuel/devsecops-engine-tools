@@ -61,9 +61,6 @@ jobs:
             apt-get install -y software-properties-common curl zip build-essential git libpython3.10 && \
             add-apt-repository ppa:deadsnakes/ppa -y && \
             apt-get update && \
-
-            # apt-get install -y python3.10 python3.10-venv python3.10-dev && \
-
             curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10 && \
             python3 --version && \
             python3 -m pip install --no-cache-dir --upgrade pip && \
