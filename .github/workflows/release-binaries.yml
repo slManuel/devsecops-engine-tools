@@ -54,22 +54,21 @@ jobs:
       - name: Build binary on Ubuntu 20.04 container
         if: matrix.name == 'linux'
         run: |
-          docker run --rm -v ${{ github.workspace }}:/app -w /app ubuntu:20.04 bash -c "
+          docker run --rm -v ${{ github.workspace }}:/app -w /app ubuntu:22.04 bash -c "
             export DEBIAN_FRONTEND=noninteractive && \
             ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime && \
             apt-get update && \
-            apt-get install software-properties-common curl zip build-essential git -y && \
-            add-apt-repository ppa:deadsnakes/ppa && \
+            apt-get install -y software-properties-common curl zip build-essential git && \
+            add-apt-repository ppa:deadsnakes/ppa -y && \
             apt-get update && \
-            apt install python3.10 -y && \
-            curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10 && \
-            ls /usr/bin && \
-            python3.10 --version
 
-            // Install dependencies and build
-            python3.10 -m pip install --no-cache-dir --upgrade pip && \
-            python3.10 -m pip install --no-cache-dir pyinstaller -r tools/requirements.txt && \
-            echo 'Building version:' && python3.10 -c 'from tools.devsecops_engine_tools.version import version; print(version)' && \
+            # apt-get install -y python3.10 python3.10-venv python3.10-dev && \
+            # curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10 && \
+
+            python3 --version && \
+            python3 -m pip install --no-cache-dir --upgrade pip && \
+            python3 -m pip install --no-cache-dir pyinstaller -r tools/requirements.txt && \
+            echo 'Building version:' && python3 -c 'from tools.devsecops_engine_tools.version import version; print(version)' && \
             pyinstaller tools/devsecops_engine_tools/devsecops-engine-tools.spec"
 
       #macOS and Windows setup
