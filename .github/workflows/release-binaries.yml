@@ -63,8 +63,8 @@ jobs:
             apt-get update && \
 
             # apt-get install -y python3.10 python3.10-venv python3.10-dev && \
-            # curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10 && \
-
+            
+            curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10 && \
             python3 --version && \
             python3 -m pip install --no-cache-dir --upgrade pip && \
             python3 -m pip install --no-cache-dir pyinstaller -r tools/requirements.txt && \
