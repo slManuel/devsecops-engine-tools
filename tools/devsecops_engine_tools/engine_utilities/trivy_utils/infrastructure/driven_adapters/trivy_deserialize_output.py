@@ -37,7 +37,7 @@ class TrivyDeserializator(DeseralizatorGateway):
                                 ),
                                 None,
                             )
-                        ),
+                        ) if vul.get("CVSS") else "",
                         where=vul.get("PkgName", "")
                         + ":"
                         + vul.get("InstalledVersion", ""),
@@ -51,10 +51,10 @@ class TrivyDeserializator(DeseralizatorGateway):
                         tool="Trivy",
                     )
                     for vul in vulnerabilities_data
-                    if vul.get("CVSS") and vul.get("PublishedDate")
+                    if vul.get("PublishedDate")
                 ]
                 list_open_vulnerabilities.extend(vulnerabilities)
-        
+        list_open_vulnerabilities
         return list_open_vulnerabilities
 
     def get_container_context_from_results(
