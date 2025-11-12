@@ -54,7 +54,7 @@ class TrivyDeserializator(DeseralizatorGateway):
                     if vul.get("PublishedDate")
                 ]
                 list_open_vulnerabilities.extend(vulnerabilities)
-        list_open_vulnerabilities
+
         return list_open_vulnerabilities
 
     def get_container_context_from_results(
