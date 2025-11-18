@@ -80,7 +80,7 @@ export class DependenciesScanner implements IScannerGateway {
           tokenParameter = `--token_engine_dependencies ${dependenciesToken}`;
         }
 
-        const containerCommand = `${containerEnginePath} runs --rm ${dependencyCheckDatabaseVolume} -v ${elementToScan}:/ms_artifact ${containerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --xray_mode ${xrayMode} --remote_config_repo docker_default_remote_config --module engine_dependencies --tool ${dependenciesTool} ${tokenParameter} --folder_path /ms_artifact --context true"`;
+        const containerCommand = `${containerEnginePath} run --rm ${dependencyCheckDatabaseVolume} -v ${elementToScan}:/ms_artifact ${containerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --xray_mode ${xrayMode} --remote_config_repo docker_default_remote_config --module engine_dependencies --tool ${dependenciesTool} ${tokenParameter} --folder_path /ms_artifact --context true"`;
 
         const childProcess = exec(containerCommand, (error, stdout, stderr) => {
           clearTimeout(timeout);
