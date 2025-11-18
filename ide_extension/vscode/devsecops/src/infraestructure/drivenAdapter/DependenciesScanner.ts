@@ -7,9 +7,11 @@ import { exec } from "child_process";
 import { IDependenciesScanContext, ISeverityCounts, Mappers } from "../../domain/model/mappers/Mappers";
 import { ScannerImageManager } from "../helper/ScannerImageManager";
 import { ScannerMetricsHelper } from "../helper/ScannerMetricsHelper";
+import { DockerErrorHandler, ErrorContext } from "../helper/DockerErrorHandler";
 
 export class DependenciesScanner implements IScannerGateway {
   private metricsHelper = new ScannerMetricsHelper();
+  private dockerErrorHandler = new DockerErrorHandler();
 
   async scan(
     elementToScan: string,
@@ -35,6 +37,8 @@ export class DependenciesScanner implements IScannerGateway {
       let dependencyCheckDatabaseVolume = "";
 
       try {
+        this.dockerErrorHandler.reset();
+
         const scannerImageAvailable = await ScannerImageManager.ensureScannerImageExists(
           containerEnginePath,
           containerImageName,
@@ -43,6 +47,7 @@ export class DependenciesScanner implements IScannerGateway {
         );
 
         if (!scannerImageAvailable) {
+          // Mandar error al metrics con docker error handler
           this.metricsHelper.captureLog(outputChannel, "Failed to ensure scanner image is available. Aborting scan.");
           resolve(new ScannerRes(false, [], null));
           return;
@@ -75,23 +80,23 @@ export class DependenciesScanner implements IScannerGateway {
           tokenParameter = `--token_engine_dependencies ${dependenciesToken}`;
         }
 
-        const containerCommand = `${containerEnginePath} run --rm ${dependencyCheckDatabaseVolume} -v ${elementToScan}:/ms_artifact ${containerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --xray_mode ${xrayMode} --remote_config_repo docker_default_remote_config --module engine_dependencies --tool ${dependenciesTool} ${tokenParameter} --folder_path /ms_artifact --context true"`;
+        const containerCommand = `${containerEnginePath} runs --rm ${dependencyCheckDatabaseVolume} -v ${elementToScan}:/ms_artifact ${containerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --xray_mode ${xrayMode} --remote_config_repo docker_default_remote_config --module engine_dependencies --tool ${dependenciesTool} ${tokenParameter} --folder_path /ms_artifact --context true"`;
 
         const childProcess = exec(containerCommand, (error, stdout, stderr) => {
           clearTimeout(timeout);
           if (error) {
-            outputChannel.appendLine(
-              `Error executing container command: ${error.message}`
-            );
-            if (stderr.includes("Unable to find image")) {
-              outputChannel.appendLine(
-                "Container image not found. Attempting to download..."
-              );
-            } else {
-              outputChannel.appendLine(`Standard Error: ${stderr}`);
-              outputChannel.appendLine(
-                "Attempting to process partial results..."
-              );
+            const errorContext: ErrorContext = {
+              imageTag: `${containerImageName}:${toolVersion}`,
+              containerImageName,
+              toolVersion
+            };
+
+            // Use DockerErrorHandler for known Docker errors y eviar al metrics
+            this.dockerErrorHandler.handle(error.message, outputChannel, errorContext);
+
+            // Also check stderr for additional error patterns
+            if (stderr) {
+              this.dockerErrorHandler.handle(stderr, outputChannel, errorContext);
             }
           }
 

@@ -18,6 +18,7 @@ const DOCKER_ERROR_MESSAGES: Record<string, ErrorHandler> = {
             outputChannel.appendLine('');
         }
     },
+    "Unable to find image": "📦 Container image not found. The image will be downloaded automatically.",
     "Failed to download image": "🛜 Failed to download image. Please check your internet connection or Docker configuration.",
     "context deadline exceeded": "🛜 Failed to download image. Please check your internet connection or Docker configuration.",
     "i/o timeout": "🌐 Network timeout: Unable to reach Docker registry. Please check your internet connection and registry availability.",
@@ -34,6 +35,12 @@ const DOCKER_ERROR_MESSAGES: Record<string, ErrorHandler> = {
             outputChannel.appendLine('');
         }
     },
+    "unknown flag": "⚠️ Invalid Docker command: Unknown flag or option. Please check the Docker command syntax.",
+    "unknown shorthand flag": "⚠️ Invalid Docker command: Unknown shorthand flag. Please verify the command flags.",
+    "Command failed:": "❌ Error executing container command. Please check the command syntax and Docker configuration.",
+    "docker: command not found": "❌ Docker command not found. Please ensure Docker is installed and in your PATH.",
+    "permission denied": "🔒 Permission denied while accessing Docker. Please check your Docker permissions or run with appropriate privileges.",
+    "error during connect": "🔌 Error connecting to Docker. Please verify Docker is running and accessible.",
     "request cancelled": () => { throw new Error("Scan operation cancelled."); }
 };
 
