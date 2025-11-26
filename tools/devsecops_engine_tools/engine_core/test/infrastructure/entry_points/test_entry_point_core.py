@@ -253,6 +253,10 @@ class TestEntryPointCore(unittest.TestCase):
                 "TOOL_OVERRIDE_PIPELINES": {
                     "my_special_pipeline": "SYFT"  # Override for specific pipeline
                 }
+            },
+            "BREAK_BUILD_MANAGER": {
+                "MODEL": "severity", 
+                "CLASSIFICATION": ["critical", "high", "medium", "low"]
             }
         }
         mock_findings_list = []
