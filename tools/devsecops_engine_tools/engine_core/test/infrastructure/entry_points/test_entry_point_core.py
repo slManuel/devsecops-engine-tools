@@ -290,6 +290,7 @@ class TestEntryPointCore(unittest.TestCase):
             print_table_gateway=mock.Mock(),
             metrics_manager_gateway=mock.Mock(),
             sbom_tool_gateway=mock_sbom_tool_gateway,
+            risk_score_gateway=mock.Mock(),
             args=args,
         )
 
