@@ -22,6 +22,9 @@ from devsecops_engine_tools.engine_core.src.domain.model.vulnerability_managemen
 from devsecops_engine_tools.engine_core.src.domain.model.gateway.sbom_manager import (
     SbomManagerGateway,
 )
+from devsecops_engine_tools.engine_core.src.domain.model.gateway.risk_score_gateway import (
+    RiskScoreGateway,
+)
 from devsecops_engine_tools.engine_core.src.domain.model.input_core import InputCore
 from devsecops_engine_tools.engine_core.src.domain.model.level_vulnerability import (
     LevelVulnerability,
@@ -58,12 +61,14 @@ class HandleScan:
         devops_platform_gateway: DevopsPlatformGateway,
         remote_config_source_gateway: DevopsPlatformGateway,
         sbom_tool_gateway: SbomManagerGateway,
+        risk_score_gateway: RiskScoreGateway,
     ):
         self.vulnerability_management = vulnerability_management
         self.secrets_manager_gateway = secrets_manager_gateway
         self.devops_platform_gateway = devops_platform_gateway
         self.remote_config_source_gateway = remote_config_source_gateway
         self.sbom_tool_gateway = sbom_tool_gateway
+        self.risk_score_gateway = risk_score_gateway
 
     def process(self, dict_args: any, config_tool: any):
         secret_tool = None
@@ -85,6 +90,7 @@ class HandleScan:
             self._use_vulnerability_management(
                 config_tool, input_core, dict_args, secret_tool, env
             )
+            self.risk_score_gateway.get_risk_score(findings_list, config_tool)
             return findings_list, input_core
         elif "engine_container" in dict_args["module"]:
             findings_list, input_core, sbom_components = runner_engine_container(
@@ -102,6 +108,7 @@ class HandleScan:
                 env,
                 sbom_components,
             )
+            self.risk_score_gateway.get_risk_score(findings_list, config_tool)
             return findings_list, input_core
         elif "engine_function" in dict_args["module"]:
             findings_list, input_core = runner_engine_function(
@@ -118,6 +125,7 @@ class HandleScan:
                 secret_tool,
                 env
             )
+            self.risk_score_gateway.get_risk_score(findings_list, config_tool)
             return findings_list, input_core
         elif "engine_dast" in dict_args["module"]:
             findings_list, input_core = runner_engine_dast(
@@ -130,6 +138,7 @@ class HandleScan:
             self._use_vulnerability_management(
                 config_tool, input_core, dict_args, secret_tool, env
             )
+            self.risk_score_gateway.get_risk_score(findings_list, config_tool)
             return findings_list, input_core
         elif "engine_code" in dict_args["module"]:
             findings_list, input_core = runner_engine_code(
@@ -141,6 +150,7 @@ class HandleScan:
             self._use_vulnerability_management(
                 config_tool, input_core, dict_args, secret_tool, env
             )
+            self.risk_score_gateway.get_risk_score(findings_list, config_tool)
             return findings_list, input_core
         elif "engine_secret" in dict_args["module"]:
             findings_list, input_core = runner_secret_scan(
@@ -153,6 +163,7 @@ class HandleScan:
             self._use_vulnerability_management(
                 config_tool, input_core, dict_args, secret_tool, env
             )
+            self.risk_score_gateway.get_risk_score(findings_list, config_tool)
             return findings_list, input_core
         elif "engine_dependencies" in dict_args["module"]:
             findings_list, input_core, sbom_components = runner_engine_dependencies(
@@ -166,6 +177,7 @@ class HandleScan:
             self._use_vulnerability_management(
                 config_tool, input_core, dict_args, secret_tool, env, sbom_components
             )
+            self.risk_score_gateway.get_risk_score(findings_list, config_tool)
             return findings_list, input_core
 
     def _use_vulnerability_management(

@@ -106,6 +106,39 @@
             }
         }
     },
+    "PRIORITY_MANAGER":{
+        "USE_PRIORITY": true,
+        "HOST_PRIORITY": "",
+        "CVE_REGEX": "CVE-\\d{4}-\\d+",
+        "HOMOLOGATION_PRIORITY":{
+            "critical":{
+                "SCORE": 1.00,
+                "CLASSIFICATION": "very critical"
+            },
+            "high":{
+                "SCORE": 0.74,
+                "CLASSIFICATION": "critical"
+            },
+            "medium":{
+                "SCORE": 0.46,
+                "CLASSIFICATION": "high"
+            },
+            "low":{
+                "SCORE": 0.01,
+                "CLASSIFICATION": "medium low"
+            }
+        },
+        "MAPPING_HOST":{
+            "Muy Crítica": "very critical",
+            "Crítica": "critical",
+            "Alta": "high",
+            "Baja y Media": "medium low"
+        }
+    },
+    "BREAK_BUILD_MANAGER":{
+        "MODEL": "severity|priority",
+        "CLASSIFICATION": ["critical|very critical", "high|critical", "medium|high", "low|medium low"]
+    },
     "ENGINE_IAC": {
         "ENABLED": true,
         "TOOL": "CHECKOV|KUBESCAPE|KICS"

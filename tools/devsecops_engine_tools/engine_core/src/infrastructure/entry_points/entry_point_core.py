@@ -22,6 +22,7 @@ def init_engine_core(
     print_table_gateway: any,
     metrics_manager_gateway: any,
     sbom_tool_gateway: any,
+    risk_score_gateway: any,
     args: any
 ):
     config_tool = remote_config_source_gateway.get_remote_config(
@@ -49,16 +50,18 @@ def init_engine_core(
                 secrets_manager_gateway,
                 devops_platform_gateway,
                 remote_config_source_gateway,
-                sbom_tool_gateway
+                sbom_tool_gateway,
+                risk_score_gateway
             ).process(args, config_tool)
 
             warning_release = config_tool["WARNING_RELEASE"]
-
+            manager = config_tool["BREAK_BUILD_MANAGER"]
             results = BreakBuild(devops_platform_gateway, print_table_gateway).process(
                 findings_list,
                 input_core,
                 args,
-                warning_release
+                warning_release,
+                manager
             )
         if args["send_metrics"] == "true":
             MetricsManager(devops_platform_gateway, metrics_manager_gateway).process(

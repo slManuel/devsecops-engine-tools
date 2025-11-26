@@ -17,12 +17,13 @@ from prettytable import PrettyTable, DOUBLE_BORDER
 
 @dataclass
 class PrinterPrettyTable(PrinterTableGateway):
-    def _create_table(self, headers, finding_list):
+    def _create_table(self, headers, finding_list, manager):
+        model = manager.get("MODEL", "severity")
         table = PrettyTable(headers)
         
         for finding in finding_list:
             row_data = [
-                finding.severity,
+                finding.severity if model == "severity" else finding.priority.scale,
                 finding.id,
                 finding.description,
                 finding.where,
@@ -34,7 +35,11 @@ class PrinterPrettyTable(PrinterTableGateway):
                 row_data.append(finding.defect_type)
             table.add_row(row_data)
 
-        severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "unknown": 4}
+        severity_order = {manager.get("CLASSIFICATION", "critical")[0]: 0,
+                          manager.get("CLASSIFICATION", "high")[1]: 1,
+                          manager.get("CLASSIFICATION", "medium")[2]: 2,
+                          manager.get("CLASSIFICATION", "low")[3]: 3,
+                          "unknown": 4}
         sorted_table = PrettyTable()
         sorted_table.field_names = table.field_names
         sorted_table.add_rows(
@@ -47,7 +52,7 @@ class PrinterPrettyTable(PrinterTableGateway):
         sorted_table.set_style(DOUBLE_BORDER)
         return sorted_table
 
-    def print_table_findings(self, finding_list: "list[Finding]"):
+    def print_table_findings(self, finding_list: "list[Finding]", manager):
         if (
             finding_list
             and (
@@ -61,7 +66,7 @@ class PrinterPrettyTable(PrinterTableGateway):
         else:
             headers = ["Severity", "ID", "Description", "Where"]
 
-        sorted_table = self._create_table(headers, finding_list)
+        sorted_table = self._create_table(headers, finding_list, manager)
 
         if len(sorted_table.rows) > 0:
             print(sorted_table)

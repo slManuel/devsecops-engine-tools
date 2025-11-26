@@ -24,7 +24,7 @@ class TestEntryPointCore(unittest.TestCase):
     ):
         # Set up mock arguments
 
-        mock_config_tool = {"BANNER": "DevSecOps Engine Tools", "WARNING_RELEASE": False, "ENGINE_IAC": {"ENABLED": "true", "TOOL": "tool"}, "SBOM_MANAGER": {"TOOL": "SYFT"}}
+        mock_config_tool = {"BANNER": "DevSecOps Engine Tools", "WARNING_RELEASE": False, "ENGINE_IAC": {"ENABLED": "true", "TOOL": "tool"}, "SBOM_MANAGER": {"TOOL": "SYFT"}, "BREAK_BUILD_MANAGER": {"MODEL": "severity", "CLASSIFICATION": ["critical", "high", "medium", "low"]}}
         mock_findings_list = []
         mock_input_core = {}
         mock_scan_result = {}
@@ -57,6 +57,7 @@ class TestEntryPointCore(unittest.TestCase):
             print_table_gateway=mock.Mock(),
             metrics_manager_gateway=mock.Mock(),
             sbom_tool_gateway=mock.Mock(),
+            risk_score_gateway=mock.Mock(),
             args=args,
         )
 
@@ -74,7 +75,7 @@ class TestEntryPointCore(unittest.TestCase):
             mock_config_tool,
         )
         mock_break_build.return_value.process.assert_called_once_with(
-            mock_findings_list, mock_input_core, args, False
+            mock_findings_list, mock_input_core, args, False, {"MODEL": "severity", "CLASSIFICATION": ["critical", "high", "medium", "low"]}
         )
         mock_metrics_manager.return_value.process.assert_called_once_with(
             mock_config_tool,
@@ -108,6 +109,7 @@ class TestEntryPointCore(unittest.TestCase):
             print_table_gateway=mock.Mock(),
             metrics_manager_gateway=mock.Mock(),
             sbom_tool_gateway=mock.Mock(),
+            risk_score_gateway=mock.Mock(),
             args={"remote_config_repo": "test", "module": "engine_iac", "remote_config_branch": ""},
         )
 
@@ -146,6 +148,7 @@ class TestEntryPointCore(unittest.TestCase):
             print_table_gateway=mock.Mock(),
             metrics_manager_gateway=mock.Mock(),
             sbom_tool_gateway=mock.Mock(),
+            risk_score_gateway=mock.Mock(),
             args={"remote_config_repo": "test", "module": "engine_risk", "send_metrics": "true", "remote_config_branch": ""},
         )
 
@@ -171,8 +174,8 @@ class TestEntryPointCore(unittest.TestCase):
     ):
         # Set up mock arguments
 
-        mock_config_tool = {"BANNER": "DevSecOps Engine Tools", "WARNING_RELEASE": "false", "ENGINE_IAC": {"ENABLED": "true", "TOOL": "tool"}, "SBOM_MANAGER": {"TOOL": "SYFT"}}
-        mock_config_tool_flag = {"BANNER": "DevSecOps Engine Tools", "WARNING_RELEASE": "false", "ENGINE_IAC": {"ENABLED": "true", "TOOL": "OTHER_TOOL"}, "SBOM_MANAGER": {"TOOL": "SYFT"}}
+        mock_config_tool = {"BANNER": "DevSecOps Engine Tools", "WARNING_RELEASE": "false", "ENGINE_IAC": {"ENABLED": "true", "TOOL": "tool"}, "SBOM_MANAGER": {"TOOL": "SYFT"}, "BREAK_BUILD_MANAGER": {"MODEL": "severity", "CLASSIFICATION": ["critical", "high", "medium", "low"]}}
+        mock_config_tool_flag = {"BANNER": "DevSecOps Engine Tools", "WARNING_RELEASE": "false", "ENGINE_IAC": {"ENABLED": "true", "TOOL": "OTHER_TOOL"}, "SBOM_MANAGER": {"TOOL": "SYFT"}, "BREAK_BUILD_MANAGER": {"MODEL": "severity", "CLASSIFICATION": ["critical", "high", "medium", "low"]}}
         mock_findings_list = []
         mock_input_core = {}
         mock_scan_result = {}
@@ -206,6 +209,7 @@ class TestEntryPointCore(unittest.TestCase):
             print_table_gateway=mock.Mock(),
             metrics_manager_gateway=mock.Mock(),
             sbom_tool_gateway=mock.Mock(),
+            risk_score_gateway=mock.Mock(),
             args=args,
         )
 

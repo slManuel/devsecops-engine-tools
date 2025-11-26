@@ -31,12 +31,14 @@ class TestHandleScan(unittest.TestCase):
                 "COMPLIANCE": {"Critical": 1},
             }
         )
+        self.risk_score_gateway = mock.Mock()
         self.handle_scan = HandleScan(
             self.vulnerability_management,
             self.secrets_manager_gateway,
             self.devops_platform_gateway,
             self.remote_config_source_gateway,
             self.sbom_gateway,
+            self.risk_score_gateway,
         )
 
     @mock.patch(
