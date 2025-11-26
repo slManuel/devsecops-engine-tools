@@ -67,8 +67,8 @@ class ImportScanRestConsumer:
                 raise ApiError(response.json())
             response = ImportScanRequest().from_dict(response.json())
         except Exception as e:
-            logger.error(f"from dict import Scan: {response.json()}")
-            raise ApiError(response.json())
+            logger.error(f"from dict import Scan: {e} with data: {data}")
+            raise ApiError(e)
         return response
 
     def import_scan(self, request: ImportScanRequest, files) -> ImportScanRequest:
