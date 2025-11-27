@@ -123,13 +123,11 @@ class BreakBuild:
         
         for finding in findings_list:
             if model == "priority":
-                # Usar finding.priority.scale para el modelo priority
                 if finding.priority and finding.priority.scale:
                     severity = finding.priority.scale.lower()
                 else:
                     continue
             else:
-                # Usar finding.severity para el modelo severity
                 severity = finding.severity.lower()
             
             if severity in counts:
@@ -161,7 +159,6 @@ class BreakBuild:
             print(devops_platform_gateway.result_pipeline("succeeded"))
             return
 
-        # Verificar threshold usando las clasificaciones del manager
         threshold_exceeded = False
         if len(classifications) >= 4:
             threshold_exceeded = (
