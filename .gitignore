@@ -74,7 +74,6 @@ result_dast_scan.json
 test_file/*
 pytest.ini
 kics-devsecops/
-dependency-check/
 dependency-check-report*
 *.vsix
 **-lock.json
