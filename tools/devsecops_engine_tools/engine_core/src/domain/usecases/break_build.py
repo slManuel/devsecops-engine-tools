@@ -84,6 +84,7 @@ class BreakBuild:
                                 **{
                                     "id": item.id,
                                     "where": "all",
+                                    "severity": item.severity,
                                     "create_date": date_initial.strftime("%d%m%Y"),
                                     "expired_date": date_final.strftime("%d%m%Y"),
                                     "reason": "New vulnerability in the industry",
