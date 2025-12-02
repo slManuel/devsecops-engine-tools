@@ -14,9 +14,10 @@ logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
 @dataclass
 class RiskScore(RiskScoreGateway):
-    def get_risk_score(self, finding_list, config_tool):
+    def get_risk_score(self, finding_list, config_tool, module):
         priority_manager = config_tool.get("PRIORITY_MANAGER", {})
         mapping_to_host = priority_manager.get("MAPPING_HOST", {})
+        homologation_priority = config_tool[module.upper()].get("PRIORITY", "standard")
         if priority_manager.get("USE_PRIORITY", False):
             cve_regex = re.compile(priority_manager.get("CVE_REGEX"))
             cve_findings = [f for f in finding_list if cve_regex.match(f.id)]
@@ -45,24 +46,28 @@ class RiskScore(RiskScoreGateway):
                         else:
                             finding.priority = self._homologate_priority_by_severity(
                                 finding.severity, 
-                                priority_manager.get("HOMOLOGATION_PRIORITY", {})
+                                priority_manager.get("HOMOLOGATION_PRIORITY", {}),
+                                homologation_priority
                             )
                 except Exception as e:
                     logger.error(f"Error al consultar prioridades externas: {e}")
                     for finding in cve_findings:
                         finding.priority = self._homologate_priority_by_severity(
                             finding.severity, 
-                            priority_manager.get("HOMOLOGATION_PRIORITY", {})
+                            priority_manager.get("HOMOLOGATION_PRIORITY", {}),
+                            homologation_priority
                         )
 
 
             for finding in non_cve_findings:
                 finding.priority = self._homologate_priority_by_severity(
                     finding.severity, 
-                    priority_manager.get("HOMOLOGATION_PRIORITY", {})
+                    priority_manager.get("HOMOLOGATION_PRIORITY", {}),
+                    homologation_priority
                     )
 
-    def _homologate_priority_by_severity(self, severity, homologation_config):
+    def _homologate_priority_by_severity(self, severity, homologation_config, homologation_priority):
+        homologation_config = homologation_config['STANDARD'] if homologation_priority == 'STANDARD' else homologation_config['DISCREET']
         if severity in homologation_config:
             conf = homologation_config[severity]
             return Priority(score=conf.get("SCORE", 0.0), scale=conf.get("CLASSIFICATION", "Unknown"))

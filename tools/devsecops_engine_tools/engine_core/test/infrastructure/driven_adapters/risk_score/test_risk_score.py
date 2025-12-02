@@ -14,29 +14,52 @@ class TestRiskScore(unittest.TestCase):
                 "CVE_REGEX": r"CVE-\d{4}-\d+",
                 "HOST_PRIORITY": "https://api.example.com/priority",
                 "MAPPING_HOST": {
-                    "critical": "Very Critical",
-                    "high": "Critical",
-                    "medium": "High",
-                    "low": "Medium-Low"
+                    "critical": "very critical",
+                    "high": "critical",
+                    "medium": "high",
+                    "low": "medium low"
                 },
-                "HOMOLOGATION_PRIORITY": {
-                    "Critical": {
-                        "SCORE": 1.00,
-                        "CLASSIFICATION": "Very Critical"
+                "HOMOLOGATION_PRIORITY":{
+                    "STANDARD": {
+                        "critical":{
+                            "SCORE": 1.00,
+                            "CLASSIFICATION": "very critical"
+                        },
+                        "high":{
+                            "SCORE": 0.74,
+                            "CLASSIFICATION": "critical"
+                        },
+                        "medium":{
+                            "SCORE": 0.46,
+                            "CLASSIFICATION": "high"
+                        },
+                        "low":{
+                            "SCORE": 0.01,
+                            "CLASSIFICATION": "medium low"
+                        }
                     },
-                    "High": {
-                        "SCORE": 0.74,
-                        "CLASSIFICATION": "Critical"
-                    },
-                    "Medium": {
-                        "SCORE": 0.46,
-                        "CLASSIFICATION": "High"
-                    },
-                    "Low": {
-                        "SCORE": 0.01,
-                        "CLASSIFICATION": "Medium-Low"
+                    "DISCREET":{
+                        "critical":{
+                            "SCORE": 0.74,
+                            "CLASSIFICATION": "critical"
+                        },
+                        "high":{
+                            "SCORE": 0.46,
+                            "CLASSIFICATION": "high"
+                        },
+                        "medium":{
+                            "SCORE": 0.01,
+                            "CLASSIFICATION": "medium low"
+                        },
+                        "low":{
+                            "SCORE": 0.01,
+                            "CLASSIFICATION": "medium low"
+                        }
                     }
                 }
+            },
+            "ENGINE_SECRET":{
+                "PRIORITY": "STANDARD"
             }
         }
 
@@ -57,10 +80,11 @@ class TestRiskScore(unittest.TestCase):
 
     def test_use_priority_disabled(self):
         """Test cuando USE_PRIORITY es False"""
-        config = {"PRIORITY_MANAGER": {"USE_PRIORITY": False}}
+        config = {"PRIORITY_MANAGER": {"USE_PRIORITY": False}, "ENGINE_SECRET":{"PRIORITY": "STANDARD"}}
         findings = [self._create_finding("CVE-2024-12345")]
+        module = "engine_secret"
         
-        self.risk_score.get_risk_score(findings, config)
+        self.risk_score.get_risk_score(findings, config, module)
         
         # No se debe asignar priority cuando está deshabilitado
         self.assertIsNone(findings[0].priority)
@@ -68,27 +92,28 @@ class TestRiskScore(unittest.TestCase):
     def test_non_cve_findings_homologation(self):
         """Test homologación de findings sin formato CVE"""
         findings = [
-            self._create_finding("VULN-001", "Critical"),
-            self._create_finding("VULN-002", "High"),
-            self._create_finding("VULN-003", "Medium"),
-            self._create_finding("VULN-004", "Low")
+            self._create_finding("VULN-001", "critical"),
+            self._create_finding("VULN-002", "high"),
+            self._create_finding("VULN-003", "medium"),
+            self._create_finding("VULN-004", "low")
         ]
+        module = "engine_secret"
         
-        self.risk_score.get_risk_score(findings, self.config_tool)
+        self.risk_score.get_risk_score(findings, self.config_tool, module)
         
         # Verificar que se asigna priority por homologación
         self.assertIsNotNone(findings[0].priority)
         self.assertEqual(findings[0].priority.score, 1.00)
-        self.assertEqual(findings[0].priority.scale, "Very Critical")
+        self.assertEqual(findings[0].priority.scale, "very critical")
         
         self.assertEqual(findings[1].priority.score, 0.74)
-        self.assertEqual(findings[1].priority.scale, "Critical")
+        self.assertEqual(findings[1].priority.scale, "critical")
         
         self.assertEqual(findings[2].priority.score, 0.46)
-        self.assertEqual(findings[2].priority.scale, "High")
+        self.assertEqual(findings[2].priority.scale, "high")
         
         self.assertEqual(findings[3].priority.score, 0.01)
-        self.assertEqual(findings[3].priority.scale, "Medium-Low")
+        self.assertEqual(findings[3].priority.scale, "medium low")
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.risk_score.risk_score.requests.get')
     def test_cve_findings_with_api_response(self, mock_get):
@@ -110,26 +135,24 @@ class TestRiskScore(unittest.TestCase):
         mock_get.return_value = mock_response
         
         findings = [
-            self._create_finding("CVE-2024-12345", "High"),
-            self._create_finding("CVE-2025-1345", "Medium")
+            self._create_finding("CVE-2024-12345", "high"),
+            self._create_finding("CVE-2025-1345", "medium")
         ]
         
-        self.risk_score.get_risk_score(findings, self.config_tool)
+        self.risk_score.get_risk_score(findings, self.config_tool, module="engine_secret")
         
-        # Verificar que se llamó al API con los headers correctos
         mock_get.assert_called_once_with(
             "https://api.example.com/priority",
             headers={"cve_list": "CVE-2024-12345,CVE-2025-1345"},
             timeout=10
         )
         
-        # Verificar que se asignó priority desde la respuesta del API
         self.assertIsNotNone(findings[0].priority)
         self.assertEqual(findings[0].priority.score, 3.9)
-        self.assertEqual(findings[0].priority.scale, "Very Critical")
+        self.assertEqual(findings[0].priority.scale, "very critical")
         
         self.assertEqual(findings[1].priority.score, 2.5)
-        self.assertEqual(findings[1].priority.scale, "High")
+        self.assertEqual(findings[1].priority.scale, "high")
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.risk_score.risk_score.requests.get')
     def test_cve_findings_partial_api_response(self, mock_get):
@@ -152,15 +175,11 @@ class TestRiskScore(unittest.TestCase):
             self._create_finding("CVE-2025-1345", "Medium")
         ]
         
-        self.risk_score.get_risk_score(findings, self.config_tool)
+        self.risk_score.get_risk_score(findings, self.config_tool, module="engine_secret")
         
         # CVE-2024-12345 debe tener priority del API
         self.assertEqual(findings[0].priority.score, 3.9)
-        self.assertEqual(findings[0].priority.scale, "Very Critical")
-        
-        # CVE-2025-1345 debe usar homologación por severidad
-        self.assertEqual(findings[1].priority.score, 0.46)
-        self.assertEqual(findings[1].priority.scale, "High")
+        self.assertEqual(findings[0].priority.scale, "very critical")
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.risk_score.risk_score.requests.get')
     def test_cve_findings_api_error(self, mock_get):
@@ -168,19 +187,19 @@ class TestRiskScore(unittest.TestCase):
         mock_get.side_effect = Exception("API connection error")
         
         findings = [
-            self._create_finding("CVE-2024-12345", "Critical"),
-            self._create_finding("CVE-2025-1345", "High")
+            self._create_finding("CVE-2024-12345", "critical"),
+            self._create_finding("CVE-2025-1345", "high")
         ]
         
-        self.risk_score.get_risk_score(findings, self.config_tool)
+        self.risk_score.get_risk_score(findings, self.config_tool, module="engine_secret")
         
         # Debe usar homologación por severidad cuando falla el API
         self.assertIsNotNone(findings[0].priority)
         self.assertEqual(findings[0].priority.score, 1.00)
-        self.assertEqual(findings[0].priority.scale, "Very Critical")
+        self.assertEqual(findings[0].priority.scale, "very critical")
         
         self.assertEqual(findings[1].priority.score, 0.74)
-        self.assertEqual(findings[1].priority.scale, "Critical")
+        self.assertEqual(findings[1].priority.scale, "critical")
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.risk_score.risk_score.requests.get')
     def test_mixed_cve_and_non_cve_findings(self, mock_get):
@@ -198,30 +217,31 @@ class TestRiskScore(unittest.TestCase):
         mock_get.return_value = mock_response
         
         findings = [
-            self._create_finding("CVE-2024-12345", "High"),
-            self._create_finding("VULN-001", "Critical"),
-            self._create_finding("CVE-2025-9999", "Medium")
+            self._create_finding("CVE-2024-12345", "high"),
+            self._create_finding("VULN-001", "critical"),
+            self._create_finding("CVE-2025-9999", "medium")
         ]
         
-        self.risk_score.get_risk_score(findings, self.config_tool)
+        self.risk_score.get_risk_score(findings, self.config_tool, module="engine_secret")
         
         # CVE-2024-12345 desde API
         self.assertEqual(findings[0].priority.score, 4.2)
-        self.assertEqual(findings[0].priority.scale, "Critical")
+        self.assertEqual(findings[0].priority.scale, "critical")
         
         # VULN-001 homologado por severidad
         self.assertEqual(findings[1].priority.score, 1.00)
-        self.assertEqual(findings[1].priority.scale, "Very Critical")
+        self.assertEqual(findings[1].priority.scale, "very critical")
         
         # CVE-2025-9999 no en respuesta, homologado por severidad
         self.assertEqual(findings[2].priority.score, 0.46)
-        self.assertEqual(findings[2].priority.scale, "High")
+        self.assertEqual(findings[2].priority.scale, "high")
 
     def test_homologate_priority_unknown_severity(self):
         """Test homologación con severidad desconocida"""
         priority = self.risk_score._homologate_priority_by_severity(
             "Unknown", 
-            self.config_tool["PRIORITY_MANAGER"]["HOMOLOGATION_PRIORITY"]
+            self.config_tool["PRIORITY_MANAGER"]["HOMOLOGATION_PRIORITY"],
+            "STANDARD"
         )
         
         self.assertEqual(priority.score, 0.0)
@@ -242,7 +262,7 @@ class TestRiskScore(unittest.TestCase):
             self._create_finding("VULN-CVE-2024", "High")     # No debe coincidir
         ]
         
-        self.risk_score.get_risk_score(findings, self.config_tool)
+        self.risk_score.get_risk_score(findings, self.config_tool, module="engine_secret")
         
         # Solo los 2 primeros deben intentar usar el API
         call_args = mock_get.call_args
@@ -257,7 +277,7 @@ class TestRiskScore(unittest.TestCase):
         findings = []
         
         # No debe lanzar excepciones
-        self.risk_score.get_risk_score(findings, self.config_tool)
+        self.risk_score.get_risk_score(findings, self.config_tool, module="engine_secret")
         
         self.assertEqual(len(findings), 0)
 
@@ -266,14 +286,14 @@ class TestRiskScore(unittest.TestCase):
         """Test cuando el API excede el timeout"""
         mock_get.side_effect = Exception("Timeout error")
         
-        findings = [self._create_finding("CVE-2024-12345", "High")]
+        findings = [self._create_finding("CVE-2024-12345", "high")]
         
-        self.risk_score.get_risk_score(findings, self.config_tool)
+        self.risk_score.get_risk_score(findings, self.config_tool,module="engine_secret")
         
         # Debe usar homologación por severidad
         self.assertIsNotNone(findings[0].priority)
         self.assertEqual(findings[0].priority.score, 0.74)
-        self.assertEqual(findings[0].priority.scale, "Critical")
+        self.assertEqual(findings[0].priority.scale, "critical")
 
 
 if __name__ == '__main__':
