@@ -160,17 +160,27 @@ class BreakBuild:
             return
 
         model = manager.get("MODEL", "severity")
-        threshold_exceeded = False
-        if len(classifications) >= 4:
-            threshold_exceeded = (
-                (counts.get(classifications[0], 0) >= (threshold.vulnerability.critical if model == "severity" else threshold.priority.very_critical_priority)) or
-                (counts.get(classifications[1], 0) >= (threshold.vulnerability.high if model == "severity" else threshold.priority.critical_priority)) or
-                (counts.get(classifications[2], 0) >= (threshold.vulnerability.medium if model == "severity" else threshold.priority.high_priority)) or
-                (counts.get(classifications[3], 0) >= (threshold.vulnerability.low if model == "severity" else threshold.priority.medium_low_priority))
-            )
-        
+
+        def get_threshold_value(idx):
+            if model == "severity":
+                return getattr(threshold.vulnerability, classifications[idx], 0)
+            else:
+                priority_map = {
+                    0: "very_critical_priority",
+                    1: "critical_priority",
+                    2: "high_priority",
+                    3: "medium_low_priority"
+                }
+                return getattr(threshold.priority, priority_map.get(idx, ""), 0)
+
+        threshold_exceeded = any(
+            counts.get(classifications[idx], 0) >= get_threshold_value(idx)
+            for idx in range(min(4, len(classifications)))
+        )
+
+        threshold_values = [get_threshold_value(idx) for idx in range(min(4, len(classifications)))]
+
         if threshold_exceeded:
-            
             print("Below are all vulnerabilities detected.")
             if vulnerabilities_list and args.get("tool", None) == "kiuwan":
                 print(f"Analysis url: {vulnerabilities_list[0].analysis_url}")
@@ -182,14 +192,10 @@ class BreakBuild:
                     classifications[1], counts.get(classifications[1], 0),
                     classifications[2], counts.get(classifications[2], 0),
                     classifications[3], counts.get(classifications[3], 0),
-                    threshold.vulnerability.critical if model == "severity" else threshold.priority.very_critical_priority, 
-                    threshold.vulnerability.high if model == "severity" else threshold.priority.critical_priority,
-                    threshold.vulnerability.medium if model == "severity" else threshold.priority.high_priority, 
-                    threshold.vulnerability.low if model == "severity" else threshold.priority.medium_low_priority
+                    *threshold_values
                 )
             ))
             print(devops_platform_gateway.result_pipeline("failed"))
-
             scan_result["vulnerabilities"] = {
                 "threshold": counts,
                 "status": "failed",
@@ -205,15 +211,11 @@ class BreakBuild:
                     classifications[1], counts.get(classifications[1], 0),
                     classifications[2], counts.get(classifications[2], 0),
                     classifications[3], counts.get(classifications[3], 0),
-                    threshold.vulnerability.critical if model == "severity" else threshold.priority.very_critical_priority,
-                    threshold.vulnerability.high if model == "severity" else threshold.priority.critical_priority,
-                    threshold.vulnerability.medium if model == "severity" else threshold.priority.high_priority, 
-                    threshold.vulnerability.low if model == "severity" else threshold.priority.medium_low_priority
+                    *threshold_values
                 )
             ))
             result = "succeeded_with_issues" if warning_release or devops_platform_gateway.get_variable("stage") == "build" else "succeeded"
             print(devops_platform_gateway.result_pipeline(result))
-
             scan_result["vulnerabilities"] = {
                 "threshold": counts,
                 "status": "succeeded",
