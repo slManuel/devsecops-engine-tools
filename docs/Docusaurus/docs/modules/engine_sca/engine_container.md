@@ -87,6 +87,12 @@ Main configuration file that defines scanning behavior, tool versions, and secur
     },
     "COMPLIANCE": {
       "Critical": 1
+    },
+    "PRIORITY": {
+        "Very Critical": 99,
+        "Critical": 99,
+        "High": 99,
+        "Medium Low": 99
     }
   }
 }
@@ -161,6 +167,12 @@ Main configuration file that defines scanning behavior, tool versions, and secur
 **Compliance Thresholds:**
 - **COMPLIANCE**: Compliance issue limits:
   - `Critical`: Maximum 1 critical compliance issue
+
+- **PRIORITY**: High tolerance thresholds for development/testing:
+  - `Very Critical`: Maximum 99 very critical priority vulnerabilities
+  - `Critical`: Maximum 99 critical priority vulnerabilities
+  - `High`: Maximum 99 high priority vulnerabilities
+  - `Medium Low`: Maximum 999 medium low priority vulnerabilities
 
 ### Exclusions.json
 

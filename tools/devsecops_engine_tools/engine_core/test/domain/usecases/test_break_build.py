@@ -33,6 +33,12 @@ class BreakBuildTests(unittest.TestCase):
                     "Low": 15,
                 },
                 "COMPLIANCE": {"Critical": 1},
+                "PRIORITY": {
+                    "Very Critical": 1,
+                    "Critical": 3,
+                    "High": 5,
+                    "Medium Low": 15
+                },
                 "CVE": ["CKV_K8S_22"],
             }
         )
@@ -151,6 +157,12 @@ class BreakBuildTests(unittest.TestCase):
                         "Low": 15,
                     },
                     "COMPLIANCE": {"Critical": 1},
+                    "PRIORITY": {
+                        "Very Critical": 1,
+                        "Critical": 3,
+                        "High": 10,
+                        "Medium Low": 15
+                    },
                     "CVE": ["CKV_K8S_22"],
                 }
             ),
@@ -234,6 +246,12 @@ class BreakBuildTests(unittest.TestCase):
                         "Low": 15,
                     },
                     "COMPLIANCE": {"Critical": 1},
+                    "PRIORITY": {
+                        "Very Critical": 1,
+                        "Critical": 3,
+                        "High": 10,
+                        "Medium Low": 15
+                    }
                 }
             ),
             path_file_results="results.json",
@@ -326,6 +344,12 @@ class BreakBuildTests(unittest.TestCase):
                         "Low": 15,
                     },
                     "COMPLIANCE": {"Critical": 1},
+                    "PRIORITY": {
+                        "Very Critical": 1,
+                        "Critical": 3,
+                        "High": 5,
+                        "Medium Low": 15
+                    }
                 }
             ),
             path_file_results="results.json",

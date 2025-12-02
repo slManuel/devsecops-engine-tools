@@ -59,7 +59,7 @@ class BreakBuild:
 
             self._handle_vulnerabilities(vulnerability_counts, vulnerabilities, threshold, warning_release, scan_result, args, manager)
             self._handle_cve_policy(vulnerabilities, threshold)
-            self._handle_compliances(compliance_counts, compliances, threshold, warning_release, scan_result, args)
+            self._handle_compliances(compliance_counts, compliances, threshold, warning_release, scan_result, args, manager)
             self._handle_exclusions(findings_excluded, exclusions, manager)
         else:
             print(devops_platform_gateway.message("succeeded", "There are no findings"))
@@ -159,13 +159,14 @@ class BreakBuild:
             print(devops_platform_gateway.result_pipeline("succeeded"))
             return
 
+        model = manager.get("MODEL", "severity")
         threshold_exceeded = False
         if len(classifications) >= 4:
             threshold_exceeded = (
-                counts.get(classifications[0], 0) >= threshold.vulnerability.critical or
-                counts.get(classifications[1], 0) >= threshold.vulnerability.high or
-                counts.get(classifications[2], 0) >= threshold.vulnerability.medium or
-                counts.get(classifications[3], 0) >= threshold.vulnerability.low
+                (counts.get(classifications[0], 0) >= (threshold.vulnerability.critical if model == "severity" else threshold.priority.very_critical_priority)) or
+                (counts.get(classifications[1], 0) >= (threshold.vulnerability.high if model == "severity" else threshold.priority.critical_priority)) or
+                (counts.get(classifications[2], 0) >= (threshold.vulnerability.medium if model == "severity" else threshold.priority.high_priority)) or
+                (counts.get(classifications[3], 0) >= (threshold.vulnerability.low if model == "severity" else threshold.priority.medium_low_priority))
             )
         
         if threshold_exceeded:
@@ -181,8 +182,10 @@ class BreakBuild:
                     classifications[1], counts.get(classifications[1], 0),
                     classifications[2], counts.get(classifications[2], 0),
                     classifications[3], counts.get(classifications[3], 0),
-                    threshold.vulnerability.critical, threshold.vulnerability.high,
-                    threshold.vulnerability.medium, threshold.vulnerability.low
+                    threshold.vulnerability.critical if model == "severity" else threshold.priority.very_critical_priority, 
+                    threshold.vulnerability.high if model == "severity" else threshold.priority.critical_priority,
+                    threshold.vulnerability.medium if model == "severity" else threshold.priority.high_priority, 
+                    threshold.vulnerability.low if model == "severity" else threshold.priority.medium_low_priority
                 )
             ))
             print(devops_platform_gateway.result_pipeline("failed"))
@@ -202,8 +205,10 @@ class BreakBuild:
                     classifications[1], counts.get(classifications[1], 0),
                     classifications[2], counts.get(classifications[2], 0),
                     classifications[3], counts.get(classifications[3], 0),
-                    threshold.vulnerability.critical, threshold.vulnerability.high,
-                    threshold.vulnerability.medium, threshold.vulnerability.low
+                    threshold.vulnerability.critical if model == "severity" else threshold.priority.very_critical_priority,
+                    threshold.vulnerability.high if model == "severity" else threshold.priority.critical_priority,
+                    threshold.vulnerability.medium if model == "severity" else threshold.priority.high_priority, 
+                    threshold.vulnerability.low if model == "severity" else threshold.priority.medium_low_priority
                 )
             ))
             result = "succeeded_with_issues" if warning_release or devops_platform_gateway.get_variable("stage") == "build" else "succeeded"
@@ -231,7 +236,7 @@ class BreakBuild:
             ))
             print(devops_platform_gateway.result_pipeline("failed"))
 
-    def _handle_compliances(self, counts, compliances_list, threshold, warning_release, scan_result, args):
+    def _handle_compliances(self, counts, compliances_list, threshold, warning_release, scan_result, args, manager):
         devops_platform_gateway = self.devops_platform_gateway
         printer_table_gateway = self.printer_table_gateway
         print()
@@ -240,7 +245,7 @@ class BreakBuild:
             print("Below are all compliances issues detected.")
             if compliances_list and args.get("tool", None) == "kiuwan":
                 print(f"Analysis url: {compliances_list[0].analysis_url}")
-            printer_table_gateway.print_table_findings(compliances_list)
+            printer_table_gateway.print_table_findings(compliances_list, manager)
             status = "succeeded"
             if counts["critical"] >= threshold.compliance.critical:
                 print(devops_platform_gateway.message(

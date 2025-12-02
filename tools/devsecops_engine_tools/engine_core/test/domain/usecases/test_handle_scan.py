@@ -29,6 +29,12 @@ class TestHandleScan(unittest.TestCase):
                     "Low": 15,
                 },
                 "COMPLIANCE": {"Critical": 1},
+                "PRIORITY": {
+                    "Very Critical": 1,
+                    "Critical": 3,
+                    "High": 5,
+                    "Medium Low": 15
+                }
             }
         )
         self.risk_score_gateway = mock.Mock()
@@ -173,6 +179,12 @@ class TestHandleScan(unittest.TestCase):
                         "Low": 15,
                     },
                     "COMPLIANCE": {"Critical": 1},
+                    "PRIORITY": {
+                        "Very Critical": 1,
+                        "Critical": 3,
+                        "High": 5,
+                        "Medium Low": 15
+                    },
                     "QUALITY_VULNERABILITY_MANAGEMENT": {
                         "PTS": [
                             {
