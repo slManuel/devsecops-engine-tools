@@ -35,14 +35,14 @@ class TrivyDeserializator(DeseralizatorGateway):
                         description=vul.get("Description", "").replace("\n", "")[:150],
                         severity=self._get_cvss_v3_severity(self._get_cvss_v3_score(vul.get("CVSS")), vul.get("Severity", "").lower()),
                         identification_date=datetime.now().strftime("%Y-%m-%dT%H:%M:%S%z"),
-                        published_date_cve=self._check_date_format(vul),
+                        published_date_cve=self._check_date_format(vul) if vul.get("PublishedDate") else None,
                         module=module,
                         category=Category.VULNERABILITY,
                         requirements=vul.get("FixedVersion") or vul.get("Status", ""),
                         tool="Trivy",
                     )
                     for vul in vulnerabilities_data
-                    if vul.get("PublishedDate")
+                    
                 ]
                 list_open_vulnerabilities.extend(vulnerabilities)
 

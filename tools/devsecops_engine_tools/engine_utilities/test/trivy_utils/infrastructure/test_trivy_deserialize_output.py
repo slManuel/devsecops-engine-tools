@@ -109,7 +109,7 @@ def test_get_list_findings_no_published_date(deserializator):
         "builtins.open", new_callable=mock_open, read_data=json.dumps(fake_json_data)
     ):
         result = deserializator.get_list_findings(images_scanned)
-        assert len(result) == 0
+        assert len(result) == 1
 
 
 def test_get_container_context_from_results(deserializator, fake_vulnerabilities, capsys):
