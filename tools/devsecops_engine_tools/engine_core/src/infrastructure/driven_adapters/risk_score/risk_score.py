@@ -17,7 +17,7 @@ class RiskScore(RiskScoreGateway):
     def get_risk_score(self, finding_list, config_tool, module):
         priority_manager = config_tool.get("PRIORITY_MANAGER", {})
         mapping_to_host = priority_manager.get("MAPPING_HOST", {})
-        homologation_priority = config_tool[module.upper()].get("PRIORITY", "standard")
+        homologation_priority = config_tool[module.upper()].get("PRIORITY", "STANDARD")
         if priority_manager.get("USE_PRIORITY", False):
             cve_regex = re.compile(priority_manager.get("CVE_REGEX"))
             cve_findings = [f for f in finding_list if cve_regex.match(f.id)]
