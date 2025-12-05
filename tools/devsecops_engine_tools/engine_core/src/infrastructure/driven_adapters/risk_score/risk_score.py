@@ -41,7 +41,7 @@ class RiskScore(RiskScoreGateway):
                         if prio:
                             finding.priority = Priority(
                                 score=float(prio.get("priority", 0.0)), 
-                                scale=mapping_to_host.get(prio.get("classification", "Unknown"))
+                                scale=mapping_to_host.get(prio.get("classification", "unknown"))
                             )
                         else:
                             finding.priority = self._homologate_priority_by_severity(
@@ -70,7 +70,7 @@ class RiskScore(RiskScoreGateway):
         homologation_config = homologation_config['STANDARD'] if homologation_priority == 'STANDARD' else homologation_config['DISCREET']
         if severity in homologation_config:
             conf = homologation_config[severity]
-            return Priority(score=conf.get("SCORE", 0.0), scale=conf.get("CLASSIFICATION", "Unknown"))
-        return Priority(score=0.0, scale="Unknown")
+            return Priority(score=conf.get("SCORE", 0.0), scale=conf.get("CLASSIFICATION", "unknown"))
+        return Priority(score=0.0, scale="unknown")
 
 
