@@ -296,7 +296,7 @@ class BreakBuild:
                     })
             
             print(devops_platform_gateway.message("warning", "Below are all findings that were excepted."))
-            printer_table_gateway.print_table_exclusions(exclusions_list)
+            printer_table_gateway.print_table_exclusions(exclusions_list, manager)
             
             for reason, total in Counter(x["reason"] for x in exclusions_list).items():
                 print("{0} findings count: {1}".format(reason, total))

@@ -245,7 +245,7 @@ class TestRiskScore(unittest.TestCase):
         )
         
         self.assertEqual(priority.score, 0.0)
-        self.assertEqual(priority.scale, "Unknown")
+        self.assertEqual(priority.scale, "unknown")
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.risk_score.risk_score.requests.get')
     def test_cve_regex_matching(self, mock_get):
