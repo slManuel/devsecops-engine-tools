@@ -16,5 +16,5 @@ class PrinterTableGateway(metaclass=ABCMeta):
         "print_table_report"
 
     @abstractmethod
-    def print_table_exclusions(self, exclusions_list, break_build_manager):
+    def print_table_exclusions(self, exclusions_list):
         "print_table_exclusions"

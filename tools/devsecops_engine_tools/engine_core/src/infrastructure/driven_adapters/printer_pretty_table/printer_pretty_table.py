@@ -131,7 +131,7 @@ class PrinterPrettyTable(PrinterTableGateway):
         if len(table.rows) > 0:
             print(table)
 
-    def print_table_exclusions(self, exclusions, manager):
+    def print_table_exclusions(self, exclusions):
         if exclusions:
             headers = [
                 "Severity",
@@ -143,10 +143,10 @@ class PrinterPrettyTable(PrinterTableGateway):
             ]
 
         table = PrettyTable(headers)
-        model = manager.get("MODEL", "severity")
+        
         for exclusion in exclusions:
             row_data = [
-                exclusion["severity"] if model == "severity" else exclusion["priority"],
+                exclusion["severity"],
                 exclusion["id"],
                 exclusion["where"],
                 format_date(exclusion["create_date"], "%d%m%Y", "%d/%m/%Y"),
