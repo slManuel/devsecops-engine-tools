@@ -770,6 +770,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
             create_date=create_date,
             expired_date=expired_date,
             severity=finding.severity.lower(),
+            priority=finding.priority_classification.lower(),
             reason=reason,
         )
 

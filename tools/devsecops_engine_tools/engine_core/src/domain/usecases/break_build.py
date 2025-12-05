@@ -87,6 +87,7 @@ class BreakBuild:
                                     "create_date": date_initial.strftime("%d%m%Y"),
                                     "expired_date": date_final.strftime("%d%m%Y"),
                                     "reason": "New vulnerability in the industry",
+                                    "priority": item.priority.scale
                                 }
                             )
                         )
@@ -96,7 +97,7 @@ class BreakBuild:
             item for item in findings_list if any(
                 exclusion.id == item.id and
                 (exclusion.where in item.where or "all" in exclusion.where) and
-                exclusion.severity == item.severity
+                (exclusion.severity == item.severity or exclusion.priority == item.priority.scale)
                 for exclusion in exclusions
             )
         ]
@@ -281,7 +282,7 @@ class BreakBuild:
             exclusions_list = []
             for item in findings_excluded_list:
                 matching = next(
-                    (e for e in exclusions if e.id == item.id and (e.where in item.where or "all" in e.where) and e.severity == item.severity),
+                    (e for e in exclusions if e.id == item.id and (e.where in item.where or "all" in e.where) and (e.severity == item.severity or e.priority == item.priority.scale)),
                     None
                 )
                 if matching:

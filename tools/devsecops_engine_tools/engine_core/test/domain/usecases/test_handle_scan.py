@@ -191,6 +191,7 @@ class TestHandleScan(unittest.TestCase):
                                 "PT1": {
                                     "APPS": ["pipeline", "app2", "app3"],
                                     "PROFILE": "STRONG",
+                                    "PROFILE_PRIORITY": "STRONG_PRIORITY"
                                 }
                             },
                             {
@@ -202,6 +203,8 @@ class TestHandleScan(unittest.TestCase):
                         ],
                         "STRONG": {"Critical": 0, "High": 0, "Medium": 5, "Low": 15},
                         "MODERATE": {"Critical": 1, "High": 3, "Medium": 5, "Low": 15},
+                        "STRONG_PRIORITY": {"Very Critical": 0, "Critical": 0, "High": 5, "Medium Low": 15},
+                        "MODERATE_PRIORITY": {"Very Critical": 1, "Critical": 3, "High": 5, "Medium Low": 15},
                     },
                 }
             ),

@@ -29,6 +29,9 @@ from devsecops_engine_tools.engine_core.src.domain.model.input_core import Input
 from devsecops_engine_tools.engine_core.src.domain.model.level_vulnerability import (
     LevelVulnerability,
 )
+from devsecops_engine_tools.engine_core.src.domain.model.level_priority import (
+    LevelPriority,
+)
 from devsecops_engine_tools.engine_core.src.domain.model.customs_exceptions import (
     ExceptionVulnerabilityManagement,
     ExceptionFindingsExcepted,
@@ -292,6 +295,7 @@ class HandleScan:
                 if apply_qualitypt:
                     pt_info = apply_qualitypt[pt_name]
                     pt_profile = pt_info["PROFILE"]
+                    pt_profile_priority = pt_info["PROFILE_PRIORITY"]
                     pt_apps = pt_info["APPS"]
 
                     input_core.threshold_defined.vulnerability = (
@@ -299,4 +303,10 @@ class HandleScan:
                         if pt_apps == "ALL"
                         or any(map(lambda pd: pd in input_core.scope_pipeline, pt_apps))
                         else input_core.threshold_defined.vulnerability
+                    )
+                    input_core.threshold_defined.priority = (
+                        LevelPriority(quality_vulnerability_management[pt_profile_priority])
+                        if pt_apps == "ALL"
+                        or any(map(lambda pd: pd in input_core.scope_pipeline, pt_apps))
+                        else input_core.threshold_defined.priority
                     )
