@@ -166,28 +166,28 @@
     "ENGINE_IAC": {
         "ENABLED": true,
         "TOOL": "CHECKOV|KUBESCAPE|KICS",
-        "PRIOTIY": "STANDARD|DISCREET"
+        "PRIORITY": "STANDARD|DISCREET"
     },
     "ENGINE_CONTAINER": {
         "ENABLED": true,
         "TOOL": "PRISMA|TRIVY",
-        "PRIOTIY": "STANDARD|DISCREET"
+        "PRIORITY": "STANDARD|DISCREET"
     },
     "ENGINE_FUNCTION": {
         "ENABLED": true,
         "TOOL": "PRISMA",
-        "PRIOTIY": "STANDARD|DISCREET"
+        "PRIORITY": "STANDARD|DISCREET"
     },
     "ENGINE_DAST": {
         "ENABLED": true,
         "TOOL": "NUCLEI",
         "EXTRA_TOOLS": ["JWT"],
-        "PRIOTIY": "STANDARD|DISCREET"
+        "PRIORITY": "STANDARD|DISCREET"
     },
     "ENGINE_SECRET": {
         "ENABLED": true,
         "TOOL": "TRUFFLEHOG|GITLEAKS",
-        "PRIOTIY": "STANDARD|DISCREET"
+        "PRIORITY": "STANDARD|DISCREET"
     },
     "ENGINE_DEPENDENCIES": {
         "ENABLED": true,
@@ -196,7 +196,7 @@
     "ENGINE_CODE": {
         "ENABLED": true,
         "TOOL": "BEARER|KIUWAN",
-        "PRIOTIY": "STANDARD|DISCREET"
+        "PRIORITY": "STANDARD|DISCREET"
     },
     "ENGINE_RISK": {
         "ENABLED": false
