@@ -290,6 +290,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                 dd_max_retries,
                 {
                     "type": "white_list",
+                    "limit": dd_limits_query
                 },
             )
 
