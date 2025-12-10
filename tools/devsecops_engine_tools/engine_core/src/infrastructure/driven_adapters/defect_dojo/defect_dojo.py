@@ -829,6 +829,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
             out_of_scope=finding.out_of_scope,
             service=finding.service,
             unique_id_from_tool=finding.unique_id_from_tool,
+            priority=finding.priority,
         )
 
     def _format_date_to_dd_format(self, date_string):
