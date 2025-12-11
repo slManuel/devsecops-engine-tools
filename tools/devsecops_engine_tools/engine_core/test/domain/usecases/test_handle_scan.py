@@ -162,7 +162,7 @@ class TestHandleScan(unittest.TestCase):
             "remote_config_branch": "",
             "use_vulnerability_management": "true",
         }
-        config_tool = {"ENGINE_CONTAINER": {"ENABLED": "true", "TOOL": "tool"}}
+        config_tool = {"BREAK_BUILD_MANAGER":{"MODEL": "severity","CLASSIFICATION": ["critical", "high", "medium", "low"]},"ENGINE_CONTAINER": {"ENABLED": "true", "TOOL": "tool"}}
         secret_tool = {"token_prisma_cloud": "test"}
         self.secrets_manager_gateway.get_secret.return_value = secret_tool
 

@@ -65,6 +65,9 @@ class RiskScore(RiskScoreGateway):
                     priority_manager.get("HOMOLOGATION_PRIORITY", {}),
                     homologation_priority
                     )
+        else:
+            for finding in finding_list:
+                finding.priority = Priority(score=0.0, scale="unknown")
 
     def _homologate_priority_by_severity(self, severity, homologation_config, homologation_priority):
         homologation_config = homologation_config['STANDARD'] if homologation_priority == 'STANDARD' else homologation_config['DISCREET']
