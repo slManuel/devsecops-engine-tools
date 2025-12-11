@@ -46,7 +46,7 @@ class BreakBuild:
         self.report_breaker = []
         self.remediation_rate = 0
         self.blacklisted = 0
-        self.max_risk_score = 0
+        self.max_finding_score = 0
         self.status = "succeeded"
         self.scan_result = {
             "findings_excluded": [],
@@ -59,15 +59,12 @@ class BreakBuild:
         new_report_list, applied_exclusions = self._apply_exclusions(self.report_list)
         self._blacklist_control(new_report_list)
         self._remediation_rate_control(self.all_report, new_report_list)
-        self._risk_score_control(new_report_list)
+        if self.remote_config.get("FINDING_SCORE", {}).get("MODEL") == "PRIORITY":
+            self._priority_score_control(new_report_list)
+        else:
+            self._risk_score_control(new_report_list)
         all_exclusions = list(self.vm_exclusions) + list(applied_exclusions)
         self._print_exclusions(self._map_applied_exclusion(all_exclusions))
-
-        self.max_risk_score = (
-            max(report.risk_score for report in new_report_list)
-            if new_report_list
-            else 0
-        )
 
         self._breaker()
 
@@ -86,7 +83,7 @@ class BreakBuild:
             "risk_control": {
                 "remediation_rate": self.remediation_rate,
                 "blacklisted": self.blacklisted,
-                "max_risk_score": self.max_risk_score,
+                "max_finding_score": self.max_finding_score,
             },
             "status": self.status,
             "found": list(
@@ -340,6 +337,9 @@ class BreakBuild:
                         else:
                             filtered_reports_below_threshold.append((report, tag))
 
+        if filtered_reports_above_threshold or filtered_reports_below_threshold:
+            print()
+
         for report, tag in filtered_reports_above_threshold:
             report.reason = "Blacklisted"
             print(
@@ -382,7 +382,7 @@ class BreakBuild:
 
     def _risk_score_control(self, report_list: "list[Report]"):
         remote_config = self.remote_config
-        risk_score_threshold = self.threshold["RISK_SCORE"]
+        finding_score_threshold = self.threshold["FINDING_SCORE"]
         break_build = False
         if report_list:
             for report in report_list:
@@ -399,27 +399,28 @@ class BreakBuild:
                     ),
                     4,
                 )
-                if report.risk_score >= risk_score_threshold:
+                if report.risk_score >= finding_score_threshold:
                     break_build = True
                     report.reason = "Risk Score"
                     self.report_breaker.append(copy.deepcopy(report))
             print("Below are open findings from Vulnerability Management Platform")
             self.printer_table_gateway.print_table_report(
                 report_list,
+                self.remote_config.get("FINDING_SCORE", {}).get("MODEL"),
             )
             if break_build:
                 self.break_build = True
                 print(
                     self.devops_platform_gateway.message(
                         "error",
-                        f"There are findings with risk score greater than {risk_score_threshold}",
+                        f"There are findings with risk score greater than {finding_score_threshold}",
                     )
                 )
             else:
                 print(
                     self.devops_platform_gateway.message(
                         "succeeded",
-                        f"There are no findings with risk score greater than {risk_score_threshold}",
+                        f"There are no findings with risk score greater than {finding_score_threshold}",
                     )
                 )
             print(f"Findings count: {len(report_list)}")
@@ -431,9 +432,66 @@ class BreakBuild:
                     "There are no open findings from Vulnerability Management Platform",
                 )
             )
+        
+        self.max_finding_score = (
+            max(report.risk_score for report in report_list)
+            if report_list
+            else 0
+        )
+
+    def _priority_score_control(self, report_list: "list[Report]"):
+        finding_score_threshold = self.threshold["FINDING_SCORE"]
+        break_build = False
+        
+        service_reports = {}
+        for report in report_list:
+            service = report.service
+            if service not in service_reports:
+                service_reports[service] = []
+            service_reports[service].append(report)
+        
+        max_priority_score = 0
+        for service, reports in service_reports.items():
+            priority_score_sum = sum(report.priority for report in reports)
+            
+            print(f"\nBelow are open findings for '{service}' from Vulnerability Management Platform")
+            self.printer_table_gateway.print_table_report(
+                reports,
+                self.remote_config.get("FINDING_SCORE", {}).get("MODEL"),
+            )
+
+            if priority_score_sum > max_priority_score:
+                max_priority_score = priority_score_sum
+            
+            if priority_score_sum >= finding_score_threshold:
+                break_build = True
+                for report in reports:
+                    report.reason = "Priority Score"
+                    self.report_breaker.append(copy.deepcopy(report))
+                print(
+                    self.devops_platform_gateway.message(
+                        "error",
+                        f"Service '{service}': The sum of priority scores {priority_score_sum} is greater than the threshold {finding_score_threshold}",
+                    )
+                )
+            else:
+                print(
+                    self.devops_platform_gateway.message(
+                        "succeeded",
+                        f"Service '{service}': The sum of priority scores {priority_score_sum} is less than the threshold {finding_score_threshold}",
+                    )
+                )
+        
+        if break_build:
+            self.break_build = True
+        
+        self.max_finding_score = max_priority_score
+        
+        
 
     def _print_exclusions(self, applied_exclusions: "list[Exclusions]"):
         if applied_exclusions:
+            print()
             print(
                 self.devops_platform_gateway.message(
                     "warning", "Bellow are all findings that were excepted"

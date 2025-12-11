@@ -65,6 +65,9 @@
             "10": 50,
             "other": 70
         },
-        "RISK_SCORE": 10
+        "FINDING_SCORE": 10
+    },
+    "FINDING_SCORE": {
+        "MODEL": "RISK"
     }
 }
