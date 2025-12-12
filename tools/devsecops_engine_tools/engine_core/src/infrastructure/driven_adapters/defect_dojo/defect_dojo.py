@@ -73,15 +73,18 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
     }
     
     multiple_scan_types = {
-        "ALL_TOOLS": {
-            "scanners": ["GITLEAKS", "TRUFFLEHOG"],
-            "file_separator": "#"
+        "engine_secret": {
+            "ALL_TOOLS": {
+                "scanners": ["GITLEAKS", "TRUFFLEHOG"],
+                "file_separator": "#"
+            }
         }
     }
 
     def send_vulnerability_management(
         self, vulnerability_management: VulnerabilityManagement
     ):
+        print(vulnerability_management.dict_args["module"])
         try:
             token_dd = (
                 vulnerability_management.dict_args["token_vulnerability_management"]
@@ -136,11 +139,12 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                     "VULNERABILITY_MANAGER"
                 ]["DEFECT_DOJO"]["CMDB"]["USE_CMDB"]
                 
-                if vulnerability_management.scan_type in self.multiple_scan_types:
+                if vulnerability_management.dict_args["module"] in self.multiple_scan_types and \
+                    vulnerability_management.scan_type in self.multiple_scan_types[vulnerability_management.dict_args["module"]]:
                     files = vulnerability_management.input_core.path_file_results.split(
-                        self.multiple_scan_types[vulnerability_management.scan_type]["file_separator"]
+                        self.multiple_scan_types[vulnerability_management.dict_args["module"]][vulnerability_management.scan_type]["file_separator"]
                     )
-                    all_tools = self.multiple_scan_types[vulnerability_management.scan_type]["scanners"]
+                    all_tools = self.multiple_scan_types[vulnerability_management.dict_args["module"]][vulnerability_management.scan_type]["scanners"]
                     
                     for index, file in enumerate(files):
                         vulnerability_management.input_core.path_file_results = file

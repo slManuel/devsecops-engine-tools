@@ -50,7 +50,7 @@ class AllToolsSecretScan(ToolGateway):
         ):
         """Ejecuta ambas herramientas en paralelo"""
         with ThreadPoolExecutor(max_workers=2) as executor:
-            # Ejecutar ambos scans en paralelo
+            # Start both scans
             future_gitleaks = executor.submit(
                 self.gitleaks_tool.run_tool_secret_scan,
                 files, agent_os, agent_work_folder, repository_name, 
@@ -64,7 +64,7 @@ class AllToolsSecretScan(ToolGateway):
                 agent_temp_dir, "trufflehog", folder_path
             )
             
-            # Obtener resultados
+            # Get results
             findings_gitleaks, finding_path_gitleaks = future_gitleaks.result()
             findings_trufflehog, finding_path_trufflehog = future_trufflehog.result()
         
