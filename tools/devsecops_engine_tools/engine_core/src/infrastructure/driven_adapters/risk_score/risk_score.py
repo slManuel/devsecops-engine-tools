@@ -50,7 +50,7 @@ class RiskScore(RiskScoreGateway):
                                 homologation_priority
                             )
                 except Exception as e:
-                    logger.error(f"Error al consultar prioridades externas: {e}")
+                    logger.error(f"Error querying external priorities: {e}")
                     for finding in cve_findings:
                         finding.priority = self._homologate_priority_by_severity(
                             finding.severity, 
