@@ -71,6 +71,13 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
         "NUCLEI": "Nuclei Scan",
         "KIUWAN": "Kiuwan Scan"
     }
+    
+    multiple_scan_types = {
+        "ALL_TOOLS": {
+            "scanners": ["GITLEAKS", "TRUFFLEHOG"],
+            "file_separator": "#"
+        }
+    }
 
     def send_vulnerability_management(
         self, vulnerability_management: VulnerabilityManagement
@@ -129,9 +136,11 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                     "VULNERABILITY_MANAGER"
                 ]["DEFECT_DOJO"]["CMDB"]["USE_CMDB"]
                 
-                if vulnerability_management.scan_type == "ALL_TOOLS":
-                    files = vulnerability_management.input_core.path_file_results.split('#')
-                    all_tools = ["GITLEAKS", "TRUFFLEHOG"]
+                if vulnerability_management.scan_type in self.multiple_scan_types:
+                    files = vulnerability_management.input_core.path_file_results.split(
+                        self.multiple_scan_types[vulnerability_management.scan_type]["file_separator"]
+                    )
+                    all_tools = self.multiple_scan_types[vulnerability_management.scan_type]["scanners"]
                     
                     for index, file in enumerate(files):
                         vulnerability_management.input_core.path_file_results = file
