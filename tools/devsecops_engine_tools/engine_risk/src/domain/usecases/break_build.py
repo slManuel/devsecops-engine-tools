@@ -440,6 +440,7 @@ class BreakBuild:
                             "reason": "Risk Score",
                         }
                     )
+            print()
             print("Below are open findings from Vulnerability Management Platform")
             self.printer_table_gateway.print_table_report(
                 report_list,

@@ -128,7 +128,7 @@ class TestPrinterPrettyTable(unittest.TestCase):
         # Add more assertions to validate the output
 
     @patch("builtins.print")
-    def test_print_table_report(self, mock_print):
+    def test_print_table_report_model_risk(self, mock_print):
         # Arrange
         report_list = [
             Report(
@@ -146,9 +146,30 @@ class TestPrinterPrettyTable(unittest.TestCase):
         printer = PrinterPrettyTable()
 
         # Act
-        printer.print_table_report(report_list)
+        printer.print_table_report(report_list, "RISK")
 
         # Assert
+        assert mock_print.called
+    
+    @patch("builtins.print")
+    def test_print_table_report_model_priority(self, mock_print):
+        report_list = [
+            Report(
+                priority=1,
+                vm_id="id1 id2",
+                vm_id_url="url1 url2",
+                status="stat2",
+                where="path",
+                tags=["tag1"],
+                severity="low",
+                active=True,
+                service="service1",
+            ),
+        ]
+        printer = PrinterPrettyTable()
+
+        printer.print_table_report(report_list, "PRIORITY")
+
         assert mock_print.called
 
     @patch("builtins.print")

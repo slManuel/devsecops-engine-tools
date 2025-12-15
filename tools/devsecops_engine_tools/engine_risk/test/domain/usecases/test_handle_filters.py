@@ -62,11 +62,8 @@ class TestHandleFilters(unittest.TestCase):
 
     def test_filter_tags_days(self):
         remote_config = {
-            "RUNTIME_TAG_EXCLUSION_DAYS": {
-                "ENABLED": False,
-                "ERROR_ON_FAILED": False
-            },
-            "TAG_EXCLUSION_DAYS": {"tag1": 5, "tag2": 10}
+            "RUNTIME_TAG_EXCLUSION_DAYS": {"ENABLED": False, "ERROR_ON_FAILED": False},
+            "TAG_EXCLUSION_DAYS": {"tag1": 5, "tag2": 10},
         }
         findings = [
             Report(
@@ -111,11 +108,8 @@ class TestHandleFilters(unittest.TestCase):
 
     def test_filter_tags_days_runtime(self):
         remote_config = {
-            "RUNTIME_TAG_EXCLUSION_DAYS": {
-                "ENABLED": True,
-                "ERROR_ON_FAILED": True
-            },
-            "TAG_EXCLUSION_DAYS": {"tag1": 5, "tag2": 10}
+            "RUNTIME_TAG_EXCLUSION_DAYS": {"ENABLED": True, "ERROR_ON_FAILED": True},
+            "TAG_EXCLUSION_DAYS": {"tag1": 5, "tag2": 10},
         }
         runtime_exclusions_days = {"tag1": 7, "tag2": 14}
         json_str = json.dumps(runtime_exclusions_days)
