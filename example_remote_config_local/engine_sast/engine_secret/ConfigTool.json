@@ -21,7 +21,7 @@
     "TARGET_BRANCHES": ["trunk", "develop"],
     "trufflehog": {
         "VERSION": "3.88.31",
-        "EXCLUDE_PATH": [".git", "_venv"],
+        "EXCLUDE_PATH": [".git", "_venv", "gitleaks_report.json", "secret_scan_result.json"],
         "EXCLUDE_DETECTORS": ["aws", "userflow"],
         "NUMBER_THREADS": 4,
         "FILTER_ENTROPY": 3.0,
@@ -41,24 +41,9 @@
     },
     "gitleaks": {
         "VERSION": "8.21.1",
-        "EXCLUDE_PATH": [".git"],
+        "EXCLUDE_PATH": [".git", "gitleaks_report.json", "secret_scan_result.json"],
         "NUMBER_THREADS": 4,
         "ALLOW_IGNORE_LEAKS": false,
-        "ENABLE_CUSTOM_RULES" : false,
-        "EXTERNAL_DIR_OWNER": "ExternalOrg",
-        "EXTERNAL_DIR_REPOSITORY": "DevSecOps_Checks",
-        "APP_ID_GITHUB":"",
-        "INSTALLATION_ID_GITHUB":"",
-        "USE_EXTERNAL_CHECKS_GIT": false,
-        "USE_EXTERNAL_CHECKS_DIR": false
-    },
-    "all_tools": {
-        "VERSION": {
-            "TRUFFLEHOG": "3.88.31",
-            "GITLEAKS": "8.21.1"
-        },
-        "EXCLUDE_PATH": [".git"],
-        "NUMBER_THREADS": 4,
         "ENABLE_CUSTOM_RULES" : false,
         "EXTERNAL_DIR_OWNER": "ExternalOrg",
         "EXTERNAL_DIR_REPOSITORY": "DevSecOps_Checks",
