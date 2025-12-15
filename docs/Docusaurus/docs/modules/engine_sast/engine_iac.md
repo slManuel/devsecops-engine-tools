@@ -252,7 +252,7 @@ Each tool contains rule sets organized by technology:
 - **RULES_TERRAFORM**: Terraform-specific infrastructure security rules
 - **RULES_OPENAPI**: API security rules for OpenAPI specifications
 - **RULES_SERVERLESS**: Serverless rules for AWS Lambda specifications
-- **RULES_BICEP**: Azure Bicep securityu rules for Azure Cloud infrastructure
+- **RULES_BICEP**: Azure Bicep security rules for Azure Cloud infrastructure
 
 In the RULES section of each platform (RULES_DOCKER, RULES_K8S, RULES_CLOUDFORMATION, etc.), the body is empty. Example “RULES_DOCKER” {}, the tool executes all rules associated with it.
 
