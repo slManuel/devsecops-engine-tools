@@ -42,6 +42,7 @@ class CheckovTool(ToolGateway):
         "RULES_OPENAPI": "openapi",
         "RULES_TERRAFORM": "terraform",
         "RULES_SERVERLESS": "serverless",
+        "RULES_BICEP": "bicep"
     }
     framework_external_checks = [
         "RULES_K8S",
@@ -50,6 +51,7 @@ class CheckovTool(ToolGateway):
         "RULES_OPENAPI",
         "RULES_TERRAFORM",
         "RULES_SERVERLESS",
+        "RULES_BICEP"
     ]
 
     def run_tool(
