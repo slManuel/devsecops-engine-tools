@@ -18,7 +18,7 @@ class AllToolsSecretScan(ToolGateway):
     trufflehog_tool: TrufflehogRun = TrufflehogRun()
     
     def install_tool(self, agent_os, agent_temp_dir, tool_version) -> any:
-        """Instala ambas herramientas en paralelo"""
+        """Install both tools in parallel"""
         gitleaks_version = tool_version.get("GITLEAKS")
         trufflehog_version = tool_version.get("TRUFFLEHOG")
         
@@ -48,7 +48,7 @@ class AllToolsSecretScan(ToolGateway):
         tool, 
         folder_path
         ):
-        """Ejecuta ambas herramientas en paralelo"""
+        """Run both secret scanning tools in parallel and collect their results."""
         with ThreadPoolExecutor(max_workers=2) as executor:
             # Start both scans
             future_gitleaks = executor.submit(

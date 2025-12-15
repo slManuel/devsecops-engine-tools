@@ -84,7 +84,6 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
     def send_vulnerability_management(
         self, vulnerability_management: VulnerabilityManagement
     ):
-        print(vulnerability_management.dict_args["module"])
         try:
             token_dd = (
                 vulnerability_management.dict_args["token_vulnerability_management"]
@@ -145,7 +144,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                         self.multiple_scan_types[vulnerability_management.dict_args["module"]][vulnerability_management.scan_type]["file_separator"]
                     )
                     all_tools = self.multiple_scan_types[vulnerability_management.dict_args["module"]][vulnerability_management.scan_type]["scanners"]
-                    
+                    print_url = True
                     for index, file in enumerate(files):
                         vulnerability_management.input_core.path_file_results = file
                         vulnerability_management.scan_type = all_tools[index]
@@ -155,7 +154,9 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                             token_dd,
                             tags,
                             use_cmdb,
+                            print_url
                         )
+                        print_url = False
                 else:
                     self._send_report_to_vulnerability_management(
                         vulnerability_management,
@@ -176,7 +177,8 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
         token_cmdb, 
         token_dd, 
         tags, 
-        use_cmdb
+        use_cmdb,
+        print_url=True
     ):
         request = self._build_request_importscan(
             vulnerability_management,
@@ -203,12 +205,13 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                     vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["HOST_DEFECT_DOJO"],
                     vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["PRINT_DOMAIN"]
                 )
-            url_parts = response.url.split("//")
-            test_string = "//".join([url_parts[0] + "/", url_parts[1]])
-            print(
-                "Report sent to vulnerability management: ",
-                f"{test_string}?tags={vulnerability_management.dict_args['module']}",
-            )
+            if print_url:
+                url_parts = response.url.split("//")
+                test_string = "//".join([url_parts[0] + "/", url_parts[1]])
+                print(
+                    "Report sent to vulnerability management: ",
+                    f"{test_string}?tags={vulnerability_management.dict_args['module']}",
+                )
         else:
             raise ExceptionVulnerabilityManagement(response)
 
