@@ -46,7 +46,8 @@ class BreakBuild:
         self.report_breaker = []
         self.remediation_rate = 0
         self.blacklisted = 0
-        self.max_finding_score = 0
+        self.max_risk_score = 0
+        self.max_priority_score = 0
         self.status = "succeeded"
         self.scan_result = {
             "findings_excluded": [],
@@ -84,7 +85,8 @@ class BreakBuild:
             "risk_control": {
                 "remediation_rate": self.remediation_rate,
                 "blacklisted": self.blacklisted,
-                "max_finding_score": self.max_finding_score,
+                "max_risk_score": self.max_risk_score,
+                "max_priority_score": self.max_priority_score,
             },
             "status": self.status,
             "found": self.report_breaker,
@@ -218,11 +220,11 @@ class BreakBuild:
                             else report.id
                         ),
                         "severity": report.severity,
-                        "finding_score": (
-                            str(report.priority)
-                            if self.remote_config.get("FINDING_SCORE", {}).get("MODEL")
-                            == "PRIORITY"
-                            else str(report.risk_score)
+                        "risk_score": (
+                            str(report.risk_score) if report.risk_score else "0"
+                        ),
+                        "priority_score": (
+                            str(report.priority) if report.priority else "0"
                         ),
                         "reason": "Remediation Rate",
                     }
@@ -369,11 +371,11 @@ class BreakBuild:
                             else report.id
                         ),
                         "severity": report.severity,
-                        "finding_score": (
-                            str(report.priority)
-                            if self.remote_config.get("FINDING_SCORE", {}).get("MODEL")
-                            == "PRIORITY"
-                            else str(report.risk_score)
+                        "risk_score": (
+                            str(report.risk_score) if report.risk_score else "0"
+                        ),
+                        "priority_score": (
+                            str(report.priority) if report.priority else "0"
                         ),
                         "reason": "Blacklisted",
                     }
@@ -391,11 +393,11 @@ class BreakBuild:
                             else report.id
                         ),
                         "severity": report.severity,
-                        "finding_score": (
-                            str(report.priority)
-                            if self.remote_config.get("FINDING_SCORE", {}).get("MODEL")
-                            == "PRIORITY"
-                            else str(report.risk_score)
+                        "risk_score": (
+                            str(report.risk_score) if report.risk_score else "0"
+                        ),
+                        "priority_score": (
+                            str(report.priority) if report.priority else "0"
                         ),
                         "reason": "Blacklisted",
                     }
@@ -436,7 +438,8 @@ class BreakBuild:
                                 else report.id
                             ),
                             "severity": report.severity,
-                            "finding_score": str(report.risk_score),
+                            "risk_score": str(report.risk_score),
+                            "priority_score": "0",
                             "reason": "Risk Score",
                         }
                     )
@@ -471,7 +474,7 @@ class BreakBuild:
                 )
             )
 
-        self.max_finding_score = (
+        self.max_risk_score = (
             max(report.risk_score for report in report_list) if report_list else 0
         )
 
@@ -512,7 +515,8 @@ class BreakBuild:
                                 else report.id
                             ),
                             "severity": report.severity,
-                            "finding_score": str(report.priority),
+                            "risk_score": "0",
+                            "priority_score": str(report.priority),
                             "reason": "Priority Score",
                         }
                     )
@@ -533,7 +537,7 @@ class BreakBuild:
         if break_build:
             self.break_build = True
 
-        self.max_finding_score = max_priority_score
+        self.max_priority_score = max_priority_score
 
     def _print_exclusions(self, applied_exclusions: "list[Exclusions]"):
         if applied_exclusions:
