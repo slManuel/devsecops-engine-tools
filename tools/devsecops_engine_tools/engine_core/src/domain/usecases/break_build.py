@@ -111,6 +111,7 @@ class BreakBuild:
         return {
             "id": item.id,
             "severity": item.severity,
+            "priority": str(item.priority.scale).replace(" ", "_"),
             "category": item.category.value,
         }
 
@@ -199,9 +200,10 @@ class BreakBuild:
             ))
             print(devops_platform_gateway.result_pipeline("failed"))
             scan_result["vulnerabilities"] = {
-                "threshold": counts,
+                "model_break_build": model,
+                "threshold": {k.replace(" ", "_"): v for k, v in counts.items()},
                 "status": "failed",
-                "found": [{"id": item.id, "severity": item.severity} for item in vulnerabilities_list],
+                "found": [{"id": item.id, "severity": item.severity, "priority": str(item.priority.scale).replace(" ", "_")} for item in vulnerabilities_list],
             }
         else:
             print("Below are all vulnerabilities detected.")
@@ -219,9 +221,10 @@ class BreakBuild:
             result = "succeeded_with_issues" if warning_release or devops_platform_gateway.get_variable("stage") == "build" else "succeeded"
             print(devops_platform_gateway.result_pipeline(result))
             scan_result["vulnerabilities"] = {
-                "threshold": counts,
+                "model_break_build": model,
+                "threshold": {k.replace(" ", "_"): v for k, v in counts.items()},
                 "status": "succeeded",
-                "found": [{"id": item.id, "severity": item.severity} for item in vulnerabilities_list],
+                "found": [{"id": item.id, "severity": item.severity, "priority": str(item.priority.scale).replace(" ", "_")} for item in vulnerabilities_list],
             }
 
     def _handle_cve_policy(self, vulnerabilities_list: "list[Finding]", threshold):
@@ -267,7 +270,7 @@ class BreakBuild:
             scan_result["compliances"] = {
                 "threshold": {"critical": counts["critical"]},
                 "status": status,
-                "found": [{"id": item.id, "severity": item.severity} for item in compliances_list],
+                "found": [{"id": item.id, "severity": item.severity, "priority": str(item.priority.scale).replace(" ", "_")} for item in compliances_list],
             }
         else:
             print(devops_platform_gateway.message("succeeded", "There are no compliances issues"))
