@@ -520,6 +520,9 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
             "reimport_scan": vulnerability_management.config_tool[
                 "VULNERABILITY_MANAGER"
             ]["DEFECT_DOJO"]["REIMPORT_SCAN"],
+            "get_exact_product": vulnerability_management.config_tool[
+                "VULNERABILITY_MANAGER"
+            ]["DEFECT_DOJO"].get("GET_EXACT_PRODUCT", False),
             "tool_sonarqube_configuration": (
                 tool_sonar_conf_mapping[
                     vulnerability_management.sonar_instance.upper()

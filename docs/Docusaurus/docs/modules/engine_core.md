@@ -39,6 +39,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
             "PRINT_DOMAIN": "",
             "LIMITS_QUERY": 100,
             "MAX_RETRIES_QUERY": 5,
+            "GET_EXACT_PRODUCT": false,
             "TOOL_SCM_MAPPING": {
                 "DEFAULT": 2,
                 "TFSGIT": 2,
@@ -246,6 +247,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
         - PRINT_DOMAIN: Dominio to print
         - LIMITS_QUERY: Query limit for platform queries.
         - MAX_RETRIES_QUERY: Maximum number of retry attempts for queries to the platform
+        - GET_EXACT_PRODUCT: optional flag. Ensure product get from defect dojo before request is exact match otherwise use default behavior include match
         - **TOOL_SCM_MAPPING**: Mapping between the source code management (SCM) tool and its corresponding identifier in DefectDojo.  
             - **DEFAULT**: Default SCM tool identifier.
             - **TFSGIT**: Identifier for Azure DevOps (TFS Git) repositories.

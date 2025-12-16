@@ -60,6 +60,7 @@ class ImportScanRequest:
     expression: str = ""
     url: str = ""
     reimport_scan: bool = None
+    get_exact_product: bool = None
     test_title: str = ""
 
     @classmethod
