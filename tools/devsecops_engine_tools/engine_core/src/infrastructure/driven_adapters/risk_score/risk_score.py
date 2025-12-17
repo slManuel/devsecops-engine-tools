@@ -7,6 +7,7 @@ import re
 import requests
 
 from devsecops_engine_tools.engine_utilities import settings
+from devsecops_engine_tools.engine_utilities.defect_dojo.infraestructure.driver_adapters.settings.settings import VERIFY_CERTIFICATE
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
 
 logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
@@ -31,7 +32,8 @@ class RiskScore(RiskScoreGateway):
                     response = requests.get(
                         host,
                         headers={"cve_list": cve_list_header},
-                        timeout=10
+                        timeout=10,
+                        verify=VERIFY_CERTIFICATE
                     )
                     response.raise_for_status()
                     priorities = response.json().get("priorities", {})
