@@ -134,6 +134,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
         "USE_PRIORITY": true,
         "HOST_PRIORITY": "",
         "CVE_REGEX": "CVE-\\d{4}-\\d+",
+        "MAX_RETRIES":3,
         "HOMOLOGATION_PRIORITY":{
             "STANDARD": {
                 "critical":{
@@ -326,6 +327,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
     - **USE_PRIORITY**: `true` o `false`. Habilita el uso del sistema de prioridades. Cuando está en `true`, el sistema consultará un API externo para obtener scores de prioridad de CVEs y aplicará homologación para findings sin formato CVE.
     - **HOST_PRIORITY**: URL del API externo que proporciona los scores de prioridad para CVEs. Ejemplo: `https://api.example.com/priorities`
     - **CVE_REGEX**: Expresión regular para identificar CVEs en los IDs de findings. Por defecto: `"CVE-\\d{4}-\\d+"`
+    - **MAX_RETRIES**: Specifies the maximum number of retry attempts allowed for a given operation
     - **HOMOLOGATION_PRIORITY**: Mapeo de severidades tradicionales a prioridades con scores. Permite dos perfiles:
         - **STANDARD**: Perfil estándar con scores más altos
             - `critical`: score 1.00 → "very critical"

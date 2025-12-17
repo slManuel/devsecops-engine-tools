@@ -146,7 +146,8 @@ class TestRiskScore(unittest.TestCase):
         mock_get.assert_called_once_with(
             "https://api.example.com/priority",
             headers={"cve_list": "CVE-2024-12345,CVE-2025-1345"},
-            timeout=10
+            timeout=10,
+            verify=False
         )
         
         self.assertIsNotNone(findings[0].priority)

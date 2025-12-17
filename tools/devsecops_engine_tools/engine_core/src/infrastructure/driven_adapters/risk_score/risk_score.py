@@ -7,7 +7,9 @@ import re
 import requests
 
 from devsecops_engine_tools.engine_utilities import settings
+from devsecops_engine_tools.engine_utilities.defect_dojo.infraestructure.driver_adapters.settings.settings import VERIFY_CERTIFICATE
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
+from devsecops_engine_tools.engine_utilities.utils.utils import Utils
 
 logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
@@ -27,13 +29,21 @@ class RiskScore(RiskScoreGateway):
                 host = priority_manager.get("HOST_PRIORITY")
                 ids = [f.id for f in cve_findings]
                 cve_list_header = ",".join(ids)
+                utils = Utils()
+                max_retries = priority_manager.get("MAX_RETRIES", 3)
+                
                 try:
-                    response = requests.get(
-                        host,
-                        headers={"cve_list": cve_list_header},
-                        timeout=10
-                    )
-                    response.raise_for_status()
+                    def make_request():
+                        response = requests.get(
+                            host,
+                            headers={"cve_list": cve_list_header},
+                            timeout=10,
+                            verify=VERIFY_CERTIFICATE
+                        )
+                        response.raise_for_status()
+                        return response
+                    
+                    response = utils.retries_requests(make_request, max_retries, retry_delay=5)
                     priorities = response.json().get("priorities", {})
                     
                     for finding in cve_findings:
