@@ -411,7 +411,7 @@ class BreakBuild:
 
     def _risk_score_control(self, report_list: "list[Report]"):
         remote_config = self.remote_config
-        finding_score_threshold = self.threshold["FINDING_SCORE"]
+        score_threshold = self.threshold["SCORE"]
         break_build = False
         if report_list:
             for report in report_list:
@@ -428,7 +428,7 @@ class BreakBuild:
                     ),
                     4,
                 )
-                if report.risk_score > finding_score_threshold:
+                if report.risk_score > score_threshold:
                     break_build = True
                     self.report_breaker.append(
                         {
@@ -454,14 +454,14 @@ class BreakBuild:
                 print(
                     self.devops_platform_gateway.message(
                         "error",
-                        f"There are findings with risk score greater than {finding_score_threshold}",
+                        f"There are findings with risk score greater than {score_threshold}",
                     )
                 )
             else:
                 print(
                     self.devops_platform_gateway.message(
                         "succeeded",
-                        f"There are no findings with risk score greater than {finding_score_threshold}",
+                        f"There are no findings with risk score greater than {score_threshold}",
                     )
                 )
             print(f"Findings count: {len(report_list)}")
@@ -479,7 +479,7 @@ class BreakBuild:
         )
 
     def _priority_score_control(self, report_list: "list[Report]"):
-        finding_score_threshold = self.threshold["FINDING_SCORE"]
+        score_threshold = self.threshold["SCORE"]
         break_build = False
 
         service_reports = {}
@@ -504,7 +504,7 @@ class BreakBuild:
             if priority_score_sum > max_priority_score:
                 max_priority_score = priority_score_sum
 
-            if priority_score_sum > finding_score_threshold:
+            if priority_score_sum > score_threshold:
                 break_build = True
                 for report in reports:
                     self.report_breaker.append(
@@ -523,14 +523,14 @@ class BreakBuild:
                 print(
                     self.devops_platform_gateway.message(
                         "error",
-                        f"Service '{service}': The sum of priority scores {priority_score_sum} is greater than the threshold {finding_score_threshold}",
+                        f"Service '{service}': The sum of priority scores {priority_score_sum} is greater than the threshold {score_threshold}",
                     )
                 )
             else:
                 print(
                     self.devops_platform_gateway.message(
                         "succeeded",
-                        f"Service '{service}': The sum of priority scores {priority_score_sum} is less than the threshold {finding_score_threshold}",
+                        f"Service '{service}': The sum of priority scores {priority_score_sum} is less than the threshold {score_threshold}",
                     )
                 )
 

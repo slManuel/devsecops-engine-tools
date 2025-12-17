@@ -461,7 +461,7 @@ def test_risk_score_control_break():
         [],
         [],
         [],
-        {"FINDING_SCORE": 4},
+        {"SCORE": 4},
         0,
     )
     break_build._risk_score_control(report_list)
@@ -493,7 +493,7 @@ def test_risk_score_control_not_break():
         [],
         [],
         [],
-        {"FINDING_SCORE": 4},
+        {"SCORE": 4},
         0,
     )
     break_build._risk_score_control(report_list)
@@ -519,7 +519,7 @@ def test_priority_score_control():
         [],
         [],
         [],
-        {"FINDING_SCORE": 1.9},
+        {"SCORE": 1.9},
         0,
     )
     break_build._priority_score_control(report_list)
