@@ -173,6 +173,7 @@ class TestDefectDojoPlatform(unittest.TestCase):
                 tags=["engine_iac_k8s"],
                 test_title="engine_iac_k8s",
                 reimport_scan=True,
+                get_exact_product=False,
             )
 
     def test_send_vulnerability_management_exception(self):
@@ -332,6 +333,7 @@ class TestDefectDojoPlatform(unittest.TestCase):
                 expression="regex",
                 test_title="engine_iac_k8s",
                 reimport_scan=True,
+                get_exact_product=False,
             )
             self.assertEqual(result, "cmdb_request_result")
 
@@ -438,6 +440,7 @@ class TestDefectDojoPlatform(unittest.TestCase):
                     "expression": "regex",
                     "test_title": "engine_iac_k8s_test_2",
                     "reimport_scan": True,
+                    "get_exact_product": False,
                 }
             )
             self.assertEqual(result, "import_scan_request_result")
