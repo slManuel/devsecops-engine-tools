@@ -19,6 +19,7 @@
             "PRINT_DOMAIN": "",
             "LIMITS_QUERY": 100,
             "MAX_RETRIES_QUERY": 5,
+            "GET_EXACT_PRODUCT": false,
             "TOOL_SCM_MAPPING": {
                 "DEFAULT": 2,
                 "TFSGIT": 2,

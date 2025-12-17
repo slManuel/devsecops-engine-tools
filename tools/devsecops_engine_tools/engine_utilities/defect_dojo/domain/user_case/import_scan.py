@@ -75,9 +75,10 @@ class ImportScanUserCase:
             raise ApiError(log)
 
         logger.debug(f"Match {request.scan_type}")
-        products = self.__rest_product.get_products({"name": request.product_name})
+        searchTypeKey = "name_exact" if request.get_exact_product is True else "name"
+        products = self.__rest_product.get_products({searchTypeKey: request.product_name})
         if len(products.results) == 0 and request.product_name != "Orphan_Product":
-            products = self.__rest_product.get_products({"name": request.code_app})
+            products = self.__rest_product.get_products({searchTypeKey: request.code_app})
         if len(products.results) > 0:
             product_id = products.results[0].id
             request.product_name = products.results[0].name
