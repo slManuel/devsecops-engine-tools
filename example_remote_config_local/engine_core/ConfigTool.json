@@ -114,6 +114,7 @@
         "USE_PRIORITY": true,
         "HOST_PRIORITY": "",
         "CVE_REGEX": "CVE-\\d{4}-\\d+",
+        "MAX_RETRIES": 3,
         "HOMOLOGATION_PRIORITY":{
             "STANDARD": {
                 "critical":{
