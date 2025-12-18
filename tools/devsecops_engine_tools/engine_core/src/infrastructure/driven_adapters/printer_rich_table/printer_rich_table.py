@@ -23,11 +23,12 @@ class PrinterRichTable(PrinterTableGateway):
         # To implement
         return
 
-    def print_table_report(self, report_list: "list[Report]"):
+    def print_table_report(self, report_list: "list[Report]", finding_score_model):
+        model_header = "Priority" if finding_score_model == "PRIORITY" else "Risk Score"
         sorted_report_list = sorted(
             report_list, key=lambda report: report.risk_score, reverse=True
         )
-        headers = ["Risk Score", "ID", "Tags", "Services"]
+        headers = [model_header, "ID", "Tags", "Services"]
         table = Table(
             show_header=True, header_style="bold magenta", box=box.DOUBLE_EDGE
         )
@@ -35,7 +36,7 @@ class PrinterRichTable(PrinterTableGateway):
             table.add_column(header)
         for report in sorted_report_list:
             row_data = [
-                str(report.risk_score),
+                str(report.priority if finding_score_model == "PRIORITY" else report.risk_score),
                 self._check_spaces(report.vm_id, report.vm_id_url),
                 ", ".join(report.tags),
                 report.service,

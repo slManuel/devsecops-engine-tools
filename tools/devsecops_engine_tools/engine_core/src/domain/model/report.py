@@ -37,3 +37,4 @@ class Report:
         self.endpoints = kwargs.get("endpoints", "")
         self.unique_id_from_tool = kwargs.get("unique_id_from_tool", "")
         self.out_of_scope = kwargs.get("out_of_scope", "")
+        self.priority = kwargs.get("priority", "")

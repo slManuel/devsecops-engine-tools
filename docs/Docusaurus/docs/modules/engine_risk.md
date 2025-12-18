@@ -78,7 +78,10 @@ Main configuration file that defines risk analysis behavior, scoring weights, an
       "10": 50,
       "other": 70
     },
-    "RISK_SCORE": 10
+    "SCORE": 10
+  },
+  "FINDING_SCORE": {
+    "MODEL": "RISK"
   }
 }
 ```
@@ -147,7 +150,20 @@ Main configuration file that defines risk analysis behavior, scoring weights, an
   - `5`: 30% minimum remediation rate
   - `10`: 50% minimum remediation rate
   - `other`: 70% minimum remediation rate for larger counts
-- **RISK_SCORE**: Maximum acceptable risk score threshold (10)
+- **SCORE**: Maximum acceptable finding score threshold (10)
+
+##### Finding Score Model
+- **FINDING_SCORE.MODEL**: Defines the scoring model used for threshold evaluation:
+  - `"RISK"`: Individual risk-based scoring model (default)
+    - Calculates a risk score for each finding based on multiple weighted factors (severity, EPSS score, age, and tags)
+    - Evaluates each finding individually against the score threshold
+    - Breaks the build if any single finding exceeds the configured threshold
+    - Formula: `risk_score = severity_weight + (epss_weight × epss_score) + min(age_weight × age, max_age) + sum(tag_weights)`
+  - `"PRIORITY"`: Service-level priority aggregation model
+    - Groups findings by service and sums their priority scores
+    - Evaluates the total priority score per service against the score threshold
+    - Breaks the build if the sum of priority scores for any service exceeds the configured threshold
+    - Useful for service-based risk management and prioritization
 
 ### Exclusions.json
 
@@ -258,6 +274,30 @@ devsecops-engine-tools \
 
 ## Configuration Guidelines
 
+### Finding Score Model Selection
+1. **Choose the appropriate model** based on your risk management strategy:
+   - Use `"RISK"` model for individual finding-level control with granular risk assessment
+   - Use `"PRIORITY"` model for service-level aggregated risk management
+2. **RISK Model Best Practices**:
+   - Ideal for organizations with strict individual vulnerability policies
+   - Configure `THRESHOLD.SCORE` to reflect maximum acceptable risk per finding
+   - Fine-tune severity, EPSS, age, and tag weights to align with security priorities
+   - Useful when any single high-risk vulnerability should break the build
+3. **PRIORITY Model Best Practices**:
+   - Ideal for microservice architectures requiring service-level risk assessment
+   - Configure `THRESHOLD.SCORE` as the maximum acceptable aggregate priority per service
+   - Allows multiple lower-priority findings while preventing accumulation of risk
+   - Better suited for gradual remediation strategies across services
+4. **Model Configuration Example**:
+   ```json
+   "FINDING_SCORE": {
+     "MODEL": "RISK"  // or "PRIORITY"
+   },
+   "THRESHOLD": {
+     "SCORE": 10  // Adjust based on selected model
+   }
+   ```
+
 ### Risk Scoring Configuration
 1. **Severity Weights**: Adjust weights based on organizational risk tolerance
 2. **Engine Tag Weights**: Configure different weights for different scanning engines
@@ -272,7 +312,7 @@ devsecops-engine-tools \
 
 ### Threshold Management
 1. Set realistic `REMEDIATION_RATE` expectations based on team capacity
-2. Adjust `RISK_SCORE` threshold based on organizational risk appetite
+2. Adjust `SCORE` threshold based on organizational risk appetite
 3. Use different thresholds for different environments (dev vs prod)
 4. Monitor threshold effectiveness and adjust based on historical data
 

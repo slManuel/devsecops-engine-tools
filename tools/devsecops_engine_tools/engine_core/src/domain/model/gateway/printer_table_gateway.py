@@ -12,7 +12,7 @@ class PrinterTableGateway(metaclass=ABCMeta):
         "print_table_findings"
 
     @abstractmethod
-    def print_table_report(self, report_list: "list[Report]"):
+    def print_table_report(self, report_list: "list[Report]", finding_score_model):
         "print_table_report"
 
     @abstractmethod
