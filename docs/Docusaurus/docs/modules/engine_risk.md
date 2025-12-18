@@ -274,6 +274,30 @@ devsecops-engine-tools \
 
 ## Configuration Guidelines
 
+### Finding Score Model Selection
+1. **Choose the appropriate model** based on your risk management strategy:
+   - Use `"RISK"` model for individual finding-level control with granular risk assessment
+   - Use `"PRIORITY"` model for service-level aggregated risk management
+2. **RISK Model Best Practices**:
+   - Ideal for organizations with strict individual vulnerability policies
+   - Configure `THRESHOLD.SCORE` to reflect maximum acceptable risk per finding
+   - Fine-tune severity, EPSS, age, and tag weights to align with security priorities
+   - Useful when any single high-risk vulnerability should break the build
+3. **PRIORITY Model Best Practices**:
+   - Ideal for microservice architectures requiring service-level risk assessment
+   - Configure `THRESHOLD.SCORE` as the maximum acceptable aggregate priority per service
+   - Allows multiple lower-priority findings while preventing accumulation of risk
+   - Better suited for gradual remediation strategies across services
+4. **Model Configuration Example**:
+   ```json
+   "FINDING_SCORE": {
+     "MODEL": "RISK"  // or "PRIORITY"
+   },
+   "THRESHOLD": {
+     "SCORE": 10  // Adjust based on selected model
+   }
+   ```
+
 ### Risk Scoring Configuration
 1. **Severity Weights**: Adjust weights based on organizational risk tolerance
 2. **Engine Tag Weights**: Configure different weights for different scanning engines
@@ -288,7 +312,7 @@ devsecops-engine-tools \
 
 ### Threshold Management
 1. Set realistic `REMEDIATION_RATE` expectations based on team capacity
-2. Adjust `RISK_SCORE` threshold based on organizational risk appetite
+2. Adjust `SCORE` threshold based on organizational risk appetite
 3. Use different thresholds for different environments (dev vs prod)
 4. Monitor threshold effectiveness and adjust based on historical data
 
