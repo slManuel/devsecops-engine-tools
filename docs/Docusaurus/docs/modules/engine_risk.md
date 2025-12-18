@@ -78,7 +78,10 @@ Main configuration file that defines risk analysis behavior, scoring weights, an
       "10": 50,
       "other": 70
     },
-    "RISK_SCORE": 10
+    "SCORE": 10
+  },
+  "FINDING_SCORE": {
+    "MODEL": "RISK"
   }
 }
 ```
@@ -147,7 +150,20 @@ Main configuration file that defines risk analysis behavior, scoring weights, an
   - `5`: 30% minimum remediation rate
   - `10`: 50% minimum remediation rate
   - `other`: 70% minimum remediation rate for larger counts
-- **RISK_SCORE**: Maximum acceptable risk score threshold (10)
+- **SCORE**: Maximum acceptable finding score threshold (10)
+
+##### Finding Score Model
+- **FINDING_SCORE.MODEL**: Defines the scoring model used for threshold evaluation:
+  - `"RISK"`: Individual risk-based scoring model (default)
+    - Calculates a risk score for each finding based on multiple weighted factors (severity, EPSS score, age, and tags)
+    - Evaluates each finding individually against the score threshold
+    - Breaks the build if any single finding exceeds the configured threshold
+    - Formula: `risk_score = severity_weight + (epss_weight × epss_score) + min(age_weight × age, max_age) + sum(tag_weights)`
+  - `"PRIORITY"`: Service-level priority aggregation model
+    - Groups findings by service and sums their priority scores
+    - Evaluates the total priority score per service against the score threshold
+    - Breaks the build if the sum of priority scores for any service exceeds the configured threshold
+    - Useful for service-based risk management and prioritization
 
 ### Exclusions.json
 

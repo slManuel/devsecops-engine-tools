@@ -44,7 +44,7 @@ class TestPrinterRichTable:
         ]
         printer = PrinterRichTable()
 
-        printer.print_table_report(report_list)
+        printer.print_table_report(report_list, "RISK")
 
         mock_console().print.assert_called_once()
 

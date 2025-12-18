@@ -28,7 +28,7 @@ class PrinterRichTable(PrinterTableGateway):
         sorted_report_list = sorted(
             report_list, key=lambda report: report.risk_score, reverse=True
         )
-        headers = ["Risk Score", "ID", "Tags", "Services"]
+        headers = [model_header, "ID", "Tags", "Services"]
         table = Table(
             show_header=True, header_style="bold magenta", box=box.DOUBLE_EDGE
         )
