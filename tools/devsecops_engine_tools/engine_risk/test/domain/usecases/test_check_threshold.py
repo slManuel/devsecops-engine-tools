@@ -47,9 +47,7 @@ def test_process_pipeline_name():
     pipeline_name = "pipeline_name_test"
     threshold = {"REMEDIATION_RATE": 1, "SCORE": 1}
     risk_exclusions = {
-        "pipeline_name_test": {
-            "THRESHOLD": {"REMEDIATION_RATE": 2, "SCORE": 2}
-        }
+        "pipeline_name_test": {"THRESHOLD": {"REMEDIATION_RATE": 2, "SCORE": 2}}
     }
     expected_threshold = {"REMEDIATION_RATE": 2, "SCORE": 2}
 
@@ -66,11 +64,7 @@ def test_process_pipeline_name_without_threshold_key():
     """Test when pipeline name exists in risk_exclusions but without THRESHOLD key"""
     pipeline_name = "pipeline_name_test"
     threshold = {"REMEDIATION_RATE": 1, "SCORE": 1}
-    risk_exclusions = {
-        "pipeline_name_test": {
-            "OTHER_CONFIG": "value"
-        }
-    }
+    risk_exclusions = {"pipeline_name_test": {"OTHER_CONFIG": "value"}}
     expected_threshold = {"REMEDIATION_RATE": 1, "SCORE": 1}
 
     check_threshold = create_check_threshold_instance(
@@ -88,9 +82,7 @@ def test_process_pattern():
     threshold = {"REMEDIATION_RATE": 1, "SCORE": 1}
     risk_exclusions = {
         "BY_PATTERN_SEARCH": {
-            ".*(pipeline_name).*": {
-                "THRESHOLD": {"REMEDIATION_RATE": 2, "SCORE": 2}
-            }
+            ".*(pipeline_name).*": {"THRESHOLD": {"REMEDIATION_RATE": 2, "SCORE": 2}}
         }
     }
     expected_threshold = {"REMEDIATION_RATE": 2, "SCORE": 2}
@@ -110,9 +102,7 @@ def test_process_pattern_no_match():
     threshold = {"REMEDIATION_RATE": 1, "SCORE": 1}
     risk_exclusions = {
         "BY_PATTERN_SEARCH": {
-            ".*(pipeline_name).*": {
-                "THRESHOLD": {"REMEDIATION_RATE": 2, "SCORE": 2}
-            }
+            ".*(pipeline_name).*": {"THRESHOLD": {"REMEDIATION_RATE": 2, "SCORE": 2}}
         }
     }
     expected_threshold = {"REMEDIATION_RATE": 1, "SCORE": 1}
@@ -130,9 +120,7 @@ def test_process_default():
     """Test when no exclusions apply, returns default threshold"""
     pipeline_name = "pipeline_name_test"
     threshold = {"REMEDIATION_RATE": 1, "SCORE": 1}
-    risk_exclusions = {
-        "THRESHOLD": {"REMEDIATION_RATE": 2, "SCORE": 2}
-    }
+    risk_exclusions = {"THRESHOLD": {"REMEDIATION_RATE": 2, "SCORE": 2}}
     expected_threshold = {"REMEDIATION_RATE": 1, "SCORE": 1}
 
     check_threshold = create_check_threshold_instance(
@@ -168,8 +156,8 @@ def test_process_with_quality_vulnerability_management_no_product_type():
         "SCORE": 1,
         "QUALITY_VULNERABILITY_MANAGEMENT": {
             "PTS": [{"ProductType1": {"APPS": "ALL", "PROFILE": "STRICT"}}],
-            "STRICT": {"REMEDIATION_RATE": 10, "SCORE": 20}
-        }
+            "STRICT": {"REMEDIATION_RATE": 10, "SCORE": 20},
+        },
     }
     risk_exclusions = {}
 
@@ -195,8 +183,8 @@ def test_process_with_quality_vulnerability_management_product_type_not_in_confi
         "SCORE": 1,
         "QUALITY_VULNERABILITY_MANAGEMENT": {
             "PTS": [{"ProductType1": {"APPS": "ALL", "PROFILE": "STRICT"}}],
-            "STRICT": {"REMEDIATION_RATE": 10, "SCORE": 20}
-        }
+            "STRICT": {"REMEDIATION_RATE": 10, "SCORE": 20},
+        },
     }
     risk_exclusions = {}
 
@@ -224,9 +212,16 @@ def test_process_with_quality_vulnerability_management_app_not_in_list():
         "REMEDIATION_RATE": 1,
         "SCORE": 1,
         "QUALITY_VULNERABILITY_MANAGEMENT": {
-            "PTS": [{"ProductType1": {"APPS": ["service1", "service2"], "PROFILE": "STRICT"}}],
-            "STRICT": {"REMEDIATION_RATE": 10, "SCORE": 20}
-        }
+            "PTS": [
+                {
+                    "ProductType1": {
+                        "APPS": ["service1", "service2"],
+                        "PROFILE": "STRICT",
+                    }
+                }
+            ],
+            "STRICT": {"REMEDIATION_RATE": 10, "SCORE": 20},
+        },
     }
     risk_exclusions = {}
 
@@ -256,8 +251,8 @@ def test_process_with_quality_vulnerability_management_with_all_apps():
         "SCORE": 1,
         "QUALITY_VULNERABILITY_MANAGEMENT": {
             "PTS": [{"ProductType1": {"APPS": "ALL", "PROFILE": "STRICT"}}],
-            "STRICT": {"REMEDIATION_RATE": 10, "SCORE": 20}
-        }
+            "STRICT": {"REMEDIATION_RATE": 10, "SCORE": 20},
+        },
     }
     risk_exclusions = {}
 
@@ -286,9 +281,16 @@ def test_process_with_quality_vulnerability_management_with_specific_app():
         "REMEDIATION_RATE": 1,
         "SCORE": 1,
         "QUALITY_VULNERABILITY_MANAGEMENT": {
-            "PTS": [{"ProductType1": {"APPS": ["service1", "service2"], "PROFILE": "STRICT"}}],
-            "STRICT": {"REMEDIATION_RATE": 10, "SCORE": 20}
-        }
+            "PTS": [
+                {
+                    "ProductType1": {
+                        "APPS": ["service1", "service2"],
+                        "PROFILE": "STRICT",
+                    }
+                }
+            ],
+            "STRICT": {"REMEDIATION_RATE": 10, "SCORE": 20},
+        },
     }
     risk_exclusions = {}
 
@@ -318,8 +320,8 @@ def test_process_with_quality_vulnerability_management_no_profile():
         "SCORE": 1,
         "QUALITY_VULNERABILITY_MANAGEMENT": {
             "PTS": [{"ProductType1": {"APPS": "ALL"}}],
-            "STRICT": {"REMEDIATION_RATE": 10, "SCORE": 20}
-        }
+            "STRICT": {"REMEDIATION_RATE": 10, "SCORE": 20},
+        },
     }
     risk_exclusions = {}
 
@@ -349,8 +351,8 @@ def test_process_with_quality_vulnerability_management_profile_not_in_config():
         "SCORE": 1,
         "QUALITY_VULNERABILITY_MANAGEMENT": {
             "PTS": [{"ProductType1": {"APPS": "ALL", "PROFILE": "NON_EXISTENT"}}],
-            "STRICT": {"REMEDIATION_RATE": 10, "SCORE": 20}
-        }
+            "STRICT": {"REMEDIATION_RATE": 10, "SCORE": 20},
+        },
     }
     risk_exclusions = {}
 
@@ -377,14 +379,10 @@ def test_process_priority_pipeline_name_over_pattern():
     pipeline_name = "pipeline_name_test"
     threshold = {"REMEDIATION_RATE": 1, "SCORE": 1}
     risk_exclusions = {
-        "pipeline_name_test": {
-            "THRESHOLD": {"REMEDIATION_RATE": 3, "SCORE": 3}
-        },
+        "pipeline_name_test": {"THRESHOLD": {"REMEDIATION_RATE": 3, "SCORE": 3}},
         "BY_PATTERN_SEARCH": {
-            ".*(pipeline_name).*": {
-                "THRESHOLD": {"REMEDIATION_RATE": 2, "SCORE": 2}
-            }
-        }
+            ".*(pipeline_name).*": {"THRESHOLD": {"REMEDIATION_RATE": 2, "SCORE": 2}}
+        },
     }
     expected_threshold = {"REMEDIATION_RATE": 3, "SCORE": 3}
 
@@ -405,8 +403,8 @@ def test_process_with_quality_vulnerability_management_multiple_services():
         "SCORE": 1,
         "QUALITY_VULNERABILITY_MANAGEMENT": {
             "PTS": [{"ProductType1": {"APPS": ["service2"], "PROFILE": "STRICT"}}],
-            "STRICT": {"REMEDIATION_RATE": 10, "SCORE": 20}
-        }
+            "STRICT": {"REMEDIATION_RATE": 10, "SCORE": 20},
+        },
     }
     risk_exclusions = {}
 

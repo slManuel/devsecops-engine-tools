@@ -84,7 +84,7 @@ class CheckThreshold:
 
         pt_profile = pt_info.get("PROFILE")
         if pt_profile and pt_profile in quality_config:
-            profile_config = quality_config[pt_profile]            
+            profile_config = quality_config[pt_profile]
             return profile_config
 
         return base_threshold
