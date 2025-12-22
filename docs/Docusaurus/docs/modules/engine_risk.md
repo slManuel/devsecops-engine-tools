@@ -78,7 +78,35 @@ Main configuration file that defines risk analysis behavior, scoring weights, an
       "10": 50,
       "other": 70
     },
-    "SCORE": 10
+    "SCORE": 10,
+    "QUALITY_VULNERABILITY_MANAGEMENT": {
+      "PTS": [
+        {
+          "Critical Applications": {
+            "APPS": ["payment-service", "auth-service", "customer-data-api"],
+            "PROFILE": "STRONG"
+          }
+        },
+        {
+          "Medium Applications": {
+            "APPS": "ALL",
+            "PROFILE": "MODERATE"
+          }
+        }
+      ],
+      "STRONG": {
+        "REMEDIATION_RATE": {
+          "other": 90
+        },
+        "SCORE": 5
+      },
+      "MODERATE": {
+        "REMEDIATION_RATE": {
+          "other": 60
+        },
+        "SCORE": 20
+      }
+    }
   },
   "FINDING_SCORE": {
     "MODEL": "RISK"
@@ -145,12 +173,20 @@ Main configuration file that defines risk analysis behavior, scoring weights, an
   - `tag4`: 0 days (immediate processing)
 
 ##### Threshold Configuration
+
+**Basic Threshold Configuration:**
 - **REMEDIATION_RATE**: Expected remediation rates based on vulnerability count:
   - `1`: 0% (single vulnerability - immediate fix)
   - `5`: 30% minimum remediation rate
   - `10`: 50% minimum remediation rate
   - `other`: 70% minimum remediation rate for larger counts
-- **SCORE**: Maximum acceptable finding score threshold (10)
+- **SCORE**: Maximum acceptable finding score threshold (e.g., `10`)
+
+**Quality-Based Vulnerability Management:**
+- **PTS (Product Type Specifications)**: Array of product-specific configurations:
+  - Product type definitions with associated applications and security profiles
+  - `APPS`: Array of application names or `"ALL"` for universal application
+  - `PROFILE`: Security profile to apply (`"STRONG"`, `"MODERATE"`, or custom profile names)
 
 ##### Finding Score Model
 - **FINDING_SCORE.MODEL**: Defines the scoring model used for threshold evaluation:
@@ -253,6 +289,7 @@ Each exclusion entry contains:
 
 - **Multi-engine Integration:** Aggregates findings from SAST, SCA, DAST, and IAC engines
 - **Advanced Scoring:** Weighted risk scoring based on severity, age, EPSS scores, and engine tags
+- **Quality-based Thresholds:** Product type-based dynamic threshold configuration for context-aware security policies
 - **Time-aware Analysis:** Holiday-aware remediation timeline calculations
 - **Tag-based Filtering:** Configurable exclusions based on finding tags and age
 - **Service Hierarchy:** Support for parent-child service relationships
@@ -315,6 +352,13 @@ devsecops-engine-tools \
 2. Adjust `SCORE` threshold based on organizational risk appetite
 3. Use different thresholds for different environments (dev vs prod)
 4. Monitor threshold effectiveness and adjust based on historical data
+
+#### Quality Vulnerability Management
+1. **Configure Product Types**: Map Product Types from vulnerability management platform to PTS array using exact names
+2. **Define Application Scope**: Use `"ALL"` for universal application or specify service names in `APPS` array
+3. **Create Security Profiles**: Define STRONG (strict), MODERATE (balanced), or custom profiles with appropriate `REMEDIATION_RATE` and `SCORE` values
+4. **Set Fallback**: Always maintain base threshold at root level for pipelines without Product Type or service matches
+5. **Monitor Effectiveness**: Review profile application and adjust thresholds based on build break rates and team capacity
 
 ### Tag-based Exclusions
 1. Configure `TAG_EXCLUSION_DAYS` for temporary exclusions during remediation
