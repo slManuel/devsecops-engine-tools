@@ -1,7 +1,4 @@
 import re
-from devsecops_engine_tools.engine_risk.src.domain.model.threshold_risk import (
-    ThresholdRisk,
-)
 
 
 class CheckThreshold:
@@ -41,17 +38,18 @@ class CheckThreshold:
         else:
             base_threshold = self.threshold
 
-        threshold_obj = ThresholdRisk(base_threshold)
-        if threshold_obj.quality_vulnerability_management:
+        quality_config = base_threshold.get(
+            "QUALITY_VULNERABILITY_MANAGEMENT"
+        )
+        if quality_config:
             return self._apply_quality_vulnerability_management(
-                threshold_obj, base_threshold
+                quality_config, base_threshold
             )
 
         return base_threshold
 
-    def _apply_quality_vulnerability_management(self, threshold_obj, base_threshold):
+    def _apply_quality_vulnerability_management(self, quality_config, base_threshold):
         """Apply dynamic threshold based on Product Type configuration"""
-        quality_config = threshold_obj.quality_vulnerability_management
 
         product_type = self.vulnerability_management_gateway.get_product_type_pipeline(
             self.pipeline_name, self.dict_args, self.secret_tool, self.config_tool
