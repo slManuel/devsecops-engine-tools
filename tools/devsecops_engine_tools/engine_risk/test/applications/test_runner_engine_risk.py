@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from devsecops_engine_tools.engine_risk.src.applications.runner_engine_risk import (
     runner_engine_risk,
 )
@@ -24,6 +24,9 @@ def test_runner_engine_risk(mock_init_engine_risk):
         devops_platform_gateway,
         remote_config_source_gateway,
         print_table_gateway,
+        MagicMock(),
+        MagicMock(),
+        MagicMock(),
     )
 
     mock_init_engine_risk.assert_called_once()
