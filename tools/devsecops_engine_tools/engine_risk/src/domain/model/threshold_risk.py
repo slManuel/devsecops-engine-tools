@@ -5,8 +5,6 @@ class ThresholdRisk:
     """
 
     def __init__(self, data):
-        self.remediation_rate = data.get("REMEDIATION_RATE", {})
-        self.score = data.get("SCORE", 0)
         self.quality_vulnerability_management = data.get(
             "QUALITY_VULNERABILITY_MANAGEMENT"
         )
