@@ -10,7 +10,3 @@ class ThresholdRisk:
         self.quality_vulnerability_management = data.get(
             "QUALITY_VULNERABILITY_MANAGEMENT"
         )
-
-    def to_dict(self):
-        """Convert threshold to dictionary format for engine_risk"""
-        return {"REMEDIATION_RATE": self.remediation_rate, "SCORE": self.score}
