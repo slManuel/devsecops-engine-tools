@@ -17,8 +17,8 @@ from prettytable import PrettyTable, DOUBLE_BORDER
 
 @dataclass
 class PrinterPrettyTable(PrinterTableGateway):
-    def _create_table(self, headers, finding_list, manager):
-        model = manager.get("MODEL", "severity")
+    def _create_table(self, headers, finding_list, break_build_manager):
+        model = break_build_manager.get("MODEL", "severity")
         table = PrettyTable(headers)
         
         for finding in finding_list:
@@ -35,10 +35,10 @@ class PrinterPrettyTable(PrinterTableGateway):
                 row_data.append(finding.defect_type)
             table.add_row(row_data)
 
-        severity_order = {manager.get("CLASSIFICATION", "critical")[0]: 0,
-                          manager.get("CLASSIFICATION", "high")[1]: 1,
-                          manager.get("CLASSIFICATION", "medium")[2]: 2,
-                          manager.get("CLASSIFICATION", "low")[3]: 3,
+        severity_order = {break_build_manager.get("CLASSIFICATION", "critical")[0]: 0,
+                          break_build_manager.get("CLASSIFICATION", "high")[1]: 1,
+                          break_build_manager.get("CLASSIFICATION", "medium")[2]: 2,
+                          break_build_manager.get("CLASSIFICATION", "low")[3]: 3,
                           "unknown": 4}
         sorted_table = PrettyTable()
         sorted_table.field_names = table.field_names
@@ -52,21 +52,22 @@ class PrinterPrettyTable(PrinterTableGateway):
         sorted_table.set_style(DOUBLE_BORDER)
         return sorted_table
 
-    def print_table_findings(self, finding_list: "list[Finding]", manager):
+    def print_table_findings(self, finding_list: "list[Finding]", break_build_manager):
+        model_header = "Priority" if break_build_manager.get("MODEL", "Severity") == "priority" else "Severity"
         if (
             finding_list
             and (
                 finding_list[0].module in ["engine_container","engine_dependencies", "engine_function"]
             )
         ):
-            headers = ["Severity", "ID", "Description", "Where", "Fixed in"]
+            headers = [model_header, "ID", "Description", "Where", "Fixed in"]
         elif finding_list and finding_list[0].module == "engine_code":
-            headers = ["Severity", "ID", "Description", "Where", "Rule", "Defect Type"]
+            headers = [model_header, "ID", "Description", "Where", "Rule", "Defect Type"]
 
         else:
-            headers = ["Severity", "ID", "Description", "Where"]
+            headers = [model_header, "ID", "Description", "Where"]
 
-        sorted_table = self._create_table(headers, finding_list, manager)
+        sorted_table = self._create_table(headers, finding_list, break_build_manager)
 
         if len(sorted_table.rows) > 0:
             print(sorted_table)
@@ -132,10 +133,11 @@ class PrinterPrettyTable(PrinterTableGateway):
         if len(table.rows) > 0:
             print(table)
 
-    def print_table_exclusions(self, exclusions):
+    def print_table_exclusions(self, exclusions, break_build_manager):
+        model_header = "Priority" if break_build_manager.get("MODEL", "Severity") == "priority" else "Severity"
         if exclusions:
             headers = [
-                "Severity",
+                model_header,
                 "ID",
                 "Where",
                 "Create Date",

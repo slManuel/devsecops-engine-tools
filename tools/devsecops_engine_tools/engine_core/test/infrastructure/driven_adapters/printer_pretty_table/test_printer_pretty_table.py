@@ -117,11 +117,12 @@ class TestPrinterPrettyTable(unittest.TestCase):
                 "reason": "reason",
             }
         ]
+        manager = {"MODEL": "severity", "CLASSIFICATION": ["critical", "high", "medium", "low"]}
         
         printer = PrinterPrettyTable()
     
         # Act
-        printer.print_table_exclusions(exclusions)
+        printer.print_table_exclusions(exclusions, manager)
 
         # Assert
         assert mock_print.called
