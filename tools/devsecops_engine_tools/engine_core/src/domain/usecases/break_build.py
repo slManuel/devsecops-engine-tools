@@ -276,12 +276,12 @@ class BreakBuild:
             print(devops_platform_gateway.message("succeeded", "There are no compliances issues"))
             print(devops_platform_gateway.result_pipeline("succeeded"))
 
-    def _handle_exclusions(self, findings_excluded_list, exclusions, manager):
+    def _handle_exclusions(self, findings_excluded_list, exclusions, break_build_manager):
         devops_platform_gateway = self.devops_platform_gateway
         printer_table_gateway = self.printer_table_gateway
         print()
 
-        model = manager.get("MODEL", "severity")
+        model = break_build_manager.get("MODEL", "severity")
         if findings_excluded_list:
             exclusions_list = []
             for item in findings_excluded_list:
@@ -300,7 +300,7 @@ class BreakBuild:
                     })
             
             print(devops_platform_gateway.message("warning", "Below are all findings that were excepted."))
-            printer_table_gateway.print_table_exclusions(exclusions_list)
+            printer_table_gateway.print_table_exclusions(exclusions_list, break_build_manager)
             
             for reason, total in Counter(x["reason"] for x in exclusions_list).items():
                 print("{0} findings count: {1}".format(reason, total))

@@ -45,7 +45,7 @@ class PrinterRichTable(PrinterTableGateway):
         console = Console()
         console.print(table)
 
-    def print_table_exclusions(self, exclusions_list):
+    def print_table_exclusions(self, exclusions_list, break_build_manager):
         headers = []
         if exclusions_list:
             headers = ["ID", "Tags", "Service", "Create Date", "Expired Date", "Reason"]
