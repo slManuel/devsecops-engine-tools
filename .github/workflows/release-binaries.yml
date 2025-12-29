@@ -49,6 +49,19 @@ jobs:
           echo "Tag being released: ${{ github.event.release.tag_name || 'N/A' }}"
           echo "Event name: ${{ github.event_name }}"
           git log --oneline -5
+
+      - name: Override version for release build
+        if: github.event_name == 'release'
+        shell: bash
+        run: |
+          RELEASE_VERSION="${{ github.event.release.tag_name }}"
+          CLEAN_VERSION="${RELEASE_VERSION#v}"
+          if [ -z "$CLEAN_VERSION" ]; then
+            echo "Release tag is empty; aborting"
+            exit 1
+          fi
+          echo "Using release version: $CLEAN_VERSION"
+          printf "version = '%s'\n" "$CLEAN_VERSION" > tools/devsecops_engine_tools/version.py
       
       # Linux: Build inside Docker container with Ubuntu 22.04
       - name: Build binary on Ubuntu 22.04 container
