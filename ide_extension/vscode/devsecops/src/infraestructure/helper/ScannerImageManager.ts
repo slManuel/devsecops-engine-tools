@@ -16,36 +16,48 @@ export class ScannerImageManager {
     containerEnginePath: string,
     containerImageName: string,
     toolVersion: string,
-    outputChannel: OutputChannel
+    outputChannel: OutputChannel,
+    logCapture?: (message: string) => void
   ): Promise<boolean> {
     if (!DockerValidator.isDockerInstalled(containerEnginePath, outputChannel)) {
+      if (logCapture) {
+        logCapture("Docker is not installed or not accessible");
+      }
       return false;
     }
 
     const imageTag = `${containerImageName}:${toolVersion}`;
     const context: ErrorContext = { imageTag, containerImageName, toolVersion };
 
-    const imageExists = await this.checkImageExists(containerEnginePath, imageTag, outputChannel);
+    const imageExists = await this.checkImageExists(containerEnginePath, imageTag, outputChannel, logCapture);
     if (imageExists) {
       return true;
     }
 
     this.errorHandler.reset();
-    return await this.pullImage(containerEnginePath, imageTag, outputChannel, context);
+    return await this.pullImage(containerEnginePath, imageTag, outputChannel, context, logCapture);
   }
 
   private async checkImageExists(
     containerEnginePath: string,
     imageTag: string,
-    outputChannel: OutputChannel
+    outputChannel: OutputChannel,
+    logCapture?: (message: string) => void
   ): Promise<boolean> {
     const checkCommand = `${containerEnginePath} image inspect ${imageTag}`;
     try {
       await execAsync(checkCommand);
-      outputChannel.appendLine(`Scanner image ${imageTag} found locally.`);
+      const message = `Scanner image ${imageTag} found locally.`;
+      outputChannel.appendLine(message);
+      if (logCapture) {
+        logCapture(message);
+      }
       return true;
     } catch (error: any) {
       this.errorHandler.handle(error.message, outputChannel, { imageTag });
+      if (logCapture) {
+        logCapture(error.message);
+      }
       return false;
     }
   }
@@ -54,20 +66,28 @@ export class ScannerImageManager {
     containerEnginePath: string,
     imageTag: string,
     outputChannel: OutputChannel,
-    context: ErrorContext
+    context: ErrorContext,
+    logCapture?: (message: string) => void
   ): Promise<boolean> {
     try {
       const pullCommand = `${containerEnginePath} pull ${imageTag}`;
       const pullProcess = exec(pullCommand);
 
-      this.attachPullProcessListeners(pullProcess, outputChannel, context);
+      this.attachPullProcessListeners(pullProcess, outputChannel, context, logCapture);
 
       await execAsync(pullCommand);
       outputChannel.appendLine('');
-      outputChannel.appendLine(`Successfully downloaded scanner image ${imageTag}`);
+      const successMessage = `Successfully downloaded scanner image ${imageTag}`;
+      outputChannel.appendLine(successMessage);
+      if (logCapture) {
+        logCapture(successMessage);
+      }
       return true;
     } catch (pullError: any) {
       this.errorHandler.handle(pullError.message, outputChannel, context);
+      if (logCapture) {
+        logCapture(pullError.message);
+      }
       return false;
     }
   }
@@ -75,10 +95,15 @@ export class ScannerImageManager {
   private attachPullProcessListeners(
     pullProcess: ReturnType<typeof exec>,
     outputChannel: OutputChannel,
-    context: ErrorContext
+    context: ErrorContext,
+    logCapture?: (message: string) => void
   ): void {
     pullProcess.stdout?.on('data', (data) => {
-      outputChannel.append(data.toString());
+      const message = data.toString();
+      outputChannel.append(message);
+      if (logCapture) {
+        logCapture(message);
+      }
     });
 
     pullProcess.stderr?.on('data', (data) => {
@@ -87,6 +112,9 @@ export class ScannerImageManager {
         this.errorHandler.handle(errorStr, outputChannel, context);
       } else {
         outputChannel.append(errorStr);
+      }
+      if (logCapture) {
+        logCapture(errorStr);
       }
     });
   }
@@ -100,9 +128,10 @@ export class ScannerImageManager {
     containerEnginePath: string,
     containerImageName: string,
     toolVersion: string,
-    outputChannel: OutputChannel
+    outputChannel: OutputChannel,
+    logCapture?: (message: string) => void
   ): Promise<boolean> {
     const manager = new ScannerImageManager();
-    return manager.ensureScannerImageExists(containerEnginePath, containerImageName, toolVersion, outputChannel);
+    return manager.ensureScannerImageExists(containerEnginePath, containerImageName, toolVersion, outputChannel, logCapture);
   }
 }

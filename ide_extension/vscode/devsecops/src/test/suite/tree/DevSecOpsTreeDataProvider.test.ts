@@ -19,20 +19,21 @@ suite("DevSecOpsTreeDataProvider Tests", () => {
       extensionUri: vscode.Uri.parse("file:///test/path"),
       globalState: {
         get: () => undefined,
-        update: async () => {},
+        update: async () => { },
         keys: () => [],
       } as any,
       workspaceState: {
         get: () => undefined,
-        update: async () => {},
+        update: async () => { },
         keys: () => [],
       } as any,
       secrets: {
         get: async () => undefined,
-        store: async () => {},
-        delete: async () => {},
+        store: async () => { },
+        delete: async () => { },
+        keys: async () => [],
         onDidChange: ((listener: any, thisArgs?: any, disposables?: any) => {
-          return { dispose() {} };
+          return { dispose() { } };
         }) as vscode.Event<vscode.SecretStorageChangeEvent>,
       },
       extensionMode: vscode.ExtensionMode.Development,
@@ -45,13 +46,13 @@ suite("DevSecOpsTreeDataProvider Tests", () => {
       asAbsolutePath: (relativePath) => `/test/path/${relativePath}`,
       environmentVariableCollection: {
         persistent: true,
-        replace: () => {},
-        append: () => {},
-        prepend: () => {},
+        replace: () => { },
+        append: () => { },
+        prepend: () => { },
         get: () => undefined,
-        forEach: () => {},
-        clear: () => {},
-        delete: () => {},
+        forEach: () => { },
+        clear: () => { },
+        delete: () => { },
       } as any,
       extension: {} as any,
       languageModelAccessInformation: {} as any,

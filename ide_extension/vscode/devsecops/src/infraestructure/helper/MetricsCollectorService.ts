@@ -10,7 +10,8 @@ export class MetricsCollectorService {
         const scanStatus = ScanStatusService.determineScanStatus(
             input.scan_success,
             input.findings.length,
-            hasLogErrors
+            hasLogErrors,
+            input.output_logs
         );
         const exceptionLog = LogAnalysisService.extractExceptionMessage(
             input.output_logs,

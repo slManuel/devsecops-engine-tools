@@ -9,9 +9,9 @@ export interface ErrorContext {
 
 type ErrorHandler = string | ((context: ErrorContext, outputChannel: OutputChannel) => void);
 
-// Error Configuration
 const DOCKER_ERROR_MESSAGES: Record<string, ErrorHandler> = {
     "Cannot connect to the Docker daemon": " 🐋 Docker is not running or not accessible. Please start Docker and try again.",
+    "Docker is not running": " 🐋 Docker is not running or not accessible. Please start Docker and try again.",
     "No such image": (context, outputChannel) => {
         if (context.imageTag) {
             outputChannel.appendLine(`Scanner image ${context.imageTag} not found locally. Attempting to download...`);
@@ -20,6 +20,7 @@ const DOCKER_ERROR_MESSAGES: Record<string, ErrorHandler> = {
     },
     "Unable to find image": "📦 Container image not found. The image will be downloaded automatically.",
     "Failed to download image": "🛜 Failed to download image. Please check your internet connection or Docker configuration.",
+    "Failed to ensure scanner image": "🛜 Failed to download image. Please check your internet connection or Docker configuration.",
     "context deadline exceeded": "🛜 Failed to download image. Please check your internet connection or Docker configuration.",
     "i/o timeout": "🌐 Network timeout: Unable to reach Docker registry. Please check your internet connection and registry availability.",
     "Error response from daemon: Get": "🌐 Network error: Unable to reach Docker registry. Please check your internet connection and registry URL.",
@@ -46,6 +47,14 @@ const DOCKER_ERROR_MESSAGES: Record<string, ErrorHandler> = {
 
 export class DockerErrorHandler {
     private lastErrorKey: string | null = null;
+
+    /**
+     * Returns all Docker error patterns for reuse in metrics analysis.
+     * This maintains single source of truth for Docker error detection.
+     */
+    public static getErrorPatterns(): string[] {
+        return Object.keys(DOCKER_ERROR_MESSAGES);
+    }
 
     handle(errorMessage: string, outputChannel: OutputChannel, context: ErrorContext = {}): void {
         const errorKey = this.findMatchingErrorKey(errorMessage);
