@@ -32,11 +32,13 @@ export class IacScanner implements IScannerGateway {
           containerEnginePath,
           containerImageName,
           toolVersion,
-          outputChannel
+          outputChannel,
+          (message) => this.metricsHelper.captureOnly(message)
         );
 
         if (!scannerImageAvailable) {
           this.metricsHelper.captureLog(outputChannel, "Failed to ensure scanner image is available. Aborting scan.");
+          await this.collectFailedScanMetrics(elementToScan);
           resolve(new ScannerRes(false, [], null));
           return;
         }
@@ -45,9 +47,11 @@ export class IacScanner implements IScannerGateway {
           scanLoader.start(`Infrastructure as Code for: ${elementToScan.split('/').pop()} `);
         }
 
-        const timeout = setTimeout(() => {
+        const timeout = setTimeout(async () => {
           outputChannel.appendLine("Scan timed out after 10 minutes");
           outputChannel.appendLine("Container command may be hanging. Check container engine configuration.");
+          this.metricsHelper.captureLog(outputChannel, "Scan timed out after 10 minutes");
+          await this.collectFailedScanMetrics(elementToScan);
           resolve(new ScannerRes(false, [], null));
         }, 600000);
 
@@ -126,6 +130,7 @@ export class IacScanner implements IScannerGateway {
 
       } catch (error) {
         this.metricsHelper.captureError(outputChannel, error, "during IaC scanning");
+        await this.collectFailedScanMetrics(elementToScan);
         resolve(new ScannerRes(false, [], null));
       }
     });
@@ -187,6 +192,20 @@ export class IacScanner implements IScannerGateway {
       outputChannel.appendLine(`Standard Error: ${stderr}`);
       outputChannel.appendLine("Attempting to process partial results...");
     }
+  }
+
+  /**
+   * Helper method to collect metrics for failed scan scenarios.
+   * Eliminates code duplication across error handling paths.
+   */
+  private async collectFailedScanMetrics(elementToScan: string): Promise<void> {
+    await this.metricsHelper.collectAndstoreMetricsData(
+      elementToScan,
+      [],
+      null,
+      false,
+      "engine_iac"
+    );
   }
 
   private calculateRawSeverityCounts(contexts: IIacContext[]): ISeverityCounts {

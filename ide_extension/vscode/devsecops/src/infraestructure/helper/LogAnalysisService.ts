@@ -110,7 +110,7 @@ export class LogAnalysisService {
 
         return logs.some(log => {
             const logLower = log.toLowerCase();
-            return ERROR_PATTERNS[category].some(pattern => 
+            return ERROR_PATTERNS[category].some(pattern =>
                 logLower.includes(pattern.toLowerCase())
             );
         });

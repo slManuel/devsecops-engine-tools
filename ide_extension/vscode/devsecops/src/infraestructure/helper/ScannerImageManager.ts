@@ -19,6 +19,9 @@ export class ScannerImageManager {
     outputChannel: OutputChannel,
     logCapture?: (message: string) => void
   ): Promise<boolean> {
+    // Reset error handler at the start to ensure clean state
+    this.errorHandler.reset();
+
     if (!DockerValidator.isDockerInstalled(containerEnginePath, outputChannel)) {
       if (logCapture) {
         logCapture("Docker is not installed or not accessible");
@@ -34,7 +37,7 @@ export class ScannerImageManager {
       return true;
     }
 
-    this.errorHandler.reset();
+    // Don't reset here - preserve duplicate detection across operations
     return await this.pullImage(containerEnginePath, imageTag, outputChannel, context, logCapture);
   }
 

@@ -37,6 +37,15 @@ export class ScannerMetricsHelper {
     }
 
     /**
+     * Capture a log message without writing to output channel
+     * Used when the message has already been written to the channel
+     * @param message Message to capture for metrics
+     */
+    captureOnly(message: string): void {
+        this.outputLogs.push(message);
+    }
+
+    /**
      * Collect and store structured metrics data from scan results
      * @param elementToScan The element that was scanned (file, directory, image, etc.)
      * @param findings Array of security findings discovered

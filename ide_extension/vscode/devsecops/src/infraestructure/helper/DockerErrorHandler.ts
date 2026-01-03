@@ -23,7 +23,7 @@ const DOCKER_ERROR_MESSAGES: Record<string, ErrorHandler> = {
     "Failed to ensure scanner image": "🛜 Failed to download image. Please check your internet connection or Docker configuration.",
     "context deadline exceeded": "🛜 Failed to download image. Please check your internet connection or Docker configuration.",
     "i/o timeout": "🌐 Network timeout: Unable to reach Docker registry. Please check your internet connection and registry availability.",
-    "Error response from daemon: Get": "🌐 Network error: Unable to reach Docker registry. Please check your internet connection and registry URL.",
+    "Error response from daemon: Get": "🌐 Network error: Unable to reach Docker registry. Please check your internet connection.",
     "manifest unknown": (context, outputChannel) => {
         if (context.containerImageName && context.toolVersion) {
             outputChannel.appendLine(`⚠️ Please verify that version ${context.toolVersion} exists for image ${context.containerImageName}. You may need to check available versions or update your configuration.`);
