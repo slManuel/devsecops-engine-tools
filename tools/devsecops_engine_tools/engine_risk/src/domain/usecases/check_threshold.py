@@ -38,9 +38,7 @@ class CheckThreshold:
         else:
             base_threshold = self.threshold
 
-        quality_config = base_threshold.get(
-            "QUALITY_VULNERABILITY_MANAGEMENT"
-        )
+        quality_config = base_threshold.get("QUALITY_VULNERABILITY_MANAGEMENT")
         if quality_config:
             return self._apply_quality_vulnerability_management(
                 quality_config, base_threshold

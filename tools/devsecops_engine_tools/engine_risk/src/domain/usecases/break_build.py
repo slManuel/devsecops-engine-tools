@@ -62,7 +62,7 @@ class BreakBuild:
         self._remediation_rate_control(self.all_report, new_report_list)
         finding_score_model = self.remote_config.get("FINDING_SCORE", {}).get("MODEL")
         if finding_score_model == "PRIORITY":
-            self._priority_score_control(new_report_list)
+            self._priority_control(new_report_list)
         else:
             self._risk_score_control(new_report_list)
         all_exclusions = list(self.vm_exclusions) + list(applied_exclusions)
@@ -478,8 +478,10 @@ class BreakBuild:
             max(report.risk_score for report in report_list) if report_list else 0
         )
 
-    def _priority_score_control(self, report_list: "list[Report]"):
+    def _priority_control(self, report_list: "list[Report]"):
         score_threshold = self.threshold["SCORE"]
+        model = self.remote_config.get("FINDING_SCORE", {}).get("MODEL")
+        classification_threshold = self.threshold.get(model, {})
         break_build = False
 
         service_reports = {}
@@ -498,7 +500,7 @@ class BreakBuild:
             )
             self.printer_table_gateway.print_table_report(
                 reports,
-                self.remote_config.get("FINDING_SCORE", {}).get("MODEL"),
+                model,
             )
 
             if priority_score_sum > max_priority_score:
@@ -523,14 +525,74 @@ class BreakBuild:
                 print(
                     self.devops_platform_gateway.message(
                         "error",
-                        f"Service '{service}': The sum of priority scores {priority_score_sum} is greater than the threshold {score_threshold}",
+                        f"The sum of priority scores {priority_score_sum} is greater than the threshold {score_threshold}",
                     )
                 )
             else:
                 print(
                     self.devops_platform_gateway.message(
                         "succeeded",
-                        f"Service '{service}': The sum of priority scores {priority_score_sum} is less than the threshold {score_threshold}",
+                        f"The sum of priority scores {priority_score_sum} is less than the threshold {score_threshold}",
+                    )
+                )
+
+            classification_reports = {}
+            for report in reports:
+                classification = report.priority_classification
+                if classification not in classification_reports:
+                    classification_reports[classification] = []
+                classification_reports[classification].append(report)
+
+            classification_counts = {}
+            has_threshold_violation = False
+            for classification in classification_threshold.keys():
+                count = len(classification_reports.get(classification, []))
+                limit = classification_threshold.get(classification, 999)
+                classification_counts[classification] = {
+                    "count": count,
+                    "limit": limit,
+                    "violated": count >= limit,
+                }
+                if count >= limit:
+                    has_threshold_violation = True
+
+            counts_str = ", ".join(
+                [f"{k}: {v['count']}" for k, v in classification_counts.items()]
+            )
+            criteria_str = ", ".join(
+                [f"{k}: {v['limit']}" for k, v in classification_counts.items()]
+            )
+
+            if has_threshold_violation:
+                break_build = True
+                print(
+                    self.devops_platform_gateway.message(
+                        "error",
+                        f"Count of priorities ({counts_str}) is greater than or equal to failure criteria ({criteria_str}, operator: or)",
+                    )
+                )
+                for classification, values in classification_counts.items():
+                    if values["violated"]:
+                        class_reports = classification_reports.get(classification, [])
+                        for report in class_reports:
+                            self.report_breaker.append(
+                                {
+                                    "id": (
+                                        report.vuln_id_from_tool
+                                        if report.vuln_id_from_tool
+                                        else report.id
+                                    ),
+                                    "severity": report.severity,
+                                    "risk_score": "0",
+                                    "priority_score": str(report.priority),
+                                    "reason": "Priority Threshold",
+                                }
+                            )
+            else:
+                print(
+                    self.devops_platform_gateway.message(
+                        "succeeded",
+                        f"Count of priorities ({counts_str}) is not greater than or equal to failure criteria ({criteria_str}, operator: or)",
                     )
                 )
 
