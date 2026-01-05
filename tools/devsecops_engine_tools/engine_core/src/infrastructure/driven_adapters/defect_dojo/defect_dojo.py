@@ -834,6 +834,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
             service=finding.service,
             unique_id_from_tool=finding.unique_id_from_tool,
             priority=finding.priority if finding.priority else 0.0,
+            priority_classification=finding.priority_classification.lower(),
         )
 
     def _format_date_to_dd_format(self, date_string):
