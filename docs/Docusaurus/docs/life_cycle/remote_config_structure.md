@@ -59,7 +59,7 @@ For more information about structure remote config for this module, [engine dast
 
 The engine_integrations module enables the integration of DevSecOps Engine Tools with external systems and platforms, focusing on orchestrating and automating reporting and data exchange processes. It is designed to be extensible, allowing new integrations to be added as needed.
 
-### **report_sonar**
+### **copacetic**
 For more information about structure remote config for this integration, [copacetic](../modules/engine_integrations/copacetic.md)
 
 ### **report_sonar**
@@ -106,7 +106,7 @@ For more information about structure remote config for this module, [engine depe
 
 ## **vulnerability_management**
 
-## **vulnerability_management/cmdb_mapping**
+### **vulnerability_management/cmdb_mapping**
 
 Mapping configuration for the names of the evcs obtained from the cmdb, to centralize a single name and have unified product types in Vulnerability Management.
 
