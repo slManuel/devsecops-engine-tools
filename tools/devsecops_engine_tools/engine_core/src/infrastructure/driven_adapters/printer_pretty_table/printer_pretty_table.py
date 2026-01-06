@@ -144,6 +144,9 @@ class PrinterPrettyTable(PrinterTableGateway):
                 "Expired Date",
                 "Reason",
             ]
+        
+        if exclusions[0].get("module") in ("engine_container", "engine_dependencies", "engine_function"):
+            headers.insert(6, "Fixed in")
 
         table = PrettyTable(headers)
         
@@ -161,6 +164,8 @@ class PrinterPrettyTable(PrinterTableGateway):
                 ),
                 exclusion["reason"],
             ]
+            if exclusion.get("module") in ("engine_container", "engine_dependencies", "engine_function"):
+                row_data.append(exclusion["fixed in"])
             table.add_row(row_data)
 
         for column in table.field_names:

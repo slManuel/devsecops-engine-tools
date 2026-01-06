@@ -297,6 +297,8 @@ class BreakBuild:
                         "create_date": matching.create_date,
                         "expired_date": matching.expired_date,
                         "reason": matching.reason,
+                        "module": item.module,
+                        "fixed in": item.requirements,
                     })
             
             print(devops_platform_gateway.message("warning", "Below are all findings that were excepted."))
