@@ -525,14 +525,14 @@ class BreakBuild:
                 print(
                     self.devops_platform_gateway.message(
                         "error",
-                        f"The sum of priority scores {priority_score_sum} is greater than the threshold {score_threshold}",
+                        f"The sum of priorities {priority_score_sum} is greater than the threshold {score_threshold}",
                     )
                 )
             else:
                 print(
                     self.devops_platform_gateway.message(
                         "succeeded",
-                        f"The sum of priority scores {priority_score_sum} is less than the threshold {score_threshold}",
+                        f"The sum of priorities {priority_score_sum} is less than the threshold {score_threshold}",
                     )
                 )
 
@@ -568,7 +568,7 @@ class BreakBuild:
                 print(
                     self.devops_platform_gateway.message(
                         "error",
-                        f"Count of priorities ({counts_str}) is greater than or equal to failure criteria ({criteria_str}, operator: or)",
+                        f"Count of priority classes ({counts_str}) is greater than or equal to failure criteria ({criteria_str}, operator: or)",
                     )
                 )
                 for classification, values in classification_counts.items():
@@ -592,7 +592,7 @@ class BreakBuild:
                 print(
                     self.devops_platform_gateway.message(
                         "succeeded",
-                        f"Count of priorities ({counts_str}) is not greater than or equal to failure criteria ({criteria_str}, operator: or)",
+                        f"Count of priority classes ({counts_str}) is not greater than or equal to failure criteria ({criteria_str}, operator: or)",
                     )
                 )
 
