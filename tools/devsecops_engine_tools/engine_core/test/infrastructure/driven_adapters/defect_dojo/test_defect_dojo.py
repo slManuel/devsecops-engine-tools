@@ -60,6 +60,7 @@ class TestDefectDojoPlatform(unittest.TestCase):
                         "DEFAULT": 1,
                         "ORPHAN": 4
                     },
+                    "REGEX_EXPRESSION_CODE_APP": "regex",
                     "CMDB": {
                         "USE_CMDB": True,
                         "HOST_CMDB": "cmdb_host",
@@ -73,7 +74,6 @@ class TestDefectDojoPlatform(unittest.TestCase):
                             "PARAMS": "username=test&password=#{passwordvalue}#",
                             "RESPONSE": None
                         },
-                        "REGEX_EXPRESSION_CMDB": "regex",
                         "CMDB_MAPPING_PATH": "mapping_path",
                         "CMDB_MAPPING": {
                             "PRODUCT_TYPE_NAME": "nombreevc",
@@ -231,13 +231,13 @@ class TestDefectDojoPlatform(unittest.TestCase):
                     "TOOL_SLA_MAPPING": {
                         "DEFAULT": 1,
                         "ORPHAN": 4
-                    },                    
+                    },
+                    "REGEX_EXPRESSION_CODE_APP": "regex",                    
                     "CMDB": {
                         "USE_CMDB": True,
                         "HOST_CMDB": "cmdb_host",
                         "GENERATE_AUTH_CMDB": False,
                         "AUTH_CMDB_REQUEST_REPONSE": {},
-                        "REGEX_EXPRESSION_CMDB": "regex",
                         "CMDB_MAPPING_PATH": "mapping_path",
                         "CMDB_MAPPING": {
                             "PRODUCT_TYPE_NAME": "nombreevc",
@@ -377,9 +377,10 @@ class TestDefectDojoPlatform(unittest.TestCase):
                     "TOOL_SLA_MAPPING": {
                         "DEFAULT": 1,
                         "ORPHAN": 4
-                    },          
+                    },
+                    "REGEX_EXPRESSION_CODE_APP": "regex",          
                     "REIMPORT_SCAN": True,
-                    "CMDB": {"USE_CMDB": True, "REGEX_EXPRESSION_CMDB": "regex"},
+                    "CMDB": {"USE_CMDB": True},
                 },
             }
         }
@@ -466,8 +467,8 @@ class TestDefectDojoPlatform(unittest.TestCase):
                     "HOST_DEFECT_DOJO": "host_defect_dojo",
                     "LIMITS_QUERY": 80,
                     "REIMPORT_SCAN": True,
+                    "REGEX_EXPRESSION_CODE_APP": "regex",
                     "MAX_RETRIES_QUERY": 5,
-                    "CMDB": {"REGEX_EXPRESSION_CMDB": "regex"},
                 }
             }
         }
@@ -806,6 +807,7 @@ class TestDefectDojoPlatform(unittest.TestCase):
             risk_status="On Whitelist",
             tags="engine_dependencies",
             limit=80,
+            fields="id,vuln_id_from_tool,vulnerability_ids,severity,priority_classification,endpoints,component_name,component_version,tags,file_path"
         )
 
         expected_result = [
