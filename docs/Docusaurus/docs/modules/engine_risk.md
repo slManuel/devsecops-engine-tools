@@ -181,6 +181,17 @@ Main configuration file that defines risk analysis behavior, scoring weights, an
   - `10`: 50% minimum remediation rate
   - `other`: 70% minimum remediation rate for larger counts
 - **SCORE**: Maximum acceptable finding score threshold (e.g., `10`)
+- **PRIORITY**: Classification-based thresholds for PRIORITY model (defines maximum count per classification before build breaks):
+  ```json
+  "PRIORITY": {
+    "classification-1": 2,
+    "classification-2": 3,
+    "classification-n": 5
+  }
+  ```
+  - Classification names must match `priority_classification` values from vulnerability management platform
+  - Each value represents the maximum number of findings allowed in that classification (>= triggers failure)
+  - Evaluated per service using "operator: or" logic (any classification exceeding its limit causes failure)
 
 **Quality-Based Vulnerability Management:**
 - **PTS (Product Type Specifications)**: Array of product-specific configurations:
@@ -196,10 +207,13 @@ Main configuration file that defines risk analysis behavior, scoring weights, an
     - Breaks the build if any single finding exceeds the configured threshold
     - Formula: `risk_score = severity_weight + (epss_weight × epss_score) + min(age_weight × age, max_age) + sum(tag_weights)`
   - `"PRIORITY"`: Service-level priority aggregation model
-    - Groups findings by service and sums their priority scores
-    - Evaluates the total priority score per service against the score threshold
-    - Breaks the build if the sum of priority scores for any service exceeds the configured threshold
-    - Useful for service-based risk management and prioritization
+    - Groups findings by service and performs two validations:
+      1. **Priority Score Sum**: Validates that the sum of priority scores per service doesn't exceed `THRESHOLD.SCORE`
+      2. **Classification Thresholds**: Validates that the count of findings in each `priority_classification` doesn't equal or exceed limits defined in `THRESHOLD.PRIORITY`
+    - Both validations are performed per service independently
+    - Breaks the build if either validation fails for any service
+    - Uses "operator: or" logic for classifications (failure of any single classification causes build break)
+    - Useful for service-based risk management and preventing accumulation of high-priority findings
 
 ### Exclusions.json
 
@@ -314,7 +328,7 @@ devsecops-engine-tools \
 ### Finding Score Model Selection
 1. **Choose the appropriate model** based on your risk management strategy:
    - Use `"RISK"` model for individual finding-level control with granular risk assessment
-   - Use `"PRIORITY"` model for service-level aggregated risk management
+   - Use `"PRIORITY"` model for service-level aggregated risk management with dual validation
 2. **RISK Model Best Practices**:
    - Ideal for organizations with strict individual vulnerability policies
    - Configure `THRESHOLD.SCORE` to reflect maximum acceptable risk per finding
@@ -323,8 +337,9 @@ devsecops-engine-tools \
 3. **PRIORITY Model Best Practices**:
    - Ideal for microservice architectures requiring service-level risk assessment
    - Configure `THRESHOLD.SCORE` as the maximum acceptable aggregate priority per service
-   - Allows multiple lower-priority findings while preventing accumulation of risk
-   - Better suited for gradual remediation strategies across services
+   - Define `THRESHOLD.PRIORITY` with classification limits matching your vulnerability management platform's `priority_classification` values
+   - Allows control over both total priority burden and distribution across severity classifications
+   - Better suited for gradual remediation strategies while preventing critical finding accumulation
 4. **Model Configuration Example**:
    ```json
    "FINDING_SCORE": {
