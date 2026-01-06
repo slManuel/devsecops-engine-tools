@@ -504,35 +504,46 @@ def test_risk_score_control_not_break():
     )
 
 
-def test_priority_score_control():
+def test_priority_control():
     report_list = [
-        Report(priority=1, service="service1"),
-        Report(priority=1, service="service1"),
-        Report(priority=0.5, service="service2"),
+        Report(priority=1, service="service1", priority_classification="severity1"),
+        Report(priority=1, service="service1", priority_classification="severity1"),
+        Report(priority=0.5, service="service2", priority_classification="severity2"),
     ]
+    config = {
+        "SCORE": 1.9,
+        "PRIORITY": {"severity1": 2, "severity2": 5},
+    }
     devops_platform_gateway = MagicMock()
     break_build = BreakBuild(
         devops_platform_gateway,
         MagicMock(),
-        {},
+        {"FINDING_SCORE": {"MODEL": "PRIORITY"}},
         [],
         [],
         [],
         [],
-        {"SCORE": 1.9},
+        config,
         0,
     )
-    break_build._priority_score_control(report_list)
+    break_build._priority_control(report_list)
 
     devops_platform_gateway.message.assert_any_call(
         "error",
-        "Service 'service1': The sum of priority scores 2 is greater than the threshold 1.9",
+        "The sum of priorities 2 is greater than the threshold 1.9",
     )
     devops_platform_gateway.message.assert_any_call(
         "succeeded",
-        "Service 'service2': The sum of priority scores 0.5 is less than the threshold 1.9",
+        "The sum of priorities 0.5 is less than the threshold 1.9",
     )
-    assert devops_platform_gateway.message.call_count == 2
+    devops_platform_gateway.message.assert_any_call(
+        "error",
+        "Count of priority classes (severity1: 2, severity2: 0) is greater than or equal to failure criteria (severity1: 2, severity2: 5, operator: or)",
+    )
+    devops_platform_gateway.message.assert_any_call(
+        "succeeded",
+        "Count of priority classes (severity1: 0, severity2: 1) is not greater than or equal to failure criteria (severity1: 2, severity2: 5, operator: or)",
+    )
     assert break_build.break_build == True
 
 

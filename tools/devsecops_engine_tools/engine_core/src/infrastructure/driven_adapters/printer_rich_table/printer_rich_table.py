@@ -23,8 +23,9 @@ class PrinterRichTable(PrinterTableGateway):
         # To implement
         return
 
-    def print_table_report(self, report_list: "list[Report]", finding_score_model):
-        model_header = "Priority" if finding_score_model == "PRIORITY" else "Risk Score"
+    def print_table_report(self, report_list: "list[Report]", model):
+        model_header = "Priority" if model == "PRIORITY" else "Risk Score"
+        service_header = "Priority Class" if model == "PRIORITY" else "Services"
         sorted_report_list = sorted(
             report_list, key=lambda report: report.risk_score, reverse=True
         )
@@ -36,10 +37,10 @@ class PrinterRichTable(PrinterTableGateway):
             table.add_column(header)
         for report in sorted_report_list:
             row_data = [
-                str(report.priority if finding_score_model == "PRIORITY" else report.risk_score),
+                str(report.priority if model == "PRIORITY" else report.risk_score),
                 self._check_spaces(report.vm_id, report.vm_id_url),
                 ", ".join(report.tags),
-                report.service,
+                report.priority_classification if model == "PRIORITY" else self._check_spaces(report.service),
             ]
             table.add_row(*row_data)
         console = Console()
