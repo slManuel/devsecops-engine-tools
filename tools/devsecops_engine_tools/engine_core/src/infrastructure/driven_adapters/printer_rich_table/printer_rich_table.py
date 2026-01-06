@@ -29,7 +29,7 @@ class PrinterRichTable(PrinterTableGateway):
         sorted_report_list = sorted(
             report_list, key=lambda report: report.risk_score, reverse=True
         )
-        headers = [model_header, "ID", "Tags", "Services"]
+        headers = [model_header, "ID", "Tags", service_header]
         table = Table(
             show_header=True, header_style="bold magenta", box=box.DOUBLE_EDGE
         )
@@ -40,7 +40,7 @@ class PrinterRichTable(PrinterTableGateway):
                 str(report.priority if model == "PRIORITY" else report.risk_score),
                 self._check_spaces(report.vm_id, report.vm_id_url),
                 ", ".join(report.tags),
-                report.priority_classification if model == "PRIORITY" else self._check_spaces(report.service),
+                report.priority_classification if model == "PRIORITY" else report.service,
             ]
             table.add_row(*row_data)
         console = Console()
