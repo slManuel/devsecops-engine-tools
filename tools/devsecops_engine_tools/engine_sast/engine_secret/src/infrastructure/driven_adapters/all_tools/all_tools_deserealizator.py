@@ -1,5 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
+import os
+import re
 from typing import List
 from devsecops_engine_tools.engine_core.src.domain.model.finding import Finding
 from devsecops_engine_tools.engine_sast.engine_secret.src.domain.model.gateway.gateway_deserealizator import (
@@ -63,12 +65,44 @@ class AllToolsSecretScanDeserealizator(DeseralizatorGateway):
             - "config.py, Secret: xox*********5t6" -> "config.py, Secret: xox*********5t6"
             - "/config.py, Secret: xox*********5t6" -> "config.py, Secret: xox*********5t6"
         """
-        # Remove leading slash from path if present
-        if where.startswith("/"):
-            where = where[1:]
-        return where
+        if not where:
+            return ""
+
+        parts = where.split(',', 1)
+        path_part = parts[0].lstrip('/')
+
+        # Use basename so differences in parent paths don't prevent deduplication
+        path_base = os.path.basename(path_part)
+
+        rest = parts[1] if len(parts) > 1 else ''
+
+        # Normalize secret mask so different masking styles still match
+        m = re.search(r'Secret:\s*(\S+)', rest)
+        if m:
+            secret_raw = m.group(1)
+            if '*' in secret_raw:
+                masked = secret_raw
+            else:
+                # keep first 3 and last 3 if possible, otherwise keep original
+                masked = (secret_raw[:3] + '*' * 9 + secret_raw[-3:]) if len(secret_raw) > 6 else secret_raw
+            rest = f', Secret: {masked}'
+
+        normalized = f"{path_base}{rest}".strip()
+        return normalized
     
     def get_where_correctly(self, result: dict, path_directory=""):
-        path = result.get("File", "").replace(path_directory, "")
-        hidden_secret = str(result.get("Secret"))[:3] + '*' * 9 + str(result.get("Secret"))[-3:]
+        full_path = result.get("File", "")
+        # Remove path_directory if present, then use basename for consistent output
+        try:
+            relative = full_path.replace(path_directory, "") if path_directory else full_path
+        except Exception:
+            relative = full_path
+        path = os.path.basename(relative.lstrip('/'))
+
+        secret = str(result.get("Secret", ""))
+        if '*' in secret:
+            hidden_secret = secret
+        else:
+            hidden_secret = (secret[:3] + '*' * 9 + secret[-3:]) if len(secret) > 6 else secret
+
         return f"{path}, Secret: {hidden_secret}"
