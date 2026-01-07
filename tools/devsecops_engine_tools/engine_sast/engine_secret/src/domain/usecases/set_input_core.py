@@ -53,6 +53,7 @@ class SetInputCore:
                             create_date=item.get("create_date", ""),
                             expired_date=item.get("expired_date", ""),
                             severity=item.get("severity", ""),
+                            priority=item.get("priority", ""),
                             hu=item.get("hu", ""),
                             reason=item.get("reason", "DevSecOps policy"),
                         )
