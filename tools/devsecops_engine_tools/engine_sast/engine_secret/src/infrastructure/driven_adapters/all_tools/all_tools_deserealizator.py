@@ -68,41 +68,100 @@ class AllToolsSecretScanDeserealizator(DeseralizatorGateway):
         if not where:
             return ""
 
-        parts = where.split(',', 1)
-        path_part = parts[0].lstrip('/')
+        # Expect formats like:
+        # - "path, Secret: xxx"
+        # - "path:line, Detector: name, Secret: xxx"
+        # We will extract path, optional line, optional detector, and secret.
+        path_part = ''
+        line_part = ''
+        detector_part = ''
+        secret_part = ''
 
-        # Use basename so differences in parent paths don't prevent deduplication
-        path_base = os.path.basename(path_part)
-
-        rest = parts[1] if len(parts) > 1 else ''
-
-        # Normalize secret mask so different masking styles still match
-        m = re.search(r'Secret:\s*(\S+)', rest)
-        if m:
-            secret_raw = m.group(1)
-            if '*' in secret_raw:
-                masked = secret_raw
+        # split by commas but keep parts manageable
+        pieces = [p.strip() for p in where.split(',') if p.strip()]
+        if pieces:
+            # first piece may contain path or path:line
+            first = pieces[0]
+            if ':' in first and not first.lower().startswith('secret'):
+                # path:line
+                idx = first.rfind(':')
+                path_part = first[:idx].lstrip('/')
+                line_part = first[idx+1:]
             else:
-                # keep first 3 and last 3 if possible, otherwise keep original
-                masked = (secret_raw[:3] + '*' * 9 + secret_raw[-3:]) if len(secret_raw) > 6 else secret_raw
-            rest = f', Secret: {masked}'
+                path_part = first.lstrip('/')
 
-        normalized = f"{path_base}{rest}".strip()
-        return normalized
+        for p in pieces[1:]:
+            if p.lower().startswith('detector:'):
+                detector_part = p.split(':',1)[1].strip()
+            elif p.lower().startswith('secret:'):
+                secret_part = p.split(':',1)[1].strip()
+            else:
+                # fallback: could be ExtraData name or other
+                if not detector_part:
+                    detector_part = p
+
+        # Normalize secret mask
+        if secret_part:
+            m = re.search(r"(\S+)", secret_part)
+            if m:
+                secret_raw = m.group(1)
+                if '*' in secret_raw:
+                    masked = secret_raw
+                else:
+                    masked = (secret_raw[:3] + '*' * 9 + secret_raw[-3:]) if len(secret_raw) > 6 else secret_raw
+                secret_part = masked
+
+        normalized = f"{path_part}"
+        if line_part:
+            normalized += f":{line_part}"
+        if detector_part:
+            normalized += f", Detector: {detector_part}"
+        if secret_part:
+            normalized += f", Secret: {secret_part}"
+
+        return normalized.strip()
     
     def get_where_correctly(self, result: dict, path_directory=""):
-        full_path = result.get("File", "")
-        # Remove path_directory if present, then use basename for consistent output
+        # Build a more detailed where string including line and detector/extra name
+        full_path = result.get("File", "") or ""
+        # Try trufflehog style nested path
+        if not full_path:
+            try:
+                full_path = (
+                    result.get("SourceMetadata", {})
+                    .get("Data", {})
+                    .get("Filesystem", {})
+                    .get("file", "")
+                )
+            except Exception:
+                full_path = full_path
+
+        # Remove path_directory prefix
         try:
             relative = full_path.replace(path_directory, "") if path_directory else full_path
         except Exception:
             relative = full_path
-        path = os.path.basename(relative.lstrip('/'))
+        path = relative.lstrip('/')
 
-        secret = str(result.get("Secret", ""))
+        # extract line if available
+        line = result.get("StartLine") or result.get("line") or (
+            result.get("SourceMetadata", {}).get("Data", {}).get("Filesystem", {}).get("line")
+        )
+
+        # prefer ExtraData.name when present, otherwise use DetectorName or RuleID
+        detector = (result.get("ExtraData") or {}).get("name") or result.get("DetectorName") or result.get("RuleID") or ""
+
+        secret = str(result.get("Secret", "") or result.get("Match", "") or result.get("Raw", "") or result.get("RawV2", "") or result.get("Redacted", ""))
         if '*' in secret:
             hidden_secret = secret
         else:
             hidden_secret = (secret[:3] + '*' * 9 + secret[-3:]) if len(secret) > 6 else secret
 
-        return f"{path}, Secret: {hidden_secret}"
+        where = f"{path}"
+        if line:
+            where += f":{line}"
+        if detector:
+            where += f", Detector: {detector}"
+        where += f", Secret: {hidden_secret}"
+
+        return where
