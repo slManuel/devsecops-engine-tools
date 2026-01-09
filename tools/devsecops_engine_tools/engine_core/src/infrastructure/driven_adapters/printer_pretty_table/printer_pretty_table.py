@@ -72,15 +72,16 @@ class PrinterPrettyTable(PrinterTableGateway):
         if len(sorted_table.rows) > 0:
             print(sorted_table)
 
-    def print_table_report(self, report_list: "list[Report]", finding_score_model):
-        model_header = "Priority" if finding_score_model == "PRIORITY" else "Risk Score"
-        headers = [model_header, "VM ID", "Services", "Tags"]
+    def print_table_report(self, report_list: "list[Report]", model):
+        score_header = "Priority" if model == "PRIORITY" else "Risk Score"
+        service_header = "Priority Class" if model == "PRIORITY" else "Services"
+        headers = [score_header, "VM ID", service_header, "Tags"]
         table = PrettyTable(headers)
         for report in report_list:
             row_data = [
-                report.priority if finding_score_model == "PRIORITY" else report.risk_score,
+                report.priority if model == "PRIORITY" else report.risk_score,
                 self._check_spaces(report.vm_id),
-                self._check_spaces(report.service),
+                report.priority_classification if model == "PRIORITY" else self._check_spaces(report.service),
                 ", ".join(report.tags),
             ]
             table.add_row(row_data)
