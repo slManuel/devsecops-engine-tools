@@ -89,10 +89,14 @@ class TestAllToolsSecretScanDeserealizator(unittest.TestCase):
 
     def test_normalize_where(self):
         """
-        Test the _normalize_where method correctly removes leading slashes.
+        Test the _normalize_where method extracts detector, filename, and secret.
+        New format: detector|filename|secret (path-agnostic deduplication)
         """
-        self.assertEqual(self.deserealizator._normalize_where("/path/to/file.py"), "path/to/file.py")
-        self.assertEqual(self.deserealizator._normalize_where("path/to/file.py"), "path/to/file.py")
+        # Test with full where string from Gitleaks format
+        self.assertEqual(self.deserealizator._normalize_where("file.py, Secret: sec*********ret"), "|file.py|sec*********ret")
+        # Test with detector and secret
+        self.assertEqual(self.deserealizator._normalize_where("/path/to/file.py, Detector: github-pat, Secret: ghp*********xYZ"), "github-pat|file.py|ghp*********xYZ")
+        # Test with empty string
         self.assertEqual(self.deserealizator._normalize_where(""), "")
 
     def test_get_where_correctly(self):

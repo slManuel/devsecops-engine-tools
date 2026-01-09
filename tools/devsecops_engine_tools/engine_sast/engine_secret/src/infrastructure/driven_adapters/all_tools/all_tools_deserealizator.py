@@ -59,66 +59,52 @@ class AllToolsSecretScanDeserealizator(DeseralizatorGateway):
     def _normalize_where(self, where: str) -> str:
         """
         Normalize the 'where' field to enable proper deduplication.
-        Handles differences in path formatting between Gitleaks and TruffleHog.
-        
-        Examples:
-            - "config.py, Secret: xox*********5t6" -> "config.py, Secret: xox*********5t6"
-            - "/config.py, Secret: xox*********5t6" -> "config.py, Secret: xox*********5t6"
+        Extracts: detector, filename (not full path), and secret
+        to be path-agnostic and robust to different path reporting formats.
         """
         if not where:
             return ""
 
-        # Expect formats like:
-        # - "path, Secret: xxx"
-        # - "path:line, Detector: name, Secret: xxx"
-        # We will extract path, optional line, optional detector, and secret.
-        path_part = ''
-        line_part = ''
-        detector_part = ''
-        secret_part = ''
+        # Parse the where string which is typically formatted as:
+        # "path[:line], [Detector: name], [Secret|Misconfiguration]: xxx"
+        detector = ""
+        filename = ""
+        secret = ""
 
-        # split by commas but keep parts manageable
+        # split by commas
         pieces = [p.strip() for p in where.split(',') if p.strip()]
+        
         if pieces:
-            # first piece may contain path or path:line
+            # first piece contains path and optionally line
             first = pieces[0]
-            if ':' in first and not first.lower().startswith('secret'):
-                # path:line
-                idx = first.rfind(':')
-                path_part = first[:idx].lstrip('/')
-                line_part = first[idx+1:]
-            else:
-                path_part = first.lstrip('/')
+            # remove leading slashes/backslashes to normalize
+            path = first.split(':')[0].lstrip('/').lstrip('\\')
+            # extract only filename (last component)
+            filename = path.split('/')[-1] if '/' in path else path
+            filename = filename.split('\\')[-1] if '\\' in filename else filename
 
+        # extract detector and secret from remaining pieces
         for p in pieces[1:]:
-            if p.lower().startswith('detector:'):
-                detector_part = p.split(':',1)[1].strip()
-            elif p.lower().startswith('secret:'):
-                secret_part = p.split(':',1)[1].strip()
-            else:
-                # fallback: could be ExtraData name or other
-                if not detector_part:
-                    detector_part = p
+            lower_p = p.lower()
+            if lower_p.startswith('detector:'):
+                detector = p.split(':', 1)[1].strip()
+            elif lower_p.startswith('secret:'):
+                secret_raw = p.split(':', 1)[1].strip()
+                # extract only the masked secret value
+                m = re.search(r'(\S+)', secret_raw)
+                if m:
+                    secret = m.group(1)
+            elif lower_p.startswith('misconfiguration:'):
+                secret_raw = p.split(':', 1)[1].strip()
+                m = re.search(r'(\S+)', secret_raw)
+                if m:
+                    secret = m.group(1)
 
-        # Normalize secret mask
-        if secret_part:
-            m = re.search(r"(\S+)", secret_part)
-            if m:
-                secret_raw = m.group(1)
-                if '*' in secret_raw:
-                    masked = secret_raw
-                else:
-                    masked = (secret_raw[:3] + '*' * 9 + secret_raw[-3:]) if len(secret_raw) > 6 else secret_raw
-                secret_part = masked
+        # Build normalized key: detector|filename|secret (path-agnostic)
+        if not (detector or filename or secret):
+            return ""
 
-        normalized = f"{path_part}"
-        if line_part:
-            normalized += f":{line_part}"
-        if detector_part:
-            normalized += f", Detector: {detector_part}"
-        if secret_part:
-            normalized += f", Secret: {secret_part}"
-
+        normalized = f"{detector}|{filename}|{secret}"
         return normalized.strip()
     
     def get_where_correctly(self, result: dict, path_directory=""):

@@ -106,27 +106,25 @@ class AllToolsSecretScan(ToolGateway):
 
     def _normalize_where_from_gitleaks(self, item: dict) -> str:
         # Gitleaks items typically have 'File' and 'Secret' or 'Match'
+        # Use only filename (not full path) + detector + secret for robust deduplication
         path = item.get("File", "") or ""
-        path = path.lstrip("/")
-        line = item.get("StartLine") or item.get("StartColumn") or ""
+        # Extract only filename from path (last component)
+        filename = path.split('/')[-1] if '/' in path else path
         detector = item.get("RuleID") or item.get("Fingerprint") or ""
         secret = item.get("Secret") or item.get("Match") or ""
         masked = self._mask_secret(secret)
 
         # if we don't have meaningful identifying information, return empty to avoid spurious deduplication
-        if not (path or line or detector or masked):
+        if not (filename or detector or masked):
             return ""
 
-        normalized = f"{path}"
-        if line:
-            normalized += f":{line}"
-        if detector:
-            normalized += f", Detector: {detector}"
-        normalized += f", Secret: {masked}"
+        # Normalize key: detector + filename + secret (no line, no full path)
+        normalized = f"{detector}|{filename}|{masked}"
         return normalized.strip()
 
     def _normalize_where_from_trufflehog(self, item: dict, folder_path: str = "") -> str:
         # TruffleHog items have nested SourceMetadata -> Data -> Filesystem -> file
+        # Use only filename (not full path) + detector + secret for robust deduplication
         path = ""
         try:
             path = (
@@ -138,33 +136,20 @@ class AllToolsSecretScan(ToolGateway):
         except Exception:
             path = item.get("file", "") or ""
 
-        # Remove provided folder_path prefix if present
-        try:
-            if folder_path and path.startswith(folder_path):
-                path = path.replace(folder_path, "", 1)
-        except Exception:
-            pass
-
-        path = path.lstrip("/")
+        # Extract only filename from path (last component) - ignore full path differences
+        filename = path.split('/')[-1] if '/' in path else path
+        filename = filename.split('\\')[-1] if '\\' in filename else filename  # Handle Windows paths too
 
         # secrets may be in Raw, RawV2, Match, or Redacted
         secret = item.get("Raw") or item.get("RawV2") or item.get("Match") or item.get("Redacted") or ""
-        # try to extract line if present in various fields
-        line = item.get("StartLine") or item.get("line") or item.get("StartColumn") or (
-            item.get("SourceMetadata", {}).get("Data", {}).get("Filesystem", {}).get("line")
-        )
-        # prefer ExtraData.name when present, otherwise use DetectorName
-        detector = (item.get("ExtraData") or {}).get("name") or item.get("DetectorName") or ""
+        # prefer ExtraData.name when present, otherwise use DetectorName or RuleID
+        detector = (item.get("ExtraData") or {}).get("name") or item.get("DetectorName") or item.get("RuleID") or ""
         masked = self._mask_secret(secret)
 
         # avoid returning a non-informative normalized key
-        if not (path or line or detector or masked):
+        if not (filename or detector or masked):
             return ""
 
-        normalized = f"{path}"
-        if line:
-            normalized += f":{line}"
-        if detector:
-            normalized += f", Detector: {detector}"
-        normalized += f", Secret: {masked}"
+        # Normalize key: detector + filename + secret (no line, no full path)
+        normalized = f"{detector}|{filename}|{masked}"
         return normalized.strip()
