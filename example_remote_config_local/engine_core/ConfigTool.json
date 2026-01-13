@@ -34,6 +34,7 @@
                 "DEFAULT": 1,
                 "ORPHAN": 4
             },
+            "REGEX_EXPRESSION_CODE_APP": "^([^-]+)",
             "REIMPORT_SCAN": false,
             "CMDB": {
                 "USE_CMDB": false,
@@ -48,7 +49,6 @@
                     "PARAMS": "username=test&password=#{passwordvalue}#",
                     "RESPONSE": null
                 },
-                "REGEX_EXPRESSION_CMDB": "",
                 "CMDB_MAPPING_PATH": "",
                 "CMDB_MAPPING": {
                     "PRODUCT_TYPE_NAME": "",

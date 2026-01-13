@@ -54,6 +54,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
                 "DEFAULT": 1,
                 "ORPHAN": 4
             },
+            "REGEX_EXPRESSION_CODE_APP": "",
             "REIMPORT_SCAN": false,
             "CMDB": {
                 "USE_CMDB": false,
@@ -68,7 +69,6 @@ Configuration of the driven adapters in the main layer and management of on/off 
                     "PARAMS": "username=test&password=#{passwordvalue}#",
                     "RESPONSE": null
                 },
-                "REGEX_EXPRESSION_CMDB": "",
                 "CMDB_MAPPING_PATH": "vulnerability_management/cmdb_mapping.json",
                 "CMDB_MAPPING": {
                     "PRODUCT_TYPE_NAME": "",
@@ -286,6 +286,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
                 "ORPHAN": 4
             }
             ```  
+        - **REGEX_EXPRESSION_CODE_APP**: Regular expression used to extract code app from component
         - **REIMPORT_SCAN**: Boolean value that determines whether the scan results should be re-imported into DefectDojo. 
             - If set to `true`, the tool will attempt to re-import scan results, updating the same test.  
             - If set to `false`, each scan will be imported as a new test.  
@@ -299,7 +300,6 @@ Configuration of the driven adapters in the main layer and management of on/off 
                 - **METHOD**: HTTP method for the authentication request (e.g., `POST`).
                 - **PARAMS**: Parameters for the authentication request.
                 - **RESPONSE**: Expected response or token field.
-            - **REGEX_EXPRESSION_CMDB**: Regular expression used to extract or filter data from the CMDB response.
             - **CMDB_MAPPING_PATH**: Path to the mapping file for product types or other mappings.
             - **CMDB_MAPPING**: Object mapping CMDB fields to DefectDojo fields.
                 - **PRODUCT_TYPE_NAME**: Field name in CMDB for the product type.
@@ -437,11 +437,11 @@ Then, the remote config settings should look similar to this:
     "HOST_DEFECT_DOJO": "http://localhost:8080",
     "LIMITS_QUERY": 100,
     "MAX_RETRIES_QUERY": 5,
+    "REGEX_EXPRESSION_CODE_APP": "^([^-]+)",
     "REIMPORT_SCAN": false,
     "CMDB": {
         "USE_CMDB": true,
         "HOST_CMDB": "http://host_cmdb_example",
-        "REGEX_EXPRESSION_CMDB": "^([^-]+)",
         "CMDB_MAPPING_PATH": "/path/mapping_cmdb.json",
         "CMDB_MAPPING": {
             "PRODUCT_TYPE_NAME": "ApplicationType",
@@ -470,8 +470,6 @@ Then, the remote config settings should look similar to this:
 - *USE_CMDB:* The value is a boolean, indicating whether or not CMDB will be used.
 
 - *HOST_CMDB:* The URL of the API for querying the CMDB.
-
-- *REGEX_EXPRESSION_CMDB:* Regular expression.
 
 - *CMDB_MAPPING_PATH:* Location of the mapping for possible product types.
 
@@ -512,10 +510,10 @@ The remote config settings should look similar to this:
         "HOST_DEFECT_DOJO": "http://localhost:8080",
         "LIMITS_QUERY": 100,
         "MAX_RETRIES_QUERY": 5,
+        "REGEX_EXPRESSION_CODE_APP": "^([^-]+)",
         "REIMPORT_SCAN": false,
         "CMDB": {
-            "USE_CMDB": false,
-            "REGEX_EXPRESSION_CMDB": "^([^-]+)",
+            "USE_CMDB": false
         }
     }
 ```
