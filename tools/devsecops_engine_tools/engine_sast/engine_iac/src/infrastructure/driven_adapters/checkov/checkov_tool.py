@@ -359,7 +359,7 @@ class CheckovTool(ToolGateway):
                         ),
                         env=agent_env,
                         external_checks_dir=(
-                            f"/tmp/rules/{self.framework_mapping[rule]}"
+                            self._get_external_checks_dirs(config_tool, rule, platform_to_scan)
                             if config_tool[self.TOOL_CHECKOV]["USE_EXTERNAL_CHECKS_DIR"]
                             and rule in self.framework_external_checks
                             else []
@@ -386,6 +386,22 @@ class CheckovTool(ToolGateway):
             result = output_queue.get()
             result_scans.extend(result)
         return result_scans, rules_run
+    
+    #Function to add multiple temporary directories for external rules in serverless
+    def _get_external_checks_dirs(self, config_tool, rule, platform_to_scan):
+        # default directory
+        dirs = [f"/tmp/rules/{self.framework_mapping[rule]}"]
+        
+        # # If it's Serverless, check if there are additional checks configured
+        if rule == "RULES_SERVERLESS" and any(p.lower() in ["serverless", "all"] for p in platform_to_scan):
+            additional_checks = config_tool[self.TOOL_CHECKOV].get("SERVERLESS_ADITIONAL_CHECKS", [])
+            for additional_check_type in additional_checks:
+                if additional_check_type in self.framework_mapping:
+                    additional_dir = f"/tmp/rules/{self.framework_mapping[additional_check_type]}"
+                    if additional_dir not in dirs:
+                        dirs.append(additional_dir)
+        
+        return dirs
 
     def _create_config_file(self, checkov_config: CheckovConfig):
         with open(
