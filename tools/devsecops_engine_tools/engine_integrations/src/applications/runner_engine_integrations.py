@@ -26,6 +26,7 @@ import sys
 import argparse
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
 from devsecops_engine_tools.engine_utilities import settings
+from devsecops_engine_tools.version import version
 
 logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
@@ -159,6 +160,9 @@ def get_inputs_from_cli(args):
         "--platform",
         required=False,
         help="Target(s) platform(s) for multi-arch images when no report directory is provided",
+    )
+    parser.add_argument(
+        "-v", "--version", action="version", version="{version}".format(version=version)
     )
 
     args = parser.parse_args()
