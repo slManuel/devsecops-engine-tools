@@ -85,6 +85,9 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
         self, vulnerability_management: VulnerabilityManagement
     ):
         try:
+
+            use_cmdb = vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["CMDB"].get("USE_CMDB", False)
+
             token_dd = (
                 vulnerability_management.dict_args["token_vulnerability_management"]
                 if vulnerability_management.dict_args["token_vulnerability_management"]
@@ -95,7 +98,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                 vulnerability_management.dict_args["token_cmdb"]
                 if vulnerability_management.dict_args["token_cmdb"] is not None
                 else vulnerability_management.secret_tool["token_cmdb"]
-            )
+            ) if use_cmdb else None
 
             tags = []
             if any(
@@ -133,10 +136,6 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                     tags = [
                         f"{vulnerability_management.dict_args['module']}_{tag_suffix}"
                     ]
-
-                use_cmdb = vulnerability_management.config_tool[
-                    "VULNERABILITY_MANAGER"
-                ]["DEFECT_DOJO"]["CMDB"]["USE_CMDB"]
                 
                 if vulnerability_management.dict_args["module"] in self.multiple_scan_types and \
                     vulnerability_management.scan_type in self.multiple_scan_types[vulnerability_management.dict_args["module"]]:
@@ -231,9 +230,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                     request={
                         "name": Connect.get_code_app(
                             service,
-                            config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["CMDB"][
-                                "REGEX_EXPRESSION_CMDB"
-                            ],
+                            config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["REGEX_EXPRESSION_CODE_APP"]
                         ),
                         "prefetch": "prod_type",
                     },
@@ -271,26 +268,31 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                 "is_mitigated": False,
                 "tags": tool,
                 "limit": dd_limits_query,
+                "fields": "id,vuln_id_from_tool,vulnerability_ids,severity,priority_classification,last_status_update,accepted_risks,component_name,component_version,endpoints,tags,file_path"
             }
             out_of_scope_query_params = {
                 "out_of_scope": True,
                 "tags": tool,
                 "limit": dd_limits_query,
+                "fields": "id,vuln_id_from_tool,vulnerability_ids,severity,priority_classification,last_status_update,component_name,component_version,endpoints,tags,file_path"
             }
             false_positive_query_params = {
                 "false_p": True,
                 "tags": tool,
                 "limit": dd_limits_query,
+                "fields": "id,vuln_id_from_tool,vulnerability_ids,severity,priority_classification,last_status_update,component_name,component_version,endpoints,tags,file_path"
             }
             transfer_finding_query_params = {
                 "risk_status": "Transfer Accepted",
                 "tags": tool,
                 "limit": dd_limits_query,
+                "fields": "id,vuln_id_from_tool,vulnerability_ids,severity,priority_classification,transfer_finding,endpoints,component_name,component_version,tags,file_path"
             }
             white_list_query_params = {
                 "risk_status": self.ON_WHITELIST,
                 "tags": tool,
                 "limit": dd_limits_query,
+                "fields": "id,vuln_id_from_tool,vulnerability_ids,severity,priority_classification,endpoints,component_name,component_version,tags,file_path"
             }
 
             exclusions_risk_accepted = self._get_findings_with_exclusions(
@@ -563,11 +565,13 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                 "VULNERABILITY_MANAGER"
             ]["DEFECT_DOJO"]["HOST_DEFECT_DOJO"],
             "expression": vulnerability_management.config_tool["VULNERABILITY_MANAGER"][
-                "DEFECT_DOJO"
-            ]["CMDB"]["REGEX_EXPRESSION_CMDB"],
+                "DEFECT_DOJO"]["REGEX_EXPRESSION_CODE_APP"],
             "reimport_scan": vulnerability_management.config_tool[
                 "VULNERABILITY_MANAGER"
             ]["DEFECT_DOJO"]["REIMPORT_SCAN"],
+            "get_exact_product": vulnerability_management.config_tool[
+                "VULNERABILITY_MANAGER"
+            ]["DEFECT_DOJO"].get("GET_EXACT_PRODUCT", False),
             "tool_sonarqube_configuration": (
                 tool_sonar_conf_mapping[
                     vulnerability_management.sonar_instance.upper()
@@ -615,8 +619,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                     "code_app": Connect.get_code_app(
                         vulnerability_management.vm_product_name,
                         vulnerability_management.config_tool["VULNERABILITY_MANAGER"][
-                            "DEFECT_DOJO"
-                        ]["CMDB"]["REGEX_EXPRESSION_CMDB"],
+                            "DEFECT_DOJO"]["REGEX_EXPRESSION_CODE_APP"],
                     ),
                     **common_fields,
                 }
@@ -878,6 +881,8 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
             out_of_scope=finding.out_of_scope,
             service=finding.service,
             unique_id_from_tool=finding.unique_id_from_tool,
+            priority=finding.priority if finding.priority else 0.0,
+            priority_classification=finding.priority_classification.lower(),
         )
 
     def _format_date_to_dd_format(self, date_string):

@@ -47,6 +47,7 @@ class BreakBuild:
         self.remediation_rate = 0
         self.blacklisted = 0
         self.max_risk_score = 0
+        self.max_priority_score = 0
         self.status = "succeeded"
         self.scan_result = {
             "findings_excluded": [],
@@ -59,15 +60,13 @@ class BreakBuild:
         new_report_list, applied_exclusions = self._apply_exclusions(self.report_list)
         self._blacklist_control(new_report_list)
         self._remediation_rate_control(self.all_report, new_report_list)
-        self._risk_score_control(new_report_list)
+        finding_score_model = self.remote_config.get("FINDING_SCORE", {}).get("MODEL")
+        if finding_score_model == "PRIORITY":
+            self._priority_control(new_report_list)
+        else:
+            self._risk_score_control(new_report_list)
         all_exclusions = list(self.vm_exclusions) + list(applied_exclusions)
         self._print_exclusions(self._map_applied_exclusion(all_exclusions))
-
-        self.max_risk_score = (
-            max(report.risk_score for report in new_report_list)
-            if new_report_list
-            else 0
-        )
 
         self._breaker()
 
@@ -87,23 +86,10 @@ class BreakBuild:
                 "remediation_rate": self.remediation_rate,
                 "blacklisted": self.blacklisted,
                 "max_risk_score": self.max_risk_score,
+                "max_priority_score": self.max_priority_score,
             },
             "status": self.status,
-            "found": list(
-                map(
-                    lambda item: {
-                        "id": (
-                            item.vuln_id_from_tool
-                            if item.vuln_id_from_tool
-                            else item.id
-                        ),
-                        "severity": item.severity,
-                        "risk_score": str(item.risk_score),
-                        "reason": item.reason,
-                    },
-                    self.report_breaker,
-                )
-            ),
+            "found": self.report_breaker,
         }
 
         print(
@@ -225,11 +211,24 @@ class BreakBuild:
                 )
             )
             self.break_build = True
-            [
-                setattr(report, "reason", "Remediation Rate")
-                for report in new_report_list
-            ]
-            self.report_breaker.extend(copy.deepcopy(new_report_list))
+            for report in new_report_list:
+                self.report_breaker.append(
+                    {
+                        "id": (
+                            report.vuln_id_from_tool
+                            if report.vuln_id_from_tool
+                            else report.id
+                        ),
+                        "severity": report.severity,
+                        "risk_score": (
+                            str(report.risk_score) if report.risk_score else "0"
+                        ),
+                        "priority_score": (
+                            str(report.priority) if report.priority else "0"
+                        ),
+                        "reason": "Remediation Rate",
+                    }
+                )
 
     def _get_remediation_rate_threshold(self, total):
         remediation_rate = self.threshold["REMEDIATION_RATE"]
@@ -300,17 +299,16 @@ class BreakBuild:
         remote_config = self.remote_config
         if report_list:
             tag_blacklist = set(remote_config["TAG_BLACKLIST_EXCLUSION_DAYS"].keys())
-            country_holidays = holidays.country_holidays(remote_config.get("COUNTRY_HOLIDAYS"))
+            country_holidays = holidays.country_holidays(
+                remote_config.get("COUNTRY_HOLIDAYS")
+            )
 
         def calculate_working_days(start_date, days):
             current_date = start_date
             working_days = 0
             while working_days < days:
                 current_date += timedelta(days=1)
-                if (
-                    current_date.weekday() < 5
-                    and current_date not in country_holidays
-                ):
+                if current_date.weekday() < 5 and current_date not in country_holidays:
                     working_days += 1
             return current_date
 
@@ -340,6 +338,9 @@ class BreakBuild:
                         else:
                             filtered_reports_below_threshold.append((report, tag))
 
+        if filtered_reports_above_threshold or filtered_reports_below_threshold:
+            print()
+
         for report, tag in filtered_reports_above_threshold:
             report.reason = "Blacklisted"
             print(
@@ -361,18 +362,46 @@ class BreakBuild:
         if filtered_reports_above_threshold:
             self.break_build = True
             self.blacklisted += len(filtered_reports_above_threshold)
-            self.report_breaker.extend(
-                copy.deepcopy(
-                    [report for report, _ in filtered_reports_above_threshold]
+            for report, _ in filtered_reports_above_threshold:
+                self.report_breaker.append(
+                    {
+                        "id": (
+                            report.vuln_id_from_tool
+                            if report.vuln_id_from_tool
+                            else report.id
+                        ),
+                        "severity": report.severity,
+                        "risk_score": (
+                            str(report.risk_score) if report.risk_score else "0"
+                        ),
+                        "priority_score": (
+                            str(report.priority) if report.priority else "0"
+                        ),
+                        "reason": "Blacklisted",
+                    }
                 )
-            )
 
         for report in report_list:
             if "On Blacklist" in report.risk_status:
                 self.break_build = True
-                report.reason = "Blacklisted"
                 self.blacklisted += 1
-                self.report_breaker.append(copy.deepcopy(report))
+                self.report_breaker.append(
+                    {
+                        "id": (
+                            report.vuln_id_from_tool
+                            if report.vuln_id_from_tool
+                            else report.id
+                        ),
+                        "severity": report.severity,
+                        "risk_score": (
+                            str(report.risk_score) if report.risk_score else "0"
+                        ),
+                        "priority_score": (
+                            str(report.priority) if report.priority else "0"
+                        ),
+                        "reason": "Blacklisted",
+                    }
+                )
                 print(
                     self.devops_platform_gateway.message(
                         "error",
@@ -382,7 +411,7 @@ class BreakBuild:
 
     def _risk_score_control(self, report_list: "list[Report]"):
         remote_config = self.remote_config
-        risk_score_threshold = self.threshold["RISK_SCORE"]
+        score_threshold = self.threshold["SCORE"]
         break_build = False
         if report_list:
             for report in report_list:
@@ -399,27 +428,40 @@ class BreakBuild:
                     ),
                     4,
                 )
-                if report.risk_score >= risk_score_threshold:
+                if report.risk_score > score_threshold:
                     break_build = True
-                    report.reason = "Risk Score"
-                    self.report_breaker.append(copy.deepcopy(report))
+                    self.report_breaker.append(
+                        {
+                            "id": (
+                                report.vuln_id_from_tool
+                                if report.vuln_id_from_tool
+                                else report.id
+                            ),
+                            "severity": report.severity,
+                            "risk_score": str(report.risk_score),
+                            "priority_score": "0",
+                            "reason": "Risk Score",
+                        }
+                    )
+            print()
             print("Below are open findings from Vulnerability Management Platform")
             self.printer_table_gateway.print_table_report(
                 report_list,
+                self.remote_config.get("FINDING_SCORE", {}).get("MODEL"),
             )
             if break_build:
                 self.break_build = True
                 print(
                     self.devops_platform_gateway.message(
                         "error",
-                        f"There are findings with risk score greater than {risk_score_threshold}",
+                        f"There are findings with risk score greater than {score_threshold}",
                     )
                 )
             else:
                 print(
                     self.devops_platform_gateway.message(
                         "succeeded",
-                        f"There are no findings with risk score greater than {risk_score_threshold}",
+                        f"There are no findings with risk score greater than {score_threshold}",
                     )
                 )
             print(f"Findings count: {len(report_list)}")
@@ -432,8 +474,136 @@ class BreakBuild:
                 )
             )
 
+        self.max_risk_score = (
+            max(report.risk_score for report in report_list) if report_list else 0
+        )
+
+    def _priority_control(self, report_list: "list[Report]"):
+        score_threshold = self.threshold["SCORE"]
+        model = self.remote_config.get("FINDING_SCORE", {}).get("MODEL")
+        classification_threshold = self.threshold.get(model, {})
+        break_build = False
+
+        service_reports = {}
+        for report in report_list:
+            service = report.service
+            if service not in service_reports:
+                service_reports[service] = []
+            service_reports[service].append(report)
+
+        max_priority_score = 0
+        for service, reports in service_reports.items():
+            priority_score_sum = sum(report.priority for report in reports)
+
+            print(
+                f"\nBelow are open findings for '{service}' from Vulnerability Management Platform"
+            )
+            self.printer_table_gateway.print_table_report(
+                reports,
+                model,
+            )
+
+            if priority_score_sum > max_priority_score:
+                max_priority_score = priority_score_sum
+
+            if priority_score_sum > score_threshold:
+                break_build = True
+                for report in reports:
+                    self.report_breaker.append(
+                        {
+                            "id": (
+                                report.vuln_id_from_tool
+                                if report.vuln_id_from_tool
+                                else report.id
+                            ),
+                            "severity": report.severity,
+                            "risk_score": "0",
+                            "priority_score": str(report.priority),
+                            "reason": "Priority Score",
+                        }
+                    )
+                print(
+                    self.devops_platform_gateway.message(
+                        "error",
+                        f"The sum of priorities {priority_score_sum} is greater than the threshold {score_threshold}",
+                    )
+                )
+            else:
+                print(
+                    self.devops_platform_gateway.message(
+                        "succeeded",
+                        f"The sum of priorities {priority_score_sum} is less than the threshold {score_threshold}",
+                    )
+                )
+
+            classification_reports = {}
+            for report in reports:
+                classification = report.priority_classification
+                if classification not in classification_reports:
+                    classification_reports[classification] = []
+                classification_reports[classification].append(report)
+
+            classification_counts = {}
+            has_threshold_violation = False
+            for classification in classification_threshold.keys():
+                count = len(classification_reports.get(classification, []))
+                limit = classification_threshold.get(classification, 999)
+                classification_counts[classification] = {
+                    "count": count,
+                    "limit": limit,
+                    "violated": count >= limit,
+                }
+                if count >= limit:
+                    has_threshold_violation = True
+
+            counts_str = ", ".join(
+                [f"{k}: {v['count']}" for k, v in classification_counts.items()]
+            )
+            criteria_str = ", ".join(
+                [f"{k}: {v['limit']}" for k, v in classification_counts.items()]
+            )
+
+            if has_threshold_violation:
+                break_build = True
+                print(
+                    self.devops_platform_gateway.message(
+                        "error",
+                        f"Count of priority classes ({counts_str}) is greater than or equal to failure criteria ({criteria_str}, operator: or)",
+                    )
+                )
+                for classification, values in classification_counts.items():
+                    if values["violated"]:
+                        class_reports = classification_reports.get(classification, [])
+                        for report in class_reports:
+                            self.report_breaker.append(
+                                {
+                                    "id": (
+                                        report.vuln_id_from_tool
+                                        if report.vuln_id_from_tool
+                                        else report.id
+                                    ),
+                                    "severity": report.severity,
+                                    "risk_score": "0",
+                                    "priority_score": str(report.priority),
+                                    "reason": "Priority Threshold",
+                                }
+                            )
+            else:
+                print(
+                    self.devops_platform_gateway.message(
+                        "succeeded",
+                        f"Count of priority classes ({counts_str}) is not greater than or equal to failure criteria ({criteria_str}, operator: or)",
+                    )
+                )
+
+        if break_build:
+            self.break_build = True
+
+        self.max_priority_score = max_priority_score
+
     def _print_exclusions(self, applied_exclusions: "list[Exclusions]"):
         if applied_exclusions:
+            print()
             print(
                 self.devops_platform_gateway.message(
                     "warning", "Bellow are all findings that were excepted"

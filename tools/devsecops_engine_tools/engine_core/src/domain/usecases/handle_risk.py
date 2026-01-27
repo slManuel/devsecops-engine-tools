@@ -244,6 +244,9 @@ class HandleRisk:
             self.devops_platform_gateway,
             self.remote_config_source_gateway,
             self.print_table_gateway,
+            self.vulnerability_management,
+            secret_tool,
+            remote_config,
         )
 
         return result, input_core

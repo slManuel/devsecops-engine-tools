@@ -66,6 +66,30 @@ class TestCdxGen(unittest.TestCase):
         mock_run.assert_called_once_with('/usr/local/bin/cdxgen', self.artifact, self.service_name, [], [], True, True, {}, False)
         mock_get_list_component.assert_called_once_with('test_service_SBOM.json', 'json')
 
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.platform.machine')
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.get_list_component')
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.platform.system')
+    def test_get_components_linux_success_arm64(self, mock_platform, mock_get_list_component, mock_machine):
+        # Arrange
+        mock_platform.return_value = "Linux"
+        mock_machine.return_value = "aarch64"
+        mock_get_list_component.return_value = self.mock_components
+        
+        with patch.object(self.cdxgen, '_install_tool_unix', return_value='/usr/local/bin/cdxgen') as mock_install:
+            with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
+                # Act
+                result = self.cdxgen.get_components(self.artifact, self.mock_config, self.service_name)
+        
+        # Assert
+        self.assertEqual(result, self.mock_components)
+        mock_install.assert_called_once_with(
+            "cdxgen-linux-arm64",
+            "https://github.com/CycloneDX/cdxgen/releases/download/v10.2.0/cdxgen-linux-arm64",
+            "cdxgen"
+        )
+        mock_run.assert_called_once_with('/usr/local/bin/cdxgen', self.artifact, self.service_name, [], [], True, True, {}, False)
+        mock_get_list_component.assert_called_once_with('test_service_SBOM.json', 'json')
+
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.get_list_component')
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.platform.system')
     def test_get_components_linux_slim_binary(self, mock_platform, mock_get_list_component):
@@ -103,6 +127,28 @@ class TestCdxGen(unittest.TestCase):
         mock_install.assert_called_once_with(
             "cdxgen-darwin-amd64",
             "https://github.com/CycloneDX/cdxgen/releases/download/v10.2.0/cdxgen-darwin-amd64",
+            "cdxgen"
+        )
+
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.platform.machine')
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.get_list_component')
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.platform.system')
+    def test_get_components_darwin_success_arm64(self, mock_platform, mock_get_list_component, mock_machine):
+        # Arrange
+        mock_platform.return_value = "Darwin"
+        mock_machine.return_value = "arm64"
+        mock_get_list_component.return_value = self.mock_components
+        
+        with patch.object(self.cdxgen, '_install_tool_unix', return_value='/usr/local/bin/cdxgen') as mock_install:
+            with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
+                # Act
+                result = self.cdxgen.get_components(self.artifact, self.mock_config, self.service_name)
+        
+        # Assert
+        self.assertEqual(result, self.mock_components)
+        mock_install.assert_called_once_with(
+            "cdxgen-darwin-arm64",
+            "https://github.com/CycloneDX/cdxgen/releases/download/v10.2.0/cdxgen-darwin-arm64",
             "cdxgen"
         )
 

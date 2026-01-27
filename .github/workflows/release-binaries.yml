@@ -49,6 +49,19 @@ jobs:
           echo "Tag being released: ${{ github.event.release.tag_name || 'N/A' }}"
           echo "Event name: ${{ github.event_name }}"
           git log --oneline -5
+
+      - name: Override version for release build
+        if: github.event_name == 'release'
+        shell: bash
+        run: |
+          RELEASE_VERSION="${{ github.event.release.tag_name }}"
+          CLEAN_VERSION="${RELEASE_VERSION#v}"
+          if [ -z "$CLEAN_VERSION" ]; then
+            echo "Release tag is empty; aborting"
+            exit 1
+          fi
+          echo "Using release version: $CLEAN_VERSION"
+          printf "version = '%s'\n" "$CLEAN_VERSION" > tools/devsecops_engine_tools/version.py
       
       # Linux: Build inside Docker container with Ubuntu 22.04
       - name: Build binary on Ubuntu 22.04 container
@@ -66,7 +79,8 @@ jobs:
             python3 -m pip install --no-cache-dir --upgrade pip && \
             python3 -m pip install --no-cache-dir pyinstaller -r tools/requirements.txt && \
             echo 'Building version:' && python3 -c 'from tools.devsecops_engine_tools.version import version; print(version)' && \
-            pyinstaller tools/devsecops_engine_tools/devsecops-engine-tools.spec"
+            pyinstaller tools/devsecops_engine_tools/devsecops-engine-tools.spec && \
+            pyinstaller tools/devsecops_engine_tools/devsecops-engine-tools-integrations.spec"
 
       #macOS and Windows setup
       - name: Set up Python (macOS/Windows)
@@ -88,30 +102,36 @@ jobs:
 
       - name: Build Executable (macOS/Windows)
         if: matrix.name != 'linux'
-        run: pyinstaller tools/devsecops_engine_tools/devsecops-engine-tools.spec
+        run: |
+          pyinstaller tools/devsecops_engine_tools/devsecops-engine-tools.spec
+          pyinstaller tools/devsecops_engine_tools/devsecops-engine-tools-integrations.spec
 
       # Testing
       - name: Test Executable (Windows)
         if: matrix.os == 'windows-latest'
         shell: bash
-        run: ./dist/devsecops-engine-tools${{ matrix.suffix }} --version
+        run: |
+          ./dist/devsecops-engine-tools${{ matrix.suffix }} --version
+          ./dist/devsecops-engine-tools-integrations${{ matrix.suffix }} --version
 
       - name: Test Executable (macOS/Linux)
         if: matrix.os != 'windows-latest'
-        run: ./dist/devsecops-engine-tools${{ matrix.suffix }} --version || echo "Ignore permission errors in docker build"
+        run: |
+          ./dist/devsecops-engine-tools${{ matrix.suffix }} --version || echo "Ignore permission errors in docker build"
+          ./dist/devsecops-engine-tools-integrations${{ matrix.suffix }} --version || echo "Ignore permission errors in docker build"
 
       # Zip artifacts
       - name: Zip Artifact (Windows)
         if: matrix.os == 'windows-latest' && github.event.action == 'published'
         run: |
           cd dist
-          tar.exe -a -c -f ../devsecops-engine-tools-${{ matrix.name }}.zip devsecops-engine-tools${{ matrix.suffix }}
+          tar.exe -a -c -f ../devsecops-engine-tools-${{ matrix.name }}.zip devsecops-engine-tools${{ matrix.suffix }} devsecops-engine-tools-integrations${{ matrix.suffix }}
 
       - name: Zip Artifact (Linux/macOS)
         if: matrix.os != 'windows-latest' && github.event.action == 'published'
         run: |
           cd dist
-          zip ../devsecops-engine-tools-${{ matrix.name }}.zip devsecops-engine-tools${{ matrix.suffix }}
+          zip ../devsecops-engine-tools-${{ matrix.name }}.zip devsecops-engine-tools${{ matrix.suffix }} devsecops-engine-tools-integrations${{ matrix.suffix }}
 
       - name: Upload Release Asset
         if: github.event_name == 'release' && github.event.action == 'published'

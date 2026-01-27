@@ -19,6 +19,7 @@
             "PRINT_DOMAIN": "",
             "LIMITS_QUERY": 100,
             "MAX_RETRIES_QUERY": 5,
+            "GET_EXACT_PRODUCT": false,
             "TOOL_SCM_MAPPING": {
                 "DEFAULT": 2,
                 "TFSGIT": 2,
@@ -33,6 +34,7 @@
                 "DEFAULT": 1,
                 "ORPHAN": 4
             },
+            "REGEX_EXPRESSION_CODE_APP": "^([^-]+)",
             "REIMPORT_SCAN": false,
             "CMDB": {
                 "USE_CMDB": false,
@@ -47,7 +49,6 @@
                     "PARAMS": "username=test&password=#{passwordvalue}#",
                     "RESPONSE": null
                 },
-                "REGEX_EXPRESSION_CMDB": "",
                 "CMDB_MAPPING_PATH": "",
                 "CMDB_MAPPING": {
                     "PRODUCT_TYPE_NAME": "",
@@ -114,6 +115,7 @@
         "USE_PRIORITY": true,
         "HOST_PRIORITY": "",
         "CVE_REGEX": "CVE-\\d{4}-\\d+",
+        "MAX_RETRIES": 3,
         "HOMOLOGATION_PRIORITY":{
             "STANDARD": {
                 "critical":{

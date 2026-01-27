@@ -30,6 +30,9 @@ def init_engine_risk(
     findings,
     services,
     vm_exclusions,
+    vulnerability_management_gateway,
+    secret_tool,
+    config_tool,
 ):
     remote_config = remote_config_source_gateway.get_remote_config(
         dict_args["remote_config_repo"],
@@ -73,7 +76,14 @@ def init_engine_risk(
     policy_excluded = len_tag_filtered + len_new_vuln
 
     threshold = CheckThreshold(
-        pipeline_name, remote_config["THRESHOLD"], risk_exclusions
+        pipeline_name,
+        remote_config["THRESHOLD"],
+        risk_exclusions,
+        vulnerability_management_gateway,
+        dict_args,
+        secret_tool,
+        config_tool,
+        services,
     ).process()
 
     break_build = BreakBuild(

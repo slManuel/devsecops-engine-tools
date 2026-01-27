@@ -753,6 +753,20 @@
                     "cvss": "",
                     "category": "Vulnerability"
                 }
+            },
+            "RULES_BICEP":{
+                "CKV_AZURE_1": {
+                    "checkID": "IAC-CKV-AZURE-1 Ensure Azure Instance does not use basic authentication",
+                    "environment": {
+                        "dev": true,
+                        "pdn": true,
+                        "qa": true
+                    },
+                    "guideline": "guideline",
+                    "severity": "High",
+                    "cvss": "",
+                    "category": "Vulnerability"
+                }
             }
         }
     },

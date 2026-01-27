@@ -44,7 +44,7 @@ class TestPrinterRichTable:
         ]
         printer = PrinterRichTable()
 
-        printer.print_table_report(report_list)
+        printer.print_table_report(report_list, "RISK")
 
         mock_console().print.assert_called_once()
 
@@ -63,8 +63,9 @@ class TestPrinterRichTable:
                 "vm_id_url": "url1",
             }
         ]
+        manager = {"MODEL": "severity", "CLASSIFICATION": ["critical", "high", "medium", "low"]}
         printer = PrinterRichTable()
 
-        printer.print_table_exclusions(exclusions_list)
+        printer.print_table_exclusions(exclusions_list, manager)
 
         mock_console().print.assert_called_once()

@@ -17,34 +17,9 @@ hidden_imports += [
     'requests',
     'boto3',
     'docker',
-    'rich',
-    'marshmallow',
-    'ruamel.yaml',
-    'Authlib',
-    'PyJWT',
-    'sympy',
-    'packageurl',
-    'distro',
-    'pexpect',
-    'requests_toolbelt',
     'python-decouple',
-    'prettytable',
-    'holidays',
-    'holidays.countries',
     'pyfiglet',
-    'paramiko',
     'dateutil.tz.tzfile',
-    'awscrt',
-    'aiohttp',
-    'multidict',
-    'opentelemetry',
-    'opentelemetry.trace',
-    'opentelemetry.context',
-    'opentelemetry.propagate',
-    'azure.core.pipeline.transport.AioHttpTransportResponse',
-    'azure.core.tracing.opentelemetry',
-    'azure.core.tracing.ext.opentelemetry_span',
-    'azure.core.tracing.ext.opencensus_span',
 ]
 
 # Automatically collect all submodules from the project
@@ -53,7 +28,7 @@ hidden_imports += collect_submodules('devsecops_engine_tools')
 block_cipher = None
 
 a = Analysis(
-    ['engine_core/src/applications/runner_engine_core.py'],  # Entry point
+    ['engine_integrations/src/applications/runner_engine_integrations.py'],  # Entry point
     pathex=['tools'],  
     binaries=[],
     datas=datas,
@@ -77,7 +52,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='devsecops-engine-tools',
+    name='devsecops-engine-tools-integrations',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

@@ -80,14 +80,16 @@ class TestRiskScore(unittest.TestCase):
 
     def test_use_priority_disabled(self):
         """Test cuando USE_PRIORITY es False"""
-        config = {"PRIORITY_MANAGER": {"USE_PRIORITY": False}, "ENGINE_SECRET":{"PRIORITY": "STANDARD"}}
+        config = {"PRIORITY_MANAGER": {"USE_PRIORITY": False},"BREAK_BUILD_MANAGER":{"MODEL": "severity","CLASSIFICATION": ["critical", "high", "medium", "low"]}, "ENGINE_SECRET":{"PRIORITY": "STANDARD"}}
         findings = [self._create_finding("CVE-2024-12345")]
         module = "engine_secret"
         
         self.risk_score.get_risk_score(findings, config, module)
         
-        # No se debe asignar priority cuando está deshabilitado
-        self.assertIsNone(findings[0].priority)
+        # Debe asignar priority con valores por defecto cuando está deshabilitado
+        self.assertIsNotNone(findings[0].priority)
+        self.assertEqual(findings[0].priority.score, 0.0)
+        self.assertEqual(findings[0].priority.scale, "unknown")
 
     def test_non_cve_findings_homologation(self):
         """Test homologación de findings sin formato CVE"""
@@ -144,7 +146,8 @@ class TestRiskScore(unittest.TestCase):
         mock_get.assert_called_once_with(
             "https://api.example.com/priority",
             headers={"cve_list": "CVE-2024-12345,CVE-2025-1345"},
-            timeout=10
+            timeout=10,
+            verify=False
         )
         
         self.assertIsNotNone(findings[0].priority)

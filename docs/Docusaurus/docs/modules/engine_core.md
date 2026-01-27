@@ -39,6 +39,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
             "PRINT_DOMAIN": "",
             "LIMITS_QUERY": 100,
             "MAX_RETRIES_QUERY": 5,
+            "GET_EXACT_PRODUCT": false,
             "TOOL_SCM_MAPPING": {
                 "DEFAULT": 2,
                 "TFSGIT": 2,
@@ -53,6 +54,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
                 "DEFAULT": 1,
                 "ORPHAN": 4
             },
+            "REGEX_EXPRESSION_CODE_APP": "",
             "REIMPORT_SCAN": false,
             "CMDB": {
                 "USE_CMDB": false,
@@ -67,7 +69,6 @@ Configuration of the driven adapters in the main layer and management of on/off 
                     "PARAMS": "username=test&password=#{passwordvalue}#",
                     "RESPONSE": null
                 },
-                "REGEX_EXPRESSION_CMDB": "",
                 "CMDB_MAPPING_PATH": "vulnerability_management/cmdb_mapping.json",
                 "CMDB_MAPPING": {
                     "PRODUCT_TYPE_NAME": "",
@@ -134,6 +135,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
         "USE_PRIORITY": true,
         "HOST_PRIORITY": "",
         "CVE_REGEX": "CVE-\\d{4}-\\d+",
+        "MAX_RETRIES":3,
         "HOMOLOGATION_PRIORITY":{
             "STANDARD": {
                 "critical":{
@@ -246,6 +248,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
         - PRINT_DOMAIN: Dominio to print
         - LIMITS_QUERY: Query limit for platform queries.
         - MAX_RETRIES_QUERY: Maximum number of retry attempts for queries to the platform
+        - GET_EXACT_PRODUCT: optional flag. Ensure product get from defect dojo before request is exact match otherwise use default behavior include match
         - **TOOL_SCM_MAPPING**: Mapping between the source code management (SCM) tool and its corresponding identifier in DefectDojo.  
             - **DEFAULT**: Default SCM tool identifier.
             - **TFSGIT**: Identifier for Azure DevOps (TFS Git) repositories.
@@ -283,6 +286,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
                 "ORPHAN": 4
             }
             ```  
+        - **REGEX_EXPRESSION_CODE_APP**: Regular expression used to extract code app from component
         - **REIMPORT_SCAN**: Boolean value that determines whether the scan results should be re-imported into DefectDojo. 
             - If set to `true`, the tool will attempt to re-import scan results, updating the same test.  
             - If set to `false`, each scan will be imported as a new test.  
@@ -296,7 +300,6 @@ Configuration of the driven adapters in the main layer and management of on/off 
                 - **METHOD**: HTTP method for the authentication request (e.g., `POST`).
                 - **PARAMS**: Parameters for the authentication request.
                 - **RESPONSE**: Expected response or token field.
-            - **REGEX_EXPRESSION_CMDB**: Regular expression used to extract or filter data from the CMDB response.
             - **CMDB_MAPPING_PATH**: Path to the mapping file for product types or other mappings.
             - **CMDB_MAPPING**: Object mapping CMDB fields to DefectDojo fields.
                 - **PRODUCT_TYPE_NAME**: Field name in CMDB for the product type.
@@ -326,6 +329,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
     - **USE_PRIORITY**: `true` o `false`. Habilita el uso del sistema de prioridades. Cuando está en `true`, el sistema consultará un API externo para obtener scores de prioridad de CVEs y aplicará homologación para findings sin formato CVE.
     - **HOST_PRIORITY**: URL del API externo que proporciona los scores de prioridad para CVEs. Ejemplo: `https://api.example.com/priorities`
     - **CVE_REGEX**: Expresión regular para identificar CVEs en los IDs de findings. Por defecto: `"CVE-\\d{4}-\\d+"`
+    - **MAX_RETRIES**: Specifies the maximum number of retry attempts allowed for a given operation
     - **HOMOLOGATION_PRIORITY**: Mapeo de severidades tradicionales a prioridades con scores. Permite dos perfiles:
         - **STANDARD**: Perfil estándar con scores más altos
             - `critical`: score 1.00 → "very critical"
@@ -433,11 +437,11 @@ Then, the remote config settings should look similar to this:
     "HOST_DEFECT_DOJO": "http://localhost:8080",
     "LIMITS_QUERY": 100,
     "MAX_RETRIES_QUERY": 5,
+    "REGEX_EXPRESSION_CODE_APP": "^([^-]+)",
     "REIMPORT_SCAN": false,
     "CMDB": {
         "USE_CMDB": true,
         "HOST_CMDB": "http://host_cmdb_example",
-        "REGEX_EXPRESSION_CMDB": "^([^-]+)",
         "CMDB_MAPPING_PATH": "/path/mapping_cmdb.json",
         "CMDB_MAPPING": {
             "PRODUCT_TYPE_NAME": "ApplicationType",
@@ -466,8 +470,6 @@ Then, the remote config settings should look similar to this:
 - *USE_CMDB:* The value is a boolean, indicating whether or not CMDB will be used.
 
 - *HOST_CMDB:* The URL of the API for querying the CMDB.
-
-- *REGEX_EXPRESSION_CMDB:* Regular expression.
 
 - *CMDB_MAPPING_PATH:* Location of the mapping for possible product types.
 
@@ -508,10 +510,10 @@ The remote config settings should look similar to this:
         "HOST_DEFECT_DOJO": "http://localhost:8080",
         "LIMITS_QUERY": 100,
         "MAX_RETRIES_QUERY": 5,
+        "REGEX_EXPRESSION_CODE_APP": "^([^-]+)",
         "REIMPORT_SCAN": false,
         "CMDB": {
-            "USE_CMDB": false,
-            "REGEX_EXPRESSION_CMDB": "^([^-]+)",
+            "USE_CMDB": false
         }
     }
 ```

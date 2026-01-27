@@ -15,4 +15,4 @@ class Threshold:
         self.cve = data.get("CVE",[])
         self.name = data.get("NAME", "default")
         self.quality_vulnerability_management = data.get("QUALITY_VULNERABILITY_MANAGEMENT") if data.get("QUALITY_VULNERABILITY_MANAGEMENT") else None
-        self.priority = LevelPriority(data.get("PRIORITY")) 
+        self.priority = LevelPriority(data.get("PRIORITY")) if data.get("PRIORITY") else None

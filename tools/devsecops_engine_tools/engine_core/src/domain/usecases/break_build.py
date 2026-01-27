@@ -111,6 +111,7 @@ class BreakBuild:
         return {
             "id": item.id,
             "severity": item.severity,
+            "priority": str(item.priority.scale).replace(" ", "_"),
             "category": item.category.value,
         }
 
@@ -199,9 +200,10 @@ class BreakBuild:
             ))
             print(devops_platform_gateway.result_pipeline("failed"))
             scan_result["vulnerabilities"] = {
-                "threshold": counts,
+                "model_break_build": model,
+                "threshold": {k.replace(" ", "_"): v for k, v in counts.items()},
                 "status": "failed",
-                "found": [{"id": item.id, "severity": item.severity} for item in vulnerabilities_list],
+                "found": [{"id": item.id, "severity": item.severity, "priority": str(item.priority.scale).replace(" ", "_")} for item in vulnerabilities_list],
             }
         else:
             print("Below are all vulnerabilities detected.")
@@ -219,9 +221,10 @@ class BreakBuild:
             result = "succeeded_with_issues" if warning_release or devops_platform_gateway.get_variable("stage") == "build" else "succeeded"
             print(devops_platform_gateway.result_pipeline(result))
             scan_result["vulnerabilities"] = {
-                "threshold": counts,
+                "model_break_build": model,
+                "threshold": {k.replace(" ", "_"): v for k, v in counts.items()},
                 "status": "succeeded",
-                "found": [{"id": item.id, "severity": item.severity} for item in vulnerabilities_list],
+                "found": [{"id": item.id, "severity": item.severity, "priority": str(item.priority.scale).replace(" ", "_")} for item in vulnerabilities_list],
             }
 
     def _handle_cve_policy(self, vulnerabilities_list: "list[Finding]", threshold):
@@ -267,18 +270,18 @@ class BreakBuild:
             scan_result["compliances"] = {
                 "threshold": {"critical": counts["critical"]},
                 "status": status,
-                "found": [{"id": item.id, "severity": item.severity} for item in compliances_list],
+                "found": [{"id": item.id, "severity": item.severity, "priority": str(item.priority.scale).replace(" ", "_")} for item in compliances_list],
             }
         else:
             print(devops_platform_gateway.message("succeeded", "There are no compliances issues"))
             print(devops_platform_gateway.result_pipeline("succeeded"))
 
-    def _handle_exclusions(self, findings_excluded_list, exclusions, manager):
+    def _handle_exclusions(self, findings_excluded_list, exclusions, break_build_manager):
         devops_platform_gateway = self.devops_platform_gateway
         printer_table_gateway = self.printer_table_gateway
         print()
 
-        model = manager.get("MODEL", "severity")
+        model = break_build_manager.get("MODEL", "severity")
         if findings_excluded_list:
             exclusions_list = []
             for item in findings_excluded_list:
@@ -294,10 +297,12 @@ class BreakBuild:
                         "create_date": matching.create_date,
                         "expired_date": matching.expired_date,
                         "reason": matching.reason,
+                        "module": item.module,
+                        "fixed in": item.requirements,
                     })
             
             print(devops_platform_gateway.message("warning", "Below are all findings that were excepted."))
-            printer_table_gateway.print_table_exclusions(exclusions_list)
+            printer_table_gateway.print_table_exclusions(exclusions_list, break_build_manager)
             
             for reason, total in Counter(x["reason"] for x in exclusions_list).items():
                 print("{0} findings count: {1}".format(reason, total))

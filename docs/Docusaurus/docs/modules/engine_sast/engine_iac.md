@@ -113,7 +113,35 @@ Main configuration file that defines scanning behavior, tool versions, and secur
                     "cvss": "",
                     "category": "Vulnerability"
             },...
-		}
+		},
+    "RULES_SERVERLESS":{
+			"CKV_AWS_200": {
+                    "checkID": "IAC-CKV-SERVERLESS-1 Ensure AWS Lambda function is not publicly accessible",
+                    "environment": {
+                        "dev": true,
+                        "pdn": true,
+                        "qa": true
+                    },
+                    "guideline": "guideline",
+                    "severity": "High",
+                    "cvss": "",
+                    "category": "Vulnerability"
+            },...
+    },
+    "RULES_BICEP":{
+			"CKV_AZURE_1": {
+                    "checkID": "IAC-CKV-AZURE-1 Ensure Azure Instance does not use basic authentication",
+                    "environment": {
+                        "dev": true,
+                        "pdn": true,
+                        "qa": true
+                    },
+                    "guideline": "guideline",
+                    "severity": "High",
+                    "cvss": "",
+                    "category": "Vulnerability"
+            },...
+    }
 	}
   },
   "KICS": {
@@ -223,6 +251,8 @@ Each tool contains rule sets organized by technology:
 - **RULES_CLOUDFORMATION**: AWS CloudFormation security rules (encryption, access controls, logging)
 - **RULES_TERRAFORM**: Terraform-specific infrastructure security rules
 - **RULES_OPENAPI**: API security rules for OpenAPI specifications
+- **RULES_SERVERLESS**: Serverless rules for AWS Lambda specifications
+- **RULES_BICEP**: Azure Bicep security rules for Azure Cloud infrastructure
 
 In the RULES section of each platform (RULES_DOCKER, RULES_K8S, RULES_CLOUDFORMATION, etc.), the body is empty. Example “RULES_DOCKER” {}, the tool executes all rules associated with it.
 

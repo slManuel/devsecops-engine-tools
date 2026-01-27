@@ -7,7 +7,9 @@ import re
 import requests
 
 from devsecops_engine_tools.engine_utilities import settings
+from devsecops_engine_tools.engine_utilities.defect_dojo.infraestructure.driver_adapters.settings.settings import VERIFY_CERTIFICATE
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
+from devsecops_engine_tools.engine_utilities.utils.utils import Utils
 
 logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
@@ -27,13 +29,21 @@ class RiskScore(RiskScoreGateway):
                 host = priority_manager.get("HOST_PRIORITY")
                 ids = [f.id for f in cve_findings]
                 cve_list_header = ",".join(ids)
+                utils = Utils()
+                max_retries = priority_manager.get("MAX_RETRIES", 3)
+                
                 try:
-                    response = requests.get(
-                        host,
-                        headers={"cve_list": cve_list_header},
-                        timeout=10
-                    )
-                    response.raise_for_status()
+                    def make_request():
+                        response = requests.get(
+                            host,
+                            headers={"cve_list": cve_list_header},
+                            timeout=10,
+                            verify=VERIFY_CERTIFICATE
+                        )
+                        response.raise_for_status()
+                        return response
+                    
+                    response = utils.retries_requests(make_request, max_retries, retry_delay=5)
                     priorities = response.json().get("priorities", {})
                     
                     for finding in cve_findings:
@@ -50,7 +60,7 @@ class RiskScore(RiskScoreGateway):
                                 homologation_priority
                             )
                 except Exception as e:
-                    logger.error(f"Error al consultar prioridades externas: {e}")
+                    logger.error(f"Error querying external priorities: {e}")
                     for finding in cve_findings:
                         finding.priority = self._homologate_priority_by_severity(
                             finding.severity, 
@@ -65,6 +75,9 @@ class RiskScore(RiskScoreGateway):
                     priority_manager.get("HOMOLOGATION_PRIORITY", {}),
                     homologation_priority
                     )
+        else:
+            for finding in finding_list:
+                finding.priority = Priority(score=0.0, scale="unknown")
 
     def _homologate_priority_by_severity(self, severity, homologation_config, homologation_priority):
         homologation_config = homologation_config['STANDARD'] if homologation_priority == 'STANDARD' else homologation_config['DISCREET']

@@ -294,8 +294,8 @@ class HandleScan:
                 )
                 if apply_qualitypt:
                     pt_info = apply_qualitypt[pt_name]
-                    pt_profile = pt_info["PROFILE"]
-                    pt_profile_priority = pt_info["PROFILE_PRIORITY"]
+                    pt_profile = pt_info["PROFILE"] if config_tool["BREAK_BUILD_MANAGER"]["MODEL"] == "severity" else None
+                    pt_profile_priority = pt_info["PROFILE_PRIORITY"] if config_tool["BREAK_BUILD_MANAGER"]["MODEL"] == "priority" else None
                     pt_apps = pt_info["APPS"]
 
                     input_core.threshold_defined.vulnerability = (
@@ -303,10 +303,10 @@ class HandleScan:
                         if pt_apps == "ALL"
                         or any(map(lambda pd: pd in input_core.scope_pipeline, pt_apps))
                         else input_core.threshold_defined.vulnerability
-                    )
+                    ) if pt_profile else input_core.threshold_defined.vulnerability
                     input_core.threshold_defined.priority = (
                         LevelPriority(quality_vulnerability_management[pt_profile_priority])
                         if pt_apps == "ALL"
                         or any(map(lambda pd: pd in input_core.scope_pipeline, pt_apps))
                         else input_core.threshold_defined.priority
-                    )
+                    ) if pt_profile_priority else input_core.threshold_defined.priority
