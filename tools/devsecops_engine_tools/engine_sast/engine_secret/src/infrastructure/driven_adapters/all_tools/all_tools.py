@@ -30,7 +30,6 @@ class AllToolsSecretScan(ToolGateway):
                 executor.submit(self.trufflehog_tool.install_tool, agent_os, agent_temp_dir, trufflehog_version)
             ]
             
-            # Esperar a que ambas completen
             for future in as_completed(futures):
                 try:
                     future.result()
@@ -72,21 +71,21 @@ class AllToolsSecretScan(ToolGateway):
         
         # Deduplicate: Remove TruffleHog findings that match Gitleaks findings
         try:
-            # Build normalized set from Gitleaks (base de referencia)
+            # Build normalized set from Gitleaks
             gitleaks_normalized = set()
             for g in findings_gitleaks or []:
-                norm = self._normalize_where_from_gitleaks(g)
+                norm = self._normalize_for_cross_tool_dedup(g, is_gitleaks=True)
                 if norm:
                     gitleaks_normalized.add(norm)
 
-            # Deduplicate within TruffleHog (same filename+secret, different detectors)
+            # Deduplicate within TruffleHog
             trufflehog_after_internal_dedup = self._deduplicate_trufflehog_internal(findings_trufflehog or [], folder_path)
             
             # Filter TruffleHog against Gitleaks
             filtered_trufflehog = []
             for idx, t in enumerate(trufflehog_after_internal_dedup):
-                norm = self._normalize_where_from_gitleaks_against_trufflehog(t, folder_path)
-                # Si la normalización coincide con Gitleaks, es un duplicado
+                norm = self._normalize_for_cross_tool_dedup(t, is_gitleaks=False)
+
                 if norm and norm in gitleaks_normalized:
                     continue
                 else:
@@ -105,12 +104,12 @@ class AllToolsSecretScan(ToolGateway):
         return findings, finding_path
 
     def _deduplicate_trufflehog_internal(self, findings: list, folder_path: str = "") -> list:
-        """Deduplicate within TruffleHog: remove findings with same filename+secret but different detectors."""
+        """Deduplicate within TruffleHog: remove findings with same filename+line+secret but different detectors."""
         if not findings:
             return findings
         
-        # Use filename+secret as key
-        seen_by_file_secret = {}
+        # Use filename+line+secret as key
+        seen_by_file_line_secret = {}
         deduplicated = []
         
         for finding in findings:
@@ -129,54 +128,91 @@ class AllToolsSecretScan(ToolGateway):
             filename = path.split('/')[-1] if '/' in path else path
             filename = filename.split('\\')[-1] if '\\' in filename else filename
             
+            # Extract line number
+            try:
+                line = (
+                    finding.get("SourceMetadata", {})
+                    .get("Data", {})
+                    .get("Filesystem", {})
+                    .get("line", "")
+                )
+            except (AttributeError, TypeError):
+                line = finding.get("line") or ""
+            
             # Get the secret
             secret = finding.get("Raw") or finding.get("RawV2") or finding.get("Match") or finding.get("Redacted") or ""
             masked_secret = self._mask_secret(secret)
             
-            # Key: filename + secret (without detector)
-            key = f"{filename}|{masked_secret}"
+            # Key: filename + line + secret
+            key = f"{filename}|{line}|{masked_secret}"
             
-            if key not in seen_by_file_secret:
-                seen_by_file_secret[key] = True
+            if key not in seen_by_file_line_secret:
+                seen_by_file_line_secret[key] = True
                 deduplicated.append(finding)
         
         return deduplicated
 
-    def _normalize_where_from_gitleaks_against_trufflehog(self, item: dict, folder_path: str = "") -> str:
+    def _normalize_for_cross_tool_dedup(self, item: dict, is_gitleaks: bool = True, include_line: bool = True) -> str:
         """
-        Normalize TruffleHog item for comparison against Gitleaks.
-        Uses only filename + masked secret (no detector) to match the actual secret.
+        Normalize item for cross-tool deduplication (Gitleaks vs TruffleHog).
         """
         if not item:
             return ""
         
-        # Extract path from nested structure
-        path = ""
-        try:
-            path = (
-                item.get("SourceMetadata", {})
-                .get("Data", {})
-                .get("Filesystem", {})
-                .get("file", "")
-            )
-        except (AttributeError, TypeError):
-            path = item.get("file", "") or ""
+        # Extract filename
+        if is_gitleaks:
+            path = item.get("File", "") or ""
+        else:
+            # TruffleHog nested path extraction
+            try:
+                path = (
+                    item.get("SourceMetadata", {})
+                    .get("Data", {})
+                    .get("Filesystem", {})
+                    .get("file", "")
+                )
+            except (AttributeError, TypeError):
+                path = item.get("file", "") or ""
         
         # Extract only filename from path
         filename = path.split('/')[-1] if '/' in path else path
         filename = filename.split('\\')[-1] if '\\' in filename else filename
         
+        # Extract line number if requested
+        line = ""
+        if include_line:
+            if is_gitleaks:
+                line = item.get("StartLine") or item.get("line") or ""
+            else:
+                try:
+                    line = (
+                        item.get("SourceMetadata", {})
+                        .get("Data", {})
+                        .get("Filesystem", {})
+                        .get("line", "")
+                    )
+                except (AttributeError, TypeError):
+                    line = item.get("line") or ""
+        
         # Get the secret from various possible fields
-        secret = item.get("Raw") or item.get("RawV2") or item.get("Match") or item.get("Redacted") or ""
+        if is_gitleaks:
+            secret = item.get("Secret") or item.get("Match") or ""
+        else:
+            secret = item.get("Raw") or item.get("RawV2") or item.get("Match") or item.get("Redacted") or ""
+        
         masked = self._mask_secret(secret)
         
-        # For Gitleaks comparison, use ONLY filename and secret (no detector)
-        # This matches how Gitleaks reports secrets
+        # Build normalized key
         if not (filename or masked):
             return ""
         
-        # Return a generic format that can match with Gitleaks
-        normalized = f"*|{filename}|{masked}"
+        if include_line:
+            # Strict: filename|line|secret
+            normalized = f"{filename}|{line}|{masked}"
+        else:
+            # Fallback: filename|secret (no line)
+            normalized = f"{filename}|{masked}"
+        
         return normalized.strip()
 
     def _rewrite_trufflehog_file(self, filtered_findings: list, file_path: str) -> None:
@@ -210,71 +246,3 @@ class AllToolsSecretScan(ToolGateway):
         if len(secret) > 6:
             return secret[:3] + "*" * 9 + secret[-3:]
         return secret
-
-    def _normalize_where_from_gitleaks(self, item: dict) -> str:
-        """
-        Normalize Gitleaks item for deduplication.
-        Extracts: detector (RuleID), filename (not full path), and masked secret
-        to match the normalization logic used in all_tools_deserealizator.py
-        """
-        if not item:
-            return ""
-        
-        # Extract components
-        path = item.get("File", "") or ""
-        # Extract only filename from path (last component)
-        filename = path.split('/')[-1] if '/' in path else path
-        filename = filename.split('\\')[-1] if '\\' in filename else filename
-        
-        # Detector is typically RuleID for Gitleaks
-        detector = item.get("RuleID") or ""
-        
-        # Get the secret
-        secret = item.get("Secret") or item.get("Match") or ""
-        masked = self._mask_secret(secret)
-        
-        # Build normalized key: detector|filename|secret (no line, no full path)
-        if not (filename or detector or masked):
-            return ""
-        
-        normalized = f"{detector}|{filename}|{masked}"
-        return normalized.strip()
-
-    def _normalize_where_from_trufflehog(self, item: dict, folder_path: str = "") -> str:
-        """
-        Normalize TruffleHog item for deduplication.
-        Extracts: detector (ExtraData.name or DetectorName), filename, and masked secret
-        to match the normalization logic used in all_tools_deserealizator.py
-        """
-        if not item:
-            return ""
-        
-        # Extract path from nested structure
-        path = ""
-        try:
-            path = (
-                item.get("SourceMetadata", {})
-                .get("Data", {})
-                .get("Filesystem", {})
-                .get("file", "")
-            )
-        except (AttributeError, TypeError):
-            path = item.get("file", "") or ""
-        
-        # Extract only filename from path (last component)
-        filename = path.split('/')[-1] if '/' in path else path
-        filename = filename.split('\\')[-1] if '\\' in filename else filename
-        
-        # Detector: prefer ExtraData.name when present, otherwise use DetectorName or RuleID
-        detector = (item.get("ExtraData") or {}).get("name") or item.get("DetectorName") or item.get("RuleID") or ""
-        
-        # Get the secret from various possible fields
-        secret = item.get("Raw") or item.get("RawV2") or item.get("Match") or item.get("Redacted") or ""
-        masked = self._mask_secret(secret)
-        
-        # Build normalized key: detector|filename|secret (no line, no full path)
-        if not (filename or detector or masked):
-            return ""
-        
-        normalized = f"{detector}|{filename}|{masked}"
-        return normalized.strip()

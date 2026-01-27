@@ -41,71 +41,11 @@ class AllToolsSecretScanDeserealizator(DeseralizatorGateway):
             list_open_gitleaks = future_gitleaks.result()
             list_open_trufflehog = future_trufflehog.result()
         
-        # Add all Gitleaks vulnerabilities first (priority)
+        # Add all vulnerabilities (already deduplicated in all_tools.py)
         list_open_vulnerabilities.extend(list_open_gitleaks)
-        
-        # Create set of unique keys from Gitleaks findings based on normalized 'where' field
-        seen_findings = {self._normalize_where(finding.where) for finding in list_open_gitleaks}
-        
-        # Add only TruffleHog vulnerabilities that are not duplicates
-        for finding in list_open_trufflehog:
-            normalized_where = self._normalize_where(finding.where)
-            if normalized_where not in seen_findings:
-                list_open_vulnerabilities.append(finding)
-                seen_findings.add(normalized_where)
+        list_open_vulnerabilities.extend(list_open_trufflehog)
 
         return list_open_vulnerabilities
-    
-    def _normalize_where(self, where: str) -> str:
-        """
-        Normalize the 'where' field to enable proper deduplication.
-        Extracts: detector, filename (not full path), and secret
-        to be path-agnostic and robust to different path reporting formats.
-        """
-        if not where:
-            return ""
-
-        # Parse the where string which is typically formatted as:
-        # "path[:line], [Detector: name], [Secret|Misconfiguration]: xxx"
-        detector = ""
-        filename = ""
-        secret = ""
-
-        # split by commas
-        pieces = [p.strip() for p in where.split(',') if p.strip()]
-        
-        if pieces:
-            # first piece contains path and optionally line
-            first = pieces[0]
-            # remove leading slashes/backslashes to normalize
-            path = first.split(':')[0].lstrip('/').lstrip('\\')
-            # extract only filename (last component)
-            filename = path.split('/')[-1] if '/' in path else path
-            filename = filename.split('\\')[-1] if '\\' in filename else filename
-
-        # extract detector and secret from remaining pieces
-        for p in pieces[1:]:
-            lower_p = p.lower()
-            if lower_p.startswith('detector:'):
-                detector = p.split(':', 1)[1].strip()
-            elif lower_p.startswith('secret:'):
-                secret_raw = p.split(':', 1)[1].strip()
-                # extract only the masked secret value
-                m = re.search(r'(\S+)', secret_raw)
-                if m:
-                    secret = m.group(1)
-            elif lower_p.startswith('misconfiguration:'):
-                secret_raw = p.split(':', 1)[1].strip()
-                m = re.search(r'(\S+)', secret_raw)
-                if m:
-                    secret = m.group(1)
-
-        # Build normalized key: detector|filename|secret (path-agnostic)
-        if not (detector or filename or secret):
-            return ""
-
-        normalized = f"{detector}|{filename}|{secret}"
-        return normalized.strip()
     
     def get_where_correctly(self, result: dict, path_directory=""):
         # Build a more detailed where string including line and detector/extra name
@@ -133,8 +73,7 @@ class AllToolsSecretScanDeserealizator(DeseralizatorGateway):
         line = result.get("StartLine") or result.get("line") or (
             result.get("SourceMetadata", {}).get("Data", {}).get("Filesystem", {}).get("line")
         )
-
-        # prefer ExtraData.name when present, otherwise use DetectorName or RuleID
+        
         detector = (result.get("ExtraData") or {}).get("name") or result.get("DetectorName") or result.get("RuleID") or ""
 
         secret = str(result.get("Secret", "") or result.get("Match", "") or result.get("Raw", "") or result.get("RawV2", "") or result.get("Redacted", ""))

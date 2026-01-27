@@ -52,23 +52,25 @@ class TestAllToolsSecretScanDeserealizator(unittest.TestCase):
 
     def test_get_list_vulnerability_with_duplicates(self):
         """
-        Test that duplicate findings (based on 'where' field) are removed, prioritizing Gitleaks.
+        Test that both Gitleaks and TruffleHog findings are returned.
+        Note: Deduplication is now handled in all_tools.py, not in the deserializer.
+        The deserializer simply combines the already-deduplicated results from both tools.
         """
-        results_scan_list = [{"gitleaks": ["g_finding1"], "trufflehog": ["t_finding_dup"]}]
+        results_scan_list = [{"gitleaks": ["g_finding1"], "trufflehog": ["t_finding2"]}]
         path_directory = "/app"
         os_env = "linux"
 
         finding_gitleaks = Finding(where="file1.py, Secret: sec***ret", **self.finding_data)
-        finding_trufflehog_dup = Finding(where="/file1.py, Secret: sec***ret", **self.finding_data)
+        finding_trufflehog = Finding(where="file2.py, Secret: ano***her", **self.finding_data)
 
         self.deserealizator.gitleaks_deserealizator.get_list_vulnerability.return_value = [finding_gitleaks]
-        self.deserealizator.trufflehog_deserealizator.get_list_vulnerability.return_value = [finding_trufflehog_dup]
+        self.deserealizator.trufflehog_deserealizator.get_list_vulnerability.return_value = [finding_trufflehog]
 
         vulnerabilities = self.deserealizator.get_list_vulnerability(results_scan_list, path_directory, os_env)
 
-        self.assertEqual(len(vulnerabilities), 1)
+        self.assertEqual(len(vulnerabilities), 2)
         self.assertIn(finding_gitleaks, vulnerabilities)
-        self.assertNotIn(finding_trufflehog_dup, vulnerabilities)
+        self.assertIn(finding_trufflehog, vulnerabilities)
 
     def test_get_list_vulnerability_only_gitleaks(self):
         """
@@ -86,18 +88,6 @@ class TestAllToolsSecretScanDeserealizator(unittest.TestCase):
 
         self.assertEqual(len(vulnerabilities), 1)
         self.assertIn(finding_gitleaks, vulnerabilities)
-
-    def test_normalize_where(self):
-        """
-        Test the _normalize_where method extracts detector, filename, and secret.
-        New format: detector|filename|secret (path-agnostic deduplication)
-        """
-        # Test with full where string from Gitleaks format
-        self.assertEqual(self.deserealizator._normalize_where("file.py, Secret: sec*********ret"), "|file.py|sec*********ret")
-        # Test with detector and secret
-        self.assertEqual(self.deserealizator._normalize_where("/path/to/file.py, Detector: github-pat, Secret: ghp*********xYZ"), "github-pat|file.py|ghp*********xYZ")
-        # Test with empty string
-        self.assertEqual(self.deserealizator._normalize_where(""), "")
 
     def test_get_where_correctly(self):
         """
