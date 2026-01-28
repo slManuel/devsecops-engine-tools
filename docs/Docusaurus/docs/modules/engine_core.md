@@ -203,7 +203,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
     },
     "ENGINE_SECRET": {
         "ENABLED": true,
-        "TOOL": "TRUFFLEHOG|GITLEAKS",
+        "TOOL": "TRUFFLEHOG|GITLEAKS|ALL_TOOLS",
         "PRIORITY": "STANDARD|DISCREET"
     },
     "ENGINE_DEPENDENCIES": {

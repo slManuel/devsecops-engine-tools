@@ -71,6 +71,15 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
         "NUCLEI": "Nuclei Scan",
         "KIUWAN": "Kiuwan Scan"
     }
+    
+    multiple_scan_types = {
+        "engine_secret": {
+            "ALL_TOOLS": {
+                "scanners": ["GITLEAKS", "TRUFFLEHOG"],
+                "file_separator": "#"
+            }
+        }
+    }
 
     def send_vulnerability_management(
         self, vulnerability_management: VulnerabilityManagement
@@ -127,44 +136,83 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                     tags = [
                         f"{vulnerability_management.dict_args['module']}_{tag_suffix}"
                     ]
-
-                request = self._build_request_importscan(
-                    vulnerability_management,
-                    token_cmdb,
-                    token_dd,
-                    tags,
-                    use_cmdb,
-                )
-
-                def request_func():
-                    return DefectDojo.send_import_scan(request)
-
-                response = Utils().retries_requests(
-                    request_func,
-                    vulnerability_management.config_tool["VULNERABILITY_MANAGER"][
-                        "DEFECT_DOJO"
-                    ]["MAX_RETRIES_QUERY"],
-                    retry_delay=5,
-                )
-
-                if hasattr(response, "url"):
-                    if vulnerability_management.config_tool.get("VULNERABILITY_MANAGER").get("DEFECT_DOJO").get("PRINT_DOMAIN"):
-                        response.url = response.url.replace(
-                            vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["HOST_DEFECT_DOJO"],
-                            vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["PRINT_DOMAIN"]
-                        )
-                    url_parts = response.url.split("//")
-                    test_string = "//".join([url_parts[0] + "/", url_parts[1]])
-                    print(
-                        "Report sent to vulnerability management: ",
-                        f"{test_string}?tags={vulnerability_management.dict_args['module']}",
+                
+                if vulnerability_management.dict_args["module"] in self.multiple_scan_types and \
+                    vulnerability_management.scan_type in self.multiple_scan_types[vulnerability_management.dict_args["module"]]:
+                    files = vulnerability_management.input_core.path_file_results.split(
+                        self.multiple_scan_types[vulnerability_management.dict_args["module"]][vulnerability_management.scan_type]["file_separator"]
                     )
+                    all_tools = self.multiple_scan_types[vulnerability_management.dict_args["module"]][vulnerability_management.scan_type]["scanners"]
+                    print_url = True
+                    for index, file in enumerate(files):
+                        vulnerability_management.input_core.path_file_results = file
+                        vulnerability_management.scan_type = all_tools[index]
+                        self._send_report_to_vulnerability_management(
+                            vulnerability_management,
+                            token_cmdb,
+                            token_dd,
+                            tags,
+                            use_cmdb,
+                            print_url
+                        )
+                        print_url = False
                 else:
-                    raise ExceptionVulnerabilityManagement(response)
+                    self._send_report_to_vulnerability_management(
+                        vulnerability_management,
+                        token_cmdb,
+                        token_dd,
+                        tags,
+                        use_cmdb,
+                    )
+                           
         except Exception as ex:
             raise ExceptionVulnerabilityManagement(
                 f"Error sending report to vulnerability management with the following error: {str(ex)}"
             )
+    
+    def _send_report_to_vulnerability_management(
+        self, 
+        vulnerability_management, 
+        token_cmdb, 
+        token_dd, 
+        tags, 
+        use_cmdb,
+        print_url=True
+    ):
+        request = self._build_request_importscan(
+            vulnerability_management,
+            token_cmdb,
+            token_dd,
+            tags,
+            use_cmdb,
+        )
+
+        def request_func():
+            return DefectDojo.send_import_scan(request)
+
+        response = Utils().retries_requests(
+            request_func,
+            vulnerability_management.config_tool["VULNERABILITY_MANAGER"][
+                "DEFECT_DOJO"
+            ]["MAX_RETRIES_QUERY"],
+            retry_delay=5,
+        )
+
+        if hasattr(response, "url"):
+            if vulnerability_management.config_tool.get("VULNERABILITY_MANAGER").get("DEFECT_DOJO").get("PRINT_DOMAIN"):
+                response.url = response.url.replace(
+                    vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["HOST_DEFECT_DOJO"],
+                    vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["PRINT_DOMAIN"]
+                )
+            if print_url:
+                url_parts = response.url.split("//")
+                test_string = "//".join([url_parts[0] + "/", url_parts[1]])
+                print(
+                    "Report sent to vulnerability management: ",
+                    f"{test_string}?tags={vulnerability_management.dict_args['module']}",
+                )
+        else:
+            raise ExceptionVulnerabilityManagement(response)
 
     def get_product_type_pipeline(self, service, dict_args, secret_tool, config_tool):
         try:
