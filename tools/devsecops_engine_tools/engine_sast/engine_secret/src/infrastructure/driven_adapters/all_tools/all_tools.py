@@ -79,7 +79,7 @@ class AllToolsSecretScan(ToolGateway):
                     gitleaks_normalized.add(norm)
 
             # Deduplicate within TruffleHog
-            trufflehog_after_internal_dedup = self._deduplicate_trufflehog_internal(findings_trufflehog or [], folder_path)
+            trufflehog_after_internal_dedup = self._deduplicate_trufflehog_internal(findings_trufflehog or [])
             
             # Filter TruffleHog against Gitleaks
             filtered_trufflehog = []
@@ -219,17 +219,11 @@ class AllToolsSecretScan(ToolGateway):
         """Rewrite the TruffleHog findings file with deduplicated results."""
         try:
             
-            if not file_path:
+            if not file_path or not os.path.exists(file_path):
                 return
             
-            if not os.path.exists(file_path):
-                return
-            
-            # Write findings to file
             with open(file_path, "w") as file:
-                for idx, finding in enumerate(filtered_findings):
-                    json_str = json.dumps(finding)
-                    file.write(json_str + '\n')
+                file.writelines(json.dumps(finding) + '\n' for finding in filtered_findings)
                 
         except Exception as e:
             logger.error(f"Error rewriting TruffleHog file: {e}")
