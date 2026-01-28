@@ -103,7 +103,7 @@ class AllToolsSecretScan(ToolGateway):
         finding_path = finding_path_gitleaks + "#" + finding_path_trufflehog
         return findings, finding_path
 
-    def _deduplicate_trufflehog_internal(self, findings: list, folder_path: str = "") -> list:
+    def _deduplicate_trufflehog_internal(self, findings: list) -> list:
         """Deduplicate within TruffleHog: remove findings with same filename+line+secret but different detectors."""
         if not findings:
             return findings

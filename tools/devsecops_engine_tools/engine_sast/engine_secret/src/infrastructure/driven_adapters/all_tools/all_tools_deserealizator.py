@@ -60,7 +60,7 @@ class AllToolsSecretScanDeserealizator(DeseralizatorGateway):
                     .get("file", "")
                 )
             except Exception:
-                full_path = full_path
+                pass
 
         # Remove path_directory prefix
         try:
