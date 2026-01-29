@@ -3,7 +3,9 @@ from devsecops_engine_tools.engine_utilities.defect_dojo.domain.request_objects.
 from devsecops_engine_tools.engine_utilities.defect_dojo.domain.serializers.import_scan import ImportScanSerializer
 from devsecops_engine_tools.engine_utilities.defect_dojo.domain.user_case.cmdb import CmdbUserCase
 from devsecops_engine_tools.engine_utilities.defect_dojo.infraestructure.driver_adapters.cmdb import CmdbRestConsumer
-from devsecops_engine_tools.engine_utilities.azuredevops.infrastructure.azure_devops_api import AzureDevopsApi
+from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.azure.azure_devops import AzureDevops
+from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.github.github_actions import GithubActions
+from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.runtime_local.runtime_local import RuntimeLocal
 from devsecops_engine_tools.engine_utilities.utils.session_manager import SessionManager
 
 
@@ -20,16 +22,13 @@ class Connect:
                 session=SessionManager(),
             )
 
-            utils_azure = AzureDevopsApi(
-                personal_access_token=request.personal_access_token,
-                project_remote_config=request.project_remote_config,
-                organization_url=request.organization_url,
-                compact_remote_config_url=request.compact_remote_config_url,
-                repository_id=request.repository_id,
-                remote_config_path=request.remote_config_path,
-            )
+            remote_config_source_gateway = {
+                "azure": AzureDevops(),
+                "github": GithubActions(),
+                "local": RuntimeLocal()
+            }.get(request.remote_config_source.lower())
 
-            uc = CmdbUserCase(rest_consumer_cmdb=rc, utils_azure=utils_azure, expression=request.expression)
+            uc = CmdbUserCase(rest_consumer_cmdb=rc, remote_config_source_gateway=remote_config_source_gateway, expression=request.expression)
             response = uc.execute(request)
         except Exception as e:
             return e
@@ -37,5 +36,5 @@ class Connect:
         return response
     
     def get_code_app(engagement_name, expression):
-        uc = CmdbUserCase(rest_consumer_cmdb=None, utils_azure=None, expression=expression)
+        uc = CmdbUserCase(rest_consumer_cmdb=None, remote_config_source_gateway=None, expression=expression)
         return uc.get_code_app(engagement_name)
