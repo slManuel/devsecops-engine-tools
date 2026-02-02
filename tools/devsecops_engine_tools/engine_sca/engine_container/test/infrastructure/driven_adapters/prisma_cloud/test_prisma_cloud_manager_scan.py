@@ -163,6 +163,40 @@ def test_scan_image_success(mock_remoteconfig):
         mock_print.assert_any_call("The image image_name was scanned")
 
 
+def test_scan_image_error_logs_details(mock_remoteconfig):
+    with patch(
+        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.subprocess.run"
+    ) as mock_run, patch(
+        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.logger.error"
+    ) as mock_logger_error:
+        mock_run.side_effect = subprocess.CalledProcessError(
+            137,
+            ["twistcli", "images", "scan"],
+            output="stdout content",
+            stderr="stderr content",
+        )
+
+        scan_manager = PrismaCloudManagerScan()
+
+        result = scan_manager.scan_image(
+            "file_path",
+            "image_name",
+            "result.json",
+            mock_remoteconfig,
+            "prisma_access_key:some_secret_key",
+            None,
+        )
+
+        assert result is None
+        mock_logger_error.assert_called_once_with(
+            "Error during image scan of %s. Return code: %s. Stderr: %s. Stdout: %s",
+            "image_name",
+            137,
+            "stderr content",
+            "stdout content",
+        )
+
+
 def test_run_tool_container_sca_success(mock_remoteconfig, mock_scan_image):
     with patch("builtins.open") as mock_open, patch("os.path.join") as mock_join, patch(
         "os.path.exists"
