@@ -58,8 +58,6 @@ class PrismaCloudManagerScan(ToolGateway):
                 encoding="utf-8",
                 errors="replace",
             )
-            if result.stdout:
-                logger.info("Prisma scan stdout for %s: %s", image_name, result.stdout)
             if result.stderr:
                 logger.warning("Prisma scan stderr for %s: %s", image_name, result.stderr)
             print(f"The image {image_name} was scanned")
