@@ -1,28 +1,19 @@
 import { DockerErrorHandler } from './DockerErrorHandler';
+import { NetworkErrorHandler } from './NetworkErrorHandler';
 
 /**
  * Centralized error patterns configuration.
  * 
  * Architecture:
  * - Docker patterns retrieved from DockerErrorHandler via static method (single source of truth)
- * - Network and Configuration patterns defined here
- * - When NetworkErrorHandler is created, move network patterns there and export similarly
+ * - Network patterns retrieved from NetworkErrorHandler via static method (single source of truth)
+ * - Configuration patterns defined here
  */
 
 export const ERROR_PATTERNS = {
     docker: DockerErrorHandler.getErrorPatterns(),
 
-    network: [
-        'context deadline exceeded',
-        'i/o timeout',
-        'network timeout',
-        'network error',
-        'unable to reach docker registry',
-        'connection refused',
-        'connection timed out',
-        'dial tcp',
-        'no route to host'
-    ],
+    network: NetworkErrorHandler.getErrorPatterns(),
 
     configuration: [
         'no dependencies token provided',
@@ -38,7 +29,8 @@ export const ERROR_PATTERNS = {
         'error executing container command',
         'failed to ensure scanner image',
         'container not found',
-        'scan timed out'
+        'scan timed out',
+        'command failed'
     ]
 } as const;
 

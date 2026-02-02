@@ -1,4 +1,5 @@
 export const VARIABLE_GROUPS_AD_BY_NAME: string = "https://dev.azure.com/{organization}/{project}/_apis/distributedtask/variablegroups?groupName={groupName}&api-version=7.1-preview.2";
 export const VARIABLE_GROUPS_AD_BY_ID: string = "https://dev.azure.com/{organization}/{project}/_apis/distributedtask/variablegroups?groupIds={groupIds}&api-version=7.1-preview.2";
 export const VARIABLE_GROUPS_AD_BY_RELEASE_DEFINITION_ID: string = "https://vsrm.dev.azure.com/{organization}/{project}/_apis/release/definitions/{definitionId}?api-version=7.1-preview.4";
-export const METRICS_DATA_UPLOAD_URL: string = "https://devsecops-dev.apps.ambientesbc.com/engine-backend/metrics/api/uploadMetrics?folder=devsecops_ai_ide_extension"
+//export const METRICS_DATA_UPLOAD_URL: string = "https://devsecops.apps.bancolombia.com/engine-backend/metrics/api/uploadMetrics?folder=devsecops_ide_extension"
+export const METRICS_DATA_UPLOAD_URL: string = "https://devsecops-dev.apps.ambientesbc.com/engine-backend/metrics/api/uploadMetrics?folder=devsecops_ide_extension"

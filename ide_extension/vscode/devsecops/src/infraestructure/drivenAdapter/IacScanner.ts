@@ -7,9 +7,13 @@ import { exec, execSync } from "child_process";
 import { IIacContext, ISeverityCounts, Mappers } from "../../domain/model/mappers/Mappers";
 import { ScannerImageManager } from "../helper/ScannerImageManager";
 import { ScannerMetricsHelper } from "../helper/ScannerMetricsHelper";
+import { DockerErrorHandler } from "../helper/DockerErrorHandler";
+import { NetworkErrorHandler } from "../helper/NetworkErrorHandler";
 
 export class IacScanner implements IScannerGateway {
   private metricsHelper = new ScannerMetricsHelper();
+  private dockerErrorHandler = new DockerErrorHandler();
+  private networkErrorHandler = new NetworkErrorHandler();
   async scan(
     elementToScan: string,
     outputChannel: OutputChannel,
@@ -21,6 +25,8 @@ export class IacScanner implements IScannerGateway {
   ): Promise<ScannerRes> {
     outputChannel.show();
     this.metricsHelper.clearLogs();
+    this.dockerErrorHandler.reset();
+    this.networkErrorHandler.reset();
 
     return new Promise(async (resolve, _reject) => {
       let scanResult: boolean = false;
@@ -60,7 +66,7 @@ export class IacScanner implements IScannerGateway {
         const childProcess = exec(containerCommand, (error, stdout, stderr) => {
           clearTimeout(timeout);
           if (error) {
-            this.errorHandler(outputChannel, error, stderr);
+            this.errorHandler(outputChannel, error, stderr, containerImageName, toolVersion);
           }
 
           if (stdout) {
@@ -183,14 +189,31 @@ export class IacScanner implements IScannerGateway {
   }
 
 
-  private errorHandler(outputChannel: OutputChannel, error: Error, stderr: string): void {
-    outputChannel.appendLine(`Error: ${error.message}`);
-    outputChannel.appendLine("Please check your container engine configuration and try again.");
-    if (stderr.includes("Unable to find image")) {
-      outputChannel.appendLine("Container image not found. Attempting to download...");
-    } else {
-      outputChannel.appendLine(`Standard Error: ${stderr}`);
-      outputChannel.appendLine("Attempting to process partial results...");
+  private errorHandler(
+    outputChannel: OutputChannel,
+    error: Error,
+    stderr: string,
+    containerImageName: string,
+    toolVersion: string
+  ): void {
+    const errorContext = {
+      imageTag: `${containerImageName}:${toolVersion}`,
+      containerImageName,
+      toolVersion
+    };
+
+    // Create log capture callback to ensure error messages are captured for metrics
+    const logCapture = (message: string) => {
+      this.metricsHelper.captureOnly(message);
+    };
+
+    // Use DockerErrorHandler for known Docker errors
+    this.dockerErrorHandler.handle(error.message, outputChannel, errorContext, logCapture);
+
+    // Also check stderr for additional error patterns
+    if (stderr) {
+      this.dockerErrorHandler.handle(stderr, outputChannel, errorContext, logCapture);
+      this.networkErrorHandler.handle(stderr, outputChannel, errorContext, logCapture);
     }
   }
 

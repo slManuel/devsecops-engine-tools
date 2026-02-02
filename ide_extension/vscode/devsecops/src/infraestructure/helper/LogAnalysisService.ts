@@ -84,6 +84,30 @@ export class LogAnalysisService {
     }
 
     /**
+     * Check if logs contain CRITICAL Docker errors (daemon not running, Docker not accessible)
+     * These errors should take priority over network errors
+     */
+    public static hasCriticalDockerErrors(logs: string[]): boolean {
+        if (!logs || logs.length === 0) {
+            return false;
+        }
+
+        const criticalDockerPatterns = [
+            'Cannot connect to the Docker daemon',
+            'Docker is not running',
+            'docker: command not found',
+            'error during connect'
+        ];
+
+        return logs.some(log => {
+            const logLower = log.toLowerCase();
+            return criticalDockerPatterns.some(pattern =>
+                logLower.includes(pattern.toLowerCase())
+            );
+        });
+    }
+
+    /**
      * Check if logs contain Network-specific errors
      * Uses shared ERROR_PATTERNS
      */

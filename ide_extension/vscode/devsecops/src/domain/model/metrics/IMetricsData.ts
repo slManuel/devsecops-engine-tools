@@ -9,7 +9,7 @@ export interface IMetricsData {
     findings_severity_low: string;
     total_findings: string;
     exception_log: string;
-    scan_status: 'Success with findings' | 'Success with no findings' | 'Docker Error' | 'Network Error' | 'Configuration Error' | 'Unknown Error';
+    scan_status: 'Success with findings' | 'Success with no findings' | 'Error: Docker inactive' | 'Error: VPN inactive' | 'Error: Configuration issues' | 'Error: Unknown';
 }
 
 export interface IMetricsInput {

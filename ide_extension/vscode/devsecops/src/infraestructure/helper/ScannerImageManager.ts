@@ -2,14 +2,34 @@ import { OutputChannel } from "vscode";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { DockerErrorHandler, ErrorContext } from "./DockerErrorHandler";
+import { NetworkErrorHandler } from "./NetworkErrorHandler";
 import { DockerValidator } from "./DockerValidator";
 
 const execAsync = promisify(exec);
 export class ScannerImageManager {
-  private readonly errorHandler: DockerErrorHandler;
+  private readonly dockerErrorHandler: DockerErrorHandler;
+  private readonly networkErrorHandler: NetworkErrorHandler;
 
   constructor() {
-    this.errorHandler = new DockerErrorHandler();
+    this.dockerErrorHandler = new DockerErrorHandler();
+    this.networkErrorHandler = new NetworkErrorHandler();
+  }
+
+  /**
+   * Get the error category from the last operation.
+   * Returns 'critical-docker', 'docker', 'network', or null.
+   */
+  public getLastErrorCategory(): 'critical-docker' | 'docker' | 'network' | null {
+    const dockerCategory = this.dockerErrorHandler.getLastErrorCategory();
+    if (dockerCategory) {
+      return dockerCategory;
+    }
+    
+    if (this.networkErrorHandler.hasNetworkError()) {
+      return 'network';
+    }
+    
+    return null;
   }
 
   async ensureScannerImageExists(
@@ -19,8 +39,9 @@ export class ScannerImageManager {
     outputChannel: OutputChannel,
     logCapture?: (message: string) => void
   ): Promise<boolean> {
-    // Reset error handler at the start to ensure clean state
-    this.errorHandler.reset();
+    // Reset error handlers at the start to ensure clean state
+    this.dockerErrorHandler.reset();
+    this.networkErrorHandler.reset();
 
     if (!DockerValidator.isDockerInstalled(containerEnginePath, outputChannel)) {
       if (logCapture) {
@@ -57,7 +78,7 @@ export class ScannerImageManager {
       }
       return true;
     } catch (error: any) {
-      this.errorHandler.handle(error.message, outputChannel, { imageTag });
+      this.handleError(error.message, outputChannel, { imageTag }, logCapture);
       if (logCapture) {
         logCapture(error.message);
       }
@@ -65,7 +86,7 @@ export class ScannerImageManager {
     }
   }
 
-  private async pullImage(
+ private async pullImage(
     containerEnginePath: string,
     imageTag: string,
     outputChannel: OutputChannel,
@@ -87,7 +108,7 @@ export class ScannerImageManager {
       }
       return true;
     } catch (pullError: any) {
-      this.errorHandler.handle(pullError.message, outputChannel, context);
+      this.handleError(pullError.message, outputChannel, context, logCapture);
       if (logCapture) {
         logCapture(pullError.message);
       }
@@ -111,19 +132,41 @@ export class ScannerImageManager {
 
     pullProcess.stderr?.on('data', (data) => {
       const errorStr = data.toString();
-      if (this.isNetworkError(errorStr)) {
-        this.errorHandler.handle(errorStr, outputChannel, context);
-      } else {
-        outputChannel.append(errorStr);
-      }
+      this.handleError(errorStr, outputChannel, context, logCapture);
       if (logCapture) {
         logCapture(errorStr);
       }
     });
   }
 
-  private isNetworkError(errorMessage: string): boolean {
-    return errorMessage.includes('i/o timeout') || errorMessage.includes('Error response from daemon: Get');
+  /**
+   * Routes error to appropriate handler based on error type.
+   * Priority: Docker errors > Network errors (VPN/connectivity).
+   * 
+   * This follows the prioritization logic:
+   * 1. If Docker is inactive → Docker error (highest priority)
+   * 2. If Docker is active but network fails → Network/VPN error
+   */
+  private handleError(errorMessage: string, outputChannel: OutputChannel, context: ErrorContext, logCapture?: (message: string) => void): void {
+    // Check Docker patterns first (highest priority)
+    const dockerPatterns = DockerErrorHandler.getErrorPatterns();
+    const isDockerError = dockerPatterns.some(pattern => errorMessage.includes(pattern));
+    
+    if (isDockerError) {
+      this.dockerErrorHandler.handle(errorMessage, outputChannel, context, logCapture);
+      return;
+    }
+    
+    // Check network patterns (VPN/connectivity issues)
+    const networkPatterns = NetworkErrorHandler.getErrorPatterns();
+    const isNetworkError = networkPatterns.some(pattern => errorMessage.includes(pattern));
+    
+    if (isNetworkError) {
+      this.networkErrorHandler.handle(errorMessage, outputChannel, context, logCapture);
+    } else {
+      // Fallback to Docker handler for unknown errors
+      this.dockerErrorHandler.handle(errorMessage, outputChannel, context, logCapture);
+    }
   }
 
   // Static method for backward compatibility

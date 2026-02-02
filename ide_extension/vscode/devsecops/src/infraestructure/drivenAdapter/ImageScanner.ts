@@ -14,9 +14,13 @@ import {
 import ContainerEngineManager from "../helper/ContainerEngineManager";
 import { ScannerImageManager } from "../helper/ScannerImageManager";
 import { ScannerMetricsHelper } from "../helper/ScannerMetricsHelper";
+import { DockerErrorHandler } from "../helper/DockerErrorHandler";
+import { NetworkErrorHandler } from "../helper/NetworkErrorHandler";
 
 export class ImageScanner implements IScannerGateway {
   private metricsHelper = new ScannerMetricsHelper();
+  private dockerErrorHandler = new DockerErrorHandler();
+  private networkErrorHandler = new NetworkErrorHandler();
   async scan(
     elementToScan: string,
     outputChannel: OutputChannel,
@@ -29,6 +33,8 @@ export class ImageScanner implements IScannerGateway {
     outputChannel.show();
 
     this.metricsHelper.clearLogs();
+    this.dockerErrorHandler.reset();
+    this.networkErrorHandler.reset();
 
     return new Promise(async (resolve, _reject) => {
       let scanResult: boolean = false;
@@ -41,11 +47,13 @@ export class ImageScanner implements IScannerGateway {
           containerEnginePath,
           containerImageName,
           toolVersion,
-          outputChannel
+          outputChannel,
+          (message) => this.metricsHelper.captureOnly(message)
         );
 
         if (!scannerImageAvailable) {
           this.metricsHelper.captureLog(outputChannel, "Failed to ensure scanner image is available. Aborting scan.");
+          await this.collectFailedScanMetrics(elementToScan);
           resolve(new ScannerRes(false, [], null));
           return;
         }
@@ -55,6 +63,7 @@ export class ImageScanner implements IScannerGateway {
         const exportSuccess = await ContainerEngineManager.exportImageToTar(elementToScan, imageTarPath);
         if (!exportSuccess) {
           this.metricsHelper.captureLog(outputChannel, `Failed to export image ${elementToScan}`);
+          await this.collectFailedScanMetrics(elementToScan);
           resolve(new ScannerRes(false, [], null));
           return;
         }
@@ -70,12 +79,14 @@ export class ImageScanner implements IScannerGateway {
           devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo docker_default_remote_config --module engine_container --tool trivy --image_to_scan /tmp/${imageTarName} --context true
         "`;
 
-        const timeout = setTimeout(() => {
+        const timeout = setTimeout(async () => {
           outputChannel.appendLine("Scan timed out after 10 minutes");
           outputChannel.appendLine("Container command may be hanging. Check container engine configuration.");
+          this.metricsHelper.captureLog(outputChannel, "Scan timed out after 10 minutes");
           if (imageTarPath) {
             ContainerEngineManager.removeFile(imageTarPath).catch(console.error);
           }
+          await this.collectFailedScanMetrics(elementToScan);
           resolve(new ScannerRes(false, [], null));
         }, 600000);
 
@@ -87,12 +98,7 @@ export class ImageScanner implements IScannerGateway {
           }
 
           if (error) {
-            outputChannel.appendLine(`Error executing container command: ${error.message}`);
-            if (stderr.includes("Unable to find image")) {
-              outputChannel.appendLine("Scanner container image not found. Attempting to download...");
-            } else {
-              outputChannel.appendLine(`Standard Error: ${stderr}`);
-            }
+            this.errorHandler(outputChannel, error, stderr, containerImageName, toolVersion);
           }
 
           if (stdout) {
@@ -163,9 +169,52 @@ export class ImageScanner implements IScannerGateway {
         if (imageTarPath) {
           ContainerEngineManager.removeFile(imageTarPath).catch(console.error);
         }
+        await this.collectFailedScanMetrics(elementToScan);
         resolve(new ScannerRes(false, [], null));
       }
     });
+  }
+
+  private errorHandler(
+    outputChannel: OutputChannel,
+    error: Error,
+    stderr: string,
+    containerImageName: string,
+    toolVersion: string
+  ): void {
+    const errorContext = {
+      imageTag: `${containerImageName}:${toolVersion}`,
+      containerImageName,
+      toolVersion
+    };
+
+    // Create log capture callback to ensure error messages are captured for metrics
+    const logCapture = (message: string) => {
+      this.metricsHelper.captureOnly(message);
+    };
+
+    // Use DockerErrorHandler for known Docker errors
+    this.dockerErrorHandler.handle(error.message, outputChannel, errorContext, logCapture);
+
+    // Also check stderr for additional error patterns
+    if (stderr) {
+      this.dockerErrorHandler.handle(stderr, outputChannel, errorContext, logCapture);
+      this.networkErrorHandler.handle(stderr, outputChannel, errorContext, logCapture);
+    }
+  }
+
+  /**
+   * Helper method to collect metrics for failed scan scenarios.
+   * Eliminates code duplication across error handling paths.
+   */
+  private async collectFailedScanMetrics(elementToScan: string): Promise<void> {
+    await this.metricsHelper.collectAndstoreMetricsData(
+      elementToScan,
+      [],
+      null,
+      false,
+      "engine_container"
+    );
   }
 
   private calculateRawSeverityCounts(contexts: IImageScanContext[]): ISeverityCounts {

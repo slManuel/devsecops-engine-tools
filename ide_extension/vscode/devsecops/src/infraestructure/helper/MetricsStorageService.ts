@@ -9,7 +9,7 @@ export class MetricsStorageService {
     public static async storeMetricsData(metricsData: IMetricsData): Promise<void> {
         try {
             // Debug feature: Print metrics to console for inspection
-            if (this.ENABLE_DEBUG_LOGGING) {
+            if (this.   ENABLE_DEBUG_LOGGING) {
                 this.printMetricsToConsole(metricsData);
             }
 

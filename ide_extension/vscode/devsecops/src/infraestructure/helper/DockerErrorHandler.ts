@@ -19,11 +19,6 @@ const DOCKER_ERROR_MESSAGES: Record<string, ErrorHandler> = {
         }
     },
     "Unable to find image": "📦 Container image not found. The image will be downloaded automatically.",
-    "Failed to download image": "🛜 Failed to download image. Please check your internet connection or Docker configuration.",
-    "Failed to ensure scanner image": "🛜 Failed to download image. Please check your internet connection or Docker configuration.",
-    "context deadline exceeded": "🛜 Failed to download image. Please check your internet connection or Docker configuration.",
-    "i/o timeout": "🌐 Network timeout: Unable to reach Docker registry. Please check your internet connection and registry availability.",
-    "Error response from daemon: Get": "🌐 Network error: Unable to reach Docker registry. Please check your internet connection.",
     "manifest unknown": (context, outputChannel) => {
         if (context.containerImageName && context.toolVersion) {
             outputChannel.appendLine(`⚠️ Please verify that version ${context.toolVersion} exists for image ${context.containerImageName}. You may need to check available versions or update your configuration.`);
@@ -38,7 +33,6 @@ const DOCKER_ERROR_MESSAGES: Record<string, ErrorHandler> = {
     },
     "unknown flag": "⚠️ Invalid Docker command: Unknown flag or option. Please check the Docker command syntax.",
     "unknown shorthand flag": "⚠️ Invalid Docker command: Unknown shorthand flag. Please verify the command flags.",
-    "Command failed:": "❌ Error executing container command. Please check the command syntax and Docker configuration.",
     "docker: command not found": "❌ Docker command not found. Please ensure Docker is installed and in your PATH.",
     "permission denied": "🔒 Permission denied while accessing Docker. Please check your Docker permissions or run with appropriate privileges.",
     "error during connect": "🔌 Error connecting to Docker. Please verify Docker is running and accessible.",
@@ -47,6 +41,7 @@ const DOCKER_ERROR_MESSAGES: Record<string, ErrorHandler> = {
 
 export class DockerErrorHandler {
     private lastErrorKey: string | null = null;
+    private lastErrorCategory: 'critical-docker' | 'docker' | null = null;
 
     /**
      * Returns all Docker error patterns for reuse in metrics analysis.
@@ -56,7 +51,15 @@ export class DockerErrorHandler {
         return Object.keys(DOCKER_ERROR_MESSAGES);
     }
 
-    handle(errorMessage: string, outputChannel: OutputChannel, context: ErrorContext = {}): void {
+    /**
+     * Get the category of the last error handled.
+     * Returns 'critical-docker' for daemon issues, 'docker' for other Docker errors, null if no error.
+     */
+    public getLastErrorCategory(): 'critical-docker' | 'docker' | null {
+        return this.lastErrorCategory;
+    }
+
+    handle(errorMessage: string, outputChannel: OutputChannel, context: ErrorContext = {}, logCapture?: (message: string) => void): void {
         const errorKey = this.findMatchingErrorKey(errorMessage);
 
         if (errorKey) {
@@ -64,15 +67,28 @@ export class DockerErrorHandler {
                 return;
             }
             this.lastErrorKey = errorKey;
-            this.executeErrorHandler(errorKey, context, outputChannel);
+            
+            // Classify as critical if it's a daemon/installation issue
+            const criticalPatterns = [
+                'Cannot connect to the Docker daemon',
+                'Docker is not running',
+                'docker: command not found',
+                'error during connect'
+            ];
+            this.lastErrorCategory = criticalPatterns.includes(errorKey) ? 'critical-docker' : 'docker';
+            
+            this.logRawError(errorMessage, outputChannel);
+            this.executeErrorHandler(errorKey, context, outputChannel, logCapture);
             return;
         }
 
         this.handleGenericError(errorMessage, context, outputChannel);
+        this.lastErrorCategory = 'docker';
     }
 
     reset(): void {
         this.lastErrorKey = null;
+        this.lastErrorCategory = null;
     }
 
     private findMatchingErrorKey(errorMessage: string): string | null {
@@ -88,12 +104,23 @@ export class DockerErrorHandler {
         return this.lastErrorKey === errorKey;
     }
 
-    private executeErrorHandler(errorKey: string, context: ErrorContext, outputChannel: OutputChannel): void {
+    private executeErrorHandler(errorKey: string, context: ErrorContext, outputChannel: OutputChannel, logCapture?: (message: string) => void): void {
         const handler = DOCKER_ERROR_MESSAGES[errorKey];
         if (typeof handler === "string") {
             outputChannel.appendLine(handler);
+            if (logCapture) {
+                logCapture(handler);
+            }
         } else {
             handler(context, outputChannel);
+        }
+    }
+
+    private logRawError(errorMessage: string, outputChannel: OutputChannel): void {
+        // Log the actual raw error for debugging purposes
+        const firstLine = errorMessage.split('\n')[0].trim();
+        if (firstLine) {
+            outputChannel.appendLine(`[Raw Error] ${firstLine}`);
         }
     }
 

@@ -20,20 +20,27 @@ export class ScanStatusService {
         // If scan failed or errors were detected in logs
         if (hasLogErrors || !scanSuccess) {
             // Categorize the specific type of error by analyzing logs
+            // Priority: Critical Docker (daemon issues) > Network/VPN > Other Docker > Configuration
             if (logs && logs.length > 0) {
-                // Check in priority order: Docker > Network > Configuration
-                if (LogAnalysisService.hasDockerErrors(logs)) {
-                    return 'Docker Error';
+                // Check critical Docker errors first (daemon not running, Docker not accessible)
+                if (LogAnalysisService.hasCriticalDockerErrors(logs)) {
+                    return 'Error: Docker inactive';
                 }
+                // Then check network/VPN errors
                 if (LogAnalysisService.hasNetworkErrors(logs)) {
-                    return 'Network Error';
+                    return 'Error: VPN inactive';
                 }
+                // Then check other Docker errors (invalid commands, permissions, etc.)
+                if (LogAnalysisService.hasDockerErrors(logs)) {
+                    return 'Error: Docker inactive';
+                }
+                // Finally check configuration errors
                 if (LogAnalysisService.hasConfigurationErrors(logs)) {
-                    return 'Configuration Error';
+                    return 'Error: Configuration issues';
                 }
             }
             // Fallback for errors that don't match specific patterns
-            return 'Unknown Error';
+            return 'Error: Unknown';
         }
 
         // Scan succeeded - differentiate between findings vs no findings
