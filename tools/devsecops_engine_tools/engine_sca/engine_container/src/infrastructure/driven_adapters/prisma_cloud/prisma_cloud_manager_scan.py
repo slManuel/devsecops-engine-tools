@@ -49,7 +49,7 @@ class PrismaCloudManagerScan(ToolGateway):
         ])
 
         try:
-            subprocess.run(
+            result = subprocess.run(
                 command,
                 check=True,
                 stdout=subprocess.PIPE,
@@ -58,11 +58,21 @@ class PrismaCloudManagerScan(ToolGateway):
                 encoding="utf-8",
                 errors="replace",
             )
+            if result.stdout:
+                logger.info("Prisma scan stdout for %s: %s", image_name, result.stdout)
+            if result.stderr:
+                logger.warning("Prisma scan stderr for %s: %s", image_name, result.stderr)
             print(f"The image {image_name} was scanned")
             return result_file
 
         except subprocess.CalledProcessError as e:
-            logger.error(f"Error during image scan of {image_name}: {e.stderr}")
+            logger.error(
+                "Error during image scan of %s. Return code: %s. Stderr: %s. Stdout: %s",
+                image_name,
+                e.returncode,
+                e.stderr,
+                e.stdout,
+            )
 
     def _write_image_base(self, result_file, base_image, exclusions_data, remoteconfig):
         try:
