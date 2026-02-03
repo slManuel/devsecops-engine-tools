@@ -59,7 +59,7 @@ export class DockerErrorHandler {
                 return;
             }
             this.lastErrorKey = errorKey;
-            
+
             const criticalPatterns = [
                 'Cannot connect to the Docker daemon',
                 'Docker is not running',
@@ -67,8 +67,7 @@ export class DockerErrorHandler {
                 'error during connect'
             ];
             this.lastErrorCategory = criticalPatterns.includes(errorKey) ? 'critical-docker' : 'docker';
-            
-            this.logRawError(errorMessage, outputChannel);
+
             this.executeErrorHandler(errorKey, context, outputChannel, logCapture);
             return;
         }
@@ -104,13 +103,6 @@ export class DockerErrorHandler {
             }
         } else {
             handler(context, outputChannel);
-        }
-    }
-
-    private logRawError(errorMessage: string, outputChannel: OutputChannel): void {
-        const firstLine = errorMessage.split('\n')[0].trim();
-        if (firstLine) {
-            outputChannel.appendLine(`[Raw Error] ${firstLine}`);
         }
     }
 

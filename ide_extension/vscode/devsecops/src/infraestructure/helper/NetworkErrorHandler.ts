@@ -41,7 +41,6 @@ export class NetworkErrorHandler {
             }
             this.lastErrorKey = errorKey;
             this.lastErrorDetected = true;
-            this.logRawError(errorMessage, outputChannel);
             this.executeErrorHandler(errorKey, context, outputChannel, logCapture);
             return;
         }
@@ -77,13 +76,6 @@ export class NetworkErrorHandler {
             }
         } else {
             handler(context, outputChannel);
-        }
-    }
-
-    private logRawError(errorMessage: string, outputChannel: OutputChannel): void {
-        const firstLine = errorMessage.split('\n')[0].trim();
-        if (firstLine) {
-            outputChannel.appendLine(`[Raw Error] ${firstLine}`);
         }
     }
 
