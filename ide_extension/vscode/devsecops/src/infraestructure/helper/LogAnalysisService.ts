@@ -1,3 +1,4 @@
+import { ERROR_PATTERNS } from "./ErrorPatterns";
 
 export class LogAnalysisService {
     public static hasErrors(logs: string[]): boolean {
@@ -5,19 +6,10 @@ export class LogAnalysisService {
             return false;
         }
 
-        const errorPatterns = [
-            'SCAN Error',
-            'engine_core Error',
-            'Error executing container command',
-            'Failed to ensure scanner image',
-            'Container not found',
-            'Scan timed out',
-            'No Dependencies Token provided'
-        ];
-
-        return logs.some(log =>
-            errorPatterns.some(pattern => log.includes(pattern))
-        );
+        return logs.some(log => {
+            const logLower = log.toLowerCase();
+            return ERROR_PATTERNS.general.some(pattern => logLower.includes(pattern));
+        });
     }
 
     public static extractExceptionMessage(
@@ -77,5 +69,50 @@ export class LogAnalysisService {
         return logs.some(log =>
             successPatterns.some(pattern => log.includes(pattern))
         );
+    }
+
+    public static hasDockerErrors(logs: string[]): boolean {
+        return this.hasErrorCategory(logs, 'docker');
+    }
+
+    public static hasCriticalDockerErrors(logs: string[]): boolean {
+        if (!logs || logs.length === 0) {
+            return false;
+        }
+
+        const criticalDockerPatterns = [
+            'Cannot connect to the Docker daemon',
+            'Docker is not running',
+            'docker: command not found',
+            'error during connect'
+        ];
+
+        return logs.some(log => {
+            const logLower = log.toLowerCase();
+            return criticalDockerPatterns.some(pattern =>
+                logLower.includes(pattern.toLowerCase())
+            );
+        });
+    }
+
+    public static hasNetworkErrors(logs: string[]): boolean {
+        return this.hasErrorCategory(logs, 'network');
+    }
+
+    public static hasConfigurationErrors(logs: string[]): boolean {
+        return this.hasErrorCategory(logs, 'configuration');
+    }
+
+    private static hasErrorCategory(logs: string[], category: keyof typeof ERROR_PATTERNS): boolean {
+        if (!logs || logs.length === 0) {
+            return false;
+        }
+
+        return logs.some(log => {
+            const logLower = log.toLowerCase();
+            return ERROR_PATTERNS[category].some(pattern =>
+                logLower.includes(pattern.toLowerCase())
+            );
+        });
     }
 }

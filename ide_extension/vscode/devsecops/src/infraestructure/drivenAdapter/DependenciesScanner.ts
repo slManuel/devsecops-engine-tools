@@ -7,9 +7,13 @@ import { exec } from "child_process";
 import { IDependenciesScanContext, ISeverityCounts, Mappers } from "../../domain/model/mappers/Mappers";
 import { ScannerImageManager } from "../helper/ScannerImageManager";
 import { ScannerMetricsHelper } from "../helper/ScannerMetricsHelper";
+import { DockerErrorHandler } from "../helper/DockerErrorHandler";
+import { NetworkErrorHandler } from "../helper/NetworkErrorHandler";
 
 export class DependenciesScanner implements IScannerGateway {
   private metricsHelper = new ScannerMetricsHelper();
+  private dockerErrorHandler = new DockerErrorHandler();
+  private networkErrorHandler = new NetworkErrorHandler();
 
   async scan(
     elementToScan: string,
@@ -27,6 +31,8 @@ export class DependenciesScanner implements IScannerGateway {
     outputChannel.show();
 
     this.metricsHelper.clearLogs();
+    this.dockerErrorHandler.reset();
+    this.networkErrorHandler.reset();
 
     return new Promise(async (resolve, _reject) => {
       let scanResult: boolean = false;
@@ -35,15 +41,18 @@ export class DependenciesScanner implements IScannerGateway {
       let dependencyCheckDatabaseVolume = "";
 
       try {
+
         const scannerImageAvailable = await ScannerImageManager.ensureScannerImageExists(
           containerEnginePath,
           containerImageName,
           toolVersion,
-          outputChannel
+          outputChannel,
+          (message) => this.metricsHelper.captureOnly(message)
         );
 
         if (!scannerImageAvailable) {
           this.metricsHelper.captureLog(outputChannel, "Failed to ensure scanner image is available. Aborting scan.");
+          await this.collectFailedScanMetrics(elementToScan);
           resolve(new ScannerRes(false, [], null));
           return;
         }
@@ -52,16 +61,19 @@ export class DependenciesScanner implements IScannerGateway {
           scanLoader.start(`Dependencies for: ${elementToScan.split('/').pop() || elementToScan}`);
         }
 
-        const timeout = setTimeout(() => {
+        const timeout = setTimeout(async () => {
           outputChannel.appendLine("Scan timed out after 10 minutes");
           outputChannel.appendLine(
             "Container command may be hanging. Check container engine configuration."
           );
+          this.metricsHelper.captureLog(outputChannel, "Scan timed out after 10 minutes");
+          await this.collectFailedScanMetrics(elementToScan);
           resolve(new ScannerRes(false, [], null));
         }, 12000000);
 
         if ((dependenciesTool === "xray" || dependenciesTool === "dependency_check") && !dependenciesToken) {
           outputChannel.appendLine(`No Dependencies Token provided for ${dependenciesTool} tool\n Go to Settings to configure it!`);
+          await this.collectFailedScanMetrics(elementToScan);
           resolve(new ScannerRes(false, [], null));
           return;
         }
@@ -80,19 +92,7 @@ export class DependenciesScanner implements IScannerGateway {
         const childProcess = exec(containerCommand, (error, stdout, stderr) => {
           clearTimeout(timeout);
           if (error) {
-            outputChannel.appendLine(
-              `Error executing container command: ${error.message}`
-            );
-            if (stderr.includes("Unable to find image")) {
-              outputChannel.appendLine(
-                "Container image not found. Attempting to download..."
-              );
-            } else {
-              outputChannel.appendLine(`Standard Error: ${stderr}`);
-              outputChannel.appendLine(
-                "Attempting to process partial results..."
-              );
-            }
+            this.errorHandler(outputChannel, error, stderr, containerImageName, toolVersion);
           }
 
           if (stdout) {
@@ -169,9 +169,45 @@ export class DependenciesScanner implements IScannerGateway {
 
       } catch (error) {
         this.metricsHelper.captureError(outputChannel, error, "during dependencies scanning");
+        await this.collectFailedScanMetrics(elementToScan);
         resolve(new ScannerRes(false, [], null));
       }
     });
+  }
+
+  private errorHandler(
+    outputChannel: OutputChannel,
+    error: Error,
+    stderr: string,
+    containerImageName: string,
+    toolVersion: string
+  ): void {
+    const errorContext = {
+      imageTag: `${containerImageName}:${toolVersion}`,
+      containerImageName,
+      toolVersion
+    };
+
+    const logCapture = (message: string) => {
+      this.metricsHelper.captureOnly(message);
+    };
+
+    this.dockerErrorHandler.handle(error.message, outputChannel, errorContext, logCapture);
+
+    if (stderr) {
+      this.dockerErrorHandler.handle(stderr, outputChannel, errorContext, logCapture);
+      this.networkErrorHandler.handle(stderr, outputChannel, errorContext, logCapture);
+    }
+  }
+
+  private async collectFailedScanMetrics(elementToScan: string): Promise<void> {
+    await this.metricsHelper.collectAndstoreMetricsData(
+      elementToScan,
+      [],
+      null,
+      false,
+      "engine_dependencies"
+    );
   }
 
   private calculateRawSeverityCounts(contexts: IDependenciesScanContext[]): ISeverityCounts {
