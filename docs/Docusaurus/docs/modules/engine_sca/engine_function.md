@@ -31,7 +31,13 @@ Main configuration file that defines scanning behavior, tool versions, and secur
     "COMPLIANCE": {
       "Critical": 1
     },
-    "CVE": ["CVE-2024-0001"]
+    "CVE": ["CVE-2024-0001"],
+    "PRIORITY": {
+        "Very Critical": 1,
+        "Critical": 3,
+        "High": 10,
+        "Medium Low": 999
+    }
   }
 }
 ```
@@ -59,6 +65,11 @@ Main configuration file that defines scanning behavior, tool versions, and secur
 - **COMPLIANCE**: Limits for compliance issues
   - `Critical`: Maximum number of critical compliance issues
 - **CVE**: List of specific CVEs to ignore or prioritize
+- **PRIORITY**: Limits by vulnerability priority
+  - `Very Critical`: Maximum number of very critical vulnerabilities allowed
+  - `Critical`: Maximum number of critical vulnerabilities allowed
+  - `High`: Maximum number of hihg vulnerabilities allowed
+  - `Medium Low`: Maximum number of medium low vulnerabilities allowed
 
 ### Exclusions.json
 

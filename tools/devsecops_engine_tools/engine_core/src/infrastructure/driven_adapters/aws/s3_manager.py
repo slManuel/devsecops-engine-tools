@@ -34,6 +34,7 @@ class S3Manager(MetricsManagerGateway):
         [
             ("id", pa.string()),
             ("severity", pa.string()),
+            ("priority", pa.string()),
             ("category", pa.string()),
         ]
     )
@@ -41,10 +42,12 @@ class S3Manager(MetricsManagerGateway):
     # ---- Vulnerabilities ----
     vuln_threshold_schema = pa.struct(
         [
+            ("very_critical", pa.int64()),
             ("critical", pa.int64()),
             ("high", pa.int64()),
             ("medium", pa.int64()),
             ("low", pa.int64()),
+            ("medium_low", pa.int64()),
         ]
     )
 
@@ -52,11 +55,13 @@ class S3Manager(MetricsManagerGateway):
         [
             ("id", pa.string()),
             ("severity", pa.string()),
+            ("priority", pa.string()),
         ]
     )
 
     vulnerabilities_schema = pa.struct(
         [
+            ("model_break_build", pa.string()),
             ("threshold", vuln_threshold_schema),
             ("status", pa.string()),
             ("found", pa.list_(vuln_found_schema)),

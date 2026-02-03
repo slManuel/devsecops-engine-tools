@@ -5,7 +5,7 @@ DevSecOps_Remote_Config
 *.jar
 
 # Virtual Enviroment python
-.venv
+.venv*
 .venv_win
 *.vscode
 .pytest*

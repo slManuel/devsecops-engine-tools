@@ -2,6 +2,7 @@ import os
 import glob
 import subprocess
 import re
+import json
 from devsecops_engine_tools.engine_sca.engine_function.src.domain.model.gateways.tool_gateway import (
     ToolGateway,
 )
@@ -49,7 +50,55 @@ class PrismaCloudManagerScan:
             remoteconfig,
             prisma_key,
         )
+        if not function_scan:
+            return function_scan
 
+        try:
+            if isinstance(function_scan, dict):
+                if "results" in function_scan:
+                    report = function_scan
+                else:
+                    report = {"results": [function_scan]}
+            elif isinstance(function_scan, list):
+                report = {"results": function_scan}
+            else:
+                return function_scan
+            results_list = report.get("results", [])
+            for result in results_list:
+                if not isinstance(result, dict):
+                    continue
+                vulns = result.get("vulnerabilities", []) or []
+                for v in vulns:
+                    if not isinstance(v, dict):
+                        continue
+                    for field in ("publishedDate", "discoveredDate", "fixDate"):
+                        val = v.get(field)
+                        if not isinstance(val, str):
+                            continue
+                        if any(token in val for token in ("days", "months", "month", ">", "ago")):
+                            v.pop(field, None)
+                            continue
+
+            function_name = "function"
+            if results_list:
+                first_result = results_list[0]
+                if isinstance(first_result, dict):
+                    function_name = first_result.get("name", function_name)
+
+            safe_name = (
+                function_name.replace("/", "_")
+                .replace(" ", "_")
+                .replace(":", "_")
+                .replace(".", "_")
+            )
+            result_file_name = f"{safe_name}_function_scan_result.json"
+            with open(result_file_name, "w", encoding="utf-8") as fp:
+                json.dump(report, fp)
+            if isinstance(self.dict_args, dict):
+                self.dict_args["path_file_results"] = os.path.abspath(result_file_name)
+
+        except Exception as exc:
+            logger.error("Error generating function scan report file: %s", exc)
         return function_scan
 
     def _split_prisma_token(self, prisma_key):

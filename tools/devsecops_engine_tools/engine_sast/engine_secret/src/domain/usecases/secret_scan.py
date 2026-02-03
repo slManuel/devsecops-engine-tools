@@ -35,7 +35,13 @@ class SecretScan:
         secret_external_checks=dict_args["token_external_checks"]
         files_to_scan = None if dict_args["folder_path"] is None else [dict_args["folder_path"]]
         if skip_tool == False:
-            self.tool_gateway.install_tool(self.devops_platform_gateway.get_variable("os"), self.devops_platform_gateway.get_variable("temp_directory"), config_tool[tool]["VERSION"])
+            if tool == "all_tools":
+                self.tool_gateway.install_tool(self.devops_platform_gateway.get_variable("os"), self.devops_platform_gateway.get_variable("temp_directory"), {
+                    "GITLEAKS": config_tool["gitleaks"]["VERSION"],
+                    "TRUFFLEHOG": config_tool["trufflehog"]["VERSION"]
+                })
+            else:
+                self.tool_gateway.install_tool(self.devops_platform_gateway.get_variable("os"), self.devops_platform_gateway.get_variable("temp_directory"), config_tool[tool]["VERSION"])
             if files_to_scan is None:
                 files_to_scan = self.git_gateway.get_files_pull_request(
                     self.devops_platform_gateway.get_variable("path_directory"),

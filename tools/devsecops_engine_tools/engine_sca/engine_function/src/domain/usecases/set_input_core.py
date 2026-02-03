@@ -43,6 +43,7 @@ class SetInputCore:
                             create_date=item.get("create_date", ""),
                             expired_date=item.get("expired_date", ""),
                             severity=item.get("severity", ""),
+                            priority=item.get("priority", ""),
                             hu=item.get("hu", ""),
                             reason=item.get("reason", "DevSecOps policy"),
                         )
@@ -58,7 +59,7 @@ class SetInputCore:
         Returns:
             dict: Input core.
         """        
-        
+        path_file_results = self.dict_args.get("path_file_results")
         return InputCore(
             self.get_exclusions(
                 self.get_remote_config("engine_sca/engine_function/Exclusions.json"),
@@ -68,7 +69,7 @@ class SetInputCore:
             Threshold(
                 self.get_remote_config("engine_sca/engine_function/ConfigTool.json")["THRESHOLD"]
             ),
-            None,
+            path_file_results,
             self.get_remote_config("engine_sca/engine_function/ConfigTool.json")["MESSAGE_INFO_ENGINE_FUNCTION"],
             self.get_variable("pipeline_name"),
             self.get_variable("pipeline_name"),

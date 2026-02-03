@@ -78,7 +78,38 @@ Main configuration file that defines risk analysis behavior, scoring weights, an
       "10": 50,
       "other": 70
     },
-    "RISK_SCORE": 10
+    "SCORE": 10,
+    "QUALITY_VULNERABILITY_MANAGEMENT": {
+      "PTS": [
+        {
+          "Critical Applications": {
+            "APPS": ["payment-service", "auth-service", "customer-data-api"],
+            "PROFILE": "STRONG"
+          }
+        },
+        {
+          "Medium Applications": {
+            "APPS": "ALL",
+            "PROFILE": "MODERATE"
+          }
+        }
+      ],
+      "STRONG": {
+        "REMEDIATION_RATE": {
+          "other": 90
+        },
+        "SCORE": 5
+      },
+      "MODERATE": {
+        "REMEDIATION_RATE": {
+          "other": 60
+        },
+        "SCORE": 20
+      }
+    }
+  },
+  "FINDING_SCORE": {
+    "MODEL": "RISK"
   }
 }
 ```
@@ -142,12 +173,47 @@ Main configuration file that defines risk analysis behavior, scoring weights, an
   - `tag4`: 0 days (immediate processing)
 
 ##### Threshold Configuration
+
+**Basic Threshold Configuration:**
 - **REMEDIATION_RATE**: Expected remediation rates based on vulnerability count:
   - `1`: 0% (single vulnerability - immediate fix)
   - `5`: 30% minimum remediation rate
   - `10`: 50% minimum remediation rate
   - `other`: 70% minimum remediation rate for larger counts
-- **RISK_SCORE**: Maximum acceptable risk score threshold (10)
+- **SCORE**: Maximum acceptable finding score threshold (e.g., `10`)
+- **PRIORITY**: Classification-based thresholds for PRIORITY model (defines maximum count per classification before build breaks):
+  ```json
+  "PRIORITY": {
+    "classification-1": 2,
+    "classification-2": 3,
+    "classification-n": 5
+  }
+  ```
+  - Classification names must match `priority_classification` values from vulnerability management platform
+  - Each value represents the maximum number of findings allowed in that classification (>= triggers failure)
+  - Evaluated per service using "operator: or" logic (any classification exceeding its limit causes failure)
+
+**Quality-Based Vulnerability Management:**
+- **PTS (Product Type Specifications)**: Array of product-specific configurations:
+  - Product type definitions with associated applications and security profiles
+  - `APPS`: Array of application names or `"ALL"` for universal application
+  - `PROFILE`: Security profile to apply (`"STRONG"`, `"MODERATE"`, or custom profile names)
+
+##### Finding Score Model
+- **FINDING_SCORE.MODEL**: Defines the scoring model used for threshold evaluation:
+  - `"RISK"`: Individual risk-based scoring model (default)
+    - Calculates a risk score for each finding based on multiple weighted factors (severity, EPSS score, age, and tags)
+    - Evaluates each finding individually against the score threshold
+    - Breaks the build if any single finding exceeds the configured threshold
+    - Formula: `risk_score = severity_weight + (epss_weight × epss_score) + min(age_weight × age, max_age) + sum(tag_weights)`
+  - `"PRIORITY"`: Service-level priority aggregation model
+    - Groups findings by service and performs two validations:
+      1. **Priority Score Sum**: Validates that the sum of priority scores per service doesn't exceed `THRESHOLD.SCORE`
+      2. **Classification Thresholds**: Validates that the count of findings in each `priority_classification` doesn't equal or exceed limits defined in `THRESHOLD.PRIORITY`
+    - Both validations are performed per service independently
+    - Breaks the build if either validation fails for any service
+    - Uses "operator: or" logic for classifications (failure of any single classification causes build break)
+    - Useful for service-based risk management and preventing accumulation of high-priority findings
 
 ### Exclusions.json
 
@@ -237,6 +303,7 @@ Each exclusion entry contains:
 
 - **Multi-engine Integration:** Aggregates findings from SAST, SCA, DAST, and IAC engines
 - **Advanced Scoring:** Weighted risk scoring based on severity, age, EPSS scores, and engine tags
+- **Quality-based Thresholds:** Product type-based dynamic threshold configuration for context-aware security policies
 - **Time-aware Analysis:** Holiday-aware remediation timeline calculations
 - **Tag-based Filtering:** Configurable exclusions based on finding tags and age
 - **Service Hierarchy:** Support for parent-child service relationships
@@ -258,6 +325,31 @@ devsecops-engine-tools \
 
 ## Configuration Guidelines
 
+### Finding Score Model Selection
+1. **Choose the appropriate model** based on your risk management strategy:
+   - Use `"RISK"` model for individual finding-level control with granular risk assessment
+   - Use `"PRIORITY"` model for service-level aggregated risk management with dual validation
+2. **RISK Model Best Practices**:
+   - Ideal for organizations with strict individual vulnerability policies
+   - Configure `THRESHOLD.SCORE` to reflect maximum acceptable risk per finding
+   - Fine-tune severity, EPSS, age, and tag weights to align with security priorities
+   - Useful when any single high-risk vulnerability should break the build
+3. **PRIORITY Model Best Practices**:
+   - Ideal for microservice architectures requiring service-level risk assessment
+   - Configure `THRESHOLD.SCORE` as the maximum acceptable aggregate priority per service
+   - Define `THRESHOLD.PRIORITY` with classification limits matching your vulnerability management platform's `priority_classification` values
+   - Allows control over both total priority burden and distribution across severity classifications
+   - Better suited for gradual remediation strategies while preventing critical finding accumulation
+4. **Model Configuration Example**:
+   ```json
+   "FINDING_SCORE": {
+     "MODEL": "RISK"  // or "PRIORITY"
+   },
+   "THRESHOLD": {
+     "SCORE": 10  // Adjust based on selected model
+   }
+   ```
+
 ### Risk Scoring Configuration
 1. **Severity Weights**: Adjust weights based on organizational risk tolerance
 2. **Engine Tag Weights**: Configure different weights for different scanning engines
@@ -272,9 +364,16 @@ devsecops-engine-tools \
 
 ### Threshold Management
 1. Set realistic `REMEDIATION_RATE` expectations based on team capacity
-2. Adjust `RISK_SCORE` threshold based on organizational risk appetite
+2. Adjust `SCORE` threshold based on organizational risk appetite
 3. Use different thresholds for different environments (dev vs prod)
 4. Monitor threshold effectiveness and adjust based on historical data
+
+#### Quality Vulnerability Management
+1. **Configure Product Types**: Map Product Types from vulnerability management platform to PTS array using exact names
+2. **Define Application Scope**: Use `"ALL"` for universal application or specify service names in `APPS` array
+3. **Create Security Profiles**: Define STRONG (strict), MODERATE (balanced), or custom profiles with appropriate `REMEDIATION_RATE` and `SCORE` values
+4. **Set Fallback**: Always maintain base threshold at root level for pipelines without Product Type or service matches
+5. **Monitor Effectiveness**: Review profile application and adjust thresholds based on build break rates and team capacity
 
 ### Tag-based Exclusions
 1. Configure `TAG_EXCLUSION_DAYS` for temporary exclusions during remediation

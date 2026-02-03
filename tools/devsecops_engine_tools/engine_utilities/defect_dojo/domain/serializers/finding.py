@@ -93,7 +93,9 @@ class FindingSerializer(Schema):
     verified = fields.Bool(required=False)
     vuln_id_from_tool = fields.Str(required=False)
     vulnerability_id = fields.Str(required=False)
-
+    priority_classification = fields.Str(required=False)
+    priority = fields.Str(required=False)
+    fields = fields.Str(required=False)
 
 class FindingCloseSerializer(Schema):
     is_mitigated = fields.Bool(required=False)

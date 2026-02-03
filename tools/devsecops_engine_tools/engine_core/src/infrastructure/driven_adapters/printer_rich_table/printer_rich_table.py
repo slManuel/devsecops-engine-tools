@@ -19,15 +19,17 @@ from rich import box
 
 @dataclass
 class PrinterRichTable(PrinterTableGateway):
-    def print_table_findings(self, finding_list: "list[Finding]"):
+    def print_table_findings(self, finding_list: "list[Finding]", break_build_manager):
         # To implement
         return
 
-    def print_table_report(self, report_list: "list[Report]"):
+    def print_table_report(self, report_list: "list[Report]", model):
+        model_header = "Priority" if model == "PRIORITY" else "Risk Score"
+        service_header = "Priority Class" if model == "PRIORITY" else "Services"
         sorted_report_list = sorted(
             report_list, key=lambda report: report.risk_score, reverse=True
         )
-        headers = ["Risk Score", "ID", "Tags", "Services"]
+        headers = [model_header, "ID", "Tags", service_header]
         table = Table(
             show_header=True, header_style="bold magenta", box=box.DOUBLE_EDGE
         )
@@ -35,16 +37,16 @@ class PrinterRichTable(PrinterTableGateway):
             table.add_column(header)
         for report in sorted_report_list:
             row_data = [
-                str(report.risk_score),
+                str(report.priority if model == "PRIORITY" else report.risk_score),
                 self._check_spaces(report.vm_id, report.vm_id_url),
                 ", ".join(report.tags),
-                report.service,
+                report.priority_classification if model == "PRIORITY" else report.service,
             ]
             table.add_row(*row_data)
         console = Console()
         console.print(table)
 
-    def print_table_exclusions(self, exclusions_list):
+    def print_table_exclusions(self, exclusions_list, break_build_manager):
         headers = []
         if exclusions_list:
             headers = ["ID", "Tags", "Service", "Create Date", "Expired Date", "Reason"]

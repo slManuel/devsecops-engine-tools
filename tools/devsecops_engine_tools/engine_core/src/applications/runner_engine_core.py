@@ -28,7 +28,9 @@ from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.
 from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen import (
     CdxGen
 )
-
+from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.risk_score.risk_score import (
+    RiskScore,
+) 
 import sys
 import argparse
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
@@ -109,6 +111,7 @@ def get_inputs_from_cli(args):
             "xray",
             "dependency_check",
             "kiuwan",
+            "all_tools",
         ],
         type=str,
         required=False,
@@ -148,7 +151,7 @@ def get_inputs_from_cli(args):
     parser.add_argument(
         "-p",
         "--platform",
-        type=parse_choices({"all", "docker", "k8s", "cloudformation", "openapi", "terraform","serverless"}),
+        type=parse_choices({"all", "docker", "k8s", "cloudformation", "openapi", "terraform", "serverless", "bicep"}),
         required=False,
         default="all",
         help="Platform to scan, applies only to the engine_iac tool and it is possible to select several {all, docker, k8s, cloudformation, openapi, terraform}",
@@ -241,7 +244,7 @@ def get_inputs_from_cli(args):
 
     TOOLS = {
         "engine_iac": ["checkov", "kics", "kubescape"],
-        "engine_secret": ["trufflehog", "gitleaks"],
+        "engine_secret": ["trufflehog", "gitleaks", "all_tools"],
         "engine_container": ["prisma", "trivy"],
         "engine_dependencies": ["xray", "dependency_check", "trivy"],
         "engine_code": ["bearer", "kiuwan"],
@@ -310,6 +313,7 @@ def application_core():
             "syft": Syft(),
             "cdxgen": CdxGen()
         }
+        risk_score_gateway = RiskScore()
 
         init_engine_core(
             vulnerability_management_gateway,
@@ -319,6 +323,7 @@ def application_core():
             printer_table_gateway,
             metrics_manager_gateway,
             sbom_tool_gateway,
+            risk_score_gateway,
             args,
         )
     except Exception as e:

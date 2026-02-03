@@ -226,6 +226,7 @@ class ImportScanSerializer(Schema):
     # regulare expression
     expression = fields.Str(required=True)
     reimport_scan = fields.Bool(required=False)
+    get_exact_product = fields.Bool(required=False)
 
     @post_load
     def make_cmdb(self, data, **kwargs):

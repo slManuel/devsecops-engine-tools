@@ -1,6 +1,7 @@
 import requests
 import os
 import subprocess
+import time
 import base64
 import json
 from devsecops_engine_tools.engine_sca.engine_container.src.domain.model.gateways.tool_gateway import (
@@ -47,22 +48,45 @@ class PrismaCloudManagerScan(ToolGateway):
             "--details",
             image_name,
         ])
+        prisma_config = remoteconfig.get("PRISMA_CLOUD", {})
+        max_attempts = int(prisma_config.get("SCAN_RETRIES", 1))
+        retry_delay = float(prisma_config.get("SCAN_RETRY_DELAY_SECONDS", 0))
+        if max_attempts < 1:
+            max_attempts = 1
 
-        try:
-            subprocess.run(
-                command,
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-            )
-            print(f"The image {image_name} was scanned")
-            return result_file
+        for attempt in range(1, max_attempts + 1):
+            try:
+                result = subprocess.run(
+                    command,
+                    check=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                )
+                if result.stderr:
+                    logger.warning("Prisma scan stderr for %s: %s", image_name, result.stderr)
+                print(f"The image {image_name} was scanned")
+                return result_file
 
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Error during image scan of {image_name}: {e.stderr}")
+            except subprocess.CalledProcessError as e:
+                logger.error(
+                    "Error during image scan of %s. Return code: %s. Stderr: %s. Stdout: %s",
+                    image_name,
+                    e.returncode,
+                    e.stderr,
+                    e.stdout,
+                )
+                if attempt < max_attempts:
+                    logger.warning(
+                        "Retrying Prisma scan for %s (attempt %s/%s)",
+                        image_name,
+                        attempt + 1,
+                        max_attempts,
+                    )
+                    if retry_delay > 0:
+                        time.sleep(retry_delay)
 
     def _write_image_base(self, result_file, base_image, exclusions_data, remoteconfig):
         try:

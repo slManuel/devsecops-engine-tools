@@ -302,7 +302,10 @@ def test_blacklist_control_error():
             vm_id_url="vm_id_url",
         )
     ]
-    remote_config = {"TAG_BLACKLIST_EXCLUSION_DAYS": {"blacklisted": 5}, "COUNTRY_HOLIDAYS": "CO"}
+    remote_config = {
+        "TAG_BLACKLIST_EXCLUSION_DAYS": {"blacklisted": 5},
+        "COUNTRY_HOLIDAYS": "CO",
+    }
     tag_age_threshold = 5
     mock_devops_platform_gateway = MagicMock()
     break_build = BreakBuild(
@@ -334,7 +337,10 @@ def test_blacklist_control_warning():
             vm_id_url="vm_id_url",
         )
     ]
-    remote_config = {"TAG_BLACKLIST_EXCLUSION_DAYS": {"blacklisted": 5}, "COUNTRY_HOLIDAYS": "CO"}
+    remote_config = {
+        "TAG_BLACKLIST_EXCLUSION_DAYS": {"blacklisted": 5},
+        "COUNTRY_HOLIDAYS": "CO",
+    }
     tag_age_threshold = 5
     mock_devops_platform_gateway = MagicMock()
     break_build = BreakBuild(
@@ -371,7 +377,10 @@ def test_blacklist_control_working_days_error(mock_datetime):
             vm_id_url="vm_id_url",
         )
     ]
-    remote_config = {"TAG_BLACKLIST_EXCLUSION_DAYS": {"blacklisted": "3WD"}, "COUNTRY_HOLIDAYS": "CO"}
+    remote_config = {
+        "TAG_BLACKLIST_EXCLUSION_DAYS": {"blacklisted": "3WD"},
+        "COUNTRY_HOLIDAYS": "CO",
+    }
     mock_devops_platform_gateway = MagicMock()
     break_build = BreakBuild(
         mock_devops_platform_gateway,
@@ -407,7 +416,10 @@ def test_blacklist_control_working_days_warning(mock_datetime):
             vm_id_url="vm_id_url",
         )
     ]
-    remote_config = {"TAG_BLACKLIST_EXCLUSION_DAYS": {"blacklisted": "5WD"}, "COUNTRY_HOLIDAYS": "CO"}
+    remote_config = {
+        "TAG_BLACKLIST_EXCLUSION_DAYS": {"blacklisted": "5WD"},
+        "COUNTRY_HOLIDAYS": "CO",
+    }
     mock_devops_platform_gateway = MagicMock()
     break_build = BreakBuild(
         mock_devops_platform_gateway,
@@ -449,7 +461,7 @@ def test_risk_score_control_break():
         [],
         [],
         [],
-        {"RISK_SCORE": 4},
+        {"SCORE": 4},
         0,
     )
     break_build._risk_score_control(report_list)
@@ -481,7 +493,7 @@ def test_risk_score_control_not_break():
         [],
         [],
         [],
-        {"RISK_SCORE": 4},
+        {"SCORE": 4},
         0,
     )
     break_build._risk_score_control(report_list)
@@ -490,6 +502,49 @@ def test_risk_score_control_not_break():
         "succeeded",
         f"There are no findings with risk score greater than {risk_score_threshold}",
     )
+
+
+def test_priority_control():
+    report_list = [
+        Report(priority=1, service="service1", priority_classification="severity1"),
+        Report(priority=1, service="service1", priority_classification="severity1"),
+        Report(priority=0.5, service="service2", priority_classification="severity2"),
+    ]
+    config = {
+        "SCORE": 1.9,
+        "PRIORITY": {"severity1": 2, "severity2": 5},
+    }
+    devops_platform_gateway = MagicMock()
+    break_build = BreakBuild(
+        devops_platform_gateway,
+        MagicMock(),
+        {"FINDING_SCORE": {"MODEL": "PRIORITY"}},
+        [],
+        [],
+        [],
+        [],
+        config,
+        0,
+    )
+    break_build._priority_control(report_list)
+
+    devops_platform_gateway.message.assert_any_call(
+        "error",
+        "The sum of priorities 2 is greater than the threshold 1.9",
+    )
+    devops_platform_gateway.message.assert_any_call(
+        "succeeded",
+        "The sum of priorities 0.5 is less than the threshold 1.9",
+    )
+    devops_platform_gateway.message.assert_any_call(
+        "error",
+        "Count of priority classes (severity1: 2, severity2: 0) is greater than or equal to failure criteria (severity1: 2, severity2: 5, operator: or)",
+    )
+    devops_platform_gateway.message.assert_any_call(
+        "succeeded",
+        "Count of priority classes (severity1: 0, severity2: 1) is not greater than or equal to failure criteria (severity1: 2, severity2: 5, operator: or)",
+    )
+    assert break_build.break_build == True
 
 
 def test_print_exclusions():
