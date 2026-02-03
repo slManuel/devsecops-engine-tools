@@ -71,11 +71,23 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
         "NUCLEI": "Nuclei Scan",
         "KIUWAN": "Kiuwan Scan"
     }
+    
+    multiple_scan_types = {
+        "engine_secret": {
+            "ALL_TOOLS": {
+                "scanners": ["GITLEAKS", "TRUFFLEHOG"],
+                "file_separator": "#"
+            }
+        }
+    }
 
     def send_vulnerability_management(
         self, vulnerability_management: VulnerabilityManagement
     ):
         try:
+
+            use_cmdb = vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["CMDB"].get("USE_CMDB", False)
+
             token_dd = (
                 vulnerability_management.dict_args["token_vulnerability_management"]
                 if vulnerability_management.dict_args["token_vulnerability_management"]
@@ -86,7 +98,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                 vulnerability_management.dict_args["token_cmdb"]
                 if vulnerability_management.dict_args["token_cmdb"] is not None
                 else vulnerability_management.secret_tool["token_cmdb"]
-            )
+            ) if use_cmdb else None
 
             tags = []
             if any(
@@ -124,48 +136,83 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                     tags = [
                         f"{vulnerability_management.dict_args['module']}_{tag_suffix}"
                     ]
-
-                use_cmdb = vulnerability_management.config_tool[
-                    "VULNERABILITY_MANAGER"
-                ]["DEFECT_DOJO"]["CMDB"]["USE_CMDB"]
-
-                request = self._build_request_importscan(
-                    vulnerability_management,
-                    token_cmdb,
-                    token_dd,
-                    tags,
-                    use_cmdb,
-                )
-
-                def request_func():
-                    return DefectDojo.send_import_scan(request)
-
-                response = Utils().retries_requests(
-                    request_func,
-                    vulnerability_management.config_tool["VULNERABILITY_MANAGER"][
-                        "DEFECT_DOJO"
-                    ]["MAX_RETRIES_QUERY"],
-                    retry_delay=5,
-                )
-
-                if hasattr(response, "url"):
-                    if vulnerability_management.config_tool.get("VULNERABILITY_MANAGER").get("DEFECT_DOJO").get("PRINT_DOMAIN"):
-                        response.url = response.url.replace(
-                            vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["HOST_DEFECT_DOJO"],
-                            vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["PRINT_DOMAIN"]
-                        )
-                    url_parts = response.url.split("//")
-                    test_string = "//".join([url_parts[0] + "/", url_parts[1]])
-                    print(
-                        "Report sent to vulnerability management: ",
-                        f"{test_string}?tags={vulnerability_management.dict_args['module']}",
+                
+                if vulnerability_management.dict_args["module"] in self.multiple_scan_types and \
+                    vulnerability_management.scan_type in self.multiple_scan_types[vulnerability_management.dict_args["module"]]:
+                    files = vulnerability_management.input_core.path_file_results.split(
+                        self.multiple_scan_types[vulnerability_management.dict_args["module"]][vulnerability_management.scan_type]["file_separator"]
                     )
+                    all_tools = self.multiple_scan_types[vulnerability_management.dict_args["module"]][vulnerability_management.scan_type]["scanners"]
+                    print_url = True
+                    for index, file in enumerate(files):
+                        vulnerability_management.input_core.path_file_results = file
+                        vulnerability_management.scan_type = all_tools[index]
+                        self._send_report_to_vulnerability_management(
+                            vulnerability_management,
+                            token_cmdb,
+                            token_dd,
+                            tags,
+                            use_cmdb,
+                            print_url
+                        )
+                        print_url = False
                 else:
-                    raise ExceptionVulnerabilityManagement(response)
+                    self._send_report_to_vulnerability_management(
+                        vulnerability_management,
+                        token_cmdb,
+                        token_dd,
+                        tags,
+                        use_cmdb,
+                    )
+                           
         except Exception as ex:
             raise ExceptionVulnerabilityManagement(
                 f"Error sending report to vulnerability management with the following error: {str(ex)}"
             )
+    
+    def _send_report_to_vulnerability_management(
+        self, 
+        vulnerability_management, 
+        token_cmdb, 
+        token_dd, 
+        tags, 
+        use_cmdb,
+        print_url=True
+    ):
+        request = self._build_request_importscan(
+            vulnerability_management,
+            token_cmdb,
+            token_dd,
+            tags,
+            use_cmdb,
+        )
+
+        def request_func():
+            return DefectDojo.send_import_scan(request)
+
+        response = Utils().retries_requests(
+            request_func,
+            vulnerability_management.config_tool["VULNERABILITY_MANAGER"][
+                "DEFECT_DOJO"
+            ]["MAX_RETRIES_QUERY"],
+            retry_delay=5,
+        )
+
+        if hasattr(response, "url"):
+            if vulnerability_management.config_tool.get("VULNERABILITY_MANAGER").get("DEFECT_DOJO").get("PRINT_DOMAIN"):
+                response.url = response.url.replace(
+                    vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["HOST_DEFECT_DOJO"],
+                    vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["PRINT_DOMAIN"]
+                )
+            if print_url:
+                url_parts = response.url.split("//")
+                test_string = "//".join([url_parts[0] + "/", url_parts[1]])
+                print(
+                    "Report sent to vulnerability management: ",
+                    f"{test_string}?tags={vulnerability_management.dict_args['module']}",
+                )
+        else:
+            raise ExceptionVulnerabilityManagement(response)
 
     def get_product_type_pipeline(self, service, dict_args, secret_tool, config_tool):
         try:
@@ -183,9 +230,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                     request={
                         "name": Connect.get_code_app(
                             service,
-                            config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["CMDB"][
-                                "REGEX_EXPRESSION_CMDB"
-                            ],
+                            config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["REGEX_EXPRESSION_CODE_APP"]
                         ),
                         "prefetch": "prod_type",
                     },
@@ -223,26 +268,31 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                 "is_mitigated": False,
                 "tags": tool,
                 "limit": dd_limits_query,
+                "fields": "id,vuln_id_from_tool,vulnerability_ids,severity,priority_classification,last_status_update,accepted_risks,component_name,component_version,endpoints,tags,file_path"
             }
             out_of_scope_query_params = {
                 "out_of_scope": True,
                 "tags": tool,
                 "limit": dd_limits_query,
+                "fields": "id,vuln_id_from_tool,vulnerability_ids,severity,priority_classification,last_status_update,component_name,component_version,endpoints,tags,file_path"
             }
             false_positive_query_params = {
                 "false_p": True,
                 "tags": tool,
                 "limit": dd_limits_query,
+                "fields": "id,vuln_id_from_tool,vulnerability_ids,severity,priority_classification,last_status_update,component_name,component_version,endpoints,tags,file_path"
             }
             transfer_finding_query_params = {
                 "risk_status": "Transfer Accepted",
                 "tags": tool,
                 "limit": dd_limits_query,
+                "fields": "id,vuln_id_from_tool,vulnerability_ids,severity,priority_classification,transfer_finding,endpoints,component_name,component_version,tags,file_path"
             }
             white_list_query_params = {
                 "risk_status": self.ON_WHITELIST,
                 "tags": tool,
                 "limit": dd_limits_query,
+                "fields": "id,vuln_id_from_tool,vulnerability_ids,severity,priority_classification,endpoints,component_name,component_version,tags,file_path"
             }
 
             exclusions_risk_accepted = self._get_findings_with_exclusions(
@@ -290,6 +340,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                 dd_max_retries,
                 {
                     "type": "white_list",
+                    "limit": dd_limits_query
                 },
             )
 
@@ -404,7 +455,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
 
             if print_domain:
                 host_dd = print_domain
-                
+
             for engagement in engagements:
                 engagement.vm_url = f"{host_dd}/engagement/{engagement.id}/finding/open"
 
@@ -514,11 +565,13 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                 "VULNERABILITY_MANAGER"
             ]["DEFECT_DOJO"]["HOST_DEFECT_DOJO"],
             "expression": vulnerability_management.config_tool["VULNERABILITY_MANAGER"][
-                "DEFECT_DOJO"
-            ]["CMDB"]["REGEX_EXPRESSION_CMDB"],
+                "DEFECT_DOJO"]["REGEX_EXPRESSION_CODE_APP"],
             "reimport_scan": vulnerability_management.config_tool[
                 "VULNERABILITY_MANAGER"
             ]["DEFECT_DOJO"]["REIMPORT_SCAN"],
+            "get_exact_product": vulnerability_management.config_tool[
+                "VULNERABILITY_MANAGER"
+            ]["DEFECT_DOJO"].get("GET_EXACT_PRODUCT", False),
             "tool_sonarqube_configuration": (
                 tool_sonar_conf_mapping[
                     vulnerability_management.sonar_instance.upper()
@@ -563,11 +616,15 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                     "product_type_name": vulnerability_management.vm_product_type_name,
                     "product_name": vulnerability_management.vm_product_name,
                     "product_description": vulnerability_management.vm_product_description,
-                    "code_app": vulnerability_management.vm_product_name,
+                    "code_app": Connect.get_code_app(
+                        vulnerability_management.vm_product_name,
+                        vulnerability_management.config_tool["VULNERABILITY_MANAGER"][
+                            "DEFECT_DOJO"]["REGEX_EXPRESSION_CODE_APP"],
+                    ),
                     **common_fields,
                 }
             )
-        
+
         return request
 
     def _process_component(self, component_sbom, session_manager, engagement):
@@ -669,7 +726,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
         findings = self._get_findings(
             session_manager, service, max_retries, query_params
         )
-        
+
         return map(
             partial(
                 self._create_exclusion,
@@ -765,6 +822,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
             create_date=create_date,
             expired_date=expired_date,
             severity=finding.severity.lower(),
+            priority=finding.priority_classification.lower(),
             reason=reason,
         )
 
@@ -823,6 +881,8 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
             out_of_scope=finding.out_of_scope,
             service=finding.service,
             unique_id_from_tool=finding.unique_id_from_tool,
+            priority=finding.priority if finding.priority else 0.0,
+            priority_classification=finding.priority_classification.lower(),
         )
 
     def _format_date_to_dd_format(self, date_string):
@@ -849,4 +909,3 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
             return finding.file_path
         else:
             return finding.file_path
-        

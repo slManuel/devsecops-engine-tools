@@ -45,6 +45,9 @@ def test_init_engine_risk(
         findings,
         services,
         vm_exclusions,
+        MagicMock(),
+        MagicMock(),
+        MagicMock(),
     )
 
     assert mock_remote_config_source_gateway.get_remote_config.call_count == 2
@@ -76,6 +79,9 @@ def test_init_engine_risk_no_findings(mock_logger):
         findings,
         services,
         vm_exclusions,
+        MagicMock(),
+        MagicMock(),
+        MagicMock(),
     )
 
     mock_logger.info.assert_called_once_with(

@@ -19,6 +19,7 @@
             "PRINT_DOMAIN": "",
             "LIMITS_QUERY": 100,
             "MAX_RETRIES_QUERY": 5,
+            "GET_EXACT_PRODUCT": false,
             "TOOL_SCM_MAPPING": {
                 "DEFAULT": 2,
                 "TFSGIT": 2,
@@ -33,6 +34,7 @@
                 "DEFAULT": 1,
                 "ORPHAN": 4
             },
+            "REGEX_EXPRESSION_CODE_APP": "^([^-]+)",
             "REIMPORT_SCAN": false,
             "CMDB": {
                 "USE_CMDB": false,
@@ -47,7 +49,6 @@
                     "PARAMS": "username=test&password=#{passwordvalue}#",
                     "RESPONSE": null
                 },
-                "REGEX_EXPRESSION_CMDB": "",
                 "CMDB_MAPPING_PATH": "",
                 "CMDB_MAPPING": {
                     "PRODUCT_TYPE_NAME": "",
@@ -68,7 +69,9 @@
                     "BODY": {
                         "appCode": "codappvalue"
                     },
-                    "RESPONSE": [0]
+                    "RESPONSE": [0],
+                    "MAX_RETRIES": 3,
+                    "RETRY_DELAY": 5
                 }
             }
         }
@@ -87,6 +90,10 @@
         "ENABLED": true,
         "TOOL": "SYFT|CDXGEN",
         "BRANCH_FILTER": [],
+        "TOOL_OVERRIDE_PIPELINES": {
+            "pipeline_exception_1": "SYFT",
+            "pipeline_exception_2": "CDXGEN"
+        },
         "SYFT": {
             "SYFT_VERSION": "1.17.0",
             "OUTPUT_FORMAT": "cyclonedx-json"
@@ -104,26 +111,85 @@
             }
         }
     },
+    "PRIORITY_MANAGER":{
+        "USE_PRIORITY": true,
+        "HOST_PRIORITY": "",
+        "CVE_REGEX": "CVE-\\d{4}-\\d+",
+        "MAX_RETRIES": 3,
+        "HOMOLOGATION_PRIORITY":{
+            "STANDARD": {
+                "critical":{
+                    "SCORE": 1.00,
+                    "CLASSIFICATION": "very critical"
+                },
+                "high":{
+                    "SCORE": 0.74,
+                    "CLASSIFICATION": "critical"
+                },
+                "medium":{
+                    "SCORE": 0.46,
+                    "CLASSIFICATION": "high"
+                },
+                "low":{
+                    "SCORE": 0.01,
+                    "CLASSIFICATION": "medium low"
+                }
+            },
+            "DISCREET":{
+                "critical":{
+                    "SCORE": 0.74,
+                    "CLASSIFICATION": "critical"
+                },
+                "high":{
+                    "SCORE": 0.46,
+                    "CLASSIFICATION": "high"
+                },
+                "medium":{
+                    "SCORE": 0.01,
+                    "CLASSIFICATION": "medium low"
+                },
+                "low":{
+                    "SCORE": 0.01,
+                    "CLASSIFICATION": "medium low"
+                }
+            }
+        },
+        "MAPPING_HOST":{
+            "Muy Crítica": "very critical",
+            "Crítica": "critical",
+            "Alta": "high",
+            "Baja y Media": "medium low"
+        }
+    },
+    "BREAK_BUILD_MANAGER":{
+        "MODEL": "severity|priority",
+        "CLASSIFICATION": ["critical|very critical", "high|critical", "medium|high", "low|medium low"]
+    },
     "ENGINE_IAC": {
         "ENABLED": true,
-        "TOOL": "CHECKOV|KUBESCAPE|KICS"
+        "TOOL": "CHECKOV|KUBESCAPE|KICS",
+        "PRIORITY": "STANDARD|DISCREET"
     },
     "ENGINE_CONTAINER": {
         "ENABLED": true,
-        "TOOL": "PRISMA|TRIVY"
+        "TOOL": "PRISMA|TRIVY",
+        "PRIORITY": "STANDARD|DISCREET"
     },
     "ENGINE_FUNCTION": {
         "ENABLED": true,
-        "TOOL": "PRISMA"
+        "TOOL": "PRISMA",
+        "PRIORITY": "STANDARD|DISCREET"
     },
     "ENGINE_DAST": {
         "ENABLED": true,
         "TOOL": "NUCLEI",
-        "EXTRA_TOOLS": ["JWT"]
+        "EXTRA_TOOLS": ["JWT"],
+        "PRIORITY": "STANDARD|DISCREET"
     },
     "ENGINE_SECRET": {
         "ENABLED": true,
-        "TOOL": "TRUFFLEHOG|GITLEAKS"
+        "TOOL": "TRUFFLEHOG|GITLEAKS|ALL_TOOLS",
+        "PRIORITY": "STANDARD|DISCREET"
     },
     "ENGINE_DEPENDENCIES": {
         "ENABLED": true,
@@ -131,7 +197,8 @@
     },
     "ENGINE_CODE": {
         "ENABLED": true,
-        "TOOL": "BEARER|KIUWAN"
+        "TOOL": "BEARER|KIUWAN",
+        "PRIORITY": "STANDARD|DISCREET"
     },
     "ENGINE_RISK": {
         "ENABLED": false

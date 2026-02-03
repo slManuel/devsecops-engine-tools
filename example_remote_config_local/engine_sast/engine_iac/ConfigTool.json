@@ -15,10 +15,16 @@
         },
         "COMPLIANCE": {
             "Critical": 1
+        },
+        "PRIORITY": {
+            "Very Critical": 1,
+            "Critical": 3,
+            "High": 5,
+            "Medium Low": 15
         }
     },
     "CHECKOV": {
-        "VERSION": "3.2.477",
+        "VERSION": "3.2.492",
         "INSTALL_TYPE": "remote-binary",
         "URL_FILE_LINUX": "https://github.com/bridgecrewio/checkov/releases/download/2.3.321/checkov_linux_X86_64_2.3.321.zip",
         "URL_FILE_LINUX_ARM64": "https://github.com/bridgecrewio/checkov/releases/download/2.3.321/checkov_linux_arm64_2.3.321.zip",
@@ -737,6 +743,20 @@
             "RULES_SERVERLESS":{
                 "CKV_AWS_200": {
                     "checkID": "IAC-CKV-SERVERLESS-1 Ensure AWS Lambda function is not publicly accessible",
+                    "environment": {
+                        "dev": true,
+                        "pdn": true,
+                        "qa": true
+                    },
+                    "guideline": "guideline",
+                    "severity": "High",
+                    "cvss": "",
+                    "category": "Vulnerability"
+                }
+            },
+            "RULES_BICEP":{
+                "CKV_AZURE_1": {
+                    "checkID": "IAC-CKV-AZURE-1 Ensure Azure Instance does not use basic authentication",
                     "environment": {
                         "dev": true,
                         "pdn": true,

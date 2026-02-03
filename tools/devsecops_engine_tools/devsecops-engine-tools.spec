@@ -29,6 +29,8 @@ hidden_imports += [
     'requests_toolbelt',
     'python-decouple',
     'prettytable',
+    'holidays',
+    'holidays.countries',
     'pyfiglet',
     'paramiko',
     'dateutil.tz.tzfile',

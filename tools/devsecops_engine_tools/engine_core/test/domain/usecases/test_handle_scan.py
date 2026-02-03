@@ -29,14 +29,22 @@ class TestHandleScan(unittest.TestCase):
                     "Low": 15,
                 },
                 "COMPLIANCE": {"Critical": 1},
+                "PRIORITY": {
+                    "Very Critical": 1,
+                    "Critical": 3,
+                    "High": 5,
+                    "Medium Low": 15
+                }
             }
         )
+        self.risk_score_gateway = mock.Mock()
         self.handle_scan = HandleScan(
             self.vulnerability_management,
             self.secrets_manager_gateway,
             self.devops_platform_gateway,
             self.remote_config_source_gateway,
             self.sbom_gateway,
+            self.risk_score_gateway,
         )
 
     @mock.patch(
@@ -154,7 +162,7 @@ class TestHandleScan(unittest.TestCase):
             "remote_config_branch": "",
             "use_vulnerability_management": "true",
         }
-        config_tool = {"ENGINE_CONTAINER": {"ENABLED": "true", "TOOL": "tool"}}
+        config_tool = {"BREAK_BUILD_MANAGER":{"MODEL": "severity","CLASSIFICATION": ["critical", "high", "medium", "low"]},"ENGINE_CONTAINER": {"ENABLED": "true", "TOOL": "tool"}}
         secret_tool = {"token_prisma_cloud": "test"}
         self.secrets_manager_gateway.get_secret.return_value = secret_tool
 
@@ -171,12 +179,19 @@ class TestHandleScan(unittest.TestCase):
                         "Low": 15,
                     },
                     "COMPLIANCE": {"Critical": 1},
+                    "PRIORITY": {
+                        "Very Critical": 1,
+                        "Critical": 3,
+                        "High": 5,
+                        "Medium Low": 15
+                    },
                     "QUALITY_VULNERABILITY_MANAGEMENT": {
                         "PTS": [
                             {
                                 "PT1": {
                                     "APPS": ["pipeline", "app2", "app3"],
                                     "PROFILE": "STRONG",
+                                    "PROFILE_PRIORITY": "STRONG_PRIORITY"
                                 }
                             },
                             {
@@ -188,6 +203,8 @@ class TestHandleScan(unittest.TestCase):
                         ],
                         "STRONG": {"Critical": 0, "High": 0, "Medium": 5, "Low": 15},
                         "MODERATE": {"Critical": 1, "High": 3, "Medium": 5, "Low": 15},
+                        "STRONG_PRIORITY": {"Very Critical": 0, "Critical": 0, "High": 5, "Medium Low": 15},
+                        "MODERATE_PRIORITY": {"Very Critical": 1, "Critical": 3, "High": 5, "Medium Low": 15},
                     },
                 }
             ),

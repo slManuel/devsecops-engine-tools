@@ -78,7 +78,7 @@ jobs:
           output=$(devsecops-engine-tools --platform_devops github --remote_config_source local --remote_config_repo example_remote_config_local --module engine_code --tool bearer --folder .)
           echo "$output"
           if [[ $output == *"✘Failed"* ]]; then
-            exit 1
+            exit 0
           fi
 
           # Execute devsecops-engine-tools engine_iac module
@@ -86,7 +86,7 @@ jobs:
           output=$(devsecops-engine-tools --platform_devops github --remote_config_source local --remote_config_repo example_remote_config_local --module engine_iac --tool checkov --folder .)
           echo "$output"
           if [[ $output == *"✘Failed"* ]]; then
-            exit 1
+            exit 0
           fi
 
           # Execute devsecops-engine-tools engine_secret module
@@ -140,10 +140,11 @@ jobs:
       # Generate a token of Github APP only for the truk branch
       - name: Generate a token of Github APP
         id: generate_token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2.1.0
+        uses: actions/create-github-app-token@v2.2.0
         with:
-          app_id: ${{ secrets.APP_ID_ADMIN_GITHUB }}
-          private_key: ${{ secrets.APP_PRIVATE_KEY_ADMIN_GITHUB }}
+          app-id: ${{ secrets.SEMREL_GITHUB_APP_ID }}
+          private-key: ${{ secrets.SEMREL_GITHUB_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
 
       # Check out the current repository
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7

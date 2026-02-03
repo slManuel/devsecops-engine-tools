@@ -12,14 +12,22 @@ class TrivyManagerScanUtils():
     def identify_os_and_install(self, trivy_version):
         os_platform = platform.system()
         arch_platform = platform.architecture()[0]
+        os_architecture = platform.machine()
         base_url = f"https://github.com/aquasecurity/trivy/releases/download/v{trivy_version}/"
 
         command_prefix = "trivy"
+        
         if os_platform == "Linux":
-            file=f"trivy_{trivy_version}_Linux-{arch_platform}.tar.gz"
+            if os_architecture == "aarch64":
+                file = f"trivy_{trivy_version}_Linux-ARM64.tar.gz"
+            else:
+                file=f"trivy_{trivy_version}_Linux-{arch_platform}.tar.gz"
             command_prefix = self._install_tool(file, base_url+file, "trivy")
         elif os_platform == "Darwin":
-            file=f"trivy_{trivy_version}_macOS-{arch_platform}.tar.gz"
+            if os_architecture == "arm64":
+                file = f"trivy_{trivy_version}_macOS-ARM64.tar.gz"
+            else:
+                file=f"trivy_{trivy_version}_macOS-{arch_platform}.tar.gz"
             command_prefix = self._install_tool(file, base_url+file, "trivy")
         elif os_platform == "Windows":
             file=f"trivy_{trivy_version}_windows-{arch_platform}.zip"

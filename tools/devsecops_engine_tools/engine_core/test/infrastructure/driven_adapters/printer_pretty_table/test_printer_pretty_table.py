@@ -1,3 +1,4 @@
+import unittest
 from unittest.mock import patch
 from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.printer_pretty_table.printer_pretty_table import (
     PrinterPrettyTable,
@@ -6,7 +7,7 @@ from devsecops_engine_tools.engine_core.src.domain.model.finding import Finding
 from devsecops_engine_tools.engine_core.src.domain.model.report import Report
 
 
-class TestPrinterPrettyTable:
+class TestPrinterPrettyTable(unittest.TestCase):
     @patch("builtins.print")
     def test_print_table_with_findings_engine_iac(self, mock_print):
         # Arrange
@@ -26,9 +27,10 @@ class TestPrinterPrettyTable:
             )
         ]
         printer = PrinterPrettyTable()
+        manager = {"MODEL": "severity", "CLASSIFICATION": ["critical", "high", "medium", "low"]}
 
         # Act
-        printer.print_table_findings(finding_list)
+        printer.print_table_findings(finding_list, manager)
 
         # Assert
         assert mock_print.called
@@ -79,9 +81,10 @@ class TestPrinterPrettyTable:
             ),
         ]
         printer = PrinterPrettyTable()
+        manager = {"MODEL": "severity", "CLASSIFICATION": ["critical", "high", "medium", "low"]}
 
         # Act
-        printer.print_table_findings(finding_list)
+        printer.print_table_findings(finding_list, manager)
 
         # Assert
         assert mock_print.called
@@ -92,9 +95,10 @@ class TestPrinterPrettyTable:
         # Arrange
         finding_list = []
         printer = PrinterPrettyTable()
+        manager = {"MODEL": "severity", "CLASSIFICATION": ["critical", "high", "medium", "low"]}
 
         # Act
-        printer.print_table_findings(finding_list)
+        printer.print_table_findings(finding_list, manager)
 
         # Assert
         assert not mock_print.called
@@ -113,17 +117,19 @@ class TestPrinterPrettyTable:
                 "reason": "reason",
             }
         ]
+        manager = {"MODEL": "severity", "CLASSIFICATION": ["critical", "high", "medium", "low"]}
+        
         printer = PrinterPrettyTable()
-
+    
         # Act
-        printer.print_table_exclusions(exclusions)
+        printer.print_table_exclusions(exclusions, manager)
 
         # Assert
         assert mock_print.called
         # Add more assertions to validate the output
 
     @patch("builtins.print")
-    def test_print_table_report(self, mock_print):
+    def test_print_table_report_model_risk(self, mock_print):
         # Arrange
         report_list = [
             Report(
@@ -141,9 +147,30 @@ class TestPrinterPrettyTable:
         printer = PrinterPrettyTable()
 
         # Act
-        printer.print_table_report(report_list)
+        printer.print_table_report(report_list, "RISK")
 
         # Assert
+        assert mock_print.called
+    
+    @patch("builtins.print")
+    def test_print_table_report_model_priority(self, mock_print):
+        report_list = [
+            Report(
+                priority=1,
+                vm_id="id1 id2",
+                vm_id_url="url1 url2",
+                status="stat2",
+                where="path",
+                tags=["tag1"],
+                severity="low",
+                active=True,
+                service="service1",
+            ),
+        ]
+        printer = PrinterPrettyTable()
+
+        printer.print_table_report(report_list, "PRIORITY")
+
         assert mock_print.called
 
     @patch("builtins.print")

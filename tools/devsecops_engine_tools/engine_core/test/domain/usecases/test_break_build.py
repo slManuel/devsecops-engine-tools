@@ -6,6 +6,7 @@ from devsecops_engine_tools.engine_core.src.domain.usecases.break_build import (
 from devsecops_engine_tools.engine_core.src.domain.model.finding import (
     Category,
     Finding,
+    Priority,
 )
 from devsecops_engine_tools.engine_core.src.domain.model.exclusions import Exclusions
 from devsecops_engine_tools.engine_core.src.domain.model.threshold import Threshold
@@ -33,6 +34,12 @@ class BreakBuildTests(unittest.TestCase):
                     "Low": 15,
                 },
                 "COMPLIANCE": {"Critical": 1},
+                "PRIORITY": {
+                    "Very Critical": 1,
+                    "Critical": 3,
+                    "High": 5,
+                    "Medium Low": 15
+                },
                 "CVE": ["CKV_K8S_22"],
             }
         )
@@ -44,8 +51,12 @@ class BreakBuildTests(unittest.TestCase):
         self.devops_platform_gateway.message.return_value = "There are no findings"
 
         args = {"module": "engine_iac"}
+        manager = {
+            "MODEL": "severity",
+            "CLASSIFICATION": ["critical", "high", "medium", "low"]
+        }
 
-        result = self.break_build.process(findings_list, input_core, args, False)
+        result = self.break_build.process(findings_list, input_core, args, False, manager)
 
         self.assertEqual(
             result, {"findings_excluded": [], "vulnerabilities": {}, "compliances": {}}
@@ -62,6 +73,7 @@ class BreakBuildTests(unittest.TestCase):
                 where="/_AW1234/Dockerfile",
                 description="Ensure that a user for the container has been created",
                 severity="high",
+                priority= Priority(score=7.0, scale="high"),
                 identification_date="19012024",
                 published_date_cve="2024-01-17T16:40:49-05:00",
                 module="engine_iac",
@@ -75,6 +87,7 @@ class BreakBuildTests(unittest.TestCase):
                 where="/_AW1234/app.yaml",
                 description="Minimize the admission of containers with capabilities assigned",
                 severity="high",
+                priority= Priority(score=7.0, scale="high"),
                 identification_date="19012024",
                 published_date_cve="2024-01-17T16:40:49-05:00",
                 module="engine_iac",
@@ -88,6 +101,7 @@ class BreakBuildTests(unittest.TestCase):
                 where="/_AW1234/app.yaml",
                 description="Liveness Probe Should be Configured",
                 severity="critical",
+                priority= Priority(score=7.0, scale="high"),
                 identification_date="19012024",
                 published_date_cve="2024-01-17T16:40:49-05:00",
                 module="engine_iac",
@@ -101,6 +115,7 @@ class BreakBuildTests(unittest.TestCase):
                 where="/_AW1234/app.yaml",
                 description="Containers should not run with allowPrivilegeEscalation",
                 severity="high",
+                priority= Priority(score=7.0, scale="high"),
                 identification_date="19012024",
                 published_date_cve="2024-01-17T16:40:49-05:00",
                 module="engine_iac",
@@ -114,6 +129,7 @@ class BreakBuildTests(unittest.TestCase):
                 where="/_AW1234/app.yaml",
                 description="Use read-only filesystem for containers where possible",
                 severity="high",
+                priority= Priority(score=7.0, scale="high"),
                 identification_date="19012024",
                 published_date_cve="2024-01-17T16:40:49-05:00",
                 module="engine_iac",
@@ -127,6 +143,7 @@ class BreakBuildTests(unittest.TestCase):
                 where="/_AW1234/app.yaml",
                 description="Readiness Probe Should be Configured",
                 severity="low",
+                priority= Priority(score=7.0, scale="high"),
                 identification_date="19012024",
                 published_date_cve="2024-01-17T16:40:49-05:00",
                 module="engine_iac",
@@ -147,6 +164,12 @@ class BreakBuildTests(unittest.TestCase):
                         "Low": 15,
                     },
                     "COMPLIANCE": {"Critical": 1},
+                    "PRIORITY": {
+                        "Very Critical": 1,
+                        "Critical": 3,
+                        "High": 10,
+                        "Medium Low": 15
+                    },
                     "CVE": ["CKV_K8S_22"],
                 }
             ),
@@ -158,27 +181,32 @@ class BreakBuildTests(unittest.TestCase):
         )
 
         args = {"module": "engine_container"}
+        manager = {
+            "MODEL": "severity",
+            "CLASSIFICATION": ["critical", "high", "medium", "low"]
+        }
 
-        result = self.break_build.process(findings_list, input_core, args, False)
+        result = self.break_build.process(findings_list, input_core, args, False, manager)
 
         result_compare = {
             "findings_excluded": [],
             "vulnerabilities": {
+                "model_break_build": "severity",
                 "threshold": {"critical": 0, "high": 4, "medium": 0, "low": 0},
                 "status": "failed",
                 "found": [
-                    {"id": "CKV_DOCKER_3", "severity": "high"},
-                    {"id": "CKV_K8S_37", "severity": "high"},
-                    {"id": "CKV_K8S_20", "severity": "high"},
-                    {"id": "CKV_K8S_22", "severity": "high"},
+                    {"id": "CKV_DOCKER_3", "severity": "high", "priority": "high"},
+                    {"id": "CKV_K8S_37", "severity": "high", "priority": "high"},
+                    {"id": "CKV_K8S_20", "severity": "high", "priority": "high"},
+                    {"id": "CKV_K8S_22", "severity": "high", "priority": "high"},
                 ],
             },
             "compliances": {
                 "threshold": {"critical": 1},
                 "status": "failed",
                 "found": [
-                    {"id": "CKV_K8S_8", "severity": "critical"},
-                    {"id": "CKV_K8S_9", "severity": "low"},
+                    {"id": "CKV_K8S_8", "severity": "critical", "priority": "high"},
+                    {"id": "CKV_K8S_9", "severity": "low", "priority": "high"},
                 ],
             },
         }
@@ -193,6 +221,7 @@ class BreakBuildTests(unittest.TestCase):
                 where="/_AW1234/Dockerfile",
                 description="Ensure that a user for the container has been created",
                 severity="high",
+                priority= Priority(score=7.0, scale="high"),
                 identification_date="19012024",
                 published_date_cve=None,
                 module="engine_iac",
@@ -206,6 +235,7 @@ class BreakBuildTests(unittest.TestCase):
                 where="/_AW1234/app.yaml",
                 description="Containers should not run with allowPrivilegeEscalation",
                 severity="high",
+                priority= Priority(score=7.0, scale="high"),
                 identification_date="19012024",
                 published_date_cve=None,
                 module="engine_iac",
@@ -226,6 +256,12 @@ class BreakBuildTests(unittest.TestCase):
                         "Low": 15,
                     },
                     "COMPLIANCE": {"Critical": 1},
+                    "PRIORITY": {
+                        "Very Critical": 1,
+                        "Critical": 3,
+                        "High": 10,
+                        "Medium Low": 15
+                    }
                 }
             ),
             path_file_results="results.json",
@@ -235,18 +271,23 @@ class BreakBuildTests(unittest.TestCase):
             stage_pipeline="Release",
         )
 
+        manager = {
+            "MODEL": "severity",
+            "CLASSIFICATION": ["critical", "high", "medium", "low"]
+        }
         result = self.break_build.process(
-            findings_list, input_core, {"module": "engine_iac"}, False
+            findings_list, input_core, {"module": "engine_iac"}, False, manager
         )
 
         result_compare = {
             "findings_excluded": [],
             "vulnerabilities": {
+                "model_break_build": "severity",
                 "threshold": {"critical": 0, "high": 2, "medium": 0, "low": 0},
                 "status": "succeeded",
                 "found": [
-                    {"id": "CKV_DOCKER_3", "severity": "high"},
-                    {"id": "CKV_K8S_20", "severity": "high"},
+                    {"id": "CKV_DOCKER_3", "severity": "high", "priority": "high"},
+                    {"id": "CKV_K8S_20", "severity": "high", "priority": "high"},
                 ],
             },
             "compliances": {},
@@ -262,6 +303,7 @@ class BreakBuildTests(unittest.TestCase):
                 where="/_AW1234/Dockerfile",
                 description="Ensure that a user for the container has been created",
                 severity="high",
+                priority= Priority(score=7.0, scale="high"),
                 identification_date="19012024",
                 published_date_cve=None,
                 module="engine_iac",
@@ -275,6 +317,7 @@ class BreakBuildTests(unittest.TestCase):
                 where="/_AW1234/app.yaml",
                 description="Containers should not run with allowPrivilegeEscalation",
                 severity="high",
+                priority= Priority(score=7.0, scale="high"),
                 identification_date="19012024",
                 published_date_cve=None,
                 module="engine_iac",
@@ -314,6 +357,12 @@ class BreakBuildTests(unittest.TestCase):
                         "Low": 15,
                     },
                     "COMPLIANCE": {"Critical": 1},
+                    "PRIORITY": {
+                        "Very Critical": 1,
+                        "Critical": 3,
+                        "High": 5,
+                        "Medium Low": 15
+                    }
                 }
             ),
             path_file_results="results.json",
@@ -323,14 +372,18 @@ class BreakBuildTests(unittest.TestCase):
             stage_pipeline="Release",
         )
 
+        manager = {
+            "MODEL": "severity",
+            "CLASSIFICATION": ["critical", "high", "medium", "low"]
+        }
         result = self.break_build.process(
-            findings_list, input_core, {"module": "engine_iac"}, False
+            findings_list, input_core, {"module": "engine_iac"}, False, manager
         )
 
         result_compare = {
             "findings_excluded": [
-                {"id": "CKV_DOCKER_3", "severity": "high", "category": Category.VULNERABILITY.value},
-                {"id": "CKV_K8S_20", "severity": "high", "category": Category.VULNERABILITY.value},
+                {"id": "CKV_DOCKER_3", "severity": "high", "priority": "high", "category": Category.VULNERABILITY.value},
+                {"id": "CKV_K8S_20", "severity": "high", "priority": "high", "category": Category.VULNERABILITY.value},
             ],
             "vulnerabilities": {},
             "compliances": {},

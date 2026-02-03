@@ -107,6 +107,25 @@ def test_identify_os_and_install_linux(trivy_utils_instance):
         mock_install.assert_called_with(expected_file, expected_url, "trivy")
         assert result == "./trivy"
 
+def test_identify_os_and_install_linux_arm64(trivy_utils_instance):
+    """Test identify_os_and_install for Linux platform"""
+    with patch("platform.system") as mock_platform, patch("platform.architecture") as mock_arch, patch(
+        "devsecops_engine_tools.engine_utilities.trivy_utils.infrastructure.driven_adapters.trivy_manager_scan_utils.TrivyManagerScanUtils._install_tool"
+    ) as mock_install, patch("platform.machine") as mock_machine:
+        mock_platform.return_value = "Linux"
+        mock_arch.return_value = ("64bit", "")
+        mock_machine.return_value = "aarch64"
+        mock_install.return_value = "./trivy"
+        version = "1.2.3"
+        
+        result = trivy_utils_instance.identify_os_and_install(version)
+        
+        expected_file = f"trivy_{version}_Linux-ARM64.tar.gz"
+        expected_url = f"https://github.com/aquasecurity/trivy/releases/download/v{version}/{expected_file}"
+        mock_install.assert_called_with(expected_file, expected_url, "trivy")
+        assert result == "./trivy"
+
+
 
 def test_identify_os_and_install_darwin(trivy_utils_instance):
     """Test identify_os_and_install for macOS platform"""
@@ -125,6 +144,23 @@ def test_identify_os_and_install_darwin(trivy_utils_instance):
         mock_install.assert_called_with(expected_file, expected_url, "trivy")
         assert result == "./trivy"
 
+def test_identify_os_and_install_darwin_arm64(trivy_utils_instance):
+    """Test identify_os_and_install for macOS platform"""
+    with patch("platform.system") as mock_platform, patch("platform.architecture") as mock_arch, patch(
+        "devsecops_engine_tools.engine_utilities.trivy_utils.infrastructure.driven_adapters.trivy_manager_scan_utils.TrivyManagerScanUtils._install_tool"
+    ) as mock_install, patch("platform.machine") as mock_machine:
+        mock_platform.return_value = "Darwin"
+        mock_arch.return_value = ("64bit", "")
+        mock_machine.return_value = "arm64"
+        mock_install.return_value = "./trivy"
+        version = "1.2.3"
+        
+        result = trivy_utils_instance.identify_os_and_install(version)
+        
+        expected_file = f"trivy_{version}_macOS-ARM64.tar.gz"
+        expected_url = f"https://github.com/aquasecurity/trivy/releases/download/v{version}/{expected_file}"
+        mock_install.assert_called_with(expected_file, expected_url, "trivy")
+        assert result == "./trivy"
 
 def test_identify_os_and_install_windows(trivy_utils_instance):
     """Test identify_os_and_install for Windows platform"""

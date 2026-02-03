@@ -40,18 +40,26 @@ class CdxGen(SbomManagerGateway):
                 os.environ["CDXGEN_DEBUG_MODE"] = "debug"
 
             os_platform = platform.system()
+            os_architecture = platform.machine()
+
             base_url = (
                 f"https://github.com/CycloneDX/cdxgen/releases/download/v{cdxgen_version}/"
             )
-
+            
             command_prefix = "cdxgen"
             if os_platform == "Linux":
-                file = f"cdxgen-linux-amd64{slim}"
+                if os_architecture == "aarch64":
+                    file = f"cdxgen-linux-arm64{slim}"
+                else:
+                    file = f"cdxgen-linux-amd64{slim}"
                 command_prefix = self._install_tool_unix(
                     file, base_url + file, command_prefix
                 )
             elif os_platform == "Darwin":
-                file = f"cdxgen-darwin-amd64{slim}"
+                if os_architecture == "arm64":
+                    file = f"cdxgen-darwin-arm64{slim}"
+                else:
+                    file = f"cdxgen-darwin-amd64{slim}"
                 command_prefix = self._install_tool_unix(
                     file, base_url + file, command_prefix
                 )

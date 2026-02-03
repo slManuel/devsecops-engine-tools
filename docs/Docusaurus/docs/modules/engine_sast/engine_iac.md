@@ -29,6 +29,12 @@ Main configuration file that defines scanning behavior, tool versions, and secur
     },
     "COMPLIANCE": {
       "Critical": 1
+    },
+    "PRIORITY": {
+        "Very Critical": 1,
+        "Critical": 4,
+        "High": 10,
+        "Medium Low": 15
     }
   },
   "CHECKOV": {
@@ -107,7 +113,35 @@ Main configuration file that defines scanning behavior, tool versions, and secur
                     "cvss": "",
                     "category": "Vulnerability"
             },...
-		}
+		},
+    "RULES_SERVERLESS":{
+			"CKV_AWS_200": {
+                    "checkID": "IAC-CKV-SERVERLESS-1 Ensure AWS Lambda function is not publicly accessible",
+                    "environment": {
+                        "dev": true,
+                        "pdn": true,
+                        "qa": true
+                    },
+                    "guideline": "guideline",
+                    "severity": "High",
+                    "cvss": "",
+                    "category": "Vulnerability"
+            },...
+    },
+    "RULES_BICEP":{
+			"CKV_AZURE_1": {
+                    "checkID": "IAC-CKV-AZURE-1 Ensure Azure Instance does not use basic authentication",
+                    "environment": {
+                        "dev": true,
+                        "pdn": true,
+                        "qa": true
+                    },
+                    "guideline": "guideline",
+                    "severity": "High",
+                    "cvss": "",
+                    "category": "Vulnerability"
+            },...
+    }
 	}
   },
   "KICS": {
@@ -156,6 +190,11 @@ Main configuration file that defines scanning behavior, tool versions, and secur
   - `Low`: Maximum 15 low severity vulnerabilities
 - **THRESHOLD.COMPLIANCE**: Maximum allowed compliance issues:
   - `Critical`: Maximum 1 critical compliance issue
+- **THRESHOLD.PRIORITY**: Maximum allowed vulnerabilities by priority level:
+  - `Very Critical`: Maximum 1 very critical priority vulnerability allowed
+  - `Critical`: Maximum 4 critical priority vulnerabilities
+  - `High`: Maximum 10 high priority vulnerabilities  
+  - `Medium Low`: Maximum 15 medium low priority vulnerabilities
 
 ##### Checkov Tool Configuration
 - **VERSION**: Checkov version to use (e.g., `"3.2.427"`)
@@ -212,6 +251,8 @@ Each tool contains rule sets organized by technology:
 - **RULES_CLOUDFORMATION**: AWS CloudFormation security rules (encryption, access controls, logging)
 - **RULES_TERRAFORM**: Terraform-specific infrastructure security rules
 - **RULES_OPENAPI**: API security rules for OpenAPI specifications
+- **RULES_SERVERLESS**: Serverless rules for AWS Lambda specifications
+- **RULES_BICEP**: Azure Bicep security rules for Azure Cloud infrastructure
 
 In the RULES section of each platform (RULES_DOCKER, RULES_K8S, RULES_CLOUDFORMATION, etc.), the body is empty. Example “RULES_DOCKER” {}, the tool executes all rules associated with it.
 
