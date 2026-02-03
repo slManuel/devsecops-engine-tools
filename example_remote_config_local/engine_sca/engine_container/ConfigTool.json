@@ -3,7 +3,9 @@
         "TWISTCLI_PATH": "twistcli",
         "PRISMA_CONSOLE_URL": "",
         "PRISMA_API_VERSION": "",
-        "SBOM_FORMAT": "cyclonedx_json"
+        "SBOM_FORMAT": "cyclonedx_json",
+        "SCAN_RETRIES": 1,
+        "SCAN_RETRY_DELAY_SECONDS": 0
     },
     "TRIVY": {
         "TRIVY_VERSION": "0.62.1",
