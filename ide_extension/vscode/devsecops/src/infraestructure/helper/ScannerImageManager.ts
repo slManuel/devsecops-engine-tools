@@ -15,10 +15,6 @@ export class ScannerImageManager {
     this.networkErrorHandler = new NetworkErrorHandler();
   }
 
-  /**
-   * Get the error category from the last operation.
-   * Returns 'critical-docker', 'docker', 'network', or null.
-   */
   public getLastErrorCategory(): 'critical-docker' | 'docker' | 'network' | null {
     const dockerCategory = this.dockerErrorHandler.getLastErrorCategory();
     if (dockerCategory) {
@@ -39,7 +35,6 @@ export class ScannerImageManager {
     outputChannel: OutputChannel,
     logCapture?: (message: string) => void
   ): Promise<boolean> {
-    // Reset error handlers at the start to ensure clean state
     this.dockerErrorHandler.reset();
     this.networkErrorHandler.reset();
 
@@ -58,7 +53,6 @@ export class ScannerImageManager {
       return true;
     }
 
-    // Don't reset here - preserve duplicate detection across operations
     return await this.pullImage(containerEnginePath, imageTag, outputChannel, context, logCapture);
   }
 
@@ -139,16 +133,7 @@ export class ScannerImageManager {
     });
   }
 
-  /**
-   * Routes error to appropriate handler based on error type.
-   * Priority: Docker errors > Network errors (VPN/connectivity).
-   * 
-   * This follows the prioritization logic:
-   * 1. If Docker is inactive → Docker error (highest priority)
-   * 2. If Docker is active but network fails → Network/VPN error
-   */
   private handleError(errorMessage: string, outputChannel: OutputChannel, context: ErrorContext, logCapture?: (message: string) => void): void {
-    // Check Docker patterns first (highest priority)
     const dockerPatterns = DockerErrorHandler.getErrorPatterns();
     const isDockerError = dockerPatterns.some(pattern => errorMessage.includes(pattern));
     
@@ -157,19 +142,16 @@ export class ScannerImageManager {
       return;
     }
     
-    // Check network patterns (VPN/connectivity issues)
     const networkPatterns = NetworkErrorHandler.getErrorPatterns();
     const isNetworkError = networkPatterns.some(pattern => errorMessage.includes(pattern));
     
     if (isNetworkError) {
       this.networkErrorHandler.handle(errorMessage, outputChannel, context, logCapture);
     } else {
-      // Fallback to Docker handler for unknown errors
       this.dockerErrorHandler.handle(errorMessage, outputChannel, context, logCapture);
     }
   }
 
-  // Static method for backward compatibility
   static async ensureScannerImageExists(
     containerEnginePath: string,
     containerImageName: string,

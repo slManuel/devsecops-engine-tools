@@ -24,17 +24,10 @@ export class NetworkErrorHandler {
     private lastErrorKey: string | null = null;
     private lastErrorDetected: boolean = false;
 
-    /**
-     * Returns all network error patterns for reuse in metrics analysis.
-     * This maintains single source of truth for network error detection.
-     */
     public static getErrorPatterns(): string[] {
         return Object.keys(NETWORK_ERROR_MESSAGES);
     }
 
-    /**
-     * Check if a network error was detected in the last handle call.
-     */
     public hasNetworkError(): boolean {
         return this.lastErrorDetected;
     }
@@ -88,7 +81,6 @@ export class NetworkErrorHandler {
     }
 
     private logRawError(errorMessage: string, outputChannel: OutputChannel): void {
-        // Log the actual raw error for debugging purposes
         const firstLine = errorMessage.split('\n')[0].trim();
         if (firstLine) {
             outputChannel.appendLine(`[Raw Error] ${firstLine}`);

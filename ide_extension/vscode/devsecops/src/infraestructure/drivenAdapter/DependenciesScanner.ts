@@ -188,25 +188,18 @@ export class DependenciesScanner implements IScannerGateway {
       toolVersion
     };
 
-    // Create log capture callback to ensure error messages are captured for metrics
     const logCapture = (message: string) => {
       this.metricsHelper.captureOnly(message);
     };
 
-    // Use DockerErrorHandler for known Docker errors
     this.dockerErrorHandler.handle(error.message, outputChannel, errorContext, logCapture);
 
-    // Also check stderr for additional error patterns
     if (stderr) {
       this.dockerErrorHandler.handle(stderr, outputChannel, errorContext, logCapture);
       this.networkErrorHandler.handle(stderr, outputChannel, errorContext, logCapture);
     }
   }
 
-  /**
-   * Helper method to collect metrics for failed scan scenarios.
-   * Eliminates code duplication across error handling paths.
-   */
   private async collectFailedScanMetrics(elementToScan: string): Promise<void> {
     await this.metricsHelper.collectAndstoreMetricsData(
       elementToScan,

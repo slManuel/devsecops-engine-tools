@@ -1,10 +1,6 @@
-
 import { ERROR_PATTERNS } from "./ErrorPatterns";
 
 export class LogAnalysisService {
-    /**
-     * Check if logs contain any general error patterns
-     */
     public static hasErrors(logs: string[]): boolean {
         if (!logs || logs.length === 0) {
             return false;
@@ -75,18 +71,10 @@ export class LogAnalysisService {
         );
     }
 
-    /**
-     * Check if logs contain Docker-specific errors
-     * Uses shared ERROR_PATTERNS to maintain consistency with DockerErrorHandler
-     */
     public static hasDockerErrors(logs: string[]): boolean {
         return this.hasErrorCategory(logs, 'docker');
     }
 
-    /**
-     * Check if logs contain CRITICAL Docker errors (daemon not running, Docker not accessible)
-     * These errors should take priority over network errors
-     */
     public static hasCriticalDockerErrors(logs: string[]): boolean {
         if (!logs || logs.length === 0) {
             return false;
@@ -107,26 +95,14 @@ export class LogAnalysisService {
         });
     }
 
-    /**
-     * Check if logs contain Network-specific errors
-     * Uses shared ERROR_PATTERNS
-     */
     public static hasNetworkErrors(logs: string[]): boolean {
         return this.hasErrorCategory(logs, 'network');
     }
 
-    /**
-     * Check if logs contain Configuration-specific errors
-     * Uses shared ERROR_PATTERNS
-     */
     public static hasConfigurationErrors(logs: string[]): boolean {
         return this.hasErrorCategory(logs, 'configuration');
     }
 
-    /**
-     * Generic helper to check for error patterns by category
-     * Promotes code reuse and maintainability
-     */
     private static hasErrorCategory(logs: string[], category: keyof typeof ERROR_PATTERNS): boolean {
         if (!logs || logs.length === 0) {
             return false;

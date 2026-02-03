@@ -1,18 +1,10 @@
 import { DockerErrorHandler } from './DockerErrorHandler';
 import { NetworkErrorHandler } from './NetworkErrorHandler';
 
-/**
- * Centralized error patterns configuration.
- * 
- * Architecture:
- * - Docker patterns retrieved from DockerErrorHandler via static method (single source of truth)
- * - Network patterns retrieved from NetworkErrorHandler via static method (single source of truth)
- * - Configuration patterns defined here
- */
 
 export const ERROR_PATTERNS = {
+    
     docker: DockerErrorHandler.getErrorPatterns(),
-
     network: NetworkErrorHandler.getErrorPatterns(),
 
     configuration: [
@@ -34,7 +26,4 @@ export const ERROR_PATTERNS = {
     ]
 } as const;
 
-/**
- * Error pattern categories for type safety
- */
 export type ErrorCategory = keyof typeof ERROR_PATTERNS;

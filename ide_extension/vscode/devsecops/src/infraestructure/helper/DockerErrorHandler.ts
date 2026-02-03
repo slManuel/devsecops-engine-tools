@@ -43,18 +43,10 @@ export class DockerErrorHandler {
     private lastErrorKey: string | null = null;
     private lastErrorCategory: 'critical-docker' | 'docker' | null = null;
 
-    /**
-     * Returns all Docker error patterns for reuse in metrics analysis.
-     * This maintains single source of truth for Docker error detection.
-     */
     public static getErrorPatterns(): string[] {
         return Object.keys(DOCKER_ERROR_MESSAGES);
     }
 
-    /**
-     * Get the category of the last error handled.
-     * Returns 'critical-docker' for daemon issues, 'docker' for other Docker errors, null if no error.
-     */
     public getLastErrorCategory(): 'critical-docker' | 'docker' | null {
         return this.lastErrorCategory;
     }
@@ -68,7 +60,6 @@ export class DockerErrorHandler {
             }
             this.lastErrorKey = errorKey;
             
-            // Classify as critical if it's a daemon/installation issue
             const criticalPatterns = [
                 'Cannot connect to the Docker daemon',
                 'Docker is not running',
@@ -117,7 +108,6 @@ export class DockerErrorHandler {
     }
 
     private logRawError(errorMessage: string, outputChannel: OutputChannel): void {
-        // Log the actual raw error for debugging purposes
         const firstLine = errorMessage.split('\n')[0].trim();
         if (firstLine) {
             outputChannel.appendLine(`[Raw Error] ${firstLine}`);

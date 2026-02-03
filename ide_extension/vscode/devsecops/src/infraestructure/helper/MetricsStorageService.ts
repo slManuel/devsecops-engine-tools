@@ -4,31 +4,13 @@ import { METRICS_DATA_UPLOAD_URL } from '../../application/appService/Constants'
 
 export class MetricsStorageService {
     private static readonly REQUEST_TIMEOUT = 30000;
-    private static readonly ENABLE_DEBUG_LOGGING = true; // Set to false to disable debug console output
 
     public static async storeMetricsData(metricsData: IMetricsData): Promise<void> {
         try {
-            // Debug feature: Print metrics to console for inspection
-            if (this.   ENABLE_DEBUG_LOGGING) {
-                this.printMetricsToConsole(metricsData);
-            }
-
             await this.uploadMetricsDataToServer(metricsData);
         } catch (error) {
             throw new Error(`Failed to upload metrics: ${error instanceof Error ? error.message : String(error)}`);
         }
-    }
-
-    /**
-     * Prints formatted metrics JSON to debug console.
-     * Useful for verifying metrics data before it's uploaded to S3.
-     */
-    private static printMetricsToConsole(metricsData: IMetricsData): void {
-        console.log('\n' + '='.repeat(80));
-        console.log('METRICS DATA TO BE UPLOADED TO S3');
-        console.log('='.repeat(80));
-        console.log(JSON.stringify(metricsData, null, 2));
-        console.log('='.repeat(80) + '\n');
     }
 
     private static async uploadMetricsDataToServer(metricsData: IMetricsData): Promise<void> {
