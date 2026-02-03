@@ -608,6 +608,12 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                 cmdb_request_response=vulnerability_management.config_tool[
                     "VULNERABILITY_MANAGER"
                 ]["DEFECT_DOJO"]["CMDB"]["CMDB_REQUEST_RESPONSE"],
+                remote_config_source=vulnerability_management.dict_args.get("remote_config_source"),
+                remote_config_repo=vulnerability_management.dict_args.get("remote_config_repo"),
+                remote_config_path=vulnerability_management.config_tool["VULNERABILITY_MANAGER"][
+                    "DEFECT_DOJO"
+                ]["CMDB"]["CMDB_MAPPING_PATH"],
+                remote_config_branch=vulnerability_management.dict_args.get("remote_config_branch"),
                 **common_fields,
             )
         else:

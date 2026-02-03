@@ -1,4 +1,5 @@
 import re
+from devsecops_engine_tools.engine_core.src.domain.model.gateway.devops_platform_gateway import DevopsPlatformGateway
 from devsecops_engine_tools.engine_utilities.utils.api_error import ApiError
 from devsecops_engine_tools.engine_utilities.defect_dojo.infraestructure.driver_adapters.cmdb import CmdbRestConsumer
 from devsecops_engine_tools.engine_utilities.defect_dojo.domain.request_objects.import_scan import ImportScanRequest
@@ -10,15 +11,18 @@ logger = MyLogger.__call__(**SETTING_LOGGER).get_logger()
 
 
 class CmdbUserCase:
-    def __init__(self, rest_consumer_cmdb: CmdbRestConsumer, utils_azure: AzureDevopsApi, expression) -> None:
+    def __init__(self, rest_consumer_cmdb: CmdbRestConsumer, remote_config_source_gateway: DevopsPlatformGateway, expression) -> None:
         self.__rc_cmdb = rest_consumer_cmdb
-        self.__utils_azure = utils_azure
+        self.__remote_config_source_gateway = remote_config_source_gateway
         self.__expression = expression
 
     def execute(self, request: ImportScanRequest) -> ImportScanRequest:
         # Connection config map
-        connection = self.__utils_azure.get_azure_connection()
-        remote_config = self.__utils_azure.get_remote_json_config(connection=connection)
+        remote_config = self.__remote_config_source_gateway.get_remote_config(
+            request.remote_config_repo,
+            request.remote_config_path,
+            request.remote_config_branch,
+        )
 
         # regular exprecion
         request.code_app = self.get_code_app(request.engagement_name)

@@ -31,6 +31,9 @@ class TestDefectDojoPlatform(unittest.TestCase):
             "token_cmdb": "token2",
             "module": "engine_iac",
             "platform": ["k8s"],
+            "remote_config_source": "github",
+            "remote_config_repo": "remote_config",
+            "remote_config_branch": None,
         }
         self.vulnerability_management.secret_tool = {
             "token_defect_dojo": "token3",
@@ -174,6 +177,10 @@ class TestDefectDojoPlatform(unittest.TestCase):
                 test_title="engine_iac_k8s",
                 reimport_scan=True,
                 get_exact_product=False,
+                remote_config_source="github",
+                remote_config_repo="remote_config",
+                remote_config_path="mapping_path",
+                remote_config_branch=None,
             )
 
     def test_send_vulnerability_management_exception(self):
@@ -210,6 +217,15 @@ class TestDefectDojoPlatform(unittest.TestCase):
         self.vulnerability_management.branch_tag = "trunk"
         self.vulnerability_management.commit_hash = "commit_hash"
         self.vulnerability_management.environment = "dev"
+        self.vulnerability_management.dict_args = {
+            "token_vulnerability_management": "token1",
+            "token_cmdb": "token2",
+            "module": "engine_iac",
+            "platform": ["k8s"],
+            "remote_config_source": "github",
+            "remote_config_repo": "remote_config",
+            "remote_config_branch": None,
+        }
 
         self.vulnerability_management.config_tool = {
             "VULNERABILITY_MANAGER": {
@@ -334,6 +350,10 @@ class TestDefectDojoPlatform(unittest.TestCase):
                 test_title="engine_iac_k8s",
                 reimport_scan=True,
                 get_exact_product=False,
+                remote_config_source="github",
+                remote_config_repo="remote_config",
+                remote_config_path="mapping_path",
+                remote_config_branch=None,
             )
             self.assertEqual(result, "cmdb_request_result")
 

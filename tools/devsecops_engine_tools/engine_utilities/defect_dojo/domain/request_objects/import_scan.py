@@ -52,7 +52,10 @@ class ImportScanRequest:
     organization_url: str = ""
     personal_access_token: str = ""
     repository_id: str = ""
+    remote_config_source: str = ""
+    remote_config_repo: str = ""
     remote_config_path: str = ""
+    remote_config_branch: str = ""
     project_remote_config: str = ""
     cmdb_mapping: dict = None
     product_type_name_mapping: dict = None

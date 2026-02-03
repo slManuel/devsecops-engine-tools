@@ -10,7 +10,6 @@ from devsecops_engine_tools.engine_utilities.defect_dojo.infraestructure.driver_
 from devsecops_engine_tools.engine_utilities.defect_dojo.domain.request_objects.import_scan import (
     ImportScanRequest,
 )
-from devsecops_engine_tools.engine_utilities.azuredevops.infrastructure.azure_devops_api import AzureDevopsApi
 from devsecops_engine_tools.engine_utilities.defect_dojo.domain.user_case.cmdb import CmdbUserCase
 
 
@@ -80,7 +79,10 @@ def test_execute(engagement_name, obj_cmdb):
         "personal_access_token": "tokenxxxx12354564",
         "product_name": "test product name",
         "repository_id": "repositoryid_or_name_repository",
+        "remote_config_source": "azure",
+        "remote_config_repo": "repositoryid_or_name_repository",
         "remote_config_path": "/defect_dojo/cmdb_mapping.json",
+        "remote_config_branch": "",
         "project_remote_config": "Vicepresidencia Servicios de Tecnología",
         "token_cmdb": "123456789",
         "host_cmdb": "http://localhost:8000",
@@ -107,28 +109,15 @@ def test_execute(engagement_name, obj_cmdb):
     mock_rc = mock_rest_consumer_cmdb(request, token="91qewuro9quowedafj", host="https://localhost:8000")
     # response file contect json
     file_content = [b'{"key": "value"}']
-    # mock git client
-    mock_git_client = MagicMock()
-    mock_git_client.get_item_text.return_value = file_content
-    # mock conecction
-    mock_connection = MagicMock()
-    mock_connection.clients.get_git_client.return_value = mock_git_client
-    # mock class azureDevopsApi
-    mock_utils_azure = MagicMock(spec=AzureDevopsApi)
-    mock_utils_azure.get_azure_connection.return_value = mock_connection
-    # mock get_remote_json_config
-    mock_utils_azure.get_remote_json_config.return_value = {
+    # mock remote config source gateway
+    mock_remote_config_source_gateway = MagicMock()
+    mock_remote_config_source_gateway.get_remote_config.return_value = {
         "types_product": {"ORPHAN_PRODUCT_TYPE": "ORPHAN_PRODUCT_TYPE"}
     }
-    AzureDevopsApi(
-        personal_access_token="asjfdiajf",
-        project_remote_config="project remote test",
-        organization_url="http://organization_url/",
-    )
     mock_rc.get_product_info.return_value = obj_cmdb
     uc = CmdbUserCase(
         rest_consumer_cmdb=mock_rc,
-        utils_azure=mock_utils_azure,
+        remote_config_source_gateway=mock_remote_config_source_gateway,
         expression=r"((AUD|AP|CLD|USR|OPS|ASN|AW|NU|EUC|IS)\d+)",
     )
 
@@ -142,7 +131,7 @@ def test_execute(engagement_name, obj_cmdb):
 @pytest.mark.parametrize("engagement_name", [("engament_name")])
 def test_get_code_app(engagement_name):
     uc = CmdbUserCase(
-        rest_consumer_cmdb=None, utils_azure=None, expression=r"((AUD|AP|CLD|USR|OPS|ASN|AW|NU|EUC|IS)\d+)_"
+        rest_consumer_cmdb=None, remote_config_source_gateway=None, expression=r"((AUD|AP|CLD|USR|OPS|ASN|AW|NU|EUC|IS)\d+)_"
     )
     code_app = uc.get_code_app(engagement_name)
     assert code_app == ""

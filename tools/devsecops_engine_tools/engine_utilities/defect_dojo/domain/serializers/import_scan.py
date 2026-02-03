@@ -221,7 +221,10 @@ class ImportScanSerializer(Schema):
     organization_url = fields.Str(required=False)
     personal_access_token = fields.Str(required=False)
     repository_id = fields.Str(required=False)
-    remote_config_path = fields.Str(required=False)
+    remote_config_source = fields.Str(required=True)
+    remote_config_repo = fields.Str(required=True)
+    remote_config_path = fields.Str(required=True)
+    remote_config_branch = fields.Str(required=False)
     project_remote_config = fields.Str(required=False)
     # regulare expression
     expression = fields.Str(required=True)
