@@ -1,4 +1,5 @@
 import unittest
+import os
 from unittest.mock import patch, Mock, mock_open, call
 from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen import CdxGen
 from devsecops_engine_tools.engine_core.src.domain.model.component import Component
@@ -340,6 +341,72 @@ class TestCdxGen(unittest.TestCase):
         # Assert
         self.assertEqual(result, self.mock_components)
         mock_run.assert_called_once_with('/usr/local/bin/cdxgen', self.artifact, self.service_name, [], [], True, True, {}, False)
+
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.get_list_component')
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.platform.system')
+    def test_get_components_fetch_license_enabled_sets_env(self, mock_platform, mock_get_list_component):
+        # Arrange
+        mock_platform.return_value = "Linux"
+        mock_get_list_component.return_value = self.mock_components
+
+        fetch_license_config = {
+            "CDXGEN": {
+                "CDXGEN_VERSION": "10.2.0",
+                "SLIM_BINARY": False,
+                "OUTPUT_FORMAT": "json",
+                "EXCLUDE_TYPES": [],
+                "EXCLUDE_PATHS": [],
+                "RECURSE": True,
+                "FETCH_LICENSE": True,
+                "DEBUG_PIPELINES": [],
+                "LIFECYCLE_PIPELINES": {}
+            }
+        }
+
+        with patch.object(self.cdxgen, '_install_tool_unix', return_value='/usr/local/bin/cdxgen') as mock_install:
+            with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
+                with patch.dict(os.environ, {}, clear=True):
+                    # Act
+                    result = self.cdxgen.get_components(self.artifact, fetch_license_config, self.service_name)
+
+                    # Assert
+                    self.assertEqual(result, self.mock_components)
+                    self.assertEqual(os.environ.get("FETCH_LICENSE"), "true")
+                    mock_install.assert_called_once()
+                    mock_run.assert_called_once_with('/usr/local/bin/cdxgen', self.artifact, self.service_name, [], [], True, True, {}, False)
+
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.get_list_component')
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.platform.system')
+    def test_get_components_fetch_license_disabled_does_not_set_env(self, mock_platform, mock_get_list_component):
+        # Arrange
+        mock_platform.return_value = "Linux"
+        mock_get_list_component.return_value = self.mock_components
+
+        fetch_license_config = {
+            "CDXGEN": {
+                "CDXGEN_VERSION": "10.2.0",
+                "SLIM_BINARY": False,
+                "OUTPUT_FORMAT": "json",
+                "EXCLUDE_TYPES": [],
+                "EXCLUDE_PATHS": [],
+                "RECURSE": True,
+                "FETCH_LICENSE": False,
+                "DEBUG_PIPELINES": [],
+                "LIFECYCLE_PIPELINES": {}
+            }
+        }
+
+        with patch.object(self.cdxgen, '_install_tool_unix', return_value='/usr/local/bin/cdxgen') as mock_install:
+            with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
+                with patch.dict(os.environ, {}, clear=True):
+                    # Act
+                    result = self.cdxgen.get_components(self.artifact, fetch_license_config, self.service_name)
+
+                    # Assert
+                    self.assertEqual(result, self.mock_components)
+                    self.assertIsNone(os.environ.get("FETCH_LICENSE"))
+                    mock_install.assert_called_once()
+                    mock_run.assert_called_once_with('/usr/local/bin/cdxgen', self.artifact, self.service_name, [], [], True, True, {}, False)
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.subprocess.run')
     def test_run_cdxgen_with_exclude_types_list(self, mock_subprocess):
