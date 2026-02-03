@@ -4,9 +4,9 @@
   "displayName": "DevSecOps Engine Tools",
   "publisher": "GrupoBancolombiaOSPO",
   "description": "",
-  "version": "1.20.0",
+  "version": "1.21.0",
   "engines": {
-    "vscode": "^1.96.0"
+    "vscode": "^1.95.0"
   },
   "categories": [
     "Other"
@@ -79,7 +79,8 @@
           },
           "devsecops.azuredevops.releaseId": {
             "type": "string",
-            "description": "Azure Release Definition ID"
+            "description": "Azure Release Definition ID",
+            "title":"Definition ID"
           },
           "devsecops.azuredevops.environment": {
             "type": "string",
