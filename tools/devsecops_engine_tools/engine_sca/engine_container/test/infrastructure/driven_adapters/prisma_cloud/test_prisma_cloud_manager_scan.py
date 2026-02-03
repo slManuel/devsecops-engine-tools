@@ -197,6 +197,42 @@ def test_scan_image_error_logs_details(mock_remoteconfig):
         )
 
 
+def test_scan_image_retries_with_delay(mock_remoteconfig):
+    remoteconfig = {
+        **mock_remoteconfig,
+        "PRISMA_CLOUD": {
+            **mock_remoteconfig["PRISMA_CLOUD"],
+            "SCAN_RETRIES": 2,
+            "SCAN_RETRY_DELAY_SECONDS": 0.5,
+        },
+    }
+
+    with patch(
+        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.subprocess.run"
+    ) as mock_run, patch(
+        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.time.sleep"
+    ) as mock_sleep:
+        mock_run.side_effect = [
+            subprocess.CalledProcessError(1, ["twistcli", "images", "scan"]),
+            MagicMock(stdout="", stderr=""),
+        ]
+
+        scan_manager = PrismaCloudManagerScan()
+
+        result = scan_manager.scan_image(
+            "file_path",
+            "image_name",
+            "result.json",
+            remoteconfig,
+            "prisma_access_key:some_secret_key",
+            None,
+        )
+
+        assert result == "result.json"
+        assert mock_run.call_count == 2
+        mock_sleep.assert_called_once_with(0.5)
+
+
 def test_run_tool_container_sca_success(mock_remoteconfig, mock_scan_image):
     with patch("builtins.open") as mock_open, patch("os.path.join") as mock_join, patch(
         "os.path.exists"
