@@ -204,9 +204,6 @@ class HandleScan:
                             config_tool,
                             self.devops_platform_gateway.get_variable("repository_provider"),
                             self.devops_platform_gateway.get_source_code_management_uri(),
-                            self.devops_platform_gateway.get_base_compact_remote_config_url(
-                                dict_args["remote_config_repo"]
-                            ),
                             None,
                             self.devops_platform_gateway.get_variable("access_token"),
                             self.devops_platform_gateway.get_variable(

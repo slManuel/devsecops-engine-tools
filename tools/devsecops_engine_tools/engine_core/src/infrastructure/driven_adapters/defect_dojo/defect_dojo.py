@@ -599,8 +599,6 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                     "product_description": cmdb_mapping["PRODUCT_DESCRIPTION"],
                     "codigo_app": cmdb_mapping["CODIGO_APP"],
                 },
-                compact_remote_config_url=f'{vulnerability_management.base_compact_remote_config_url}{vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["CMDB"]["CMDB_MAPPING_PATH"]}',
-                personal_access_token=vulnerability_management.access_token,
                 token_cmdb=token_cmdb,
                 host_cmdb=vulnerability_management.config_tool["VULNERABILITY_MANAGER"][
                     "DEFECT_DOJO"
