@@ -50,9 +50,7 @@ class TrivyScan(ToolGateway):
             return result_file
 
         except subprocess.CalledProcessError as e:
-            logger.error(f"Error during image scan of {image_name}: {e}")
-            logger.error(f"Command stdout: {e.stdout}")
-            logger.error(f"Command stderr: {e.stderr}")
+            logger.error(f"Error during image scan of {image_name}: {e} \nCommand stdout: {e.stdout} \nCommand stderr: {e.stderr}")
         except Exception as e:
             logger.error(f"Unexpected error during image scan of {image_name}: {e}")
 
@@ -87,9 +85,7 @@ class TrivyScan(ToolGateway):
             return get_list_component(result_sbom, remoteconfig["TRIVY"]["SBOM_FORMAT"])
 
         except subprocess.CalledProcessError as e:
-            logger.error(f"Error generating SBOM: {e}")
-            logger.error(f"Command stdout: {e.stdout}")
-            logger.error(f"Command stderr: {e.stderr}")
+            logger.error(f"Error generating SBOM: {e} \nCommand stdout: {e.stdout} \nCommand stderr: {e.stderr}")
         except Exception as e:
             logger.error(f"Unexpected error generating SBOM: {e}")
 
