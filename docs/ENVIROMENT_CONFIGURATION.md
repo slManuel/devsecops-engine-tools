@@ -86,7 +86,6 @@ PYTHONPATH=tools/
                 "DET_TEMP_DIRECTORY": "/tmp",
                 "DET_BRANCH_NAME": "trunk",
                 "DET_SOURCE_CODE_MANAGEMENT_URI": "[DET_SOURCE_CODE_MANAGEMENT_URI]",
-                "DET_BASE_COMPACT_REMOTE_CONFIG_URL": "[DET_BASE_COMPACT_REMOTE_CONFIG_URL]",
                 "DET_ACCESS_TOKEN": "[DET_ACCESS_TOKEN]",
                 "DET_BUILD_EXECUTION_ID": "2688",
                 "DET_BUILD_ID": "2688",

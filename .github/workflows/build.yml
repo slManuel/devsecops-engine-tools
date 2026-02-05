@@ -106,6 +106,7 @@ jobs:
         with:
           projectBaseDir: tools
           args: >
+            -Dsonar.sources=devsecops_engine_tools
             -Dsonar.organization=grupo-bancolombia
             -Dsonar.projectKey=bancolombia_devsecops-engine-tools
             -Dsonar.python.coverage.reportPaths=coverage.xml
