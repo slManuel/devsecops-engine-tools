@@ -48,9 +48,6 @@ class RuntimeLocal(DevopsPlatformGateway):
     def get_build_pipeline_execution_url(self):
         return os.environ.get("DET_BUILD_PIPELINE_EXECUTION_URL")
 
-    def get_base_compact_remote_config_url(self, remote_config_repo):
-        return f"{os.environ.get('DET_BASE_COMPACT_REMOTE_CONFIG_URL')}?path=/"
-
     def get_variable(self, variable):
         env_variables = {
             "branch_name" : "DET_BRANCH_NAME",
