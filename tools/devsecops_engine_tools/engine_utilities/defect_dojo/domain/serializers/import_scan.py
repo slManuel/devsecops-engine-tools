@@ -217,9 +217,7 @@ class ImportScanSerializer(Schema):
     cmdb_mapping = fields.Dict(required=False)
     product_type_name_mapping = fields.Dict(required=False)
     # Config remote credential
-    compact_remote_config_url = fields.Str(required=False)
     organization_url = fields.Str(required=False)
-    personal_access_token = fields.Str(required=False)
     repository_id = fields.Str(required=False)
     remote_config_source = fields.Str(required=True)
     remote_config_repo = fields.Str(required=True)

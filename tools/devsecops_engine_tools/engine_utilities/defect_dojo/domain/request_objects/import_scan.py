@@ -50,7 +50,6 @@ class ImportScanRequest:
     host_defect_dojo: str = ""
     # *** config map ***
     organization_url: str = ""
-    personal_access_token: str = ""
     repository_id: str = ""
     remote_config_source: str = ""
     remote_config_repo: str = ""
@@ -59,7 +58,6 @@ class ImportScanRequest:
     project_remote_config: str = ""
     cmdb_mapping: dict = None
     product_type_name_mapping: dict = None
-    compact_remote_config_url: str = None
     expression: str = ""
     url: str = ""
     reimport_scan: bool = None
@@ -101,14 +99,12 @@ class ImportScanRequest:
             group_by=obj.get("group_by"),
             create_finding_groups_for_all_findings=obj.get("create_finding_groups_for_all_findings"),
             organization_url=obj.get("organization_url"),
-            personal_access_token=obj.get("personal_access_token"),
             repository_id=obj.get("remote_config_repo"),
             remote_config_path=obj.get("remote_config_path"),
             project_remote_config=obj.get("project_remote_config"),
             cmdb_mapping=obj.get("cmdb_mapping"),
             product_type_name_mapping=obj.get("product_type_name_mapping"),
             expression=obj.get("expression"),
-            compact_remote_config_url=obj.get("compact_remote_config_url"),
             reimport_scan=obj.get("reimport_scan"),
         )
         return obj
