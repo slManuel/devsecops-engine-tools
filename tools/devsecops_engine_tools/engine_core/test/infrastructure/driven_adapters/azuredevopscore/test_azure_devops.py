@@ -55,14 +55,6 @@ class TestAzureDevops(unittest.TestCase):
 
         assert azure_devops.get_source_code_management_uri() == "System_TeamFoundationCollectionUriBuild_Project_Name/_git/Build_Repository_Name"
 
-    @mock.patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.azure.azure_devops.SystemVariables', autospec=True)
-    def test_get_base_compact_remote_config_url(self, mock_system_variables):
-        azure_devops = AzureDevops()
-
-        mock_system_variables.System_TeamFoundationCollectionUri.value.return_value = "System_TeamFoundationCollectionUri"
-        mock_system_variables.System_TeamProject.value.return_value = "Build_Project_Name"
-
-        assert azure_devops.get_base_compact_remote_config_url("my_repo") == "https://System_TeamFoundationCollectionUri.visualstudio.com/Build_Project_Name/_git/my_repo?path=/"
 
     @mock.patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.azure.azure_devops.SystemVariables', autospec=True)
     @mock.patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.azure.azure_devops.BuildVariables', autospec=True)

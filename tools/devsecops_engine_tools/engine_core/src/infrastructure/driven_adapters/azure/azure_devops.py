@@ -78,13 +78,6 @@ class AzureDevops(DevopsPlatformGateway):
             return None
 
 
-    def get_base_compact_remote_config_url(self, remote_config_repo):
-        return (
-            f"https://{SystemVariables.System_TeamFoundationCollectionUri.value().rstrip('/').split('/')[-1].replace('.visualstudio.com','')}"
-            f".visualstudio.com/{SystemVariables.System_TeamProject.value()}/_git/"
-            f"{remote_config_repo}?path=/"
-        )
-
     def get_build_pipeline_execution_url(self):
         return f"{SystemVariables.System_TeamFoundationCollectionUri.value()}{SystemVariables.System_TeamProject.value()}/_build?buildId={BuildVariables.Build_BuildId.value()}"
 

@@ -39,9 +39,6 @@ class TestDefectDojoPlatform(unittest.TestCase):
             "token_defect_dojo": "token3",
             "token_cmdb": "token4",
         }
-        self.vulnerability_management.base_compact_remote_config_url = (
-            "http://example.com/"
-        )
         self.vulnerability_management.config_tool = {
             "VULNERABILITY_MANAGER": {
                 "BRANCH_FILTER": "trunk,master,release,develop",
@@ -98,7 +95,6 @@ class TestDefectDojoPlatform(unittest.TestCase):
                 },
             }
         }
-        self.vulnerability_management.access_token = "access_token"
         self.vulnerability_management.scan_type = "CHECKOV"
         self.vulnerability_management.sonar_instance = "sonar_instance_one"
         self.vulnerability_management.input_core = MagicMock()
@@ -141,8 +137,6 @@ class TestDefectDojoPlatform(unittest.TestCase):
                     "product_description": "arearesponsableti",
                     "codigo_app": "CodigoApp",
                 },
-                compact_remote_config_url="http://example.com/mapping_path",
-                personal_access_token="access_token",
                 token_cmdb="token2",
                 host_cmdb="cmdb_host",
                 cmdb_request_response={
@@ -275,10 +269,6 @@ class TestDefectDojoPlatform(unittest.TestCase):
                 },
             }
         }
-        self.vulnerability_management.base_compact_remote_config_url = (
-            "http://example.com/"
-        )
-        self.vulnerability_management.access_token = "access_token"
 
         self.token_cmdb = "token_cmdb"
         self.token_dd = "token_dd"
@@ -314,8 +304,6 @@ class TestDefectDojoPlatform(unittest.TestCase):
                     "product_description": "arearesponsableti",
                     "codigo_app": "CodigoApp",
                 },
-                compact_remote_config_url="http://example.com/mapping_path",
-                personal_access_token="access_token",
                 token_cmdb=self.token_cmdb,
                 host_cmdb="cmdb_host",
                 cmdb_request_response={
@@ -404,9 +392,6 @@ class TestDefectDojoPlatform(unittest.TestCase):
                 },
             }
         }
-        self.vulnerability_management.base_compact_remote_config_url = (
-            "http://example.com/"
-        )
         self.vulnerability_management.access_token = "access_token"
 
         self.token_cmdb = "token_cmdb"

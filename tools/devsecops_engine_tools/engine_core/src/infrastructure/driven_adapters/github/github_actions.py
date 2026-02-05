@@ -56,12 +56,6 @@ class GithubActions(DevopsPlatformGateway):
     def get_source_code_management_uri(self):
         return f"{SystemVariables.github_server_url.value()}/{self.get_variable('repository')}"
 
-    def get_base_compact_remote_config_url(self, remote_config_repo):
-        github_repository = SystemVariables.github_repository.value()
-        split = github_repository.split("/")
-        owner = split[0]
-        return f"{SystemVariables.github_server_url}/{owner}/{remote_config_repo}"
-
     def get_build_pipeline_execution_url(self):
         return f"{SystemVariables.github_server_url.value()}/{SystemVariables.github_repository.value()}/actions/runs/{BuildVariables.github_run_id.value()}"
 

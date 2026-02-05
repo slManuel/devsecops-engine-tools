@@ -76,7 +76,6 @@ def test_execute(engagement_name, obj_cmdb):
             "codigo_app": "CodigoApp",
         },
         "organization_url": "https://organizaciont.visualstudio.com/",
-        "personal_access_token": "tokenxxxx12354564",
         "product_name": "test product name",
         "repository_id": "repositoryid_or_name_repository",
         "remote_config_source": "azure",

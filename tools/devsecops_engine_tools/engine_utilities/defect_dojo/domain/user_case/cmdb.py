@@ -1,11 +1,9 @@
 import re
 import os
 from devsecops_engine_tools.engine_core.src.domain.model.gateway.devops_platform_gateway import DevopsPlatformGateway
-from devsecops_engine_tools.engine_utilities.utils.api_error import ApiError
 from devsecops_engine_tools.engine_utilities.defect_dojo.infraestructure.driver_adapters.cmdb import CmdbRestConsumer
 from devsecops_engine_tools.engine_utilities.defect_dojo.domain.request_objects.import_scan import ImportScanRequest
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
-from devsecops_engine_tools.engine_utilities.azuredevops.infrastructure.azure_devops_api import AzureDevopsApi
 from devsecops_engine_tools.engine_utilities.settings import SETTING_LOGGER
 
 logger = MyLogger.__call__(**SETTING_LOGGER).get_logger()
