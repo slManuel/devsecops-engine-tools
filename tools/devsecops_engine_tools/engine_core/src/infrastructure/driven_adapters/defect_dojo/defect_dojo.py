@@ -584,9 +584,12 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
         }
 
         if use_cmdb:
-            cmdb_mapping = vulnerability_management.config_tool[
-                "VULNERABILITY_MANAGER"
-            ]["DEFECT_DOJO"]["CMDB"]["CMDB_MAPPING"]
+            cmdb_config = vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["CMDB"]
+            cmdb_mapping = cmdb_config["CMDB_MAPPING"]
+            
+            if variable_code_app := cmdb_config.get("VARIABLE_CODE_APP"):
+                common_fields["variable_code_app"] = variable_code_app
+            
             request = Connect.cmdb(
                 generate_auth_cmdb=vulnerability_management.config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"]["CMDB"]["GENERATE_AUTH_CMDB"],
                 auth_cmdb_request_response=vulnerability_management.config_tool[

@@ -216,6 +216,7 @@ class ImportScanSerializer(Schema):
     host_defect_dojo = fields.Str(required=True)
     cmdb_mapping = fields.Dict(required=False)
     product_type_name_mapping = fields.Dict(required=False)
+    variable_code_app = fields.Str(required=False)
     # Config remote credential
     organization_url = fields.Str(required=False)
     repository_id = fields.Str(required=False)
