@@ -1,4 +1,5 @@
 import re
+import os
 from devsecops_engine_tools.engine_core.src.domain.model.gateway.devops_platform_gateway import DevopsPlatformGateway
 from devsecops_engine_tools.engine_utilities.utils.api_error import ApiError
 from devsecops_engine_tools.engine_utilities.defect_dojo.infraestructure.driver_adapters.cmdb import CmdbRestConsumer
@@ -24,8 +25,11 @@ class CmdbUserCase:
             request.remote_config_branch,
         )
 
-        # regular exprecion
-        request.code_app = self.get_code_app(request.engagement_name)
+        request.code_app = (
+            os.environ.get(request.variable_code_app)
+            if request.variable_code_app
+            else self.get_code_app(request.engagement_name)
+        )
 
         # connect cmdb
         product_data = self.__rc_cmdb.get_product_info(request)

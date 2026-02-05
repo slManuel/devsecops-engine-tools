@@ -59,6 +59,7 @@ class ImportScanRequest:
     project_remote_config: str = ""
     cmdb_mapping: dict = None
     product_type_name_mapping: dict = None
+    variable_code_app: str = ""
     compact_remote_config_url: str = None
     expression: str = ""
     url: str = ""
