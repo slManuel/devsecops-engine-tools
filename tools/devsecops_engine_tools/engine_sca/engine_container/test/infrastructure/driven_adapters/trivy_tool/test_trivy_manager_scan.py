@@ -31,7 +31,7 @@ def test_scan_image_exception(trivy_scan_instance):
 
         trivy_scan_instance.scan_image("prefix", "image_name", "result.json","base_image", "os,library")
 
-        mock_logger.assert_called_with("Error during image scan of image_name: custom error")
+        mock_logger.assert_called_with("Unexpected error during image scan of image_name: custom error")
 
 
 def test_run_tool_container_sca_success(trivy_scan_instance):
@@ -142,7 +142,7 @@ def test_generate_sbom_failure(mock_logger, mock_subprocess_run):
     # Llamar a la función y verificar que se lanza la excepción esperada
     trivy_scan._generate_sbom(prefix, image_name, remoteconfig, vuln_type)
 
-    mock_logger.error.assert_called_once_with("Error generating SBOM: Test exception")
+    mock_logger.error.assert_called_once_with("Unexpected error generating SBOM: Test exception")
 
 
 @patch('devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.subprocess.run')

@@ -49,8 +49,10 @@ class TrivyScan(ToolGateway):
 
             return result_file
 
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Error during image scan of {image_name}: {e} \nCommand stdout: {e.stdout} \nCommand stderr: {e.stderr}")
         except Exception as e:
-            logger.error(f"Error during image scan of {image_name}: {e}")
+            logger.error(f"Unexpected error during image scan of {image_name}: {e}")
 
     def _generate_sbom(self, prefix, image_name, remoteconfig, vuln_type, ignore_unfixed=False, is_compressed_file=False):
         result_sbom = f"{image_name.replace('/', '_')}_SBOM.json"
@@ -82,8 +84,10 @@ class TrivyScan(ToolGateway):
 
             return get_list_component(result_sbom, remoteconfig["TRIVY"]["SBOM_FORMAT"])
 
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Error generating SBOM: {e} \nCommand stdout: {e.stdout} \nCommand stderr: {e.stderr}")
         except Exception as e:
-            logger.error(f"Error generating SBOM: {e}")
+            logger.error(f"Unexpected error generating SBOM: {e}")
 
     def run_tool_container_sca(self, remoteconfig, secret_tool, token_engine_container, image_name, result_file, base_image, exclusions, generate_sbom, docker_address, is_compressed_file=False):
         trivy_version = remoteconfig["TRIVY"]["TRIVY_VERSION"]
