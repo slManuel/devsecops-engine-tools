@@ -1023,6 +1023,7 @@ class TestDefectDojoPlatform(unittest.TestCase):
             service=service,
             limit=80,
             duplicate="false",
+            fields='id,vulnerability_ids,vuln_id_from_tool,component_name,component_version,endpoints,file_path,tags,severity,age,active,risk_status,created,publish_date,last_status_update,accepted_risks,transfer_finding,epss_score,is_mitigated,description,risk_accepted,false_p,out_of_scope,service,unique_id_from_tool,priority,priority_classification'
         )
         mock_exclusions.assert_called_once()
         assert exclusions == mock_exclusions.return_value
