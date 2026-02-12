@@ -5,6 +5,9 @@ from devsecops_engine_tools.engine_core.src.domain.model.finding import (
     Finding,
     Category,
 )
+from devsecops_engine_tools.engine_utilities.trivy_utils.infrastructure.driven_adapters.trivy_manager_scan_utils import (
+    TrivyManagerScanUtils,
+)
 from dataclasses import dataclass
 import json
 from datetime import datetime, timezone
@@ -25,12 +28,15 @@ class TrivyDeserializator(DeseralizatorGateway):
                 vulnerabilities = [
                     Finding(
                         id=vul.get("VulnerabilityID", ""),
-                        cvss=self._get_cvss_v3_score(vul.get("CVSS")),
+                        cvss=TrivyManagerScanUtils.get_cvss_v3_score(vul.get("CVSS")),
                         where=vul.get("PkgName", "")
                         + ":"
                         + vul.get("InstalledVersion", ""),
                         description=vul.get("Description", "").replace("\n", "")[:150],
-                        severity=self._get_cvss_v3_severity(self._get_cvss_v3_score(vul.get("CVSS")), vul.get("Severity", "").lower()),
+                        severity=TrivyManagerScanUtils.get_cvss_v3_severity(
+                            TrivyManagerScanUtils.get_cvss_v3_score(vul.get("CVSS")), 
+                            vul.get("Severity", "").lower()
+                        ),
                         identification_date=datetime.now().strftime("%Y-%m-%dT%H:%M:%S%z"),
                         published_date_cve=self._check_date_format(vul) if vul.get("PublishedDate") else None,
                         module=module,
@@ -59,36 +65,3 @@ class TrivyDeserializator(DeseralizatorGateway):
                 .isoformat()
             )
         return published_date_cve
-
-    def _get_cvss_v3_severity(self, cvss_score: str, severity: str) -> str:
-        if not cvss_score:
-            severity
-            return severity
-        else:
-            try:
-                cvss_score = float(cvss_score)
-            except ValueError:
-                return severity
-            if cvss_score < 4.0:
-                return "low"
-            elif 4.0 <= cvss_score < 7.0:
-                return "medium"
-            elif 7.0 <= cvss_score < 9.0:
-                return "high"
-            elif cvss_score >= 9.0:
-                return "critical"
-    
-    def _get_cvss_v3_score(self, cvss_data: any) -> str:
-        if not cvss_data:
-            return ""
-        else:
-            return str(
-                next(
-                    (
-                        v["V3Score"]
-                        for v in cvss_data.values()
-                        if "V3Score" in v
-                    ),
-                    "",
-                )
-            )

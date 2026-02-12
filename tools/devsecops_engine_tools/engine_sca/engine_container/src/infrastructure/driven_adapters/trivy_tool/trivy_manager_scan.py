@@ -132,17 +132,21 @@ class TrivyScan(ToolGateway):
         for result in results:
             vulnerabilities = result.get("Vulnerabilities", [])
             for vul in vulnerabilities:
+                cvss_score = TrivyManagerScanUtils.get_cvss_v3_score(vul.get("CVSS"))
                 context_container = ContextContainer(
                     cve_id=vul.get("VulnerabilityID", "unknown"),
                     cwe_id=vul.get("CweIDs", "unknown"),
                     vendor_id=vul.get("VendorIDs", "unknown"),
-                    severity=self._get_cvss_v3_severity(self._get_cvss_v3_score(vul.get("CVSS")), vul.get("Severity", "unknown").lower()),
+                    severity=TrivyManagerScanUtils.get_cvss_v3_severity(
+                        cvss_score, 
+                        vul.get("Severity", "unknown").lower()
+                    ),
                     vulnerability_status=vul.get("Status", "unknown"),
                     target_image=result.get("Target", "unknown"),
                     package_name=vul.get("PkgName", "unknown"),
                     installed_version=vul.get("InstalledVersion", "unknown"),
                     fixed_version=vul.get("FixedVersion", "unknown"),
-                    cvss_score=self._get_cvss_v3_score(vul.get("CVSS")),
+                    cvss_score=cvss_score,
                     cvss_vector=vul.get("CVSS", "unknown"),
                     description=vul.get("Description", "unknown").replace("\n", ""),
                     os_type=result.get("Type", "unknown"),
@@ -186,37 +190,3 @@ class TrivyScan(ToolGateway):
                 .isoformat()
             )
         return published_date_cve
-
-    def _get_cvss_v3_severity(self, cvss_score: str, severity: str) -> str:
-        """Get CVSS v3 severity based on score."""
-        if not cvss_score:
-            return severity
-        else:
-            try:
-                cvss_score = float(cvss_score)
-            except ValueError:
-                return severity
-            if cvss_score < 4.0:
-                return "low"
-            elif 4.0 <= cvss_score < 7.0:
-                return "medium"
-            elif 7.0 <= cvss_score < 9.0:
-                return "high"
-            elif cvss_score >= 9.0:
-                return "critical"
-    
-    def _get_cvss_v3_score(self, cvss_data: any) -> str:
-        """Extract CVSS v3 score from CVSS data."""
-        if not cvss_data:
-            return ""
-        else:
-            return str(
-                next(
-                    (
-                        v["V3Score"]
-                        for v in cvss_data.values()
-                        if "V3Score" in v
-                    ),
-                    "",
-                )
-            )

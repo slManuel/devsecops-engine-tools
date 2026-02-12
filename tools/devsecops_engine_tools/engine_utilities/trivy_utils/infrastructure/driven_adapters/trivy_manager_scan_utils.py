@@ -79,3 +79,56 @@ class TrivyManagerScanUtils():
                 compress_file.write(response.content)
         except Exception as e:
             logger.error(f"Error downloading trivy: {e}")
+
+    @staticmethod
+    def get_cvss_v3_severity(cvss_score: str, severity: str) -> str:
+        """
+        Get CVSS v3 severity based on score.
+        
+        Args:
+            cvss_score: CVSS score as string
+            severity: Fallback severity value
+            
+        Returns:
+            Severity level (low, medium, high, critical)
+        """
+        if not cvss_score:
+            return severity
+        else:
+            try:
+                cvss_score = float(cvss_score)
+            except ValueError:
+                return severity
+            if cvss_score < 4.0:
+                return "low"
+            elif 4.0 <= cvss_score < 7.0:
+                return "medium"
+            elif 7.0 <= cvss_score < 9.0:
+                return "high"
+            elif cvss_score >= 9.0:
+                return "critical"
+    
+    @staticmethod
+    def get_cvss_v3_score(cvss_data: any) -> str:
+        """
+        Extract CVSS v3 score from CVSS data.
+        
+        Args:
+            cvss_data: CVSS data dictionary
+            
+        Returns:
+            CVSS v3 score as string, empty string if not found
+        """
+        if not cvss_data:
+            return ""
+        else:
+            return str(
+                next(
+                    (
+                        v["V3Score"]
+                        for v in cvss_data.values()
+                        if "V3Score" in v
+                    ),
+                    "",
+                )
+            )
