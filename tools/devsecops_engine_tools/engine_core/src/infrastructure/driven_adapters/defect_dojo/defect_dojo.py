@@ -375,6 +375,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                     "LIMITS_QUERY"
                 ],
                 "duplicate": "false",
+                "fields": "id,vulnerability_ids,vuln_id_from_tool,component_name,component_version,endpoints,file_path,tags,severity,age,active,risk_status,created,publish_date,last_status_update,accepted_risks,transfer_finding,epss_score,is_mitigated,description,risk_accepted,false_p,out_of_scope,service,unique_id_from_tool,priority,priority_classification",
             }
             max_retries = config_tool["VULNERABILITY_MANAGER"]["DEFECT_DOJO"][
                 "MAX_RETRIES_QUERY"
@@ -862,7 +863,6 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
             vm_id_url=f"{host_dd}/finding/{finding.id}",
             id=finding.vulnerability_ids,
             vuln_id_from_tool=finding.vuln_id_from_tool,
-            status=finding.display_status,
             component_name=finding.component_name,
             component_version=finding.component_version,
             file_path=finding.file_path,
@@ -875,12 +875,10 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
             risk_status=finding.risk_status,
             created=finding.created,
             publish_date=finding.publish_date,
-            last_reviewed=finding.last_reviewed,
             last_status_update=finding.last_status_update,
             accepted_risks=finding.accepted_risks,
             transfer_finding=finding.transfer_finding,
             epss_score=finding.epss_score,
-            epss_percentile=finding.epss_percentile,
             mitigated=finding.is_mitigated,
             vul_description=finding.description,
             risk_accepted=finding.risk_accepted,
