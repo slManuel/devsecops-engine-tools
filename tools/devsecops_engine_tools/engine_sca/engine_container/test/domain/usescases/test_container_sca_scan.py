@@ -150,7 +150,8 @@ def test_deserialize_with_context_enabled(container_sca_scan):
         "finding1",
         "finding2",
     ]
-    container_sca_scan.tool_run.get_container_context_from_results = MagicMock()
+    # Don't replace the mock, use the one that's already there
+    # container_sca_scan.tool_run.get_container_context_from_results = MagicMock()
     
     result = container_sca_scan.deseralizator("image_scanned")
     
@@ -167,7 +168,8 @@ def test_deserialize_with_context_disabled(container_sca_scan):
         "finding1",
         "finding2",
     ]
-    container_sca_scan.tool_run.get_container_context_from_results = MagicMock()
+    # Don't replace the mock, use the one that's already there
+    # container_sca_scan.tool_run.get_container_context_from_results = MagicMock()
     
     result = container_sca_scan.deseralizator("image_scanned")
     

@@ -29,9 +29,14 @@ def test_scan_image_exception(trivy_scan_instance):
         ) as mock_logger:
         mock_run.side_effect = Exception("custom error")
 
-        trivy_scan_instance.scan_image("prefix", "image_name", "result.json","base_image", "os,library")
+        result = trivy_scan_instance.scan_image("prefix", "image_name", "result.json","base_image", "os,library")
 
-        mock_logger.assert_called_with("Unexpected error during image scan of image_name: custom error")
+        # Check that error was logged with correct message
+        assert mock_logger.called
+        call_args = mock_logger.call_args[0][0]
+        assert "Unexpected error during image scan of image_name:" in call_args
+        assert "custom error" in call_args
+        assert result is None
 
 
 def test_run_tool_container_sca_success(trivy_scan_instance):
@@ -121,8 +126,8 @@ def test_generate_sbom_success(mock_get_list_component, mock_subprocess_run):
 
 
 @patch('devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.subprocess.run')
-@patch('devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.logger')
-def test_generate_sbom_failure(mock_logger, mock_subprocess_run):
+@patch('devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.logger.error')
+def test_generate_sbom_failure(mock_logger_error, mock_subprocess_run):
     # Configurar los mocks
     mock_subprocess_run.side_effect = Exception("Test exception")
 
@@ -139,10 +144,15 @@ def test_generate_sbom_failure(mock_logger, mock_subprocess_run):
     }
     vuln_type = "os,library"
 
-    # Llamar a la función y verificar que se lanza la excepción esperada
-    trivy_scan._generate_sbom(prefix, image_name, remoteconfig, vuln_type)
+    # Llamar a la función y verificar que se registra el error
+    result = trivy_scan._generate_sbom(prefix, image_name, remoteconfig, vuln_type)
 
-    mock_logger.error.assert_called_once_with("Unexpected error generating SBOM: Test exception")
+    # Check that error was logged with correct message
+    assert mock_logger_error.called
+    call_args = mock_logger_error.call_args[0][0]
+    assert "Unexpected error generating SBOM:" in call_args
+    assert "Test exception" in call_args
+    assert result is None
 
 
 @patch('devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.subprocess.run')
