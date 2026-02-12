@@ -1,6 +1,9 @@
 from devsecops_engine_tools.engine_sca.engine_container.src.domain.model.gateways.tool_gateway import (
     ToolGateway,
 )
+from devsecops_engine_tools.engine_sca.engine_container.src.domain.model.context_container import (
+    ContextContainer,
+)
 from devsecops_engine_tools.engine_utilities.sbom.deserealizator import (
     get_list_component,
 )
@@ -8,6 +11,9 @@ from devsecops_engine_tools.engine_utilities.trivy_utils.infrastructure.driven_a
     TrivyManagerScanUtils
 )
 import subprocess
+import json
+from dataclasses import asdict
+from datetime import datetime, timezone
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
 from devsecops_engine_tools.engine_utilities import settings
 
@@ -107,3 +113,110 @@ class TrivyScan(ToolGateway):
             sbom_components = self._generate_sbom(command_prefix, image_name, remoteconfig, vuln_type, ignore_unfixed, is_compressed_file)
 
         return image_scanned, sbom_components
+
+    def get_container_context_from_results(self, path_file_results: str) -> None:
+        """
+        Extract context from Trivy scan results.
+        
+        Args:
+            path_file_results: Path to the scan results file
+        """
+        context_container_list = []
+
+        with open(path_file_results, "rb") as file:
+            image_object = file.read()
+            json_data = json.loads(image_object)
+
+        results = json_data.get("Results", [])
+
+        for result in results:
+            vulnerabilities = result.get("Vulnerabilities", [])
+            for vul in vulnerabilities:
+                context_container = ContextContainer(
+                    cve_id=vul.get("VulnerabilityID", "unknown"),
+                    cwe_id=vul.get("CweIDs", "unknown"),
+                    vendor_id=vul.get("VendorIDs", "unknown"),
+                    severity=self._get_cvss_v3_severity(self._get_cvss_v3_score(vul.get("CVSS")), vul.get("Severity", "unknown").lower()),
+                    vulnerability_status=vul.get("Status", "unknown"),
+                    target_image=result.get("Target", "unknown"),
+                    package_name=vul.get("PkgName", "unknown"),
+                    installed_version=vul.get("InstalledVersion", "unknown"),
+                    fixed_version=vul.get("FixedVersion", "unknown"),
+                    cvss_score=self._get_cvss_v3_score(vul.get("CVSS")),
+                    cvss_vector=vul.get("CVSS", "unknown"),
+                    description=vul.get("Description", "unknown").replace("\n", ""),
+                    os_type=result.get("Type", "unknown"),
+                    layer_digest=vul.get("Layer", {}).get("DiffID", "unknown"),
+                    published_date=(
+                        self._check_date_format(vul)
+                        if vul.get("PublishedDate")
+                        else None
+                    ),
+                    last_modified_date=vul.get("LastModifiedDate", "unknown"),
+                    references=vul.get("References", "unknown"),
+                    source_tool="Trivy",
+                )
+                context_container_list.append(context_container)
+
+        print("===== BEGIN CONTEXT OUTPUT =====")
+        print(
+            json.dumps(
+                {
+                    "container_context": [
+                        asdict(context) for context in context_container_list
+                    ]
+                },
+                indent=2,
+            )
+        )
+        print("===== END CONTEXT OUTPUT =====")
+
+    def _check_date_format(self, vul):
+        """Check and format date from vulnerability data."""
+        try:
+            published_date_cve = (
+                datetime.strptime(vul.get("PublishedDate"), "%Y-%m-%dT%H:%M:%S.%fZ")
+                .replace(tzinfo=timezone.utc)
+                .isoformat()
+            )
+        except:
+            published_date_cve = (
+                datetime.strptime(vul.get("PublishedDate"), "%Y-%m-%dT%H:%M:%SZ")
+                .replace(tzinfo=timezone.utc)
+                .isoformat()
+            )
+        return published_date_cve
+
+    def _get_cvss_v3_severity(self, cvss_score: str, severity: str) -> str:
+        """Get CVSS v3 severity based on score."""
+        if not cvss_score:
+            return severity
+        else:
+            try:
+                cvss_score = float(cvss_score)
+            except ValueError:
+                return severity
+            if cvss_score < 4.0:
+                return "low"
+            elif 4.0 <= cvss_score < 7.0:
+                return "medium"
+            elif 7.0 <= cvss_score < 9.0:
+                return "high"
+            elif cvss_score >= 9.0:
+                return "critical"
+    
+    def _get_cvss_v3_score(self, cvss_data: any) -> str:
+        """Extract CVSS v3 score from CVSS data."""
+        if not cvss_data:
+            return ""
+        else:
+            return str(
+                next(
+                    (
+                        v["V3Score"]
+                        for v in cvss_data.values()
+                        if "V3Score" in v
+                    ),
+                    "",
+                )
+            )

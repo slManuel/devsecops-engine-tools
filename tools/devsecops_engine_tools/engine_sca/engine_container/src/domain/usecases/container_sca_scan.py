@@ -134,7 +134,7 @@ class ContainerScaScan:
         """
         context_flag = self.context
         if context_flag == "true":
-            self.tool_deseralizator.get_container_context_from_results(image_scanned)
+            self.tool_run.get_container_context_from_results(image_scanned)
 
         return self.tool_deseralizator.get_list_findings(image_scanned, module="engine_container")
 

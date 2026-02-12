@@ -201,3 +201,7 @@ class PrismaCloudManagerScan(ToolGateway):
             )
 
         return image_scanned, sbom_components
+
+    def get_container_context_from_results(self, path_file_results: str) -> None:
+        # TODO: Implement Prisma Cloud context extraction
+        pass

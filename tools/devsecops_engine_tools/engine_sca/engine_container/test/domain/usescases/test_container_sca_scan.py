@@ -44,8 +44,8 @@ def container_sca_scan(
         "image_to_scan",
         {"exclusions": "exclusions"},
         "pipeline_name",
-        "docker_address",
         "context",
+        "docker_address",
     )
 
 
@@ -141,6 +141,40 @@ def test_deserialize(container_sca_scan):
         "finding2",
     ]
     assert container_sca_scan.deseralizator("image_scanned") == ["finding1", "finding2"]
+
+
+def test_deserialize_with_context_enabled(container_sca_scan):
+    """Test that context extraction is called from tool_run when context is enabled"""
+    container_sca_scan.context = "true"
+    container_sca_scan.tool_deseralizator.get_list_findings.return_value = [
+        "finding1",
+        "finding2",
+    ]
+    container_sca_scan.tool_run.get_container_context_from_results = MagicMock()
+    
+    result = container_sca_scan.deseralizator("image_scanned")
+    
+    # Verify context extraction was called from tool_run
+    container_sca_scan.tool_run.get_container_context_from_results.assert_called_once_with("image_scanned")
+    # Verify findings are returned
+    assert result == ["finding1", "finding2"]
+
+
+def test_deserialize_with_context_disabled(container_sca_scan):
+    """Test that context extraction is NOT called when context is disabled"""
+    container_sca_scan.context = "false"
+    container_sca_scan.tool_deseralizator.get_list_findings.return_value = [
+        "finding1",
+        "finding2",
+    ]
+    container_sca_scan.tool_run.get_container_context_from_results = MagicMock()
+    
+    result = container_sca_scan.deseralizator("image_scanned")
+    
+    # Verify context extraction was NOT called
+    container_sca_scan.tool_run.get_container_context_from_results.assert_not_called()
+    # Verify findings are returned
+    assert result == ["finding1", "finding2"]
 
 
 def test_validate_black_list_base_image_calls_tool_images(container_sca_scan):
