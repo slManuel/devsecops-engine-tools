@@ -49,9 +49,9 @@ class HandleRisk:
                 remote_config,
             )
         except ExceptionGettingFindings as e:
-            logger.error(
-                "Error getting finding list in handle risk: {0}".format(str(e))
-            )
+            error_msg = f"Cannot retrieve findings from VM for service '{service}'. Original error: {str(e)}"
+            logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
 
     def _filter_engagements(self, engagements, service, initial_services, risk_config):
         filtered_engagements = []
