@@ -1,6 +1,9 @@
 from devsecops_engine_tools.engine_utilities.trivy_utils.infrastructure.driven_adapters.trivy_deserialize_output import (
     TrivyDeserializator,
 )
+from devsecops_engine_tools.engine_utilities.trivy_utils.infrastructure.driven_adapters.trivy_manager_scan_utils import (
+    TrivyManagerScanUtils,
+)
 
 import pytest
 from unittest.mock import mock_open, patch, MagicMock
@@ -112,84 +115,59 @@ def test_get_list_findings_no_published_date(deserializator):
         assert len(result) == 1
 
 
-def test_get_container_context_from_results(deserializator, fake_vulnerabilities, capsys):
-    images_scanned = "scan_result.json"
-    fake_json_data = {
-        "Results": [
-            {
-                "Target": "debian:latest",
-                "Type": "debian",
-                "Vulnerabilities": fake_vulnerabilities
-            }
-        ]
-    }
-    
-    with patch(
-        "builtins.open", new_callable=mock_open, read_data=json.dumps(fake_json_data)
-    ):
-        deserializator.get_container_context_from_results(images_scanned)
-        
-        captured = capsys.readouterr()
-        assert "===== BEGIN CONTEXT OUTPUT =====" in captured.out
-        assert "===== END CONTEXT OUTPUT =====" in captured.out
-        assert "CVE-2011-3374" in captured.out
-        assert "CVE-2024-1234" in captured.out
-        assert "debian:latest" in captured.out
-
-
-def test_get_cvss_v3_score_with_valid_data(deserializator):
+def test_get_cvss_v3_score_with_valid_data():
     cvss_data = {
         "nvd": {
             "V3Score": 7.5,
             "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N"
         }
     }
-    result = deserializator._get_cvss_v3_score(cvss_data)
+    result = TrivyManagerScanUtils.get_cvss_v3_score(cvss_data)
     assert result == "7.5"
 
 
-def test_get_cvss_v3_score_with_empty_data(deserializator):
-    result = deserializator._get_cvss_v3_score(None)
+def test_get_cvss_v3_score_with_empty_data():
+    result = TrivyManagerScanUtils.get_cvss_v3_score(None)
     assert result == ""
 
 
-def test_get_cvss_v3_score_no_v3_score(deserializator):
+def test_get_cvss_v3_score_no_v3_score():
     cvss_data = {
         "nvd": {
             "V2Score": 5.0,
         }
     }
-    result = deserializator._get_cvss_v3_score(cvss_data)
+    result = TrivyManagerScanUtils.get_cvss_v3_score(cvss_data)
     assert result == ""
 
 
-def test_get_cvss_v3_severity_low(deserializator):
-    result = deserializator._get_cvss_v3_severity("3.5", "low")
+def test_get_cvss_v3_severity_low():
+    result = TrivyManagerScanUtils.get_cvss_v3_severity("3.5", "low")
     assert result == "low"
 
 
-def test_get_cvss_v3_severity_medium(deserializator):
-    result = deserializator._get_cvss_v3_severity("5.5", "medium")
+def test_get_cvss_v3_severity_medium():
+    result = TrivyManagerScanUtils.get_cvss_v3_severity("5.5", "medium")
     assert result == "medium"
 
 
-def test_get_cvss_v3_severity_high(deserializator):
-    result = deserializator._get_cvss_v3_severity("7.8", "high")
+def test_get_cvss_v3_severity_high():
+    result = TrivyManagerScanUtils.get_cvss_v3_severity("7.8", "high")
     assert result == "high"
 
 
-def test_get_cvss_v3_severity_critical(deserializator):
-    result = deserializator._get_cvss_v3_severity("9.5", "critical")
+def test_get_cvss_v3_severity_critical():
+    result = TrivyManagerScanUtils.get_cvss_v3_severity("9.5", "critical")
     assert result == "critical"
 
 
-def test_get_cvss_v3_severity_no_score(deserializator):
-    result = deserializator._get_cvss_v3_severity("", "medium")
+def test_get_cvss_v3_severity_no_score():
+    result = TrivyManagerScanUtils.get_cvss_v3_severity("", "medium")
     assert result == "medium"
 
 
-def test_get_cvss_v3_severity_invalid_score(deserializator):
-    result = deserializator._get_cvss_v3_severity("invalid", "low")
+def test_get_cvss_v3_severity_invalid_score():
+    result = TrivyManagerScanUtils.get_cvss_v3_severity("invalid", "low")
     assert result == "low"
 
 
