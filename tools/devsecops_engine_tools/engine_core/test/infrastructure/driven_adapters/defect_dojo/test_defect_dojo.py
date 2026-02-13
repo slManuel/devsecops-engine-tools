@@ -1037,9 +1037,7 @@ class TestDefectDojoPlatform(unittest.TestCase):
 
         with unittest.TestCase().assertRaises(Exception) as context:
             self.defect_dojo.get_all(service, dict_args, secret_tool, config_tool)
-        assert "Error getting all findings with the following error:" in str(
-            context.exception
-        )
+        assert "DEFECT_DOJO" in str(context.exception)
 
     @patch(
         "devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.defect_dojo.defect_dojo.ImportScanRequest"

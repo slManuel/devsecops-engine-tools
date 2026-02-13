@@ -420,9 +420,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
             return all_findings, all_exclusions
 
         except Exception as ex:
-            raise ExceptionGettingFindings(
-                f"Error getting all findings with the following error: {str(ex)}"
-            )
+            raise ExceptionGettingFindings(ex)
 
     def get_active_engagements(
         self, engagement_name, dict_args, secret_tool, config_tool
@@ -785,32 +783,39 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                 return date_fn(matching_finding.create_date), date_fn(matching_finding.expiration_date)
             return date_fn(None), date_fn(None)
 
-        reason_to_dates = {
-            self.FALSE_POSITIVE: lambda: (
-                date_fn(finding.last_status_update),
-                date_fn(None),
-            ),
-            self.OUT_OF_SCOPE: lambda: (
-                date_fn(finding.last_status_update),
-                date_fn(None),
-            ),
-            self.TRANSFERRED_FINDING: lambda: (
-                date_fn(finding.transfer_finding.date),
-                date_fn(finding.transfer_finding.expiration_date),
-            ),
-            self.RISK_ACCEPTED: lambda: (
-                date_fn(finding.accepted_risks[-1]["created"]),
-                date_fn(finding.accepted_risks[-1]["expiration_date"]),
-            ),
-            self.ON_WHITELIST: lambda: get_dates_from_whitelist(
-                get_vuln_id(finding, tool), kwargs.get("white_list", [])
-            ),
-        }
+        try:
+            reason_to_dates = {
+                self.FALSE_POSITIVE: lambda: (
+                    date_fn(finding.last_status_update),
+                    date_fn(None),
+                ),
+                self.OUT_OF_SCOPE: lambda: (
+                    date_fn(finding.last_status_update),
+                    date_fn(None),
+                ),
+                self.TRANSFERRED_FINDING: lambda: (
+                    date_fn(finding.transfer_finding.date),
+                    date_fn(finding.transfer_finding.expiration_date),
+                ),
+                self.RISK_ACCEPTED: lambda: (
+                    date_fn(finding.accepted_risks[-1]["created"]),
+                    date_fn(finding.accepted_risks[-1]["expiration_date"]),
+                ),
+                self.ON_WHITELIST: lambda: get_dates_from_whitelist(
+                    get_vuln_id(finding, tool), kwargs.get("white_list", [])
+                ),
+            }
 
-        create_date, expired_date = reason_to_dates.get(
-            reason, lambda: (date_fn(None), date_fn(None))
-        )()
-        return create_date, expired_date
+            create_date, expired_date = reason_to_dates.get(
+                reason, lambda: (date_fn(None), date_fn(None))
+            )()
+            return create_date, expired_date
+            
+        except Exception as e:
+            finding_id = finding.vm_id if tool == "engine_risk" else get_vuln_id(finding, tool)
+            error_msg = f"Error processing dates for reason '{reason}' of finding '{finding_id}': {str(e)}"
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
 
     def _create_exclusion(self, finding, date_fn, tool, reason, **kwargs):
         create_date, expired_date = self._date_reason_based(

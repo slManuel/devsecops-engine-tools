@@ -49,7 +49,7 @@ class HandleRisk:
                 remote_config,
             )
         except ExceptionGettingFindings as e:
-            error_msg = f"Cannot retrieve findings from VM for service '{service}'. Original error: {str(e)}"
+            error_msg = f"Cannot retrieve findings from VM for service '{service}': {str(e)}"
             logger.error(error_msg)
             raise RuntimeError(error_msg) from e
 
