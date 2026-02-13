@@ -169,15 +169,15 @@ class TestHandleRisk(unittest.TestCase):
             "error"
         )
 
-        # Call the process method
-        self.handle_risk._get_all_from_vm(
-            dict_args, secret_tool, remote_config, service
-        )
+        # Call the process method and expect RuntimeError
+        with self.assertRaises(RuntimeError) as context:
+            self.handle_risk._get_all_from_vm(
+                dict_args, secret_tool, remote_config, service
+            )
 
         # Assert the expected values
-        mock_logger_error.assert_called_with(
-            "Error getting finding list in handle risk: error"
-        )
+        self.assertIn("Cannot retrieve findings from VM for service 'pipeline_name_id_test'", str(context.exception))
+        mock_logger_error.assert_called_once()
 
     def test_exclude_services(self):
         dict_args = {
