@@ -1,4 +1,8 @@
 from abc import ABCMeta, abstractmethod
+from typing import List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from devsecops_engine_tools.engine_sca.engine_container.src.domain.model.context_container import ContextContainer
 
 
 class ToolGateway(metaclass=ABCMeta):
@@ -7,5 +11,5 @@ class ToolGateway(metaclass=ABCMeta):
         "run tool container sca"
 
     @abstractmethod
-    def get_container_context_from_results(self, path_file_results: str) -> None:
+    def get_container_context_from_results(self, path_file_results: str) -> List['ContextContainer']:
         "get_container_context_from_results"

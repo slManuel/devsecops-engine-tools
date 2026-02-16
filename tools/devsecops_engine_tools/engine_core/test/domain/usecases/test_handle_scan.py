@@ -487,7 +487,8 @@ class TestHandleScan(unittest.TestCase):
         context_extraction_gateway.extract_context.assert_called_once_with(
             module_name="engine_iac",
             path_file_results="test/file/results.json",
-            remote_config=config_tool["ENGINE_IAC"]
+            remote_config=config_tool["ENGINE_IAC"],
+            config_tool=config_tool
         )
 
     @mock.patch(

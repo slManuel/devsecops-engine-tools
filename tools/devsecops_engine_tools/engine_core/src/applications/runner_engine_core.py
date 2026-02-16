@@ -317,7 +317,7 @@ def application_core():
             "cdxgen": CdxGen()
         }
         risk_score_gateway = RiskScore()
-        context_extraction_gateway = ContextExtractionManager()
+        context_extraction_gateway = ContextExtractionManager(risk_score_gateway)
 
         init_engine_core(
             vulnerability_management_gateway,

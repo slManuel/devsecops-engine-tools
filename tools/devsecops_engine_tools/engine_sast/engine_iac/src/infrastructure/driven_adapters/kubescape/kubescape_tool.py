@@ -4,6 +4,7 @@ import platform
 import requests
 import distro
 import os
+from typing import List
 from devsecops_engine_tools.engine_sast.engine_iac.src.domain.model.gateways.tool_gateway import (
     ToolGateway,
 )
@@ -46,9 +47,9 @@ class KubescapeTool(ToolGateway):
         else:
             return [], None
 
-    def get_iac_context_from_results(self, path_file_results):
+    def get_iac_context_from_results(self, path_file_results) -> List:
         # TODO: Implement this method
-        pass
+        return []
 
     def _select_operative_system(self, os_platform, base_url):
         if os_platform == "Linux":

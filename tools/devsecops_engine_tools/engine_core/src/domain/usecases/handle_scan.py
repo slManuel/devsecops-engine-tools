@@ -101,7 +101,8 @@ class HandleScan:
                 "engine_iac",
                 input_core.path_file_results,
                 config_tool["ENGINE_IAC"],
-                tool_gateway
+                tool_gateway,
+                config_tool
             )
             
             self._use_vulnerability_management(
@@ -123,7 +124,8 @@ class HandleScan:
                 "engine_container",
                 input_core.path_file_results,
                 config_tool["ENGINE_CONTAINER"],
-                tool_gateway
+                tool_gateway,
+                config_tool
             )
             
             self._use_vulnerability_management(
@@ -206,7 +208,8 @@ class HandleScan:
                 "engine_dependencies",
                 input_core.path_file_results,
                 config_tool["ENGINE_DEPENDENCIES"],
-                tool_gateway
+                tool_gateway,
+                config_tool
             )
             
             self._use_vulnerability_management(
@@ -346,7 +349,8 @@ class HandleScan:
         module_name: str,
         path_file_results: str,
         module_config: dict,
-        tool_gateway: any = None
+        tool_gateway: any = None,
+        config_tool: dict = None
     ) -> None:
         # Register tool gateway if provided
         if tool_gateway:
@@ -359,7 +363,8 @@ class HandleScan:
                 self.context_extraction_gateway.extract_context(
                     module_name=module_name,
                     path_file_results=path_file_results,
-                    remote_config=module_config
+                    remote_config=module_config,
+                    config_tool=config_tool
                 )
             except Exception as e:
                 logger.error(f"Context extraction failed for {module_name}: {str(e)}")

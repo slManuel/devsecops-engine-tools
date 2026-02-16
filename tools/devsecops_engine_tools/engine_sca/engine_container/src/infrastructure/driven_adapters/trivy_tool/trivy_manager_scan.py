@@ -14,6 +14,7 @@ import subprocess
 import json
 from dataclasses import asdict
 from datetime import datetime, timezone
+from typing import List
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
 from devsecops_engine_tools.engine_utilities import settings
 
@@ -114,12 +115,15 @@ class TrivyScan(ToolGateway):
 
         return image_scanned, sbom_components
 
-    def get_container_context_from_results(self, path_file_results: str) -> None:
+    def get_container_context_from_results(self, path_file_results: str) -> List[ContextContainer]:
         """
         Extract context from Trivy scan results.
         
         Args:
             path_file_results: Path to the scan results file
+            
+        Returns:
+            List of ContextContainer objects
         """
         context_container_list = []
 
@@ -162,18 +166,7 @@ class TrivyScan(ToolGateway):
                 )
                 context_container_list.append(context_container)
 
-        print("===== BEGIN CONTEXT OUTPUT =====")
-        print(
-            json.dumps(
-                {
-                    "container_context": [
-                        asdict(context) for context in context_container_list
-                    ]
-                },
-                indent=2,
-            )
-        )
-        print("===== END CONTEXT OUTPUT =====")
+        return context_container_list
 
     def _check_date_format(self, vul):
         """Check and format date from vulnerability data."""

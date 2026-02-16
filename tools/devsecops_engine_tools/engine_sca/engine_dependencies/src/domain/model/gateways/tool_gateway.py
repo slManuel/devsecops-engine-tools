@@ -1,4 +1,8 @@
 from abc import ABCMeta, abstractmethod
+from typing import List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from devsecops_engine_tools.engine_sca.engine_dependencies.src.domain.model.context_dependencies import ContextDependencies
 
 
 class ToolGateway(metaclass=ABCMeta):
@@ -9,5 +13,5 @@ class ToolGateway(metaclass=ABCMeta):
         "run tool dependencies sca"
     
     @abstractmethod
-    def get_dependencies_context_from_results(self, path_file_results, **kwargs) -> None:
+    def get_dependencies_context_from_results(self, path_file_results, **kwargs) -> List['ContextDependencies']:
         "get_dependencies_context_from_results"

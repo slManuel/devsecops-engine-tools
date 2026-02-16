@@ -444,10 +444,7 @@ class TestDependencyCheckTool(unittest.TestCase):
     @patch(
         "devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.driven_adapters.dependency_check.dependency_check_tool.DependencyCheckDeserialize"
     )
-    @patch(
-        "builtins.print"
-    )
-    def test_get_dependencies_context_from_results_prints(self, mock_print, mock_deserializer_cls):
+    def test_get_dependencies_context_from_results_prints(self, mock_deserializer_cls):
         # Arrange
         tool = DependencyCheckTool()
         mock_deserializer = MagicMock()
@@ -489,10 +486,11 @@ class TestDependencyCheckTool(unittest.TestCase):
         }
 
         # Act
-        tool.get_dependencies_context_from_results("fake_path.xml", remote_config)
+        result = tool.get_dependencies_context_from_results("fake_path.xml", remote_config)
 
         # Assert
-        printed = [call[0][0] for call in mock_print.call_args_list]
-        self.assertTrue(any("===== BEGIN CONTEXT OUTPUT =====" in line for line in printed))
-        self.assertTrue(any("===== END CONTEXT OUTPUT =====" in line for line in printed))
-        self.assertTrue(any("CVE-2024-1234" in line for line in printed))
+        self.assertIsInstance(result, list)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].cve_id, ["CVE-2024-1234"])
+        self.assertEqual(result[0].severity, "high")
+        self.assertIn("Test description", result[0].description)

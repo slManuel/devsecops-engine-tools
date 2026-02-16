@@ -4,6 +4,7 @@ import platform
 import requests
 import os
 import shutil
+from typing import List
 from devsecops_engine_tools.engine_sast.engine_iac.src.domain.model.context_iac import ContextIac
 from devsecops_engine_tools.engine_sast.engine_iac.src.domain.model.gateways.tool_gateway import (
     ToolGateway,
@@ -94,7 +95,7 @@ class KicsTool(ToolGateway):
             return finding_list, path_file
         return [], None
 
-    def get_iac_context_from_results(self, path_file_results):
+    def get_iac_context_from_results(self, path_file_results) -> List[ContextIac]:
         with open(path_file_results, "r") as file:
             context_results_scan_list = json.load(file)
             context_iac_list = []
@@ -114,14 +115,7 @@ class KicsTool(ToolGateway):
                     )
                     context_iac_list.append(context_iac)
 
-            print("===== BEGIN CONTEXT OUTPUT =====")
-            print(
-                json.dumps(
-                    {"iac_context": [obj.__dict__ for obj in context_iac_list]},
-                    indent=4,
-                )
-            )
-            print("===== END CONTEXT OUTPUT =====")
+            return context_iac_list
 
     def _validate_kics(self, command_prefix):
         try:

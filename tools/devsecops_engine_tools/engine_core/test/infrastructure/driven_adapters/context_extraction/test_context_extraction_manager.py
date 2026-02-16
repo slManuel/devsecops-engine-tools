@@ -15,11 +15,18 @@ class TestContextExtractionManager(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures before each test method."""
-        self.manager = ContextExtractionManager()
+        self.mock_risk_score_gateway = Mock()
+        self.manager = ContextExtractionManager(self.mock_risk_score_gateway)
         self.mock_iac_gateway = Mock()
         self.mock_container_gateway = Mock()
         self.mock_dependencies_gateway = Mock()
         self.remote_config = {"TOOL": "test", "CONFIG": {}}
+        self.config_tool = {
+            "PRIORITY_MANAGER": {"USE_PRIORITY": False},
+            "ENGINE_IAC": {},
+            "ENGINE_CONTAINER": {},
+            "ENGINE_DEPENDENCIES": {}
+        }
 
     def test_initialization(self):
         """Test that ContextExtractionManager initializes correctly."""
@@ -27,6 +34,7 @@ class TestContextExtractionManager(unittest.TestCase):
         self.assertIsNotNone(self.manager._method_mapping)
         self.assertEqual(len(self.manager._tool_gateways), 0)
         self.assertEqual(len(self.manager._method_mapping), 3)
+        self.assertIsNotNone(self.manager._risk_score_gateway)
 
     def test_register_tool_gateway_iac(self):
         """Test registering an IaC tool gateway."""
@@ -64,11 +72,13 @@ class TestContextExtractionManager(unittest.TestCase):
         """Test extracting context for IaC module."""
         path_file_results = "/path/to/iac_results.json"
         self.manager.register_tool_gateway("engine_iac", self.mock_iac_gateway)
+        self.mock_iac_gateway.get_iac_context_from_results.return_value = []
         
         self.manager.extract_context(
             "engine_iac",
             path_file_results,
-            self.remote_config
+            self.remote_config,
+            self.config_tool
         )
         
         # Verify the correct method was called
@@ -80,11 +90,13 @@ class TestContextExtractionManager(unittest.TestCase):
         """Test extracting context for Container module."""
         path_file_results = "/path/to/container_results.json"
         self.manager.register_tool_gateway("engine_container", self.mock_container_gateway)
+        self.mock_container_gateway.get_container_context_from_results.return_value = []
         
         self.manager.extract_context(
             "engine_container",
             path_file_results,
-            self.remote_config
+            self.remote_config,
+            self.config_tool
         )
         
         # Verify the correct method was called
@@ -96,11 +108,13 @@ class TestContextExtractionManager(unittest.TestCase):
         """Test extracting context for Dependencies module."""
         path_file_results = "/path/to/dependencies_results.json"
         self.manager.register_tool_gateway("engine_dependencies", self.mock_dependencies_gateway)
+        self.mock_dependencies_gateway.get_dependencies_context_from_results.return_value = []
         
         self.manager.extract_context(
             "engine_dependencies",
             path_file_results,
-            self.remote_config
+            self.remote_config,
+            self.config_tool
         )
         
         # Verify the correct method was called with remote_config
@@ -113,11 +127,13 @@ class TestContextExtractionManager(unittest.TestCase):
         """Test extracting context for Dependencies with additional kwargs."""
         path_file_results = "/path/to/dependencies_results.json"
         self.manager.register_tool_gateway("engine_dependencies", self.mock_dependencies_gateway)
+        self.mock_dependencies_gateway.get_dependencies_context_from_results.return_value = []
         
         self.manager.extract_context(
             "engine_dependencies",
             path_file_results,
             self.remote_config,
+            self.config_tool,
             extra_param="value"
         )
         
@@ -135,7 +151,8 @@ class TestContextExtractionManager(unittest.TestCase):
         self.manager.extract_context(
             "engine_iac",
             None,
-            self.remote_config
+            self.remote_config,
+            self.config_tool
         )
         
         # Verify method was not called
@@ -149,7 +166,8 @@ class TestContextExtractionManager(unittest.TestCase):
         self.manager.extract_context(
             "engine_iac",
             path_file_results,
-            self.remote_config
+            self.remote_config,
+            self.config_tool
         )
         
         # No exception should be raised, just logged warning
@@ -164,7 +182,8 @@ class TestContextExtractionManager(unittest.TestCase):
         self.manager.extract_context(
             "unknown_module",
             path_file_results,
-            self.remote_config
+            self.remote_config,
+            self.config_tool
         )
         
         # No method should be called since module is not in mapping
@@ -179,7 +198,8 @@ class TestContextExtractionManager(unittest.TestCase):
         self.manager.extract_context(
             "engine_iac",
             path_file_results,
-            self.remote_config
+            self.remote_config,
+            self.config_tool
         )
         
         # Verify method was called
@@ -195,7 +215,8 @@ class TestContextExtractionManager(unittest.TestCase):
         self.manager.extract_context(
             "engine_container",
             path_file_results,
-            self.remote_config
+            self.remote_config,
+            self.config_tool
         )
         
         # Verify method was called
@@ -211,7 +232,8 @@ class TestContextExtractionManager(unittest.TestCase):
         self.manager.extract_context(
             "engine_dependencies",
             path_file_results,
-            self.remote_config
+            self.remote_config,
+            self.config_tool
         )
         
         # Verify method was called
@@ -227,10 +249,11 @@ class TestContextExtractionManager(unittest.TestCase):
         ]
         
         self.manager.register_tool_gateway("engine_iac", self.mock_iac_gateway)
+        self.mock_iac_gateway.get_iac_context_from_results.return_value = []
         
         for path in test_paths:
             self.mock_iac_gateway.reset_mock()
-            self.manager.extract_context("engine_iac", path, self.remote_config)
+            self.manager.extract_context("engine_iac", path, self.remote_config, self.config_tool)
             self.mock_iac_gateway.get_iac_context_from_results.assert_called_once_with(path)
 
     def test_method_mapping_contains_all_modules(self):
@@ -255,6 +278,7 @@ class TestContextExtractionManager(unittest.TestCase):
         """Test that registering a new gateway for the same module replaces the old one."""
         mock_gateway_1 = Mock()
         mock_gateway_2 = Mock()
+        mock_gateway_2.get_iac_context_from_results.return_value = []
         
         self.manager.register_tool_gateway("engine_iac", mock_gateway_1)
         self.assertEqual(self.manager._tool_gateways["engine_iac"], mock_gateway_1)
@@ -265,7 +289,7 @@ class TestContextExtractionManager(unittest.TestCase):
         
         # Verify the new gateway is used
         path_file_results = "/path/to/results.json"
-        self.manager.extract_context("engine_iac", path_file_results, self.remote_config)
+        self.manager.extract_context("engine_iac", path_file_results, self.remote_config, self.config_tool)
         
         mock_gateway_1.get_iac_context_from_results.assert_not_called()
         mock_gateway_2.get_iac_context_from_results.assert_called_once()
@@ -281,7 +305,8 @@ class TestContextExtractionManager(unittest.TestCase):
         self.manager.extract_context(
             "engine_iac",
             path_file_results,
-            self.remote_config
+            self.remote_config,
+            self.config_tool
         )
 
 if __name__ == '__main__':

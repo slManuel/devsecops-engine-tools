@@ -184,24 +184,20 @@ class TestTrivyScanSBOM(unittest.TestCase):
         
         # Act
         with patch('builtins.open', mock_open(read_data=mock_file_content)):
-            with patch('builtins.print') as mock_print:
-                self.trivy_scanner.get_dependencies_context_from_results(
-                    self.sample_result_path,
-                    self.mock_remote_config
-                )
+            result = self.trivy_scanner.get_dependencies_context_from_results(
+                self.sample_result_path,
+                self.mock_remote_config
+            )
         
-        # Assert - verificar que se llamó print con los mensajes esperados
-        print_calls = mock_print.call_args_list
-        self.assertEqual(len(print_calls), 3)  # BEGIN, JSON content, END
+        # Assert - verificar que retorna una lista con el número correcto de contextos
+        self.assertIsInstance(result, list)
+        self.assertEqual(len(result), expected_contexts_count)
         
-        # Verificar que los prints contienen el contenido esperado
-        begin_call = str(print_calls[0])
-        end_call = str(print_calls[2])
-        json_call = str(print_calls[1])
-        
-        self.assertIn("BEGIN CONTEXT OUTPUT", begin_call)
-        self.assertIn("END CONTEXT OUTPUT", end_call)
-        self.assertIn("dependencies_context", json_call)
+        # Verificar el contenido de los contextos
+        self.assertEqual(result[0].cve_id, ["CVE-2021-12345"])
+        self.assertEqual(result[0].severity, "high")
+        self.assertEqual(result[1].cve_id, ["CVE-2021-67890"])
+        self.assertEqual(result[1].severity, "medium")
 
     def test_get_dependencies_context_from_results_with_context_creation(self):
         # Arrange
@@ -209,36 +205,31 @@ class TestTrivyScanSBOM(unittest.TestCase):
         
         # Act
         with patch('builtins.open', mock_open(read_data=mock_file_content)):
-            with patch('builtins.print') as mock_print:
-                self.trivy_scanner.get_dependencies_context_from_results(
-                    self.sample_result_path,
-                    self.mock_remote_config
-                )
+            result = self.trivy_scanner.get_dependencies_context_from_results(
+                self.sample_result_path,
+                self.mock_remote_config
+            )
         
-        # Assert - verificar el contenido del JSON impreso
-        json_call_args = mock_print.call_args_list[1][0][0]
-        parsed_json = json.loads(json_call_args)
-        
-        self.assertIn("dependencies_context", parsed_json)
-        contexts = parsed_json["dependencies_context"]
-        self.assertEqual(len(contexts), 2)
+        # Assert - verificar el contenido de la lista retornada
+        self.assertIsInstance(result, list)
+        self.assertEqual(len(result), 2)
         
         # Verificar el primer contexto
-        first_context = contexts[0]
-        self.assertEqual(first_context["cve_id"], ["CVE-2021-12345"])
-        self.assertEqual(first_context["severity"], "high")
-        self.assertEqual(first_context["component"], "package@1.0.0")
-        self.assertEqual(first_context["package_name"], "test-package")
-        self.assertEqual(first_context["installed_version"], "1.0.0")
-        self.assertEqual(first_context["fixed_version"], ["1.0.1", "1.0.2"])
-        self.assertEqual(first_context["description"], "Test vulnerability descriptionwith newlines")
-        self.assertEqual(first_context["source_tool"], "Trivy")
+        first_context = result[0]
+        self.assertEqual(first_context.cve_id, ["CVE-2021-12345"])
+        self.assertEqual(first_context.severity, "high")
+        self.assertEqual(first_context.component, "package@1.0.0")
+        self.assertEqual(first_context.package_name, "test-package")
+        self.assertEqual(first_context.installed_version, "1.0.0")
+        self.assertEqual(first_context.fixed_version, ["1.0.1", "1.0.2"])
+        self.assertEqual(first_context.description, "Test vulnerability descriptionwith newlines")
+        self.assertEqual(first_context.source_tool, "Trivy")
         
         # Verificar el segundo contexto
-        second_context = contexts[1]
-        self.assertEqual(second_context["cve_id"], ["CVE-2021-67890"])
-        self.assertEqual(second_context["severity"], "medium")
-        self.assertEqual(second_context["component"], "another-package@2.0.0")
+        second_context = result[1]
+        self.assertEqual(second_context.cve_id, ["CVE-2021-67890"])
+        self.assertEqual(second_context.severity, "medium")
+        self.assertEqual(second_context.component, "another-package@2.0.0")
 
     def test_get_dependencies_context_from_results_empty_results(self):
         # Arrange
@@ -247,19 +238,14 @@ class TestTrivyScanSBOM(unittest.TestCase):
         
         # Act
         with patch('builtins.open', mock_open(read_data=mock_file_content)):
-            with patch('builtins.print') as mock_print:
-                self.trivy_scanner.get_dependencies_context_from_results(
-                    self.sample_result_path,
-                    self.mock_remote_config
-                )
+            result = self.trivy_scanner.get_dependencies_context_from_results(
+                self.sample_result_path,
+                self.mock_remote_config
+            )
         
         # Assert
-        json_call_args = mock_print.call_args_list[1][0][0]
-        parsed_json = json.loads(json_call_args)
-        
-        self.assertIn("dependencies_context", parsed_json)
-        contexts = parsed_json["dependencies_context"]
-        self.assertEqual(len(contexts), 0)
+        self.assertIsInstance(result, list)
+        self.assertEqual(len(result), 0)
 
     def test_get_dependencies_context_from_results_missing_vulnerabilities(self):
         # Arrange
@@ -268,18 +254,14 @@ class TestTrivyScanSBOM(unittest.TestCase):
         
         # Act
         with patch('builtins.open', mock_open(read_data=mock_file_content)):
-            with patch('builtins.print') as mock_print:
-                self.trivy_scanner.get_dependencies_context_from_results(
-                    self.sample_result_path,
-                    self.mock_remote_config
-                )
+            result = self.trivy_scanner.get_dependencies_context_from_results(
+                self.sample_result_path,
+                self.mock_remote_config
+            )
         
         # Assert
-        json_call_args = mock_print.call_args_list[1][0][0]
-        parsed_json = json.loads(json_call_args)
-        
-        contexts = parsed_json["dependencies_context"]
-        self.assertEqual(len(contexts), 0)
+        self.assertIsInstance(result, list)
+        self.assertEqual(len(result), 0)
 
     def test_get_dependencies_context_from_results_unknown_values(self):
         # Arrange
@@ -301,25 +283,21 @@ class TestTrivyScanSBOM(unittest.TestCase):
         
         # Act
         with patch('builtins.open', mock_open(read_data=mock_file_content)):
-            with patch('builtins.print') as mock_print:
-                self.trivy_scanner.get_dependencies_context_from_results(
-                    self.sample_result_path,
-                    self.mock_remote_config
-                )
+            result = self.trivy_scanner.get_dependencies_context_from_results(
+                self.sample_result_path,
+                self.mock_remote_config
+            )
         
         # Assert
-        json_call_args = mock_print.call_args_list[1][0][0]
-        parsed_json = json.loads(json_call_args)
+        self.assertIsInstance(result, list)
+        self.assertEqual(len(result), 1)
         
-        contexts = parsed_json["dependencies_context"]
-        self.assertEqual(len(contexts), 1)
-        
-        context = contexts[0]
-        self.assertEqual(context["cve_id"], ["CVE-2021-99999"])
-        self.assertEqual(context["severity"], "low")
-        self.assertEqual(context["component"], "unknown")
-        self.assertEqual(context["package_name"], "unknown")
-        self.assertEqual(context["installed_version"], "unknown")
-        self.assertEqual(context["fixed_version"], ["unknown"])
-        self.assertEqual(context["description"], "unknown")
-        self.assertEqual(context["references"], "unknown")
+        context = result[0]
+        self.assertEqual(context.cve_id, ["CVE-2021-99999"])
+        self.assertEqual(context.severity, "low")
+        self.assertEqual(context.component, "unknown")
+        self.assertEqual(context.package_name, "unknown")
+        self.assertEqual(context.installed_version, "unknown")
+        self.assertEqual(context.fixed_version, ["unknown"])
+        self.assertEqual(context.description, "unknown")
+        self.assertEqual(context.references, "unknown")

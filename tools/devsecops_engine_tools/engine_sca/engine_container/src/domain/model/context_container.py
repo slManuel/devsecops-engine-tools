@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional
 
 
@@ -22,3 +22,4 @@ class ContextContainer:
     last_modified_date: Optional[str]
     references: Optional[List[str]]
     source_tool: str
+    priority: Optional[dict] = field(default=None)
