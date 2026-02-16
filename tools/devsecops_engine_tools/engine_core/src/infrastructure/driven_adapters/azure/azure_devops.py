@@ -126,3 +126,6 @@ class AzureDevops(DevopsPlatformGateway):
             return variable_map.get(variable).value()
         except ValueError:
             return None
+        
+    def set_variable(self, variable, value):        
+        logger.info(f"##vso[task.setvariable variable={variable};]{value}")

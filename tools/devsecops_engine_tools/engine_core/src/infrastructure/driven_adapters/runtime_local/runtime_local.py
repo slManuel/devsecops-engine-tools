@@ -76,3 +76,6 @@ class RuntimeLocal(DevopsPlatformGateway):
             "build_task":  "DET_APPLICATION_BUILD_TASK",
         }
         return os.environ.get(env_variables[variable], None)
+    
+    def set_variable(self, variable, value):
+        os.environ[variable] = value
