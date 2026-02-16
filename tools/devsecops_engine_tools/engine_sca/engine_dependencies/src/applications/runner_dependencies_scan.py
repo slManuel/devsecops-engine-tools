@@ -48,7 +48,7 @@ def runner_engine_dependencies(
         tool_deserializator = tools_mapping[selected_tool]["tool_deserializator"]()
         tool_sbom = tools_mapping[selected_tool]["tool_sbom"]
 
-        return init_engine_dependencies(
+        findings_list, input_core, sbom_components = init_engine_dependencies(
             tool_run,
             devops_platform_gateway,
             remote_config_source_gateway,
@@ -58,6 +58,9 @@ def runner_engine_dependencies(
             config_tool,
             tool_sbom
         )
+        
+        # Return tool_run as fourth element for context extraction
+        return findings_list, input_core, sbom_components, tool_run
 
     except Exception as e:
         raise Exception(f"Error SCAN engine dependencies : {str(e)}")

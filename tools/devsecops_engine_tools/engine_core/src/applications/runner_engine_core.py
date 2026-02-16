@@ -30,7 +30,10 @@ from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxge
 )
 from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.risk_score.risk_score import (
     RiskScore,
-) 
+)
+from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.context_extraction.context_extraction_manager import (
+    ContextExtractionManager,
+)
 import sys
 import argparse
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
@@ -314,6 +317,7 @@ def application_core():
             "cdxgen": CdxGen()
         }
         risk_score_gateway = RiskScore()
+        context_extraction_gateway = ContextExtractionManager()
 
         init_engine_core(
             vulnerability_management_gateway,
@@ -324,6 +328,7 @@ def application_core():
             metrics_manager_gateway,
             sbom_tool_gateway,
             risk_score_gateway,
+            context_extraction_gateway,
             args,
         )
     except Exception as e:

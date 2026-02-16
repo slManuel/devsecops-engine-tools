@@ -26,7 +26,7 @@ def runner_engine_iac(dict_args, tool, secret_tool, devops_platform_gateway, rem
         if tool in tools:
             tool_gateway = tools[tool]
 
-        return init_engine_sast_rm(
+        findings_list, input_core = init_engine_sast_rm(
             devops_platform_gateway=devops_platform_gateway,
             remote_config_source_gateway=remote_config_source_gateway,
             tool_gateway=tool_gateway,
@@ -35,6 +35,9 @@ def runner_engine_iac(dict_args, tool, secret_tool, devops_platform_gateway, rem
             tool=tool,
             env=env,
         )
+        
+        # Return tool_gateway as third element for context extraction
+        return findings_list, input_core, tool_gateway
 
     except Exception as e:
         raise Exception(f"Error engine_iac : {str(e)}")

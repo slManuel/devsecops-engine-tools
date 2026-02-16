@@ -33,7 +33,7 @@ def test_runner_engine_iac(mock_entry_point_tool):
     remote_config_source_gateway = None
 
     # Call the function
-    [] , input_output = runner_engine_iac(dict_args, tool, secret_tool, devops_platform_gateway, remote_config_source_gateway, "qa")
+    [] , input_output , _ = runner_engine_iac(dict_args, tool, secret_tool, devops_platform_gateway, remote_config_source_gateway, "qa")
 
     # Assert the expected behavior
     assert input_output == input_core
@@ -83,7 +83,7 @@ def test_runner_engine_iac_kubescape(mock_entry_point_tool):
     remote_config_source_gateway = None
 
     # Call the function
-    [] , input_output = runner_engine_iac(dict_args, tool, secret_tool, devops_platform_gateway, remote_config_source_gateway, "qa")
+    [] , input_output , _ = runner_engine_iac(dict_args, tool, secret_tool, devops_platform_gateway, remote_config_source_gateway, "qa")
 
     # Assert the expected behavior
     assert input_output == input_core
@@ -114,7 +114,7 @@ def test_runner_engine_iac_kics(mock_entry_point_tool):
     remote_config_source_gateway = None
 
     # Call the function
-    [] , input_output = runner_engine_iac(dict_args, tool, secret_tool, devops_platform_gateway, remote_config_source_gateway, "qa")
+    [] , input_output , _ = runner_engine_iac(dict_args, tool, secret_tool, devops_platform_gateway, remote_config_source_gateway, "qa")
 
     # Assert the expected behavior
     assert input_output == input_core

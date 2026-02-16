@@ -50,9 +50,6 @@ class DependenciesScan:
             build_id=self.build_id,
             build_url=self.build_url
         )
-    
-        if self.dict_args.get("context") == "true":
-            self.tool_run.get_dependencies_context_from_results(dependencies_scanned, remote_config=self.remote_config)
         
         return dependencies_scanned
 

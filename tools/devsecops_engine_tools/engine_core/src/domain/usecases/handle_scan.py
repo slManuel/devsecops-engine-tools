@@ -25,6 +25,9 @@ from devsecops_engine_tools.engine_core.src.domain.model.gateway.sbom_manager im
 from devsecops_engine_tools.engine_core.src.domain.model.gateway.risk_score_gateway import (
     RiskScoreGateway,
 )
+from devsecops_engine_tools.engine_core.src.domain.model.gateway.context_extraction_gateway import (
+    ContextExtractionGateway,
+)
 from devsecops_engine_tools.engine_core.src.domain.model.input_core import InputCore
 from devsecops_engine_tools.engine_core.src.domain.model.level_vulnerability import (
     LevelVulnerability,
@@ -65,6 +68,7 @@ class HandleScan:
         remote_config_source_gateway: DevopsPlatformGateway,
         sbom_tool_gateway: SbomManagerGateway,
         risk_score_gateway: RiskScoreGateway,
+        context_extraction_gateway: ContextExtractionGateway,
     ):
         self.vulnerability_management = vulnerability_management
         self.secrets_manager_gateway = secrets_manager_gateway
@@ -72,6 +76,7 @@ class HandleScan:
         self.remote_config_source_gateway = remote_config_source_gateway
         self.sbom_tool_gateway = sbom_tool_gateway
         self.risk_score_gateway = risk_score_gateway
+        self.context_extraction_gateway = context_extraction_gateway
 
     def process(self, dict_args: any, config_tool: any):
         secret_tool = None
@@ -82,7 +87,7 @@ class HandleScan:
         if dict_args["use_secrets_manager"] == "true":
             secret_tool = self.secrets_manager_gateway.get_secret(config_tool)
         if "engine_iac" in dict_args["module"]:
-            findings_list, input_core = runner_engine_iac(
+            findings_list, input_core, tool_gateway = runner_engine_iac(
                 dict_args,
                 config_tool["ENGINE_IAC"]["TOOL"],
                 secret_tool,
@@ -90,19 +95,37 @@ class HandleScan:
                 self.remote_config_source_gateway,
                 env,
             )
+            
+            self._handle_context_extraction(
+                dict_args,
+                "engine_iac",
+                input_core.path_file_results,
+                config_tool["ENGINE_IAC"],
+                tool_gateway
+            )
+            
             self._use_vulnerability_management(
                 config_tool, input_core, dict_args, secret_tool, env
             )
             self.risk_score_gateway.get_risk_score(findings_list, config_tool, dict_args["module"])
             return findings_list, input_core
         elif "engine_container" in dict_args["module"]:
-            findings_list, input_core, sbom_components = runner_engine_container(
+            findings_list, input_core, sbom_components, tool_gateway = runner_engine_container(
                 dict_args,
                 config_tool["ENGINE_CONTAINER"]["TOOL"],
                 secret_tool,
                 self.devops_platform_gateway,
                 self.remote_config_source_gateway
             )
+            
+            self._handle_context_extraction(
+                dict_args,
+                "engine_container",
+                input_core.path_file_results,
+                config_tool["ENGINE_CONTAINER"],
+                tool_gateway
+            )
+            
             self._use_vulnerability_management(
                 config_tool,
                 input_core,
@@ -169,7 +192,7 @@ class HandleScan:
             self.risk_score_gateway.get_risk_score(findings_list, config_tool, dict_args["module"])
             return findings_list, input_core
         elif "engine_dependencies" in dict_args["module"]:
-            findings_list, input_core, sbom_components = runner_engine_dependencies(
+            findings_list, input_core, sbom_components, tool_gateway = runner_engine_dependencies(
                 dict_args,
                 config_tool,
                 secret_tool,
@@ -177,6 +200,15 @@ class HandleScan:
                 self.remote_config_source_gateway,
                 self.sbom_tool_gateway,
             )
+            
+            self._handle_context_extraction(
+                dict_args,
+                "engine_dependencies",
+                input_core.path_file_results,
+                config_tool["ENGINE_DEPENDENCIES"],
+                tool_gateway
+            )
+            
             self._use_vulnerability_management(
                 config_tool, input_core, dict_args, secret_tool, env, sbom_components
             )
@@ -307,3 +339,28 @@ class HandleScan:
                         or any(map(lambda pd: pd in input_core.scope_pipeline, pt_apps))
                         else input_core.threshold_defined.priority
                     ) if pt_profile_priority else input_core.threshold_defined.priority
+
+    def _handle_context_extraction(
+        self,
+        dict_args: dict,
+        module_name: str,
+        path_file_results: str,
+        module_config: dict,
+        tool_gateway: any = None
+    ) -> None:
+        # Register tool gateway if provided
+        if tool_gateway:
+            self.context_extraction_gateway.register_tool_gateway(module_name, tool_gateway)
+        
+        # Extract context if enabled
+        if dict_args.get("context") == "true":
+            try:
+                logger.info(f"Context extraction enabled for {module_name}")
+                self.context_extraction_gateway.extract_context(
+                    module_name=module_name,
+                    path_file_results=path_file_results,
+                    remote_config=module_config
+                )
+            except Exception as e:
+                logger.error(f"Context extraction failed for {module_name}: {str(e)}")
+                # Continue execution even if context extraction fails

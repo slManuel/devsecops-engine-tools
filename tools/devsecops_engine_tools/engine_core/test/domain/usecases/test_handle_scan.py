@@ -20,6 +20,7 @@ class TestHandleScan(unittest.TestCase):
         self.devops_platform_gateway = MagicMock()
         self.remote_config_source_gateway = MagicMock()
         self.sbom_gateway = MagicMock()
+        self.context_extraction_gateway = MagicMock()
         self.threshold = Threshold(
             {
                 "VULNERABILITY": {
@@ -45,6 +46,7 @@ class TestHandleScan(unittest.TestCase):
             self.remote_config_source_gateway,
             self.sbom_gateway,
             self.risk_score_gateway,
+            self.context_extraction_gateway,
         )
 
     @mock.patch(
@@ -74,7 +76,8 @@ class TestHandleScan(unittest.TestCase):
             scope_service="service",
             stage_pipeline="Release",
         )
-        mock_runner_engine_iac.return_value = findings_list, input_core
+        mock_tool_gateway = MagicMock()
+        mock_runner_engine_iac.return_value = findings_list, input_core, mock_tool_gateway
 
         # Mock the send_vulnerability_management method
         self.vulnerability_management.send_vulnerability_management = MagicMock()
@@ -127,7 +130,8 @@ class TestHandleScan(unittest.TestCase):
             scope_service="service",
             stage_pipeline="Release",
         )
-        mock_runner_engine_iac.return_value = findings_list, input_core
+        mock_tool_gateway = MagicMock()
+        mock_runner_engine_iac.return_value = findings_list, input_core, mock_tool_gateway
 
         # Mock the send_vulnerability_management method
         self.vulnerability_management.send_vulnerability_management.side_effect = (
@@ -215,8 +219,9 @@ class TestHandleScan(unittest.TestCase):
             stage_pipeline="Release",
         )
         component_list = [Component("component1", "version1"), Component("component2", "version2")]
+        mock_tool_gateway = MagicMock()
 
-        mock_runner_engine_container.return_value = findings_list, input_core, component_list
+        mock_runner_engine_container.return_value = findings_list, input_core, component_list, mock_tool_gateway
         mock_product_type = Mock()
         mock_product_type.name = "PT1"
         self.vulnerability_management.get_product_type_pipeline.return_value = mock_product_type
@@ -427,7 +432,8 @@ class TestHandleScan(unittest.TestCase):
             scope_service="service",
             stage_pipeline="Release",
         )
-        mock_runner_engine_dependencies.return_value = findings_list, input_core, None
+        mock_tool_gateway = MagicMock()
+        mock_runner_engine_dependencies.return_value = findings_list, input_core, None, mock_tool_gateway
 
         # Call the process method
         result_findings_list, result_input_core = self.handle_scan.process(
@@ -441,3 +447,214 @@ class TestHandleScan(unittest.TestCase):
         mock_runner_engine_dependencies.assert_called_once_with(
             dict_args, config_tool, secret_tool, self.devops_platform_gateway, self.remote_config_source_gateway, self.sbom_gateway
         )
+
+    @mock.patch(
+        "devsecops_engine_tools.engine_core.src.domain.usecases.handle_scan.runner_engine_iac"
+    )
+    def test_context_extraction_invoked_when_enabled(self, mock_runner_engine_iac):
+        """Test that context extraction is invoked when context='true'"""
+        dict_args = {
+            "use_secrets_manager": "false",
+            "module": "engine_iac",
+            "use_vulnerability_management": "false",
+            "context": "true",
+            "remote_config_repo": "test_repo",
+            "remote_config_branch": ""
+        }
+        config_tool = {"ENGINE_IAC": {"ENABLED": "true", "TOOL": "tool"}}
+        
+        findings_list = ["finding1"]
+        input_core = InputCore(
+            totalized_exclusions=[],
+            threshold_defined=self.threshold,
+            path_file_results="test/file/results.json",
+            custom_message_break_build="message",
+            scope_pipeline="pipeline",
+            scope_service="service",
+            stage_pipeline="Release",
+        )
+        mock_tool_gateway = MagicMock()
+        mock_runner_engine_iac.return_value = findings_list, input_core, mock_tool_gateway
+        
+        # Mock context extraction gateway
+        context_extraction_gateway = MagicMock()
+        self.handle_scan.context_extraction_gateway = context_extraction_gateway
+        
+        # Call the process method
+        self.handle_scan.process(dict_args, config_tool)
+        
+        # Assert context extraction was called with correct parameters
+        context_extraction_gateway.extract_context.assert_called_once_with(
+            module_name="engine_iac",
+            path_file_results="test/file/results.json",
+            remote_config=config_tool["ENGINE_IAC"]
+        )
+
+    @mock.patch(
+        "devsecops_engine_tools.engine_core.src.domain.usecases.handle_scan.runner_engine_container"
+    )
+    def test_context_extraction_not_invoked_when_false(self, mock_runner_engine_container):
+        """Test that context extraction is NOT invoked when context='false'"""
+        dict_args = {
+            "use_secrets_manager": "false",
+            "module": "engine_container",
+            "use_vulnerability_management": "false",
+            "context": "false",
+            "remote_config_repo": "test_repo",
+            "remote_config_branch": ""
+        }
+        config_tool = {"ENGINE_CONTAINER": {"ENABLED": "true", "TOOL": "tool"}}
+        
+        findings_list = ["finding1"]
+        input_core = InputCore(
+            totalized_exclusions=[],
+            threshold_defined=self.threshold,
+            path_file_results="test/file/results.json",
+            custom_message_break_build="message",
+            scope_pipeline="pipeline",
+            scope_service="service",
+            stage_pipeline="Release",
+        )
+        mock_tool_gateway = MagicMock()
+        mock_runner_engine_container.return_value = findings_list, input_core, [], mock_tool_gateway
+        
+        # Mock context extraction gateway
+        context_extraction_gateway = MagicMock()
+        self.handle_scan.context_extraction_gateway = context_extraction_gateway
+        
+        # Call the process method
+        self.handle_scan.process(dict_args, config_tool)
+        
+        # Assert context extraction was NOT called
+        context_extraction_gateway.extract_context.assert_not_called()
+
+    @mock.patch(
+        "devsecops_engine_tools.engine_core.src.domain.usecases.handle_scan.runner_engine_dependencies"
+    )
+    def test_context_extraction_not_invoked_when_undefined(self, mock_runner_engine_dependencies):
+        """Test that context extraction is NOT invoked when context is not defined"""
+        dict_args = {
+            "use_secrets_manager": "false",
+            "module": "engine_dependencies",
+            "use_vulnerability_management": "false",
+            "remote_config_repo": "test_repo",
+            "remote_config_branch": ""
+            # Note: 'context' key is not present
+        }
+        config_tool = {"ENGINE_DEPENDENCIES": {"TOOL": "tool"}}
+        
+        findings_list = ["finding1"]
+        input_core = InputCore(
+            totalized_exclusions=[],
+            threshold_defined=self.threshold,
+            path_file_results="test/file/results.json",
+            custom_message_break_build="message",
+            scope_pipeline="pipeline",
+            scope_service="service",
+            stage_pipeline="Release",
+        )
+        mock_tool_gateway = MagicMock()
+        mock_runner_engine_dependencies.return_value = findings_list, input_core, [], mock_tool_gateway
+        
+        # Mock context extraction gateway
+        context_extraction_gateway = MagicMock()
+        self.handle_scan.context_extraction_gateway = context_extraction_gateway
+        
+        # Call the process method
+        self.handle_scan.process(dict_args, config_tool)
+        
+        # Assert context extraction was NOT called
+        context_extraction_gateway.extract_context.assert_not_called()
+
+    @mock.patch(
+        "devsecops_engine_tools.engine_core.src.domain.usecases.handle_scan.runner_engine_iac"
+    )
+    def test_execution_continues_if_context_extraction_fails(self, mock_runner_engine_iac):
+        """Test that execution continues if context extraction fails"""
+        dict_args = {
+            "use_secrets_manager": "false",
+            "module": "engine_iac",
+            "use_vulnerability_management": "false",
+            "context": "true",
+            "remote_config_repo": "test_repo",
+            "remote_config_branch": ""
+        }
+        config_tool = {"ENGINE_IAC": {"ENABLED": "true", "TOOL": "tool"}}
+        
+        findings_list = ["finding1"]
+        input_core = InputCore(
+            totalized_exclusions=[],
+            threshold_defined=self.threshold,
+            path_file_results="test/file/results.json",
+            custom_message_break_build="message",
+            scope_pipeline="pipeline",
+            scope_service="service",
+            stage_pipeline="Release",
+        )
+        mock_tool_gateway = MagicMock()
+        mock_runner_engine_iac.return_value = findings_list, input_core, mock_tool_gateway
+        
+        # Mock context extraction gateway to raise an exception
+        context_extraction_gateway = MagicMock()
+        context_extraction_gateway.extract_context.side_effect = Exception("Context extraction failed")
+        self.handle_scan.context_extraction_gateway = context_extraction_gateway
+        
+        # Call the process method - should not raise exception
+        result_findings_list, result_input_core = self.handle_scan.process(dict_args, config_tool)
+        
+        # Assert execution continued and returned results
+        self.assertEqual(result_findings_list, findings_list)
+        self.assertEqual(result_input_core, input_core)
+        context_extraction_gateway.extract_context.assert_called_once()
+
+    @mock.patch(
+        "devsecops_engine_tools.engine_core.src.domain.usecases.handle_scan.runner_engine_container"
+    )
+    def test_context_extraction_order_correct(self, mock_runner_engine_container):
+        """Test that context extraction occurs after runner and before vulnerability management"""
+        dict_args = {
+            "use_secrets_manager": "false",
+            "module": "engine_container",
+            "use_vulnerability_management": "true",
+            "context": "true",
+            "remote_config_repo": "test_repo",
+            "remote_config_branch": ""
+        }
+        config_tool = {"ENGINE_CONTAINER": {"ENABLED": "true", "TOOL": "tool"}}
+        
+        findings_list = ["finding1"]
+        input_core = InputCore(
+            totalized_exclusions=[],
+            threshold_defined=self.threshold,
+            path_file_results="test/file/results.json",
+            custom_message_break_build="message",
+            scope_pipeline="pipeline",
+            scope_service="service",
+            stage_pipeline="Release",
+        )
+        mock_tool_gateway = MagicMock()
+        mock_runner_engine_container.return_value = findings_list, input_core, [], mock_tool_gateway
+        
+        # Mock context extraction gateway and vulnerability management
+        context_extraction_gateway = MagicMock()
+        self.handle_scan.context_extraction_gateway = context_extraction_gateway
+        self.vulnerability_management.get_findings_excepted.return_value = []
+        
+        # Track call order
+        call_order = []
+        mock_runner_engine_container.side_effect = lambda *args, **kwargs: (
+            call_order.append("runner"),
+            findings_list,
+            input_core,
+            [],
+            mock_tool_gateway
+        )[1:]
+        context_extraction_gateway.extract_context.side_effect = lambda *args, **kwargs: call_order.append("context_extraction")
+        self.vulnerability_management.send_vulnerability_management.side_effect = lambda *args, **kwargs: call_order.append("vulnerability_management")
+        
+        # Call the process method
+        self.handle_scan.process(dict_args, config_tool)
+        
+        # Assert correct order: runner -> context_extraction -> vulnerability_management
+        self.assertEqual(call_order, ["runner", "context_extraction", "vulnerability_management"])
+
