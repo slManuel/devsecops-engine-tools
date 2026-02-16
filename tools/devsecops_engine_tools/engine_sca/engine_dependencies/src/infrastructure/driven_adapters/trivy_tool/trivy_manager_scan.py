@@ -49,16 +49,6 @@ class TrivyScanSBOM(ToolGateway):
             path_file_results, 
             remote_config
     ) -> List[ContextDependencies]:
-        """
-        Extract dependencies context from Trivy scan results.
-        
-        Args:
-            path_file_results: Path to the scan results file
-            remote_config: Remote configuration (not currently used)
-            
-        Returns:
-            List of ContextDependencies objects
-        """
         dependencies_container_list = []
 
         with open(path_file_results, "rb") as file:

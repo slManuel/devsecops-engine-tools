@@ -116,15 +116,6 @@ class TrivyScan(ToolGateway):
         return image_scanned, sbom_components
 
     def get_container_context_from_results(self, path_file_results: str) -> List[ContextContainer]:
-        """
-        Extract context from Trivy scan results.
-        
-        Args:
-            path_file_results: Path to the scan results file
-            
-        Returns:
-            List of ContextContainer objects
-        """
         context_container_list = []
 
         with open(path_file_results, "rb") as file:

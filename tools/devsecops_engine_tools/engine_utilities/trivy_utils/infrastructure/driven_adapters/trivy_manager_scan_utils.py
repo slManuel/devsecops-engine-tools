@@ -82,16 +82,6 @@ class TrivyManagerScanUtils():
 
     @staticmethod
     def get_cvss_v3_severity(cvss_score: str, severity: str) -> str:
-        """
-        Get CVSS v3 severity based on score.
-        
-        Args:
-            cvss_score: CVSS score as string
-            severity: Fallback severity value
-            
-        Returns:
-            Severity level (low, medium, high, critical)
-        """
         if not cvss_score:
             return severity
         else:
@@ -110,15 +100,6 @@ class TrivyManagerScanUtils():
     
     @staticmethod
     def get_cvss_v3_score(cvss_data: any) -> str:
-        """
-        Extract CVSS v3 score from CVSS data.
-        
-        Args:
-            cvss_data: CVSS data dictionary
-            
-        Returns:
-            CVSS v3 score as string, empty string if not found
-        """
         if not cvss_data:
             return ""
         else:

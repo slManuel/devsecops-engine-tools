@@ -6,12 +6,6 @@ from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.conte
 
 
 class TestContextExtractionManager(unittest.TestCase):
-    """
-    Unit tests for ContextExtractionManager.
-    
-    Tests verify that the manager correctly registers tool gateways and delegates
-    context extraction to the appropriate tool gateway methods.
-    """
 
     def setUp(self):
         """Set up test fixtures before each test method."""

@@ -239,16 +239,6 @@ class XrayScan(ToolGateway):
         return results_file
 
     def get_dependencies_context_from_results(self, path_file_results, remote_config) -> List[ContextDependencies]:
-        """
-        Extract dependencies context from Xray scan results.
-        
-        Args:
-            path_file_results: Path to the scan results file
-            remote_config: Remote configuration (not currently used)
-            
-        Returns:
-            List of ContextDependencies objects
-        """
         with open(path_file_results, "r") as file:
             scan_results = json.load(file)
             context_dependencies_list = []
