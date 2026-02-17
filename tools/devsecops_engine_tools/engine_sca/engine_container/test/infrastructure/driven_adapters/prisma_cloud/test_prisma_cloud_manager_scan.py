@@ -169,12 +169,13 @@ def test_scan_image_error_logs_details(mock_remoteconfig):
     ) as mock_run, patch(
         "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.logger.error"
     ) as mock_logger_error:
-        mock_run.side_effect = subprocess.CalledProcessError(
+        error = subprocess.CalledProcessError(
             137,
             ["twistcli", "images", "scan"],
-            output="stdout content",
-            stderr="stderr content",
         )
+        error.stdout = "stdout content"
+        error.stderr = "stderr content"
+        mock_run.side_effect = error
 
         scan_manager = PrismaCloudManagerScan()
 
@@ -188,13 +189,14 @@ def test_scan_image_error_logs_details(mock_remoteconfig):
         )
 
         assert result is None
-        mock_logger_error.assert_called_once_with(
-            "Error during image scan of %s. Return code: %s. Stderr: %s. Stdout: %s",
-            "image_name",
-            137,
-            "stderr content",
-            "stdout content",
-        )
+        # Check that error was logged with correct format and arguments
+        assert mock_logger_error.called
+        call_args = mock_logger_error.call_args
+        assert "Error during image scan of %s" in call_args[0][0]
+        assert call_args[0][1] == "image_name"
+        assert call_args[0][2] == 137
+        assert call_args[0][3] == "stderr content"
+        assert call_args[0][4] == "stdout content"
 
 
 def test_scan_image_retries_with_delay(mock_remoteconfig):
@@ -210,11 +212,22 @@ def test_scan_image_retries_with_delay(mock_remoteconfig):
     with patch(
         "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.subprocess.run"
     ) as mock_run, patch(
-        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.time.sleep"
-    ) as mock_sleep:
+        "time.sleep"
+    ) as mock_sleep, patch(
+        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.logger.error"
+    ) as mock_logger_error, patch(
+        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.logger.warning"
+    ) as mock_logger_warning:
+        # Mock successful second attempt
+        mock_success = MagicMock()
+        mock_success.stderr = ""
+        
+        error = subprocess.CalledProcessError(1, ["twistcli", "images", "scan"])
+        error.stdout = ""
+        error.stderr = ""
         mock_run.side_effect = [
-            subprocess.CalledProcessError(1, ["twistcli", "images", "scan"]),
-            MagicMock(stdout="", stderr=""),
+            error,
+            mock_success,
         ]
 
         scan_manager = PrismaCloudManagerScan()

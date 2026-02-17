@@ -27,7 +27,8 @@ def runner_engine_container(dict_args, tool, secret_tool, tool_remote, remote_co
             tool_run = PrismaCloudManagerScan()
             tool_deseralizator = PrismaDeserealizator()
         tool_images = DockerImages()
-        return init_engine_sca_rm(
+        
+        findings_list, input_core, sbom_components = init_engine_sca_rm(
             tool_run,
             tool_remote,
             remote_config_source_gateway,
@@ -37,6 +38,8 @@ def runner_engine_container(dict_args, tool, secret_tool, tool_remote, remote_co
             secret_tool,
             tool,
         )
+        
+        return findings_list, input_core, sbom_components, tool_run
 
     except Exception as e:
         raise Exception(f"Error SCAN engine container : {str(e)}")

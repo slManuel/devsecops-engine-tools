@@ -44,8 +44,8 @@ def container_sca_scan(
         "image_to_scan",
         {"exclusions": "exclusions"},
         "pipeline_name",
-        "docker_address",
         "context",
+        "docker_address",
     )
 
 
@@ -141,6 +141,52 @@ def test_deserialize(container_sca_scan):
         "finding2",
     ]
     assert container_sca_scan.deseralizator("image_scanned") == ["finding1", "finding2"]
+
+
+def test_deserialize_with_context_enabled(container_sca_scan):
+    """Test that deserializer returns findings regardless of context setting.
+    
+    Note: Context extraction is handled by ContextExtractionManager in engine_core,
+    not in the domain layer's deseralizator method. The deseralizator only
+    deserializes findings from the scan results.
+    """
+    container_sca_scan.context = "true"
+    container_sca_scan.tool_deseralizator.get_list_findings.return_value = [
+        "finding1",
+        "finding2",
+    ]
+    
+    result = container_sca_scan.deseralizator("image_scanned")
+    
+    # Verify findings are returned
+    assert result == ["finding1", "finding2"]
+    # Verify deserializer was called
+    container_sca_scan.tool_deseralizator.get_list_findings.assert_called_once_with(
+        "image_scanned", module="engine_container"
+    )
+
+
+def test_deserialize_with_context_disabled(container_sca_scan):
+    """Test that deserializer returns findings regardless of context setting.
+    
+    Note: Context extraction is handled by ContextExtractionManager in engine_core,
+    not in the domain layer's deseralizator method. The deseralizator only
+    deserializes findings from the scan results.
+    """
+    container_sca_scan.context = "false"
+    container_sca_scan.tool_deseralizator.get_list_findings.return_value = [
+        "finding1",
+        "finding2",
+    ]
+    
+    result = container_sca_scan.deseralizator("image_scanned")
+    
+    # Verify findings are returned
+    assert result == ["finding1", "finding2"]
+    # Verify deserializer was called
+    container_sca_scan.tool_deseralizator.get_list_findings.assert_called_once_with(
+        "image_scanned", module="engine_container"
+    )
 
 
 def test_validate_black_list_base_image_calls_tool_images(container_sca_scan):

@@ -14,6 +14,7 @@ import os
 import platform
 import shutil
 from dataclasses import asdict
+from typing import List
 import json
 
 from devsecops_engine_tools.engine_utilities.utils.utils import Utils
@@ -154,7 +155,17 @@ class DependencyCheckTool(ToolGateway):
         self.scan_dependencies(command_prefix, to_scan, token_engine_dependencies)
         return self.search_result()
 
-    def get_dependencies_context_from_results(self, path_file_results, remote_config):
+    def get_dependencies_context_from_results(self, path_file_results, remote_config) -> List[ContextDependencies]:
+        """
+        Extract dependencies context from Dependency Check scan results.
+        
+        Args:
+            path_file_results: Path to the scan results file
+            remote_config: Remote configuration for filtering vulnerabilities
+            
+        Returns:
+            List of ContextDependencies objects
+        """
         deserializer = DependencyCheckDeserialize()
         dependencies, namespace = deserializer.filter_vulnerabilities_by_confidence(path_file_results, remote_config)
         context_dependencies_list = []
@@ -181,16 +192,5 @@ class DependencyCheckTool(ToolGateway):
                     )
                     context_dependencies_list.append(context)
 
-        print("===== BEGIN CONTEXT OUTPUT =====")
-        print(
-            json.dumps(
-                {
-                    "dependencies_context": [
-                        asdict(context) for context in context_dependencies_list
-                    ]
-                },
-                indent=4,
-            )
-        )
-        print("===== END CONTEXT OUTPUT =====")
+        return context_dependencies_list
         

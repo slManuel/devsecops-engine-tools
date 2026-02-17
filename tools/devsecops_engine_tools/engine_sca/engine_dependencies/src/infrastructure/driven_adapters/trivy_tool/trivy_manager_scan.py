@@ -11,6 +11,7 @@ import os
 import json
 import subprocess
 from dataclasses import asdict
+from typing import List
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
 from devsecops_engine_tools.engine_utilities import settings
 
@@ -47,7 +48,7 @@ class TrivyScanSBOM(ToolGateway):
             self, 
             path_file_results, 
             remote_config
-    ):
+    ) -> List[ContextDependencies]:
         dependencies_container_list = []
 
         with open(path_file_results, "rb") as file:
@@ -73,18 +74,7 @@ class TrivyScanSBOM(ToolGateway):
                 )
                 dependencies_container_list.append(context_container)
 
-        print("===== BEGIN CONTEXT OUTPUT =====")
-        print(
-            json.dumps(
-                {
-                    "dependencies_context": [
-                        asdict(context) for context in dependencies_container_list
-                    ]
-                },
-                indent=2,
-            )
-        )
-        print("===== END CONTEXT OUTPUT =====")
+        return dependencies_container_list
 
     def _scan_dependencies_sbom(self, command_prefix, sbom_path):
         result_file = f"{sbom_path.replace('.json', '')}_scan_result.json"

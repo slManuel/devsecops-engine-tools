@@ -1,6 +1,9 @@
 from devsecops_engine_tools.engine_sca.engine_container.src.domain.model.gateways.tool_gateway import (
     ToolGateway,
 )
+from devsecops_engine_tools.engine_sca.engine_container.src.domain.model.context_container import (
+    ContextContainer,
+)
 from devsecops_engine_tools.engine_utilities.sbom.deserealizator import (
     get_list_component,
 )
@@ -8,6 +11,10 @@ from devsecops_engine_tools.engine_utilities.trivy_utils.infrastructure.driven_a
     TrivyManagerScanUtils
 )
 import subprocess
+import json
+from dataclasses import asdict
+from datetime import datetime, timezone
+from typing import List
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
 from devsecops_engine_tools.engine_utilities import settings
 
@@ -107,3 +114,63 @@ class TrivyScan(ToolGateway):
             sbom_components = self._generate_sbom(command_prefix, image_name, remoteconfig, vuln_type, ignore_unfixed, is_compressed_file)
 
         return image_scanned, sbom_components
+
+    def get_container_context_from_results(self, path_file_results: str) -> List[ContextContainer]:
+        context_container_list = []
+
+        with open(path_file_results, "rb") as file:
+            image_object = file.read()
+            json_data = json.loads(image_object)
+
+        results = json_data.get("Results", [])
+
+        for result in results:
+            vulnerabilities = result.get("Vulnerabilities", [])
+            for vul in vulnerabilities:
+                cvss_score = TrivyManagerScanUtils.get_cvss_v3_score(vul.get("CVSS"))
+                context_container = ContextContainer(
+                    cve_id=vul.get("VulnerabilityID", "unknown"),
+                    cwe_id=vul.get("CweIDs", "unknown"),
+                    vendor_id=vul.get("VendorIDs", "unknown"),
+                    severity=TrivyManagerScanUtils.get_cvss_v3_severity(
+                        cvss_score, 
+                        vul.get("Severity", "unknown").lower()
+                    ),
+                    vulnerability_status=vul.get("Status", "unknown"),
+                    target_image=result.get("Target", "unknown"),
+                    package_name=vul.get("PkgName", "unknown"),
+                    installed_version=vul.get("InstalledVersion", "unknown"),
+                    fixed_version=vul.get("FixedVersion", "unknown"),
+                    cvss_score=cvss_score,
+                    cvss_vector=vul.get("CVSS", "unknown"),
+                    description=vul.get("Description", "unknown").replace("\n", ""),
+                    os_type=result.get("Type", "unknown"),
+                    layer_digest=vul.get("Layer", {}).get("DiffID", "unknown"),
+                    published_date=(
+                        self._check_date_format(vul)
+                        if vul.get("PublishedDate")
+                        else None
+                    ),
+                    last_modified_date=vul.get("LastModifiedDate", "unknown"),
+                    references=vul.get("References", "unknown"),
+                    source_tool="Trivy",
+                )
+                context_container_list.append(context_container)
+
+        return context_container_list
+
+    def _check_date_format(self, vul):
+        """Check and format date from vulnerability data."""
+        try:
+            published_date_cve = (
+                datetime.strptime(vul.get("PublishedDate"), "%Y-%m-%dT%H:%M:%S.%fZ")
+                .replace(tzinfo=timezone.utc)
+                .isoformat()
+            )
+        except:
+            published_date_cve = (
+                datetime.strptime(vul.get("PublishedDate"), "%Y-%m-%dT%H:%M:%SZ")
+                .replace(tzinfo=timezone.utc)
+                .isoformat()
+            )
+        return published_date_cve

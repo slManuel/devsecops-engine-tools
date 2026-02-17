@@ -23,6 +23,7 @@ def init_engine_core(
     metrics_manager_gateway: any,
     sbom_tool_gateway: any,
     risk_score_gateway: any,
+    context_extraction_gateway: any,
     args: any
 ):
     config_tool = remote_config_source_gateway.get_remote_config(
@@ -33,7 +34,6 @@ def init_engine_core(
     pipeline_name = devops_platform_gateway.get_variable("pipeline_name")
     tool_override_pipelines = config_tool["SBOM_MANAGER"].get("TOOL_OVERRIDE_PIPELINES", {})
     sbom_tool_name = tool_override_pipelines.get(pipeline_name, config_tool["SBOM_MANAGER"]["TOOL"])
-    
     sbom_tool_gateway = sbom_tool_gateway.get(sbom_tool_name.lower())
 
     if config_tool[args["module"].upper()]["ENABLED"]:
@@ -56,7 +56,8 @@ def init_engine_core(
                 devops_platform_gateway,
                 remote_config_source_gateway,
                 sbom_tool_gateway,
-                risk_score_gateway
+                risk_score_gateway,
+                context_extraction_gateway
             ).process(args, config_tool)
 
             warning_release = config_tool["WARNING_RELEASE"]

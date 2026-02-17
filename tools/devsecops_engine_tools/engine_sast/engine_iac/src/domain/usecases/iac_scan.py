@@ -60,9 +60,6 @@ class IacScan:
             dict_args["send_metrics"] = "false"
             dict_args["use_vulnerability_management"] = "false"
 
-        if dict_args.get("context") == "true":
-            self.tool_gateway.get_iac_context_from_results(path_file_results)
-
         totalized_exclusions = []
         (
             totalized_exclusions.extend(

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional
 
 @dataclass
@@ -13,3 +13,4 @@ class ContextDependencies:
     description: str
     references: Optional[List[str]]
     source_tool: str
+    priority: Optional[dict] = field(default=None)

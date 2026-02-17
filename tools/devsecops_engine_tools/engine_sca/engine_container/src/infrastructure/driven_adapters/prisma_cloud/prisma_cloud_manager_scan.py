@@ -4,6 +4,7 @@ import subprocess
 import time
 import base64
 import json
+from typing import List
 from devsecops_engine_tools.engine_sca.engine_container.src.domain.model.gateways.tool_gateway import (
     ToolGateway,
 )
@@ -201,3 +202,7 @@ class PrismaCloudManagerScan(ToolGateway):
             )
 
         return image_scanned, sbom_components
+
+    def get_container_context_from_results(self, path_file_results: str) -> List:
+        # TODO: Implement Prisma Cloud context extraction
+        return []

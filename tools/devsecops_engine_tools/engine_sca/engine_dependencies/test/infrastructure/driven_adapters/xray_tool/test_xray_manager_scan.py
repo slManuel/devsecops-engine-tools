@@ -446,18 +446,17 @@ def test_get_dependencies_context_from_results(monkeypatch):
 
     xray = XrayScan()
 
-    printed_lines = []
-    def fake_print(*args, **kwargs):
-        printed_lines.append(args[0] if args else "")
-
-    monkeypatch.setattr("builtins.print", fake_print)
-
     # Act
-    xray.get_dependencies_context_from_results(tmpfile_name, remote_config)
+    result = xray.get_dependencies_context_from_results(tmpfile_name, remote_config)
 
-    # Assert
-    assert any("===== BEGIN CONTEXT OUTPUT =====" in line for line in printed_lines)
-    assert any("===== END CONTEXT OUTPUT =====" in line for line in printed_lines)
-    assert any("CVE-2024-0001" in line for line in printed_lines)
-    assert any("Test summary" in line for line in printed_lines)
-    assert any("Jfrog Xray" in line for line in printed_lines)
+    # Assert - verificar el contenido de la lista retornada
+    assert isinstance(result, list)
+    assert len(result) == 1
+    
+    context = result[0]
+    assert context.cve_id == ["CVE-2024-0001"]
+    assert context.description == "Test summary"
+    assert context.source_tool == "Jfrog Xray"
+    assert context.severity == "high"
+    assert context.component == "pkg:generic/testpkg:1.0.0"
+    assert context.fixed_version == ["1.0.1"]

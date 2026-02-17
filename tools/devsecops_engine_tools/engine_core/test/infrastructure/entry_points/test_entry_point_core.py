@@ -58,6 +58,7 @@ class TestEntryPointCore(unittest.TestCase):
             metrics_manager_gateway=mock.Mock(),
             sbom_tool_gateway=mock.Mock(),
             risk_score_gateway=mock.Mock(),
+            context_extraction_gateway=mock.Mock(),
             args=args,
         )
 
@@ -110,6 +111,7 @@ class TestEntryPointCore(unittest.TestCase):
             metrics_manager_gateway=mock.Mock(),
             sbom_tool_gateway=mock.Mock(),
             risk_score_gateway=mock.Mock(),
+            context_extraction_gateway=mock.Mock(),
             args={"remote_config_repo": "test", "module": "engine_iac", "remote_config_branch": ""},
         )
 
@@ -149,6 +151,7 @@ class TestEntryPointCore(unittest.TestCase):
             metrics_manager_gateway=mock.Mock(),
             sbom_tool_gateway=mock.Mock(),
             risk_score_gateway=mock.Mock(),
+            context_extraction_gateway=mock.Mock(),
             args={"remote_config_repo": "test", "module": "engine_risk", "send_metrics": "true", "remote_config_branch": ""},
         )
 
@@ -210,6 +213,7 @@ class TestEntryPointCore(unittest.TestCase):
             metrics_manager_gateway=mock.Mock(),
             sbom_tool_gateway=mock.Mock(),
             risk_score_gateway=mock.Mock(),
+            context_extraction_gateway=mock.Mock(),
             args=args,
         )
 
@@ -295,6 +299,7 @@ class TestEntryPointCore(unittest.TestCase):
             metrics_manager_gateway=mock.Mock(),
             sbom_tool_gateway=mock_sbom_tool_gateway,
             risk_score_gateway=mock.Mock(),
+            context_extraction_gateway=mock.Mock(),
             args=args,
         )
 

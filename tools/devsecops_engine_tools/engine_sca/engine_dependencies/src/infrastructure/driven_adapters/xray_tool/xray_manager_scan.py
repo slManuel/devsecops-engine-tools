@@ -12,6 +12,7 @@ import re
 import os
 import json
 from dataclasses import asdict, dataclass
+from typing import List
 
 from devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.helpers.get_artifacts import (
     GetArtifacts,
@@ -237,7 +238,7 @@ class XrayScan(ToolGateway):
 
         return results_file
 
-    def get_dependencies_context_from_results(self, path_file_results, remote_config):
+    def get_dependencies_context_from_results(self, path_file_results, remote_config) -> List[ContextDependencies]:
         with open(path_file_results, "r") as file:
             scan_results = json.load(file)
             context_dependencies_list = []
@@ -274,15 +275,4 @@ class XrayScan(ToolGateway):
                         )
                         context_dependencies_list.append(context)
 
-            print("===== BEGIN CONTEXT OUTPUT =====")
-            print(
-                json.dumps(
-                    {
-                        "dependencies_context": [
-                            asdict(context) for context in context_dependencies_list
-                        ]
-                    },
-                    indent=4,
-                )
-            )
-            print("===== END CONTEXT OUTPUT =====")
+            return context_dependencies_list
