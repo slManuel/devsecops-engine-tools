@@ -70,7 +70,7 @@ def init_engine_dependencies(
     )
 
     if scan_flag and not (skip_flag):
-        to_scan = dict_args["folder_path"] if dict_args["folder_path"] else os.getcwd()        
+        to_scan = dict_args["folder_path"] if dict_args["folder_path"] else os.getcwd()
         if os.path.exists(to_scan):
             dependencies_sca_scan = DependenciesScan(
                 tool_run,

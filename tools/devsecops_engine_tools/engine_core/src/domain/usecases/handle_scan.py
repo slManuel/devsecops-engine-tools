@@ -220,7 +220,6 @@ class HandleScan:
                 config_tool, input_core, dict_args, secret_tool, env, sbom_components
             )
 
-            # TODO: cargar sbom al dependency track si aplica
             self.risk_score_gateway.get_risk_score(findings_list, config_tool, dict_args["module"])
             return findings_list, input_core
 
