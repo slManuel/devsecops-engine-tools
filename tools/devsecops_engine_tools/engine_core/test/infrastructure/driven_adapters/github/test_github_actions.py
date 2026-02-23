@@ -195,5 +195,51 @@ class TestEnvVariables(unittest.TestCase):
         self.assertEqual(result, "pipeline_name")
         mock_env_get.assert_called_once_with("CUSTOM_PIPELINE_NAME")
 
+
+class TestGithubActionsAdditional(unittest.TestCase):
+
+    def test_result_pipeline_succeeded_with_issues(self):
+        WARNING = "\033[93m"
+        ENDC = "\033[0m"
+        ICON_SUCCESS = "\u2714"
+        github_actions = GithubActions()
+        result = github_actions.result_pipeline("succeeded_with_issues")
+        self.assertEqual(result, f"{WARNING}{ICON_SUCCESS}Succeeded with issues{ENDC}")
+
+    @mock.patch(
+        'devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.github.github_actions.SystemVariables',
+        autospec=True)
+    @mock.patch(
+        'devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.github.github_actions.BuildVariables',
+        autospec=True)
+    def test_get_source_code_management_uri(self, mock_build_variables, mock_system_variables):
+        github_actions = GithubActions()
+        mock_system_variables.github_server_url.value.return_value = "https://github.com"
+        mock_build_variables.github_repository.value.return_value = "octocat/hello-world"
+        result = github_actions.get_source_code_management_uri()
+        self.assertEqual(result, "https://github.com/octocat/hello-world")
+
+    @mock.patch(
+        'devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.github.github_actions.SystemVariables',
+        autospec=True)
+    @mock.patch(
+        'devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.github.github_actions.BuildVariables',
+        autospec=True)
+    @mock.patch(
+        'devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.github.github_actions.ReleaseVariables',
+        autospec=True)
+    def test_get_variable_value_error_returns_none(self, mock_release_variables, mock_build_variables, mock_system_variables):
+        github_actions = GithubActions()
+        mock_build_variables.github_ref.value.side_effect = ValueError("not defined")
+        result = github_actions.get_variable("branch_name")
+        self.assertIsNone(result)
+
+    def test_set_variable(self):
+        github_actions = GithubActions()
+        with mock.patch('builtins.print') as mock_print:
+            github_actions.set_variable("MY_VAR", "my_value")
+            mock_print.assert_called_once_with("::set-output name=MY_VAR::my_value")
+
+
 if __name__ == '__main__':
     unittest.main()

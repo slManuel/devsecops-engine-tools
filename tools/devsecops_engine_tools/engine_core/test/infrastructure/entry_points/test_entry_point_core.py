@@ -24,7 +24,7 @@ class TestEntryPointCore(unittest.TestCase):
     ):
         # Set up mock arguments
 
-        mock_config_tool = {"BANNER": "DevSecOps Engine Tools", "WARNING_RELEASE": False, "ENGINE_IAC": {"ENABLED": "true", "TOOL": "tool"}, "SBOM_MANAGER": {"TOOL": "SYFT"}, "BREAK_BUILD_MANAGER": {"MODEL": "severity", "CLASSIFICATION": ["critical", "high", "medium", "low"]}}
+        mock_config_tool = {"BANNER": "DevSecOps Engine Tools", "WARNING_RELEASE": False, "ENGINE_IAC": {"ENABLED": "true", "TOOL": "tool"}, "SBOM_MANAGER": {"TOOL": "SYFT"}, "BREAK_BUILD_MANAGER": {"MODEL": "severity", "CLASSIFICATION": ["critical", "high", "medium", "low"]}, "LICENSE_ANALYZER": {"TOOL": "dependency_track"}}
         mock_findings_list = []
         mock_input_core = {}
         mock_scan_result = {}
@@ -59,6 +59,7 @@ class TestEntryPointCore(unittest.TestCase):
             sbom_tool_gateway=mock.Mock(),
             risk_score_gateway=mock.Mock(),
             context_extraction_gateway=mock.Mock(),
+            license_tool_gateway=mock.Mock(),
             args=args,
         )
 
@@ -94,7 +95,8 @@ class TestEntryPointCore(unittest.TestCase):
             "ENGINE_IAC": {"ENABLED": False, "TOOL": "tool"},
             "SBOM_MANAGER": {
                 "TOOL": "SYFT"
-            }
+            },
+            "LICENSE_ANALYZER": {"TOOL": "dependency_track"}
         }
         mock_devops_platform_gateway = mock.Mock()
         mock_remote_config_source_gateway = mock.Mock()
@@ -112,6 +114,7 @@ class TestEntryPointCore(unittest.TestCase):
             sbom_tool_gateway=mock.Mock(),
             risk_score_gateway=mock.Mock(),
             context_extraction_gateway=mock.Mock(),
+            license_tool_gateway=mock.Mock(),
             args={"remote_config_repo": "test", "module": "engine_iac", "remote_config_branch": ""},
         )
 
@@ -130,7 +133,8 @@ class TestEntryPointCore(unittest.TestCase):
         mock_config_tool = {
             "BANNER": "DevSecOps Engine Tools",
             "ENGINE_RISK": {"ENABLED": "true"},
-            "SBOM_MANAGER": {"TOOL": "SYFT"}
+            "SBOM_MANAGER": {"TOOL": "SYFT"},
+            "LICENSE_ANALYZER": {"TOOL": "dependency_track"}
         }
         mock_devops_platform_gateway = mock.Mock()
         mock_remote_config_source_gateway = mock.Mock()
@@ -152,6 +156,7 @@ class TestEntryPointCore(unittest.TestCase):
             sbom_tool_gateway=mock.Mock(),
             risk_score_gateway=mock.Mock(),
             context_extraction_gateway=mock.Mock(),
+            license_tool_gateway=mock.Mock(),
             args={"remote_config_repo": "test", "module": "engine_risk", "send_metrics": "true", "remote_config_branch": ""},
         )
 
@@ -177,8 +182,8 @@ class TestEntryPointCore(unittest.TestCase):
     ):
         # Set up mock arguments
 
-        mock_config_tool = {"BANNER": "DevSecOps Engine Tools", "WARNING_RELEASE": "false", "ENGINE_IAC": {"ENABLED": "true", "TOOL": "tool"}, "SBOM_MANAGER": {"TOOL": "SYFT"}, "BREAK_BUILD_MANAGER": {"MODEL": "severity", "CLASSIFICATION": ["critical", "high", "medium", "low"]}}
-        mock_config_tool_flag = {"BANNER": "DevSecOps Engine Tools", "WARNING_RELEASE": "false", "ENGINE_IAC": {"ENABLED": "true", "TOOL": "OTHER_TOOL"}, "SBOM_MANAGER": {"TOOL": "SYFT"}, "BREAK_BUILD_MANAGER": {"MODEL": "severity", "CLASSIFICATION": ["critical", "high", "medium", "low"]}}
+        mock_config_tool = {"BANNER": "DevSecOps Engine Tools", "WARNING_RELEASE": "false", "ENGINE_IAC": {"ENABLED": "true", "TOOL": "tool"}, "SBOM_MANAGER": {"TOOL": "SYFT"}, "BREAK_BUILD_MANAGER": {"MODEL": "severity", "CLASSIFICATION": ["critical", "high", "medium", "low"]}, "LICENSE_ANALYZER": {"TOOL": "dependency_track"}}
+        mock_config_tool_flag = {"BANNER": "DevSecOps Engine Tools", "WARNING_RELEASE": "false", "ENGINE_IAC": {"ENABLED": "true", "TOOL": "OTHER_TOOL"}, "SBOM_MANAGER": {"TOOL": "SYFT"}, "BREAK_BUILD_MANAGER": {"MODEL": "severity", "CLASSIFICATION": ["critical", "high", "medium", "low"]}, "LICENSE_ANALYZER": {"TOOL": "dependency_track"}}
         mock_findings_list = []
         mock_input_core = {}
         mock_scan_result = {}
@@ -214,6 +219,7 @@ class TestEntryPointCore(unittest.TestCase):
             sbom_tool_gateway=mock.Mock(),
             risk_score_gateway=mock.Mock(),
             context_extraction_gateway=mock.Mock(),
+            license_tool_gateway=mock.Mock(),
             args=args,
         )
 
@@ -261,7 +267,8 @@ class TestEntryPointCore(unittest.TestCase):
             "BREAK_BUILD_MANAGER": {
                 "MODEL": "severity", 
                 "CLASSIFICATION": ["critical", "high", "medium", "low"]
-            }
+            },
+            "LICENSE_ANALYZER": {"TOOL": "dependency_track"}
         }
         mock_findings_list = []
         mock_input_core = {}
@@ -300,6 +307,7 @@ class TestEntryPointCore(unittest.TestCase):
             sbom_tool_gateway=mock_sbom_tool_gateway,
             risk_score_gateway=mock.Mock(),
             context_extraction_gateway=mock.Mock(),
+            license_tool_gateway=mock.Mock(),
             args=args,
         )
 
