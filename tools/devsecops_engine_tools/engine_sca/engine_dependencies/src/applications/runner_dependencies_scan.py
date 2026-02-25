@@ -22,7 +22,7 @@ from devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.en
 
 
 def runner_engine_dependencies(
-    dict_args, config_tool, secret_tool, devops_platform_gateway, remote_config_source_gateway, sbom_tool_gateway
+    dict_args, config_tool, secret_tool, devops_platform_gateway, remote_config_source_gateway, sbom_tool_gateway, license_tool_gateway
 ):
     try:
         tools_mapping = {
@@ -47,6 +47,7 @@ def runner_engine_dependencies(
         tool_run = tools_mapping[selected_tool]["tool_run"]()
         tool_deserializator = tools_mapping[selected_tool]["tool_deserializator"]()
         tool_sbom = tools_mapping[selected_tool]["tool_sbom"]
+        tool_license_manager = license_tool_gateway
 
         findings_list, input_core, sbom_components = init_engine_dependencies(
             tool_run,
@@ -56,7 +57,8 @@ def runner_engine_dependencies(
             dict_args,
             secret_tool,
             config_tool,
-            tool_sbom
+            tool_sbom,
+            tool_license_manager
         )
         
         # Return tool_run as fourth element for context extraction

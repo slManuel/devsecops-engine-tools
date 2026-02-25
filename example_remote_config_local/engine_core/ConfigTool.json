@@ -86,6 +86,16 @@
             "REGION_NAME": ""
         }
     },
+    "LICENSE_ANALYZER": {
+        "ENABLED": false,
+        "TOOL": "DEPENDENCY_TRACK",
+        "DEPENDENCY_TRACK": {
+            "HOST": "",
+            "API_KEY_SECRET_KEY": "",
+            "EXPORT_TASK_ID": false,
+            "TASK_ID_VARIABLE_NAME": ""
+        }
+    },
     "SBOM_MANAGER": {
         "ENABLED": true,
         "TOOL": "SYFT|CDXGEN",
@@ -102,12 +112,20 @@
             "CDXGEN_VERSION": "11.7.0",
             "OUTPUT_FORMAT": "cyclonedx-json",
             "SLIM_BINARY": true,
+            "FETCH_LICENSE": false,
             "EXCLUDE_TYPES": ["jar"],
             "EXCLUDE_PATHS": ["**/test/**"],
             "RECURSE": true,
             "DEBUG_PIPELINES": ["pipeline_name1", "pipeline_name2"],
             "LIFECYCLE_PIPELINES": {
                 "pipeline_name1": "pre-build"
+            },
+            "OVERRIDE_REGISTRIES": false,
+            "REGISTRIES": {
+                "MAVEN_CENTRAL_URL": "https://repo1.maven.org/maven2/",
+                "NPM_URL": "https://registry.npmjs.org/",
+                "PYPI_URL": "https://pypi.org/pypi/",
+                "NUGET_URL": "https://api.nuget.org/v3/index.json"
             }
         }
     },

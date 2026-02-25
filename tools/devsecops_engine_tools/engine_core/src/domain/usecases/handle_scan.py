@@ -1,3 +1,4 @@
+from devsecops_engine_tools.engine_core.src.domain.model.gateway.license_manager import LicenseManagerGateway
 from devsecops_engine_tools.engine_sast.engine_iac.src.applications.runner_iac_scan import (
     runner_engine_iac,
 )
@@ -69,6 +70,7 @@ class HandleScan:
         sbom_tool_gateway: SbomManagerGateway,
         risk_score_gateway: RiskScoreGateway,
         context_extraction_gateway: ContextExtractionGateway,
+        license_tool_gateway: LicenseManagerGateway,
     ):
         self.vulnerability_management = vulnerability_management
         self.secrets_manager_gateway = secrets_manager_gateway
@@ -77,7 +79,8 @@ class HandleScan:
         self.sbom_tool_gateway = sbom_tool_gateway
         self.risk_score_gateway = risk_score_gateway
         self.context_extraction_gateway = context_extraction_gateway
-
+        self.license_tool_gateway = license_tool_gateway
+    
     def process(self, dict_args: any, config_tool: any):
         secret_tool = None
         env = define_env(
@@ -201,6 +204,7 @@ class HandleScan:
                 self.devops_platform_gateway,
                 self.remote_config_source_gateway,
                 self.sbom_tool_gateway,
+                self.license_tool_gateway
             )
             
             self._handle_context_extraction(
@@ -215,6 +219,7 @@ class HandleScan:
             self._use_vulnerability_management(
                 config_tool, input_core, dict_args, secret_tool, env, sbom_components
             )
+
             self.risk_score_gateway.get_risk_score(findings_list, config_tool, dict_args["module"])
             return findings_list, input_core
 

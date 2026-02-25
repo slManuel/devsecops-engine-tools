@@ -184,5 +184,57 @@ class TestEnvVariables(unittest.TestCase):
         self.assertEqual(result, "pipeline_name")
         mock_env_get.assert_called_once_with("CUSTOM_PIPELINE_NAME")
 
+
+class TestAzureDevopsAdditional(unittest.TestCase):
+
+    def test_result_pipeline_succeeded_with_issues(self):
+        azure_devops = AzureDevops()
+        result = azure_devops.result_pipeline("succeeded_with_issues")
+        self.assertEqual(result, "##vso[task.complete result=SucceededWithIssues;]DONE")
+
+    @mock.patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.azure.azure_devops.SystemVariables', autospec=True)
+    @mock.patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.azure.azure_devops.BuildVariables', autospec=True)
+    def test_get_source_code_management_uri_github(self, mock_build_variables, mock_system_variables):
+        azure_devops = AzureDevops()
+        mock_build_variables.Build_Repository_Name.value.return_value = "octocat/hello-world"
+        mock_build_variables.Build_Repository_Provider.value.return_value = "github"
+        result = azure_devops.get_source_code_management_uri()
+        self.assertEqual(result, "https://github.com/octocat/hello-world")
+
+    @mock.patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.azure.azure_devops.SystemVariables', autospec=True)
+    @mock.patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.azure.azure_devops.BuildVariables', autospec=True)
+    def test_get_source_code_management_uri_git(self, mock_build_variables, mock_system_variables):
+        azure_devops = AzureDevops()
+        mock_system_variables.System_TeamFoundationCollectionUri.value.return_value = "https://dev.azure.com/org/"
+        mock_system_variables.System_TeamProject.value.return_value = "MyProject"
+        mock_build_variables.Build_Repository_Name.value.return_value = "MyRepo"
+        mock_build_variables.Build_Repository_Provider.value.return_value = "git"
+        result = azure_devops.get_source_code_management_uri()
+        self.assertEqual(result, "https://dev.azure.com/org/MyProject/_git/MyRepo")
+
+    @mock.patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.azure.azure_devops.SystemVariables', autospec=True)
+    @mock.patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.azure.azure_devops.BuildVariables', autospec=True)
+    @mock.patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.azure.azure_devops.ReleaseVariables', autospec=True)
+    def test_get_variable_value_error_returns_none(self, mock_release_variables, mock_build_variables, mock_system_variables):
+        azure_devops = AzureDevops()
+        mock_build_variables.Build_SourceBranchName.value.side_effect = ValueError("not defined")
+        result = azure_devops.get_variable("branch_name")
+        self.assertIsNone(result)
+
+    @mock.patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.azure.azure_devops.logger')
+    def test_set_variable(self, mock_logger):
+        azure_devops = AzureDevops()
+        azure_devops.set_variable("MY_VAR", "my_value")
+        mock_logger.info.assert_called_once_with("##vso[task.setvariable variable=MY_VAR;]my_value")
+
+    @mock.patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.azure.azure_devops.SystemVariables', autospec=True)
+    @mock.patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.azure.azure_devops.BuildVariables', autospec=True)
+    def test_get_source_code_management_uri_value_error_returns_none(self, mock_build_variables, mock_system_variables):
+        azure_devops = AzureDevops()
+        mock_build_variables.Build_Repository_Provider.value.side_effect = ValueError("not set")
+        result = azure_devops.get_source_code_management_uri()
+        self.assertIsNone(result)
+
+
 if __name__ == '__main__':
     unittest.main()
