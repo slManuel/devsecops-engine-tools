@@ -99,7 +99,7 @@ def init_engine_dependencies(
                 )
 
                 if config_tool["LICENSE_ANALYZER"]["ENABLED"]:
-                    token_license_analyzer = secret_tool.get_secret(config_license[license_tool]["API_KEY_SECRET_KEY"]) if secret_tool else dict_args.get("token_license_analyzer")
+                    token_license_analyzer = secret_tool.get(config_license[license_tool]["API_KEY_SECRET_KEY"]) if secret_tool else dict_args.get("token_license_analyzer")
                     
                     if not token_license_analyzer:
                         logger.error("API key for license analyzer is not provided.")
