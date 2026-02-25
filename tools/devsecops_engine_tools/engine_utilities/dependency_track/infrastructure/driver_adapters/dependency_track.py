@@ -6,6 +6,7 @@ from devsecops_engine_tools.engine_utilities.dependency_track.domain.models.sbom
 from devsecops_engine_tools.engine_utilities.dependency_track.domain.models.server_config import ServerConfig
 from devsecops_engine_tools.engine_utilities.dependency_track.infrastructure.driver_adapters.dto.sbom_request import SbomRequest
 from devsecops_engine_tools.engine_utilities.dependency_track.infrastructure.driver_adapters.dto.sbom_response import SbomUploadResponse
+from devsecops_engine_tools.engine_utilities.defect_dojo.infraestructure.driver_adapters.settings.settings import VERIFY_CERTIFICATE
 from devsecops_engine_tools.engine_utilities.utils.api_error import ApiError
 from devsecops_engine_tools.engine_utilities.sbom.sbom_file_reader import read_sbom_file_as_base64
 from devsecops_engine_tools.engine_utilities.settings import SETTING_LOGGER
@@ -31,7 +32,7 @@ class DependencyTrack(LicenseManagerGateway):
                 bom=sbom_base64,
             )
             response = requests.put(
-                url=url, headers=headers, json=payload.to_dict()
+                url=url, headers=headers, json=payload.to_dict(), verify=VERIFY_CERTIFICATE
             )
             if response.status_code != 200:
                 try:
