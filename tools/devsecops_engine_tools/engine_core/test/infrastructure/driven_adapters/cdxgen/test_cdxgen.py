@@ -51,19 +51,21 @@ class TestCdxGen(unittest.TestCase):
         mock_platform.return_value = "Linux"
         mock_get_list_component.return_value = self.mock_components
         
-        with patch.object(self.cdxgen, '_install_tool_unix', return_value='/usr/local/bin/cdxgen') as mock_install:
-            with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
-                # Act
-                result = self.cdxgen.get_components(self.artifact, self.mock_config, self.service_name)
+        with patch.object(self.cdxgen, '_check_cdxgen_in_path', return_value=None) as mock_check:
+            with patch.object(self.cdxgen, '_install_tool_unix', return_value='./cdxgen-linux-amd64') as mock_install:
+                with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
+                    # Act
+                    result = self.cdxgen.get_components(self.artifact, self.mock_config, self.service_name)
         
         # Assert
         self.assertEqual(result, self.mock_components)
+        mock_check.assert_called_once()
         mock_install.assert_called_once_with(
             "cdxgen-linux-amd64",
             "https://github.com/CycloneDX/cdxgen/releases/download/v10.2.0/cdxgen-linux-amd64",
             "cdxgen"
         )
-        mock_run.assert_called_once_with('/usr/local/bin/cdxgen', self.artifact, self.service_name, [], [], True, True, {}, False)
+        mock_run.assert_called_once_with('./cdxgen-linux-amd64', self.artifact, self.service_name, [], [], True, True, {}, False)
         mock_get_list_component.assert_called_once_with('test_service_SBOM.json', 'json')
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.platform.machine')
@@ -75,19 +77,21 @@ class TestCdxGen(unittest.TestCase):
         mock_machine.return_value = "aarch64"
         mock_get_list_component.return_value = self.mock_components
         
-        with patch.object(self.cdxgen, '_install_tool_unix', return_value='/usr/local/bin/cdxgen') as mock_install:
-            with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
-                # Act
-                result = self.cdxgen.get_components(self.artifact, self.mock_config, self.service_name)
+        with patch.object(self.cdxgen, '_check_cdxgen_in_path', return_value=None) as mock_check:
+            with patch.object(self.cdxgen, '_install_tool_unix', return_value='./cdxgen-linux-arm64') as mock_install:
+                with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
+                    # Act
+                    result = self.cdxgen.get_components(self.artifact, self.mock_config, self.service_name)
         
         # Assert
         self.assertEqual(result, self.mock_components)
+        mock_check.assert_called_once()
         mock_install.assert_called_once_with(
             "cdxgen-linux-arm64",
             "https://github.com/CycloneDX/cdxgen/releases/download/v10.2.0/cdxgen-linux-arm64",
             "cdxgen"
         )
-        mock_run.assert_called_once_with('/usr/local/bin/cdxgen', self.artifact, self.service_name, [], [], True, True, {}, False)
+        mock_run.assert_called_once_with('./cdxgen-linux-arm64', self.artifact, self.service_name, [], [], True, True, {}, False)
         mock_get_list_component.assert_called_once_with('test_service_SBOM.json', 'json')
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.get_list_component')
@@ -97,13 +101,15 @@ class TestCdxGen(unittest.TestCase):
         mock_platform.return_value = "Linux"
         mock_get_list_component.return_value = self.mock_components
         
-        with patch.object(self.cdxgen, '_install_tool_unix', return_value='./cdxgen-linux-amd64-slim') as mock_install:
-            with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
-                # Act
-                result = self.cdxgen.get_components(self.artifact, self.mock_config_slim, self.service_name)
+        with patch.object(self.cdxgen, '_check_cdxgen_in_path', return_value=None) as mock_check:
+            with patch.object(self.cdxgen, '_install_tool_unix', return_value='./cdxgen-linux-amd64-slim') as mock_install:
+                with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
+                    # Act
+                    result = self.cdxgen.get_components(self.artifact, self.mock_config_slim, self.service_name)
         
         # Assert
         self.assertEqual(result, self.mock_components)
+        mock_check.assert_called_once()
         mock_install.assert_called_once_with(
             "cdxgen-linux-amd64-slim",
             "https://github.com/CycloneDX/cdxgen/releases/download/v10.2.0/cdxgen-linux-amd64-slim",
@@ -117,13 +123,15 @@ class TestCdxGen(unittest.TestCase):
         mock_platform.return_value = "Darwin"
         mock_get_list_component.return_value = self.mock_components
         
-        with patch.object(self.cdxgen, '_install_tool_unix', return_value='/usr/local/bin/cdxgen') as mock_install:
-            with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
-                # Act
-                result = self.cdxgen.get_components(self.artifact, self.mock_config, self.service_name)
+        with patch.object(self.cdxgen, '_check_cdxgen_in_path', return_value=None) as mock_check:
+            with patch.object(self.cdxgen, '_install_tool_unix', return_value='./cdxgen-darwin-amd64') as mock_install:
+                with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
+                    # Act
+                    result = self.cdxgen.get_components(self.artifact, self.mock_config, self.service_name)
         
         # Assert
         self.assertEqual(result, self.mock_components)
+        mock_check.assert_called_once()
         mock_install.assert_called_once_with(
             "cdxgen-darwin-amd64",
             "https://github.com/CycloneDX/cdxgen/releases/download/v10.2.0/cdxgen-darwin-amd64",
@@ -139,13 +147,15 @@ class TestCdxGen(unittest.TestCase):
         mock_machine.return_value = "arm64"
         mock_get_list_component.return_value = self.mock_components
         
-        with patch.object(self.cdxgen, '_install_tool_unix', return_value='/usr/local/bin/cdxgen') as mock_install:
-            with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
-                # Act
-                result = self.cdxgen.get_components(self.artifact, self.mock_config, self.service_name)
+        with patch.object(self.cdxgen, '_check_cdxgen_in_path', return_value=None) as mock_check:
+            with patch.object(self.cdxgen, '_install_tool_unix', return_value='./cdxgen-darwin-arm64') as mock_install:
+                with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
+                    # Act
+                    result = self.cdxgen.get_components(self.artifact, self.mock_config, self.service_name)
         
         # Assert
         self.assertEqual(result, self.mock_components)
+        mock_check.assert_called_once()
         mock_install.assert_called_once_with(
             "cdxgen-darwin-arm64",
             "https://github.com/CycloneDX/cdxgen/releases/download/v10.2.0/cdxgen-darwin-arm64",
@@ -159,13 +169,15 @@ class TestCdxGen(unittest.TestCase):
         mock_platform.return_value = "Windows"
         mock_get_list_component.return_value = self.mock_components
         
-        with patch.object(self.cdxgen, '_install_tool_windows', return_value='cdxgen-windows-amd64.exe') as mock_install:
-            with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
-                # Act
-                result = self.cdxgen.get_components(self.artifact, self.mock_config, self.service_name)
+        with patch.object(self.cdxgen, '_check_cdxgen_in_path', return_value=None) as mock_check:
+            with patch.object(self.cdxgen, '_install_tool_windows', return_value='cdxgen-windows-amd64.exe') as mock_install:
+                with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
+                    # Act
+                    result = self.cdxgen.get_components(self.artifact, self.mock_config, self.service_name)
         
         # Assert
         self.assertEqual(result, self.mock_components)
+        mock_check.assert_called_once()
         mock_install.assert_called_once_with(
             "cdxgen-windows-amd64.exe",
             "https://github.com/CycloneDX/cdxgen/releases/download/v10.2.0/cdxgen-windows-amd64.exe",
@@ -178,8 +190,9 @@ class TestCdxGen(unittest.TestCase):
         # Arrange
         mock_platform.return_value = "FreeBSD"
         
-        # Act
-        result = self.cdxgen.get_components(self.artifact, self.mock_config, self.service_name)
+        with patch.object(self.cdxgen, '_check_cdxgen_in_path', return_value=None):
+            # Act
+            result = self.cdxgen.get_components(self.artifact, self.mock_config, self.service_name)
         
         # Assert
         self.assertIsNone(result)
@@ -192,9 +205,10 @@ class TestCdxGen(unittest.TestCase):
         mock_platform.return_value = "Linux"
         error_message = "Installation failed"
         
-        with patch.object(self.cdxgen, '_install_tool_unix', side_effect=Exception(error_message)):
-            # Act
-            result = self.cdxgen.get_components(self.artifact, self.mock_config, self.service_name)
+        with patch.object(self.cdxgen, '_check_cdxgen_in_path', return_value=None):
+            with patch.object(self.cdxgen, '_install_tool_unix', side_effect=Exception(error_message)):
+                # Act
+                result = self.cdxgen.get_components(self.artifact, self.mock_config, self.service_name)
         
         # Assert
         self.assertIsNone(result)
@@ -301,15 +315,16 @@ class TestCdxGen(unittest.TestCase):
             }
         }
         
-        with patch.object(self.cdxgen, '_install_tool_unix', return_value='/usr/local/bin/cdxgen') as mock_install:
-            with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
-                # Act
-                result = self.cdxgen.get_components(self.artifact, debug_config, self.service_name)
+        with patch.object(self.cdxgen, '_check_cdxgen_in_path', return_value=None):
+            with patch.object(self.cdxgen, '_install_tool_unix', return_value='./cdxgen-linux-amd64') as mock_install:
+                with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
+                    # Act
+                    result = self.cdxgen.get_components(self.artifact, debug_config, self.service_name)
         
         # Assert
         self.assertEqual(result, self.mock_components)
         mock_logger.info.assert_called_with(f"Enabling debug mode for pipeline: {self.service_name}")
-        mock_run.assert_called_once_with('/usr/local/bin/cdxgen', self.artifact, self.service_name, [], [], True, False, {}, True)
+        mock_run.assert_called_once_with('./cdxgen-linux-amd64', self.artifact, self.service_name, [], [], True, False, {}, True)
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.get_list_component')
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.platform.system')
@@ -332,14 +347,15 @@ class TestCdxGen(unittest.TestCase):
             }
         }
         
-        with patch.object(self.cdxgen, '_install_tool_unix', return_value='/usr/local/bin/cdxgen') as mock_install:
-            with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
-                # Act
-                result = self.cdxgen.get_components(self.artifact, debug_config, self.service_name)
+        with patch.object(self.cdxgen, '_check_cdxgen_in_path', return_value=None):
+            with patch.object(self.cdxgen, '_install_tool_unix', return_value='./cdxgen-linux-amd64') as mock_install:
+                with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
+                    # Act
+                    result = self.cdxgen.get_components(self.artifact, debug_config, self.service_name)
         
         # Assert
         self.assertEqual(result, self.mock_components)
-        mock_run.assert_called_once_with('/usr/local/bin/cdxgen', self.artifact, self.service_name, [], [], True, True, {}, False)
+        mock_run.assert_called_once_with('./cdxgen-linux-amd64', self.artifact, self.service_name, [], [], True, True, {}, False)
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.subprocess.run')
     def test_run_cdxgen_with_exclude_types_list(self, mock_subprocess):
@@ -426,38 +442,118 @@ class TestCdxGen(unittest.TestCase):
         )
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.subprocess.run')
-    def test_install_tool_unix_already_installed(self, mock_subprocess):
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.platform.system')
+    def test_check_cdxgen_in_path_found_unix(self, mock_platform, mock_subprocess):
         # Arrange
-        file = "cdxgen-linux-amd64"
-        url = "https://github.com/CycloneDX/cdxgen/releases/download/v10.2.0/cdxgen-linux-amd64"
-        command_prefix = "cdxgen"
-        installed_path = "/usr/local/bin/cdxgen"
+        mock_platform.return_value = "Linux"
+        cdxgen_path = "/usr/local/bin/cdxgen"
         
-        mock_subprocess.return_value = Mock(
-            returncode=0,
-            stdout=Mock(decode=Mock(return_value=f"{installed_path}\n"))
-        )
+        # Mock both which and version check
+        mock_subprocess.side_effect = [
+            Mock(returncode=0, stdout=f"{cdxgen_path}\n", stderr=""),
+            Mock(returncode=0, stdout="10.2.0", stderr="")
+        ]
         
         # Act
-        result = self.cdxgen._install_tool_unix(file, url, command_prefix)
+        result = self.cdxgen._check_cdxgen_in_path()
         
         # Assert
-        self.assertEqual(result, installed_path)
-        mock_subprocess.assert_called_once_with(
-            ["which", command_prefix],
-            stdout=unittest.mock.ANY,
-            stderr=unittest.mock.ANY
-        )
+        self.assertEqual(result, cdxgen_path)
+        self.assertEqual(mock_subprocess.call_count, 2)
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.subprocess.run')
-    def test_install_tool_unix_not_installed_success(self, mock_subprocess):
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.platform.system')
+    def test_check_cdxgen_in_path_found_windows(self, mock_platform, mock_subprocess):
+        # Arrange
+        mock_platform.return_value = "Windows"
+        cdxgen_path = "C:\\Program Files\\cdxgen\\cdxgen.exe"
+        
+        # Mock both where and version check
+        mock_subprocess.side_effect = [
+            Mock(returncode=0, stdout=f"{cdxgen_path}\n", stderr=""),
+            Mock(returncode=0, stdout="10.2.0", stderr="")
+        ]
+        
+        # Act
+        result = self.cdxgen._check_cdxgen_in_path()
+        
+        # Assert
+        self.assertEqual(result, cdxgen_path)
+
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.subprocess.run')
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.platform.system')
+    def test_check_cdxgen_in_path_not_found(self, mock_platform, mock_subprocess):
+        # Arrange
+        mock_platform.return_value = "Linux"
+        mock_subprocess.return_value = Mock(returncode=1, stdout="", stderr="")
+        
+        # Act
+        result = self.cdxgen._check_cdxgen_in_path()
+        
+        # Assert
+        self.assertIsNone(result)
+
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.logger')
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.subprocess.run')
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.platform.system')
+    def test_check_cdxgen_in_path_version_check_fails(self, mock_platform, mock_subprocess, mock_logger):
+        # Arrange
+        mock_platform.return_value = "Linux"
+        cdxgen_path = "/usr/local/bin/cdxgen"
+        
+        # Mock which succeeds but version check fails
+        mock_subprocess.side_effect = [
+            Mock(returncode=0, stdout=f"{cdxgen_path}\n", stderr=""),
+            Mock(returncode=1, stdout="", stderr="error")
+        ]
+        
+        # Act
+        result = self.cdxgen._check_cdxgen_in_path()
+        
+        # Assert
+        self.assertIsNone(result)
+
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.logger')
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.subprocess.run')
+    def test_check_cdxgen_in_path_exception(self, mock_subprocess, mock_logger):
+        # Arrange
+        error_message = "Command failed"
+        mock_subprocess.side_effect = Exception(error_message)
+        
+        # Act
+        result = self.cdxgen._check_cdxgen_in_path()
+        
+        # Assert
+        self.assertIsNone(result)
+        mock_logger.debug.assert_called_once_with(f"cdxgen not found in PATH: {error_message}")
+
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.get_list_component')
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.platform.system')
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.logger')
+    def test_get_components_uses_cdxgen_from_path(self, mock_logger, mock_platform, mock_get_list_component):
+        # Arrange
+        mock_platform.return_value = "Linux"
+        mock_get_list_component.return_value = self.mock_components
+        cdxgen_path = "/usr/local/bin/cdxgen"
+        
+        with patch.object(self.cdxgen, '_check_cdxgen_in_path', return_value=cdxgen_path):
+            with patch.object(self.cdxgen, '_run_cdxgen', return_value='test_service_SBOM.json') as mock_run:
+                # Act
+                result = self.cdxgen.get_components(self.artifact, self.mock_config, self.service_name)
+        
+        # Assert
+        self.assertEqual(result, self.mock_components)
+        mock_logger.info.assert_called_with(f"Using cdxgen from PATH: {cdxgen_path}")
+        mock_run.assert_called_once_with(cdxgen_path, self.artifact, self.service_name, [], [], True, True, {}, False)
+
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.subprocess.run')
+    def test_install_tool_unix_success(self, mock_subprocess):
         # Arrange
         file = "cdxgen-linux-amd64"
         url = "https://github.com/CycloneDX/cdxgen/releases/download/v10.2.0/cdxgen-linux-amd64"
         command_prefix = "cdxgen"
         
-        # Mock 'which' command returning 1 (not found)
-        mock_subprocess.return_value = Mock(returncode=1)
+        mock_subprocess.return_value = Mock(returncode=0)
         
         with patch.object(self.cdxgen, '_download_tool') as mock_download:
             # Act
@@ -467,12 +563,12 @@ class TestCdxGen(unittest.TestCase):
         self.assertEqual(result, f"./{file}")
         mock_download.assert_called_once_with(file, url)
         
-        # Verify subprocess calls: which and chmod
-        expected_calls = [
-            call(["which", command_prefix], stdout=unittest.mock.ANY, stderr=unittest.mock.ANY),
-            call(["chmod", "+x", f"./{file}"], stdout=unittest.mock.ANY, stderr=unittest.mock.ANY)
-        ]
-        mock_subprocess.assert_has_calls(expected_calls)
+        # Verify chmod call
+        mock_subprocess.assert_called_once_with(
+            ["chmod", "+x", f"./{file}"],
+            stdout=unittest.mock.ANY,
+            stderr=unittest.mock.ANY
+        )
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.logger')
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.subprocess.run')
@@ -483,8 +579,6 @@ class TestCdxGen(unittest.TestCase):
         command_prefix = "cdxgen"
         error_message = "Download failed"
         
-        mock_subprocess.return_value = Mock(returncode=1)
-        
         with patch.object(self.cdxgen, '_download_tool', side_effect=Exception(error_message)):
             # Act
             result = self.cdxgen._install_tool_unix(file, url, command_prefix)
@@ -494,37 +588,11 @@ class TestCdxGen(unittest.TestCase):
         mock_logger.error.assert_called_once_with(f"Error installing cdxgen: {error_message}")
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.subprocess.run')
-    def test_install_tool_windows_already_installed(self, mock_subprocess):
+    def test_install_tool_windows_success(self, mock_subprocess):
         # Arrange
         file = "cdxgen-windows-amd64.exe"
         url = "https://github.com/CycloneDX/cdxgen/releases/download/v10.2.0/cdxgen-windows-amd64.exe"
         command_prefix = "cdxgen.exe"
-        version_output = "cdxgen 10.2.0"
-        
-        mock_subprocess.return_value = Mock(
-            stdout=Mock(decode=Mock(return_value=version_output))
-        )
-        
-        # Act
-        result = self.cdxgen._install_tool_windows(file, url, command_prefix)
-        
-        # Assert
-        self.assertEqual(result, version_output)
-        mock_subprocess.assert_called_once_with(
-            [command_prefix, "--version"],
-            stdout=unittest.mock.ANY,
-            stderr=unittest.mock.ANY
-        )
-
-    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.subprocess.run')
-    def test_install_tool_windows_not_installed_success(self, mock_subprocess):
-        # Arrange
-        file = "cdxgen-windows-amd64.exe"
-        url = "https://github.com/CycloneDX/cdxgen/releases/download/v10.2.0/cdxgen-windows-amd64.exe"
-        command_prefix = "cdxgen.exe"
-        
-        # Mock subprocess to raise exception (command not found)
-        mock_subprocess.side_effect = Exception("Command not found")
         
         with patch.object(self.cdxgen, '_download_tool') as mock_download:
             # Act
@@ -542,8 +610,6 @@ class TestCdxGen(unittest.TestCase):
         url = "https://github.com/CycloneDX/cdxgen/releases/download/v10.2.0/cdxgen-windows-amd64.exe"
         command_prefix = "cdxgen.exe"
         error_message = "Download failed"
-        
-        mock_subprocess.side_effect = Exception("Command not found")
         
         with patch.object(self.cdxgen, '_download_tool', side_effect=Exception(error_message)):
             # Act
