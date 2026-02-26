@@ -18,6 +18,7 @@ The `engine_utilities` module provides a set of shared utilities, helpers, and a
 - **GitHub:** Utilities and adapters for integrating with [GitHub](https://github.com/), including helpers for authenticating with GitHub services, managing repositories, retrieving pull request and commit information, and automating repository operations. These utilities enable seamless interaction with GitHub APIs to support CI/CD workflows and project automation.
 - **Input Validation:** Helpers for validating and sanitizing input data.
 - **SBOM Handling:** Tools for generating, parsing, and managing Software Bill of Materials (SBOM).
+- **License Analyzer (Dependency Track):** Utilities and adapter for integrating with [Dependency-Track](https://dependencytrack.org/), an open-source component analysis platform. Handles uploading CycloneDX SBOMs via the Dependency-Track REST API, providing per-status-code error handling and returning the upload task token for downstream polling.
 - **SonarQube Integration:** Adapters and runners for collecting and reporting SonarQube analysis results.
 - **SSH:** Utilities and adapters for managing SSH connections, executing remote commands, handling key-based authentication, and automating secure file transfers between systems.
 - **Logging:** Advanced logger with color-coded output, file logging, and configurable verbosity.
@@ -33,6 +34,7 @@ The `engine_utilities` module provides a set of shared utilities, helpers, and a
 - `input_validations/`: Input validation helpers.
 - `trivy_utils/`: Utilities for Trivy output parsing and management.
 - `copacetic/`: Copacetic image patching, and VEX report generation.
+- `dependency_track/`: Dependency-Track adapter for SBOM upload and license analysis.
 - `settings.py`: Centralized configuration for utility modules.
 
 ## Example Usage
