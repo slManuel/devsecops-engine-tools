@@ -245,3 +245,56 @@ def test_init_engine_dependencies_license_upload_with_export_task_id(mock_logger
     tool_license_manager.upload_sbom.assert_called_once()
     mock_logger.info.assert_any_call("SBOM uploaded to license analyzer with task ID: task_abc123")
     tool_remote.set_variable.assert_called_once_with("DT_TASK_ID", "task_abc123")
+
+
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.HandleRemoteConfigPatterns')
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.SetInputCore')
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.DependenciesScan')
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.os.path.exists')
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.logger')
+def test_init_engine_dependencies_license_upload_without_task_id_does_not_export(mock_logger, mock_exists, mock_dependencies_scan, mock_set_input_core, mock_handle_remote_config_patterns):
+    mock_exists.return_value = True
+    mock_handle_remote_config_patterns.return_value.skip_from_exclusion.return_value = False
+    mock_handle_remote_config_patterns.return_value.ignore_analysis_pattern.return_value = True
+    mock_dependencies_scan.return_value.process.return_value = "scanned_dependencies"
+    mock_dependencies_scan.return_value.deserializator.return_value = ["dep"]
+    mock_set_input_core.return_value.set_input_core.return_value = "core_input"
+
+    tool_remote = MagicMock(spec=DevopsPlatformGateway)
+    tool_remote.get_variable.return_value = "main"
+    remote_config_source_gateway = MagicMock(spec=DevopsPlatformGateway)
+    tool_sbom = MagicMock(spec=SbomManagerGateway)
+    tool_sbom.get_components.return_value = [Mock()]
+
+    tool_license_manager = MagicMock()
+    tool_license_manager.upload_sbom.return_value = None
+
+    config_tool = {
+        "SBOM_MANAGER": {"ENABLED": True, "BRANCH_FILTER": ["main"]},
+        "ENGINE_DEPENDENCIES": {"TOOL": "tool"},
+        "LICENSE_ANALYZER": {
+            "ENABLED": True,
+            "TOOL": "dep_track",
+            "dep_track": {
+                "API_KEY_SECRET_KEY": "api_key_secret",
+                "HOST": "http://host",
+                "EXPORT_TASK_ID": True,
+                "TASK_ID_VARIABLE_NAME": "DT_TASK_ID",
+            },
+        },
+    }
+    dict_args = {"remote_config_repo": "repo", "folder_path": "path", "remote_config_branch": ""}
+
+    secret_tool = MagicMock()
+    secret_tool.get.return_value = "valid_token"
+
+    init_engine_dependencies(
+        Mock(), tool_remote, remote_config_source_gateway, Mock(), dict_args,
+        secret_tool, config_tool, tool_sbom, tool_license_manager
+    )
+
+    tool_license_manager.upload_sbom.assert_called_once()
+    tool_remote.set_variable.assert_not_called()
+    mock_logger.warning.assert_any_call("SBOM upload to license analyzer failed or returned empty task ID.")
+
+

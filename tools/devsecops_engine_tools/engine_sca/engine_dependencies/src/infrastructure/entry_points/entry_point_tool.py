@@ -104,7 +104,7 @@ def init_engine_dependencies(
                     if not token_license_analyzer:
                         logger.error("API key for license analyzer is not provided.")
                     else:
-                        task_id=tool_license_manager.upload_sbom(
+                        task_id = tool_license_manager.upload_sbom(
                             config=ServerConfig(
                                 host=config_license[license_tool]["HOST"],
                                 api_key=token_license_analyzer
@@ -116,10 +116,13 @@ def init_engine_dependencies(
                             )
                         )
 
-                        logger.info(f"SBOM uploaded to license analyzer with task ID: {task_id}")
-    
-                        if config_license[license_tool].get("EXPORT_TASK_ID", False):
-                            tool_remote.set_variable(config_license[license_tool]["TASK_ID_VARIABLE_NAME"],task_id)
+                        if task_id:
+                            logger.info(f"SBOM uploaded to license analyzer with task ID: {task_id}")
+
+                            if config_license[license_tool].get("EXPORT_TASK_ID", False):
+                                tool_remote.set_variable(config_license[license_tool]["TASK_ID_VARIABLE_NAME"], task_id)
+                        else:
+                            logger.warning("SBOM upload to license analyzer failed or returned empty task ID.")
 
             dependencies_scanned = dependencies_sca_scan.process()
             deserialized = (

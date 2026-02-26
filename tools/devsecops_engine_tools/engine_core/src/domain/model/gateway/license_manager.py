@@ -1,8 +1,9 @@
 from abc import ABCMeta, abstractmethod
+from typing import Optional
 
 class LicenseManagerGateway(metaclass=ABCMeta):
     @abstractmethod
     def upload_sbom(
         self, config, request
-    ) -> "str":
+    ) -> "Optional[str]":
         "upload sbom to license analyzer"
