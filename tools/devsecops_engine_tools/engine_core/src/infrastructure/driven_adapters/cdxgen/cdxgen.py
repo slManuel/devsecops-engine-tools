@@ -51,35 +51,39 @@ class CdxGen(SbomManagerGateway):
             os_platform = platform.system()
             os_architecture = platform.machine()
 
-            base_url = (
-                f"https://github.com/CycloneDX/cdxgen/releases/download/v{cdxgen_version}/"
-            )
+            command_prefix = self._check_cdxgen_in_path()
             
-            command_prefix = "cdxgen"
-            if os_platform == "Linux":
-                if os_architecture == "aarch64":
-                    file = f"cdxgen-linux-arm64{slim}"
-                else:
-                    file = f"cdxgen-linux-amd64{slim}"
-                command_prefix = self._install_tool_unix(
-                    file, base_url + file, command_prefix
-                )
-            elif os_platform == "Darwin":
-                if os_architecture == "arm64":
-                    file = f"cdxgen-darwin-arm64{slim}"
-                else:
-                    file = f"cdxgen-darwin-amd64{slim}"
-                command_prefix = self._install_tool_unix(
-                    file, base_url + file, command_prefix
-                )
-            elif os_platform == "Windows":
-                file = f"cdxgen-windows-amd64{slim}.exe"
-                command_prefix = self._install_tool_windows(
-                    file, base_url + file, "cdxgen.exe"
-                )
+            if command_prefix:
+                logger.info(f"Using cdxgen from PATH: {command_prefix}")
             else:
-                logger.warning(f"{os_platform} is not supported.")
-                return None
+                base_url = (
+                    f"https://github.com/CycloneDX/cdxgen/releases/download/v{cdxgen_version}/"
+                )
+                
+                if os_platform == "Linux":
+                    if os_architecture == "aarch64":
+                        file = f"cdxgen-linux-arm64{slim}"
+                    else:
+                        file = f"cdxgen-linux-amd64{slim}"
+                    command_prefix = self._install_tool_unix(
+                        file, base_url + file, "cdxgen"
+                    )
+                elif os_platform == "Darwin":
+                    if os_architecture == "arm64":
+                        file = f"cdxgen-darwin-arm64{slim}"
+                    else:
+                        file = f"cdxgen-darwin-amd64{slim}"
+                    command_prefix = self._install_tool_unix(
+                        file, base_url + file, "cdxgen"
+                    )
+                elif os_platform == "Windows":
+                    file = f"cdxgen-windows-amd64{slim}.exe"
+                    command_prefix = self._install_tool_windows(
+                        file, base_url + file, "cdxgen.exe"
+                    )
+                else:
+                    logger.warning(f"{os_platform} is not supported.")
+                    return None
 
             result_sbom = self._run_cdxgen(command_prefix, artifact, service_name, exclude_types, exclude_paths, recurse, install_deps, lifecycle_pipelines, enable_debug)
             return get_list_component(result_sbom, config["CDXGEN"]["OUTPUT_FORMAT"])
@@ -146,40 +150,58 @@ class CdxGen(SbomManagerGateway):
         except Exception as e:
             logger.error(f"Error running cdxgen: {e}")
 
-    def _install_tool_unix(self, file, url, command_prefix):
-        installed = subprocess.run(
-            ["which", command_prefix],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        if installed.returncode == 1:
-            try:
-                self._download_tool(file, url)
-                subprocess.run(
-                    ["chmod", "+x", f"./{file}"],
+    def _check_cdxgen_in_path(self):
+        """Check if cdxgen is available in PATH and return its path if found."""
+        try:
+            # Try to find cdxgen in PATH
+            result = subprocess.run(
+                ["which", "cdxgen"] if platform.system() != "Windows" else ["where", "cdxgen"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            
+            if result.returncode == 0:
+                cdxgen_path = result.stdout.strip().split('\n')[0]  # Get first match
+                # Verify it's executable by checking version
+                version_check = subprocess.run(
+                    [cdxgen_path, "--version"],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
+                    text=True,
+                    timeout=5
                 )
-                return f"./{file}"
-            except Exception as e:
-                logger.error(f"Error installing cdxgen: {e}")
-        else:
-            return installed.stdout.decode("utf-8").strip()
+                if version_check.returncode == 0:
+                    return cdxgen_path
+            return None
+        except Exception as e:
+            logger.debug(f"cdxgen not found in PATH: {e}")
+            return None
 
-    def _install_tool_windows(self, file, url, command_prefix):
+    def _install_tool_unix(self, file, url, command_prefix):
+        """Download and install cdxgen binary for Unix-like systems."""
         try:
-            installed = subprocess.run(
-                [command_prefix, "--version"],
+            self._download_tool(file, url)
+            subprocess.run(
+                ["chmod", "+x", f"./{file}"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
-            return installed.stdout.decode("utf-8").strip()
-        except:
-            try:
-                self._download_tool(file, url)
-                return f"{file}"
-            except Exception as e:
-                logger.error(f"Error installing cdxgen: {e}")
+            logger.info(f"Downloaded cdxgen binary: {file}")
+            return f"./{file}"
+        except Exception as e:
+            logger.error(f"Error installing cdxgen: {e}")
+            return None
+
+    def _install_tool_windows(self, file, url, command_prefix):
+        """Download and install cdxgen binary for Windows."""
+        try:
+            self._download_tool(file, url)
+            logger.info(f"Downloaded cdxgen binary: {file}")
+            return f"{file}"
+        except Exception as e:
+            logger.error(f"Error installing cdxgen: {e}")
+            return None
 
     def _download_tool(self, file, url):
         try:
