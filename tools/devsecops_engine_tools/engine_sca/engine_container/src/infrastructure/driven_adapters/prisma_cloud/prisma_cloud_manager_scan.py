@@ -28,7 +28,13 @@ class PrismaCloudManagerScan(ToolGateway):
     def scan_image(
         self, file_path, image_name, result_file, remoteconfig, prisma_key, docker_address
     ):
-        command = [
+        prisma_config = remoteconfig.get("PRISMA_CLOUD", {})
+        max_attempts = int(prisma_config.get("SCAN_RETRIES", 1))
+        retry_delay = float(prisma_config.get("SCAN_RETRY_DELAY_SECONDS", 0))
+        if max_attempts < 1:
+            max_attempts = 1
+
+        base_command = [
             file_path,
             "images",
             "scan",
@@ -41,20 +47,48 @@ class PrismaCloudManagerScan(ToolGateway):
         ]
 
         if docker_address:
-            command.extend(["--docker-address", docker_address])
+            base_command.extend(["--docker-address", docker_address])
 
-        command.extend([
-            "--output-file",
-            result_file,
-            "--details",
+        base_command.extend(["--output-file", result_file, "--details"])
+
+        # First attempt: normal scan
+        command = base_command + [image_name]
+        if self._execute_scan(command, image_name, max_attempts, retry_delay):
+            return result_file
+
+        # Tarball fallback (Linux only)
+        tarball_path = f"/tmp/{image_name.replace('/', '_').replace(':', '_')}.tar"
+        logger.warning(
+            "Normal scan failed for %s, attempting tarball fallback at %s",
             image_name,
-        ])
-        prisma_config = remoteconfig.get("PRISMA_CLOUD", {})
-        max_attempts = int(prisma_config.get("SCAN_RETRIES", 1))
-        retry_delay = float(prisma_config.get("SCAN_RETRY_DELAY_SECONDS", 0))
-        if max_attempts < 1:
-            max_attempts = 1
+            tarball_path,
+        )
+        try:
+            subprocess.run(
+                ["docker", "save", "-o", tarball_path, image_name],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+            )
+            logger.info("Image %s saved as tarball at %s", image_name, tarball_path)
+            tarball_command = base_command + ["--tarball", tarball_path]
+            if self._execute_scan(tarball_command, image_name, max_attempts, retry_delay):
+                return result_file
+        except subprocess.CalledProcessError as e:
+            logger.error(
+                "Error saving image %s as tarball: %s", image_name, e.stderr
+            )
+        finally:
+            if os.path.exists(tarball_path):
+                os.remove(tarball_path)
+                logger.info("Cleaned up tarball %s", tarball_path)
 
+        return None
+
+    def _execute_scan(self, command, image_name, max_attempts, retry_delay):
         for attempt in range(1, max_attempts + 1):
             try:
                 result = subprocess.run(
@@ -69,8 +103,7 @@ class PrismaCloudManagerScan(ToolGateway):
                 if result.stderr:
                     logger.warning("Prisma scan stderr for %s: %s", image_name, result.stderr)
                 print(f"The image {image_name} was scanned")
-                return result_file
-
+                return True
             except subprocess.CalledProcessError as e:
                 logger.error(
                     "Error during image scan of %s. Return code: %s. Stderr: %s. Stdout: %s",
@@ -88,6 +121,7 @@ class PrismaCloudManagerScan(ToolGateway):
                     )
                     if retry_delay > 0:
                         time.sleep(retry_delay)
+        return False
 
     def _write_image_base(self, result_file, base_image, exclusions_data, remoteconfig):
         try:

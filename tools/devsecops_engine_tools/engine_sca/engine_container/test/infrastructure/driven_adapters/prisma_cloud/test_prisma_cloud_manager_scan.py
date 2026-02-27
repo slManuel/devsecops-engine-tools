@@ -168,7 +168,10 @@ def test_scan_image_error_logs_details(mock_remoteconfig):
         "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.subprocess.run"
     ) as mock_run, patch(
         "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.logger.error"
-    ) as mock_logger_error:
+    ) as mock_logger_error, patch(
+        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.os.path.exists",
+        return_value=False,
+    ):
         error = subprocess.CalledProcessError(
             137,
             ["twistcli", "images", "scan"],
@@ -189,9 +192,9 @@ def test_scan_image_error_logs_details(mock_remoteconfig):
         )
 
         assert result is None
-        # Check that error was logged with correct format and arguments
+        # Check that scan error was logged with correct format and arguments
         assert mock_logger_error.called
-        call_args = mock_logger_error.call_args
+        call_args = mock_logger_error.call_args_list[0]
         assert "Error during image scan of %s" in call_args[0][0]
         assert call_args[0][1] == "image_name"
         assert call_args[0][2] == 137
@@ -249,11 +252,12 @@ def test_scan_image_retries_with_delay(mock_remoteconfig):
 def test_run_tool_container_sca_success(mock_remoteconfig, mock_scan_image):
     with patch("builtins.open") as mock_open, patch("os.path.join") as mock_join, patch(
         "os.path.exists"
-    ) as mock_exists:
-        PrismaCloudManagerScan.download_twistcli = MagicMock()
-        PrismaCloudManagerScan.scan_image = MagicMock()
+    ) as mock_exists, patch.object(
+        PrismaCloudManagerScan, "download_twistcli"
+    ), patch.object(
+        PrismaCloudManagerScan, "scan_image", return_value="result.json"
+    ):
         mock_exists.return_value = False
-        PrismaCloudManagerScan.scan_image.return_value = "result.json"
 
         scan_manager = PrismaCloudManagerScan()
         result = scan_manager.run_tool_container_sca(
@@ -429,6 +433,85 @@ def test_extra_colon_prisma_key():
     prisma_key = "your_access_key:your_secret_key:extra"
     with pytest.raises(ValueError, match="The string is not properly formatted. Make sure it contains a ':'."):
         scan_manager._split_prisma_token(prisma_key)
+
+
+def test_scan_image_tarball_fallback_success(mock_remoteconfig):
+    """Test that scan falls back to tarball when normal scan fails."""
+    with patch(
+        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.subprocess.run"
+    ) as mock_run, patch(
+        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.os.path.exists",
+        return_value=True,
+    ), patch(
+        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.os.remove"
+    ) as mock_remove, patch("builtins.print"):
+        error = subprocess.CalledProcessError(1, ["twistcli", "images", "scan"])
+        error.stdout = ""
+        error.stderr = "scan failed"
+
+        mock_docker_save_success = MagicMock()
+        mock_tarball_scan_success = MagicMock()
+        mock_tarball_scan_success.stderr = ""
+
+        mock_run.side_effect = [error, mock_docker_save_success, mock_tarball_scan_success]
+
+        scan_manager = PrismaCloudManagerScan()
+
+        result = scan_manager.scan_image(
+            "file_path",
+            "my/image:latest",
+            "result.json",
+            mock_remoteconfig,
+            "prisma_access_key:some_secret_key",
+            None,
+        )
+
+        assert result == "result.json"
+        assert mock_run.call_count == 3
+        # Verify docker save was called
+        docker_save_call = mock_run.call_args_list[1]
+        assert docker_save_call[0][0] == ["docker", "save", "-o", "/tmp/my_image_latest.tar", "my/image:latest"]
+        # Verify tarball scan used --tarball flag and tarball path as last arg
+        tarball_scan_call = mock_run.call_args_list[2]
+        assert "--tarball" in tarball_scan_call[0][0]
+        assert tarball_scan_call[0][0][-1] == "/tmp/my_image_latest.tar"
+        # Verify cleanup
+        mock_remove.assert_called_once_with("/tmp/my_image_latest.tar")
+
+
+def test_scan_image_tarball_fallback_cleanup_on_failure(mock_remoteconfig):
+    """Test that tarball is cleaned up even when tarball scan also fails."""
+    with patch(
+        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.subprocess.run"
+    ) as mock_run, patch(
+        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.os.path.exists",
+        return_value=True,
+    ), patch(
+        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.os.remove"
+    ) as mock_remove:
+        error = subprocess.CalledProcessError(1, ["twistcli"])
+        error.stdout = ""
+        error.stderr = "scan failed"
+
+        mock_docker_save_success = MagicMock()
+
+        # Normal scan fails, docker save succeeds, tarball scan fails
+        mock_run.side_effect = [error, mock_docker_save_success, error]
+
+        scan_manager = PrismaCloudManagerScan()
+
+        result = scan_manager.scan_image(
+            "file_path",
+            "ubuntu:latest",
+            "result.json",
+            mock_remoteconfig,
+            "prisma_access_key:some_secret_key",
+            None,
+        )
+
+        assert result is None
+        # Tarball must be cleaned up even on failure
+        mock_remove.assert_called_once_with("/tmp/ubuntu_latest.tar")
 
 
 def test_run_tool_container_sca_compressed_file():
