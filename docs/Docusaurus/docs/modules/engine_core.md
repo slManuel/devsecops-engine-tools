@@ -106,6 +106,16 @@ Configuration of the driven adapters in the main layer and management of on/off 
             "REGION_NAME": ""
         }
     },
+    "LICENSE_ANALYZER": {
+        "ENABLED": true,
+        "TOOL": "DEPENDENCY_TRACK",
+        "DEPENDENCY_TRACK": {
+            "HOST": "",
+            "API_KEY_SECRET_KEY": "",
+            "EXPORT_TASK_ID": false,
+            "TASK_ID_VARIABLE_NAME": ""
+        }
+    },
     "SBOM_MANAGER": {
         "ENABLED": true,
         "TOOL": "SYFT|CDXGEN",
@@ -122,12 +132,21 @@ Configuration of the driven adapters in the main layer and management of on/off 
             "CDXGEN_VERSION": "11.7.0",
             "OUTPUT_FORMAT": "cyclonedx-json",
             "SLIM_BINARY": true,
+            "FETCH_LICENSE": false,
             "EXCLUDE_TYPES": ["jar"],
             "EXCLUDE_PATHS": ["**/test/**"],
             "RECURSE": true,
+            "INSTALL_DEPENDENCIES": true,
             "DEBUG_PIPELINES": ["pipeline_name1", "pipeline_name2"],
             "LIFECYCLE_PIPELINES": {
                 "pipeline_name1": "pre-build"
+            },
+            "OVERRIDE_REGISTRIES": false,
+            "REGISTRIES": {
+                "MAVEN_CENTRAL_URL": "",
+                "NPM_URL": "",
+                "PYPI_URL": "",
+                "NUGET_URL": ""
             }
         }
     },
@@ -324,6 +343,26 @@ Configuration of the driven adapters in the main layer and management of on/off 
         - USE_ROLE: use AWS role
         - ROLE_ARN: ARN of the assumed role with permissions over this resource
         - REGION_NAME: AWS region name
+
+- **LICENSE_ANALYZER**: Configuration for the license analysis integration (beta). Uploads the generated SBOM to a license analyzer tool to inspect component licenses. Only runs if `SBOM_MANAGER.ENABLED` is `true` for the current branch.
+    - **ENABLED**: `true` or `false`. Enables or disables the license analyzer upload.
+    - **TOOL**: License analyzer adapter to use. Currently supported: `DEPENDENCY_TRACK`.
+    - **DEPENDENCY_TRACK**
+        - **HOST**: Base URL of the Dependency-Track server (e.g., `https://dtrack.example.com`).
+        - **API_KEY_SECRET_KEY**: Name of the secret key in the secrets manager that holds the Dependency-Track API key. If no secrets manager is used, pass the token via `--token_license_analyzer` CLI argument.
+        - **EXPORT_TASK_ID**: `true` or `false`. When enabled, the upload task token returned by Dependency-Track is exported as a pipeline variable, allowing downstream jobs to poll for analysis results.
+        - **TASK_ID_VARIABLE_NAME**: Name of the pipeline variable where the task token will be stored (only used when `EXPORT_TASK_ID` is `true`).
+
+- **SBOM_MANAGER**: Configuration for SBOM generation. Requires `ENABLED: true` for `LICENSE_ANALYZER` to run. Additionally, `CDXGEN.FETCH_LICENSE` should be set to `true` to enrich the SBOM with license metadata before uploading to the license analyzer.
+    - **CDXGEN**
+        - **FETCH_LICENSE**: `true` or `false`. When enabled, cdxgen fetches license information for each component from public registries and includes it in the generated SBOM. Recommended when `LICENSE_ANALYZER` is enabled.
+        - **INSTALL_DEPENDENCIES**: `true` or `false`. When enabled, cdxgen installs project dependencies before generating the SBOM, improving component coverage.
+        - **OVERRIDE_REGISTRIES**: `true` or `false`. When enabled, the registry URLs defined in `REGISTRIES` are set as environment variables before cdxgen runs, redirecting dependency resolution to internal or private registries.
+        - **REGISTRIES**: Map of environment variable names to registry URLs used when `OVERRIDE_REGISTRIES` is `true`.
+            - **MAVEN_CENTRAL_URL**: Maven registry URL.
+            - **NPM_URL**: npm registry URL.
+            - **PYPI_URL**: PyPI registry URL.
+            - **NUGET_URL**: NuGet registry URL.
 
 - **PRIORITY_MANAGER**: Configuración para el manejo de prioridades basadas en scores de vulnerabilidades CVE
     - **USE_PRIORITY**: `true` o `false`. Habilita el uso del sistema de prioridades. Cuando está en `true`, el sistema consultará un API externo para obtener scores de prioridad de CVEs y aplicará homologación para findings sin formato CVE.

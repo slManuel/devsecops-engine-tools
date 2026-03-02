@@ -41,7 +41,7 @@ class TestGitleaksTool(unittest.TestCase):
                 "https://github.com/gitleaks/gitleaks/releases/download/v8.0.0/gitleaks_8.0.0_windows_x64.zip",
                 allow_redirects=True
             )
-            mock_file.assert_called_once_with(f"{self.agent_temp_dir}/gitleaks_8.0.0_windows_x64.zip", "wb")
+            mock_file.assert_called_once_with(os.path.join(self.agent_temp_dir, "gitleaks_8.0.0_windows_x64.zip"), "wb")
             mock_unzip.assert_called_once()
 
     @patch("subprocess.run")
@@ -62,7 +62,7 @@ class TestGitleaksTool(unittest.TestCase):
                 "https://github.com/gitleaks/gitleaks/releases/download/v8.0.0/gitleaks_8.0.0_linux_x64.tar.gz",
                 allow_redirects=True
             )
-            mock_file.assert_called_once_with(f"{self.agent_temp_dir}/gitleaks_8.0.0_linux_x64.tar.gz", "wb")
+            mock_file.assert_called_once_with(os.path.join(self.agent_temp_dir, "gitleaks_8.0.0_linux_x64.tar.gz"), "wb")
             mock_extract.assert_called_once()
 
     @patch("subprocess.run")
@@ -83,7 +83,7 @@ class TestGitleaksTool(unittest.TestCase):
                 "https://github.com/gitleaks/gitleaks/releases/download/v8.0.0/gitleaks_8.0.0_darwin_x64.tar.gz",
                 allow_redirects=True
             )
-            mock_file.assert_called_once_with(f"{self.agent_temp_dir}/gitleaks_8.0.0_darwin_x64.tar.gz", "wb")
+            mock_file.assert_called_once_with(os.path.join(self.agent_temp_dir, "gitleaks_8.0.0_darwin_x64.tar.gz"), "wb")
             mock_extract.assert_called_once()
 
     @patch("subprocess.run")
@@ -97,7 +97,7 @@ class TestGitleaksTool(unittest.TestCase):
         self.tool.install_tool("Linux", self.agent_temp_dir, "8.20.0")
 
         # Assert
-        mock_run.assert_called_once_with(f"{self.agent_temp_dir}/gitleaks --version", capture_output=True, shell=True, text=True)
+        mock_run.assert_called_once_with(f"{self.agent_temp_dir}{os.sep}gitleaks --version", capture_output=True, shell=True, text=True)
         mock_search.assert_any_call(r"8.20.0", "gitleaks version 8.20.0")
 
     @patch("os.path.exists")

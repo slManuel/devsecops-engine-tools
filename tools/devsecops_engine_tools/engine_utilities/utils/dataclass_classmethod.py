@@ -3,39 +3,57 @@ import typing
 import datetime
 import enum
 from inspect import isclass
+from typing import get_type_hints
+from .alias import Alias
 from .name_conversion import camel_case_to_snake_case, snake_case_to_camel_case
 from .datetime_parsing import iso_from_datetime, parse_iso_datetime
 
 
 class FromDictMixin:
+    _exclude_none: bool = False
+
     @staticmethod
     def attribute_to_dict(attribute):
         if hasattr(attribute, "to_dict") and callable(attribute.to_dict):
             return getattr(attribute, "to_dict")()
         return attribute
 
+    @staticmethod
+    def _resolve_key(field_name, hints):
+        hint = hints.get(field_name)
+        if hasattr(hint, "__metadata__"):
+            for meta in hint.__metadata__:
+                if isinstance(meta, Alias):
+                    return meta.name
+        return snake_case_to_camel_case(field_name)
+
     def to_dict(self):
         if self == {}:
             return self
+        hints = get_type_hints(self.__class__, include_extras=True)
         available_fields = {field.name: field for field in dataclasses.fields(self)}
         transformed_data = {}
         for field_name, field_type in available_fields.items():
-            navitaire_key = snake_case_to_camel_case(field_name)
+            if field_name.startswith("_"):
+                continue
             attribute = getattr(self, field_name)
+            if self._exclude_none and attribute is None:
+                continue
+            key = self._resolve_key(field_name, hints)
             if isinstance(attribute, list):
-                transformed_data[navitaire_key] = []
+                transformed_data[key] = []
                 for element in attribute:
-                    transformed_data[navitaire_key].append(FromDictMixin.attribute_to_dict(element))
+                    transformed_data[key].append(FromDictMixin.attribute_to_dict(element))
             elif isinstance(attribute, dict):
-                transformed_data[navitaire_key] = {}
-                for key, element in attribute.items():
-                    transformed_data[navitaire_key][key] = FromDictMixin.attribute_to_dict(element)
+                transformed_data[key] = {}
+                for k, element in attribute.items():
+                    transformed_data[key][k] = FromDictMixin.attribute_to_dict(element)
             elif isinstance(attribute, enum.Enum):
-                transformed_data[navitaire_key] = attribute.value
+                transformed_data[key] = attribute.value
             elif isinstance(attribute, datetime.datetime):
-                transformed_data[navitaire_key] = iso_from_datetime(attribute)
+                transformed_data[key] = iso_from_datetime(attribute)
             else:
-                transformed_data[navitaire_key] = FromDictMixin.attribute_to_dict(attribute)
+                transformed_data[key] = FromDictMixin.attribute_to_dict(attribute)
         return transformed_data
 
     @classmethod

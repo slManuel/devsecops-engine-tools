@@ -39,6 +39,7 @@ class TestHandleScan(unittest.TestCase):
             }
         )
         self.risk_score_gateway = mock.Mock()
+        self.license_manager_gateway = MagicMock()
         self.handle_scan = HandleScan(
             self.vulnerability_management,
             self.secrets_manager_gateway,
@@ -47,6 +48,7 @@ class TestHandleScan(unittest.TestCase):
             self.sbom_gateway,
             self.risk_score_gateway,
             self.context_extraction_gateway,
+            self.license_manager_gateway,
         )
 
     @mock.patch(
@@ -445,7 +447,7 @@ class TestHandleScan(unittest.TestCase):
         self.assertEqual(result_input_core, input_core)
         self.secrets_manager_gateway.get_secret.assert_called_once_with(config_tool)
         mock_runner_engine_dependencies.assert_called_once_with(
-            dict_args, config_tool, secret_tool, self.devops_platform_gateway, self.remote_config_source_gateway, self.sbom_gateway
+            dict_args, config_tool, secret_tool, self.devops_platform_gateway, self.remote_config_source_gateway, self.sbom_gateway, self.license_manager_gateway
         )
 
     @mock.patch(
@@ -658,4 +660,327 @@ class TestHandleScan(unittest.TestCase):
         
         # Assert correct order: runner -> context_extraction -> vulnerability_management
         self.assertEqual(call_order, ["runner", "context_extraction", "vulnerability_management"])
+
+    @mock.patch(
+        "devsecops_engine_tools.engine_core.src.domain.usecases.handle_scan.runner_engine_code"
+    )
+    def test_process_with_engine_code(self, mock_runner_engine_code):
+        dict_args = {
+            "use_secrets_manager": "false",
+            "module": "engine_code",
+            "remote_config_repo": "test_repo",
+            "remote_config_branch": "",
+            "use_vulnerability_management": "false",
+        }
+        config_tool = {"ENGINE_CODE": {"ENABLED": "true", "TOOL": "bearer"}}
+
+        findings_list = ["finding1"]
+        input_core = InputCore(
+            totalized_exclusions=[],
+            threshold_defined=self.threshold,
+            path_file_results=None,
+            custom_message_break_build="message",
+            scope_pipeline="pipeline",
+            scope_service="service",
+            stage_pipeline="Release",
+        )
+        mock_runner_engine_code.return_value = findings_list, input_core
+
+        result_findings_list, result_input_core = self.handle_scan.process(
+            dict_args, config_tool
+        )
+
+        self.assertEqual(result_findings_list, findings_list)
+        self.assertEqual(result_input_core, input_core)
+        mock_runner_engine_code.assert_called_once_with(
+            dict_args,
+            config_tool["ENGINE_CODE"]["TOOL"],
+            self.devops_platform_gateway,
+            self.remote_config_source_gateway,
+        )
+
+    @mock.patch(
+        "devsecops_engine_tools.engine_core.src.domain.usecases.handle_scan.runner_engine_function"
+    )
+    def test_process_with_engine_function(self, mock_runner_engine_function):
+        dict_args = {
+            "use_secrets_manager": "false",
+            "module": "engine_function",
+            "remote_config_repo": "test_repo",
+            "remote_config_branch": "",
+            "use_vulnerability_management": "false",
+        }
+        config_tool = {"ENGINE_FUNCTION": {"ENABLED": "true", "TOOL": "prisma"}}
+
+        findings_list = ["finding1"]
+        input_core = InputCore(
+            totalized_exclusions=[],
+            threshold_defined=self.threshold,
+            path_file_results=None,
+            custom_message_break_build="message",
+            scope_pipeline="pipeline",
+            scope_service="service",
+            stage_pipeline="Release",
+        )
+        mock_runner_engine_function.return_value = findings_list, input_core
+
+        result_findings_list, result_input_core = self.handle_scan.process(
+            dict_args, config_tool
+        )
+
+        self.assertEqual(result_findings_list, findings_list)
+        self.assertEqual(result_input_core, input_core)
+        mock_runner_engine_function.assert_called_once_with(
+            dict_args,
+            config_tool["ENGINE_FUNCTION"],
+            None,
+            self.devops_platform_gateway,
+            self.remote_config_source_gateway,
+        )
+
+    @mock.patch(
+        "devsecops_engine_tools.engine_core.src.domain.usecases.handle_scan.runner_engine_container"
+    )
+    def test_use_vulnerability_management_sends_sbom_when_branch_matches(
+        self, mock_runner_engine_container
+    ):
+        """Covers the send_sbom_components branch when sbom_components + branch_filter matches."""
+        dict_args = {
+            "use_secrets_manager": "false",
+            "module": "engine_container",
+            "remote_config_repo": "test_repo",
+            "remote_config_branch": "",
+            "use_vulnerability_management": "true",
+        }
+        config_tool = {
+            "VULNERABILITY_MANAGER": {
+                "BRANCH_FILTER": ["main"]
+            },
+            "ENGINE_CONTAINER": {"ENABLED": "true", "TOOL": "trivy"},
+        }
+
+        findings_list = []
+        input_core = InputCore(
+            totalized_exclusions=[],
+            threshold_defined=self.threshold,
+            path_file_results="some/file",
+            custom_message_break_build="",
+            scope_pipeline="pipeline",
+            scope_service="service",
+            stage_pipeline="Release",
+        )
+        from devsecops_engine_tools.engine_core.src.domain.model.component import Component
+        sbom_components = [Component("comp1", "1.0")]
+        mock_tool_gateway = MagicMock()
+        mock_runner_engine_container.return_value = findings_list, input_core, sbom_components, mock_tool_gateway
+
+        self.devops_platform_gateway.get_variable.return_value = "main"
+        self.vulnerability_management.get_findings_excepted.return_value = []
+
+        self.handle_scan.process(dict_args, config_tool)
+
+        self.vulnerability_management.send_sbom_components.assert_called_once()
+
+    @mock.patch(
+        "devsecops_engine_tools.engine_core.src.domain.usecases.handle_scan.runner_engine_iac"
+    )
+    def test_update_threshold_cve_called_for_default_threshold(self, mock_runner_engine_iac):
+        """Covers _update_threshold_cve when threshold name is 'default'."""
+        dict_args = {
+            "use_secrets_manager": "false",
+            "module": "engine_iac",
+            "use_vulnerability_management": "true",
+            "remote_config_repo": "test_repo",
+            "remote_config_branch": "",
+        }
+        config_tool = {"ENGINE_IAC": {"ENABLED": "true", "TOOL": "checkov"}}
+        findings_list = []
+        input_core = InputCore(
+            totalized_exclusions=[],
+            threshold_defined=self.threshold,
+            path_file_results="some/file",
+            custom_message_break_build="",
+            scope_pipeline="pipeline",
+            scope_service="service",
+            stage_pipeline="Release",
+        )
+        mock_tool_gateway = MagicMock()
+        mock_runner_engine_iac.return_value = findings_list, input_core, mock_tool_gateway
+        self.vulnerability_management.get_findings_excepted.return_value = []
+        self.vulnerability_management.get_black_list.return_value = []
+
+        self.handle_scan.process(dict_args, config_tool)
+
+        self.vulnerability_management.get_black_list.assert_called_once()
+
+    @mock.patch(
+        "devsecops_engine_tools.engine_core.src.domain.usecases.handle_scan.runner_engine_container"
+    )
+    def test_define_threshold_quality_vuln_with_matching_pt(self, mock_runner_engine_container):
+        """Covers _define_threshold_quality_vuln when quality_vulnerability_management is set
+        and a matching product type is found (model=severity branch)."""
+        from devsecops_engine_tools.engine_core.src.domain.model.threshold import Threshold
+        quality_threshold = Threshold(
+            {
+                "VULNERABILITY": {"Critical": 5, "High": 8, "Medium": 10, "Low": 15},
+                "COMPLIANCE": {"Critical": 1},
+                "PRIORITY": {"Very Critical": 1, "Critical": 3, "High": 5, "Medium Low": 15},
+                "QUALITY_VULNERABILITY_MANAGEMENT": {
+                    "PTS": [
+                        {
+                            "PT1": {
+                                "APPS": ["pipeline"],
+                                "PROFILE": "STRONG",
+                                "PROFILE_PRIORITY": "STRONG_PRIORITY",
+                            }
+                        }
+                    ],
+                    "STRONG": {"Critical": 0, "High": 0, "Medium": 5, "Low": 15},
+                    "STRONG_PRIORITY": {"Very Critical": 0, "Critical": 0, "High": 5, "Medium Low": 15},
+                },
+            }
+        )
+        dict_args = {
+            "use_secrets_manager": "false",
+            "module": "engine_container",
+            "use_vulnerability_management": "true",
+            "remote_config_repo": "test_repo",
+            "remote_config_branch": "",
+        }
+        config_tool = {
+            "VULNERABILITY_MANAGER": {},
+            "ENGINE_CONTAINER": {"ENABLED": "true", "TOOL": "trivy"},
+            "BREAK_BUILD_MANAGER": {"MODEL": "severity"},
+        }
+        findings_list = []
+        input_core = InputCore(
+            totalized_exclusions=[],
+            threshold_defined=quality_threshold,
+            path_file_results="some/file",
+            custom_message_break_build="",
+            scope_pipeline="pipeline",
+            scope_service="service",
+            stage_pipeline="Release",
+        )
+        mock_tool_gateway = MagicMock()
+        mock_runner_engine_container.return_value = findings_list, input_core, [], mock_tool_gateway
+
+        mock_product_type = Mock()
+        mock_product_type.name = "PT1"
+        self.vulnerability_management.get_product_type_pipeline.return_value = mock_product_type
+        self.vulnerability_management.get_findings_excepted.return_value = []
+
+        self.handle_scan.process(dict_args, config_tool)
+
+        self.vulnerability_management.get_product_type_pipeline.assert_called_once()
+
+    @mock.patch(
+        "devsecops_engine_tools.engine_core.src.domain.usecases.handle_scan.runner_engine_container"
+    )
+    def test_define_threshold_quality_vuln_with_matching_pt_priority_model(
+        self, mock_runner_engine_container
+    ):
+        """Covers _define_threshold_quality_vuln priority model branch."""
+        from devsecops_engine_tools.engine_core.src.domain.model.threshold import Threshold
+        quality_threshold = Threshold(
+            {
+                "VULNERABILITY": {"Critical": 5, "High": 8, "Medium": 10, "Low": 15},
+                "COMPLIANCE": {"Critical": 1},
+                "PRIORITY": {"Very Critical": 1, "Critical": 3, "High": 5, "Medium Low": 15},
+                "QUALITY_VULNERABILITY_MANAGEMENT": {
+                    "PTS": [
+                        {
+                            "PT1": {
+                                "APPS": "ALL",
+                                "PROFILE": "STRONG",
+                                "PROFILE_PRIORITY": "STRONG_PRIORITY",
+                            }
+                        }
+                    ],
+                    "STRONG": {"Critical": 0, "High": 0, "Medium": 5, "Low": 15},
+                    "STRONG_PRIORITY": {"Very Critical": 0, "Critical": 0, "High": 5, "Medium Low": 15},
+                },
+            }
+        )
+        dict_args = {
+            "use_secrets_manager": "false",
+            "module": "engine_container",
+            "use_vulnerability_management": "true",
+            "remote_config_repo": "test_repo",
+            "remote_config_branch": "",
+        }
+        config_tool = {
+            "VULNERABILITY_MANAGER": {},
+            "ENGINE_CONTAINER": {"ENABLED": "true", "TOOL": "trivy"},
+            "BREAK_BUILD_MANAGER": {"MODEL": "priority"},
+        }
+        findings_list = []
+        input_core = InputCore(
+            totalized_exclusions=[],
+            threshold_defined=quality_threshold,
+            path_file_results="some/file",
+            custom_message_break_build="",
+            scope_pipeline="pipeline",
+            scope_service="service",
+            stage_pipeline="Release",
+        )
+        mock_tool_gateway = MagicMock()
+        mock_runner_engine_container.return_value = findings_list, input_core, [], mock_tool_gateway
+
+        mock_product_type = Mock()
+        mock_product_type.name = "PT1"
+        self.vulnerability_management.get_product_type_pipeline.return_value = mock_product_type
+        self.vulnerability_management.get_findings_excepted.return_value = []
+
+        self.handle_scan.process(dict_args, config_tool)
+
+        self.vulnerability_management.get_product_type_pipeline.assert_called_once()
+
+    @mock.patch(
+        "devsecops_engine_tools.engine_core.src.domain.usecases.handle_scan.runner_engine_container"
+    )
+    def test_define_threshold_quality_vuln_no_matching_pt(self, mock_runner_engine_container):
+        """Covers _define_threshold_quality_vuln when product_type is None (no match)."""
+        from devsecops_engine_tools.engine_core.src.domain.model.threshold import Threshold
+        quality_threshold = Threshold(
+            {
+                "VULNERABILITY": {"Critical": 5, "High": 8, "Medium": 10, "Low": 15},
+                "COMPLIANCE": {"Critical": 1},
+                "PRIORITY": {"Very Critical": 1, "Critical": 3, "High": 5, "Medium Low": 15},
+                "QUALITY_VULNERABILITY_MANAGEMENT": {
+                    "PTS": [{"PT1": {"APPS": ["pipeline"], "PROFILE": "STRONG", "PROFILE_PRIORITY": "STRONG_PRIORITY"}}],
+                    "STRONG": {"Critical": 0, "High": 0, "Medium": 5, "Low": 15},
+                    "STRONG_PRIORITY": {"Very Critical": 0, "Critical": 0, "High": 5, "Medium Low": 15},
+                },
+            }
+        )
+        dict_args = {
+            "use_secrets_manager": "false",
+            "module": "engine_container",
+            "use_vulnerability_management": "true",
+            "remote_config_repo": "test_repo",
+            "remote_config_branch": "",
+        }
+        config_tool = {
+            "VULNERABILITY_MANAGER": {},
+            "ENGINE_CONTAINER": {"ENABLED": "true", "TOOL": "trivy"},
+            "BREAK_BUILD_MANAGER": {"MODEL": "severity"},
+        }
+        findings_list = []
+        input_core = InputCore(
+            totalized_exclusions=[],
+            threshold_defined=quality_threshold,
+            path_file_results="some/file",
+            custom_message_break_build="",
+            scope_pipeline="pipeline",
+            scope_service="service",
+            stage_pipeline="Release",
+        )
+        mock_tool_gateway = MagicMock()
+        mock_runner_engine_container.return_value = findings_list, input_core, [], mock_tool_gateway
+
+        self.vulnerability_management.get_product_type_pipeline.return_value = None
+        self.vulnerability_management.get_findings_excepted.return_value = []
+
+        self.handle_scan.process(dict_args, config_tool)
 

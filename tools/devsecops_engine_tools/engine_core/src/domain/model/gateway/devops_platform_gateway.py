@@ -25,3 +25,7 @@ class DevopsPlatformGateway(metaclass=ABCMeta):
     @abstractmethod
     def get_variable(self, variable):
         "get_variable"
+
+    @abstractmethod
+    def set_variable(self, variable, value):
+        "set_variable"

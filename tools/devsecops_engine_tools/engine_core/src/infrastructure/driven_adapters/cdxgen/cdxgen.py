@@ -27,17 +27,26 @@ class CdxGen(SbomManagerGateway):
         try:
             cdxgen_version = config["CDXGEN"]["CDXGEN_VERSION"]
             slim = "-slim" if config["CDXGEN"]["SLIM_BINARY"] else ""
+            fetch_license = config["CDXGEN"].get("FETCH_LICENSE", False)
             exclude_types = config["CDXGEN"].get("EXCLUDE_TYPES", [])
             exclude_paths = config["CDXGEN"].get("EXCLUDE_PATHS", [])
             recurse = config["CDXGEN"].get("RECURSE", True)
             install_deps = config["CDXGEN"].get("INSTALL_DEPENDENCIES", True)
             debug_pipelines = config["CDXGEN"].get("DEBUG_PIPELINES", [])
             lifecycle_pipelines = config["CDXGEN"].get("LIFECYCLE_PIPELINES", {})
-            
+
+            if config["CDXGEN"].get("OVERRIDE_REGISTRIES", False):
+                registries = config["CDXGEN"].get("REGISTRIES", {})
+                for env_var, url in registries.items():
+                    os.environ[env_var] = url
+
             enable_debug = service_name in debug_pipelines if debug_pipelines else False
             if enable_debug:
                 logger.info(f"Enabling debug mode for pipeline: {service_name}")
                 os.environ["CDXGEN_DEBUG_MODE"] = "debug"
+
+            if fetch_license:
+                os.environ["FETCH_LICENSE"] = "true"
 
             os_platform = platform.system()
             os_architecture = platform.machine()

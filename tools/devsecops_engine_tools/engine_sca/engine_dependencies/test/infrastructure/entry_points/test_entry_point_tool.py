@@ -2,7 +2,7 @@ from devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.en
     init_engine_dependencies,
 )
 from devsecops_engine_tools.engine_core.src.domain.model.gateway.devops_platform_gateway import DevopsPlatformGateway
-from devsecops_engine_tools.engine_core.src.domain.model.gateway.sbom_manager import SbomManagerGateway 
+from devsecops_engine_tools.engine_core.src.domain.model.gateway.sbom_manager import SbomManagerGateway
 from unittest.mock import patch, Mock, MagicMock
 
 
@@ -16,7 +16,11 @@ def test_init_engine_dependencies():
     ) as mock_handle_remote_config_patterns:
         dict_args = {"remote_config_repo": "remote_repo", "remote_config_branch": ""}
         token = "token"
-        tool = {"ENGINE_DEPENDENCIES": {"TOOL": "tool"}, "SBOM_MANAGER": {"ENABLED": True, "BRANCH_FILTER": ["trunk"]}}
+        tool = {
+            "ENGINE_DEPENDENCIES": {"TOOL": "tool"},
+            "SBOM_MANAGER": {"ENABLED": True, "BRANCH_FILTER": ["trunk"]},
+            "LICENSE_ANALYZER": {"ENABLED": False, "TOOL": "dep_track"},
+        }
         mock_handle_remote_config_patterns.process_handle_working_directory.return_value = (
             "working_dir"
         )
@@ -34,7 +38,8 @@ def test_init_engine_dependencies():
             dict_args,
             token,
             tool,
-            None
+            None,
+            Mock(),
         )
 
 
@@ -62,18 +67,18 @@ def test_init_engine_dependencies_success(mock_exists, mock_dependencies_scan, m
     secret_tool = MagicMock()
     config_tool = {
         "SBOM_MANAGER": {"ENABLED": True, "BRANCH_FILTER": ["main"]},
-        "ENGINE_DEPENDENCIES": {"TOOL": "tool"}
+        "ENGINE_DEPENDENCIES": {"TOOL": "tool"},
+        "LICENSE_ANALYZER": {"ENABLED": False, "TOOL": "dep_track"},
     }
 
     # Llamar a la función
     deserialized, core_input, sbom_components = init_engine_dependencies(
-        tool_run, tool_remote, remote_config_source_gateway, tool_deserializator, dict_args, secret_tool, config_tool, tool_sbom
+        tool_run, tool_remote, remote_config_source_gateway, tool_deserializator, dict_args, secret_tool, config_tool, tool_sbom, Mock()
     )
 
     # Verificar que se llamaron las funciones esperadas
     remote_config_source_gateway.get_remote_config.assert_any_call("repo", "engine_sca/engine_dependencies/ConfigTool.json", "")
     remote_config_source_gateway.get_remote_config.assert_any_call("repo", "engine_sca/engine_dependencies/Exclusions.json", "")
-    # tool_remote.get_variable.assert_called_with("pipeline_name")
     mock_handle_remote_config_patterns.assert_called_once()
     mock_dependencies_scan.return_value.process.assert_called_once()
     mock_dependencies_scan.return_value.deserializator.assert_called_once_with("scanned_dependencies")
@@ -82,3 +87,214 @@ def test_init_engine_dependencies_success(mock_exists, mock_dependencies_scan, m
     assert deserialized, ["deserialized_dependency"]
     assert core_input, "core_input"
     assert sbom_components is not None
+
+
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.HandleRemoteConfigPatterns')
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.SetInputCore')
+def test_init_engine_dependencies_skip_tool(mock_set_input_core, mock_handle_remote_config_patterns):
+    """Covers else branch: scan_flag=False → 'Tool skipped by DevSecOps policy'."""
+    mock_handle_remote_config_patterns.return_value.skip_from_exclusion.return_value = False
+    mock_handle_remote_config_patterns.return_value.ignore_analysis_pattern.return_value = False  # scan_flag = False
+
+    tool_remote = MagicMock(spec=DevopsPlatformGateway)
+    tool_remote.get_variable.return_value = "main"
+    remote_config_source_gateway = MagicMock(spec=DevopsPlatformGateway)
+    mock_set_input_core.return_value.set_input_core.return_value = "core_input"
+
+    config_tool = {
+        "SBOM_MANAGER": {"ENABLED": False, "BRANCH_FILTER": []},
+        "ENGINE_DEPENDENCIES": {"TOOL": "tool"},
+        "LICENSE_ANALYZER": {"ENABLED": False, "TOOL": "dep_track"},
+    }
+    dict_args = {"remote_config_repo": "repo", "folder_path": None, "remote_config_branch": ""}
+
+    deserialized, core_input, sbom_components = init_engine_dependencies(
+        Mock(), tool_remote, remote_config_source_gateway, Mock(), dict_args,
+        None, config_tool, Mock(), Mock()
+    )
+
+    assert deserialized == []
+    assert sbom_components is None
+    assert dict_args["send_metrics"] == "false"
+    assert dict_args["use_vulnerability_management"] == "false"
+
+
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.HandleRemoteConfigPatterns')
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.SetInputCore')
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.os.path.exists')
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.logger')
+def test_init_engine_dependencies_path_not_exists(mock_logger, mock_exists, mock_set_input_core, mock_handle_remote_config_patterns):
+    """Covers logger.error when the target scan path does not exist."""
+    mock_exists.return_value = False
+    mock_handle_remote_config_patterns.return_value.skip_from_exclusion.return_value = False
+    mock_handle_remote_config_patterns.return_value.ignore_analysis_pattern.return_value = True
+    mock_set_input_core.return_value.set_input_core.return_value = "core_input"
+
+    tool_remote = MagicMock(spec=DevopsPlatformGateway)
+    tool_remote.get_variable.return_value = "main"
+    remote_config_source_gateway = MagicMock(spec=DevopsPlatformGateway)
+
+    config_tool = {
+        "SBOM_MANAGER": {"ENABLED": False, "BRANCH_FILTER": []},
+        "ENGINE_DEPENDENCIES": {"TOOL": "tool"},
+        "LICENSE_ANALYZER": {"ENABLED": False, "TOOL": "dep_track"},
+    }
+    dict_args = {"remote_config_repo": "repo", "folder_path": "nonexistent_path", "remote_config_branch": ""}
+
+    deserialized, core_input, sbom_components = init_engine_dependencies(
+        Mock(), tool_remote, remote_config_source_gateway, Mock(), dict_args,
+        None, config_tool, Mock(), Mock()
+    )
+
+    mock_logger.error.assert_called_once_with("Path nonexistent_path does not exist")
+    assert deserialized == []
+    assert sbom_components is None
+
+
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.HandleRemoteConfigPatterns')
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.SetInputCore')
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.DependenciesScan')
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.os.path.exists')
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.logger')
+def test_init_engine_dependencies_license_no_token(mock_logger, mock_exists, mock_dependencies_scan, mock_set_input_core, mock_handle_remote_config_patterns):
+    """Covers LICENSE_ANALYZER.ENABLED=True but no token → logger.error."""
+    mock_exists.return_value = True
+    mock_handle_remote_config_patterns.return_value.skip_from_exclusion.return_value = False
+    mock_handle_remote_config_patterns.return_value.ignore_analysis_pattern.return_value = True
+    mock_dependencies_scan.return_value.process.return_value = "scanned_dependencies"
+    mock_dependencies_scan.return_value.deserializator.return_value = ["dep"]
+    mock_set_input_core.return_value.set_input_core.return_value = "core_input"
+
+    tool_remote = MagicMock(spec=DevopsPlatformGateway)
+    tool_remote.get_variable.return_value = "main"
+    remote_config_source_gateway = MagicMock(spec=DevopsPlatformGateway)
+    tool_sbom = MagicMock(spec=SbomManagerGateway)
+    tool_sbom.get_components.return_value = [Mock()]
+
+    config_tool = {
+        "SBOM_MANAGER": {"ENABLED": True, "BRANCH_FILTER": ["main"]},
+        "ENGINE_DEPENDENCIES": {"TOOL": "tool"},
+        "LICENSE_ANALYZER": {
+            "ENABLED": True,
+            "TOOL": "dep_track",
+            "dep_track": {
+                "API_KEY_SECRET_KEY": "api_key_secret",
+                "HOST": "http://host",
+                "EXPORT_TASK_ID": False,
+            },
+        },
+    }
+    dict_args = {"remote_config_repo": "repo", "folder_path": "path", "remote_config_branch": ""}
+
+    # secret_tool=None and no token_license_analyzer in dict_args → token is None
+    init_engine_dependencies(
+        Mock(), tool_remote, remote_config_source_gateway, Mock(), dict_args,
+        None, config_tool, tool_sbom, Mock()
+    )
+
+    mock_logger.error.assert_any_call("API key for license analyzer is not provided.")
+
+
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.HandleRemoteConfigPatterns')
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.SetInputCore')
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.DependenciesScan')
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.os.path.exists')
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.logger')
+def test_init_engine_dependencies_license_upload_with_export_task_id(mock_logger, mock_exists, mock_dependencies_scan, mock_set_input_core, mock_handle_remote_config_patterns):
+    """Covers full license upload path including EXPORT_TASK_ID."""
+    mock_exists.return_value = True
+    mock_handle_remote_config_patterns.return_value.skip_from_exclusion.return_value = False
+    mock_handle_remote_config_patterns.return_value.ignore_analysis_pattern.return_value = True
+    mock_dependencies_scan.return_value.process.return_value = "scanned_dependencies"
+    mock_dependencies_scan.return_value.deserializator.return_value = ["dep"]
+    mock_set_input_core.return_value.set_input_core.return_value = "core_input"
+
+    tool_remote = MagicMock(spec=DevopsPlatformGateway)
+    tool_remote.get_variable.return_value = "main"
+    remote_config_source_gateway = MagicMock(spec=DevopsPlatformGateway)
+    tool_sbom = MagicMock(spec=SbomManagerGateway)
+    tool_sbom.get_components.return_value = [Mock()]
+
+    tool_license_manager = MagicMock()
+    tool_license_manager.upload_sbom.return_value = "task_abc123"
+
+    config_tool = {
+        "SBOM_MANAGER": {"ENABLED": True, "BRANCH_FILTER": ["main"]},
+        "ENGINE_DEPENDENCIES": {"TOOL": "tool"},
+        "LICENSE_ANALYZER": {
+            "ENABLED": True,
+            "TOOL": "dep_track",
+            "dep_track": {
+                "API_KEY_SECRET_KEY": "api_key_secret",
+                "HOST": "http://host",
+                "EXPORT_TASK_ID": True,
+                "TASK_ID_VARIABLE_NAME": "DT_TASK_ID",
+            },
+        },
+    }
+    dict_args = {"remote_config_repo": "repo", "folder_path": "path", "remote_config_branch": ""}
+
+    secret_tool = MagicMock()
+    secret_tool.get_secret.return_value = "valid_token"
+
+    init_engine_dependencies(
+        Mock(), tool_remote, remote_config_source_gateway, Mock(), dict_args,
+        secret_tool, config_tool, tool_sbom, tool_license_manager
+    )
+
+    tool_license_manager.upload_sbom.assert_called_once()
+    mock_logger.info.assert_any_call("SBOM uploaded to license analyzer with task ID: task_abc123")
+    tool_remote.set_variable.assert_called_once_with("DT_TASK_ID", "task_abc123")
+
+
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.HandleRemoteConfigPatterns')
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.SetInputCore')
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.DependenciesScan')
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.os.path.exists')
+@patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.logger')
+def test_init_engine_dependencies_license_upload_without_task_id_does_not_export(mock_logger, mock_exists, mock_dependencies_scan, mock_set_input_core, mock_handle_remote_config_patterns):
+    mock_exists.return_value = True
+    mock_handle_remote_config_patterns.return_value.skip_from_exclusion.return_value = False
+    mock_handle_remote_config_patterns.return_value.ignore_analysis_pattern.return_value = True
+    mock_dependencies_scan.return_value.process.return_value = "scanned_dependencies"
+    mock_dependencies_scan.return_value.deserializator.return_value = ["dep"]
+    mock_set_input_core.return_value.set_input_core.return_value = "core_input"
+
+    tool_remote = MagicMock(spec=DevopsPlatformGateway)
+    tool_remote.get_variable.return_value = "main"
+    remote_config_source_gateway = MagicMock(spec=DevopsPlatformGateway)
+    tool_sbom = MagicMock(spec=SbomManagerGateway)
+    tool_sbom.get_components.return_value = [Mock()]
+
+    tool_license_manager = MagicMock()
+    tool_license_manager.upload_sbom.return_value = None
+
+    config_tool = {
+        "SBOM_MANAGER": {"ENABLED": True, "BRANCH_FILTER": ["main"]},
+        "ENGINE_DEPENDENCIES": {"TOOL": "tool"},
+        "LICENSE_ANALYZER": {
+            "ENABLED": True,
+            "TOOL": "dep_track",
+            "dep_track": {
+                "API_KEY_SECRET_KEY": "api_key_secret",
+                "HOST": "http://host",
+                "EXPORT_TASK_ID": True,
+                "TASK_ID_VARIABLE_NAME": "DT_TASK_ID",
+            },
+        },
+    }
+    dict_args = {"remote_config_repo": "repo", "folder_path": "path", "remote_config_branch": ""}
+
+    secret_tool = MagicMock()
+    secret_tool.get.return_value = "valid_token"
+
+    init_engine_dependencies(
+        Mock(), tool_remote, remote_config_source_gateway, Mock(), dict_args,
+        secret_tool, config_tool, tool_sbom, tool_license_manager
+    )
+
+    tool_license_manager.upload_sbom.assert_called_once()
+    tool_remote.set_variable.assert_not_called()
+    mock_logger.warning.assert_any_call("SBOM upload to license analyzer failed or returned empty task ID.")
+
+

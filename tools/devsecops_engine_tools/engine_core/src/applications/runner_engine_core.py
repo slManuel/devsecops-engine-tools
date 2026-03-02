@@ -36,6 +36,7 @@ from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.conte
 )
 import sys
 import argparse
+from devsecops_engine_tools.engine_utilities.dependency_track.infrastructure.driver_adapters.dependency_track import DependencyTrack
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
 from devsecops_engine_tools.engine_utilities import settings
 from devsecops_engine_tools.version import version
@@ -213,6 +214,12 @@ def get_inputs_from_cli(args):
         help="Password for connecting with the kiuwan platform. In order to get a kiuwan pass, go to the platform and select the pass of the account selected for the engine."
     )
     parser.add_argument(
+        "--token_license_analyzer",
+        type=str,
+        required=False,
+        help="Token to execute license analyzer if is necessary. The expected value is the API key to connect with the license analyzer tool, for example, Dependency Track API key.",
+    )
+    parser.add_argument(
         "--xray_mode",
         choices=["scan", "audit","build-scan"],
         required=False,
@@ -284,11 +291,12 @@ def get_inputs_from_cli(args):
         "token_engine_dependencies": args.token_engine_dependencies,
         "token_external_checks": args.token_external_checks,
         "token_engine_code": args.token_engine_code,
+        "token_license_analyzer": args.token_license_analyzer,
         "xray_mode": args.xray_mode,
         "image_to_scan": args.image_to_scan,
         "dast_file_path": args.dast_file_path,
         "context": args.context,
-        "docker_address": args.docker_address
+        "docker_address": args.docker_address,
     }
 
 
@@ -318,6 +326,9 @@ def application_core():
         }
         risk_score_gateway = RiskScore()
         context_extraction_gateway = ContextExtractionManager(risk_score_gateway)
+        license_tool_gateway = {
+            "dependency_track": DependencyTrack()
+        }
 
         init_engine_core(
             vulnerability_management_gateway,
@@ -329,7 +340,8 @@ def application_core():
             sbom_tool_gateway,
             risk_score_gateway,
             context_extraction_gateway,
-            args,
+            license_tool_gateway,
+            args
         )
     except Exception as e:
         logger.error("Error engine_core: {0} ".format(str(e)))

@@ -1,3 +1,4 @@
+from devsecops_engine_tools.engine_core.src.domain.model.gateway.license_manager import LicenseManagerGateway
 from devsecops_engine_tools.engine_sca.engine_dependencies.src.domain.usecases.dependencies_sca_scan import (
     DependenciesScan,
 )
@@ -16,6 +17,8 @@ from devsecops_engine_tools.engine_core.src.domain.model.gateway.sbom_manager im
 
 import os
 
+from devsecops_engine_tools.engine_utilities.dependency_track.domain.models.sbom_upload import SbomUpload
+from devsecops_engine_tools.engine_utilities.dependency_track.domain.models.server_config import ServerConfig
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
 from devsecops_engine_tools.engine_utilities import settings
 
@@ -31,6 +34,7 @@ def init_engine_dependencies(
     secret_tool,
     config_tool,
     tool_sbom: SbomManagerGateway,
+    tool_license_manager: LicenseManagerGateway,
 ):
     remote_config = remote_config_source_gateway.get_remote_config(
         dict_args["remote_config_repo"],
@@ -56,6 +60,8 @@ def init_engine_dependencies(
     deserialized = []
     sbom_components = None
     config_sbom = config_tool["SBOM_MANAGER"]
+    config_license = config_tool["LICENSE_ANALYZER"]
+    license_tool = config_license.get("TOOL")
     input_core = SetInputCore(
         remote_config,
         exclusions,
@@ -91,6 +97,33 @@ def init_engine_dependencies(
                     config_sbom,
                     pipeline_name
                 )
+
+                if config_tool["LICENSE_ANALYZER"]["ENABLED"]:
+                    token_license_analyzer = secret_tool.get(config_license[license_tool]["API_KEY_SECRET_KEY"]) if secret_tool else dict_args.get("token_license_analyzer")
+                    
+                    if not token_license_analyzer:
+                        logger.error("API key for license analyzer is not provided.")
+                    else:
+                        task_id = tool_license_manager.upload_sbom(
+                            config=ServerConfig(
+                                host=config_license[license_tool]["HOST"],
+                                api_key=token_license_analyzer
+                            ),
+                            request=SbomUpload(
+                                project_name=pipeline_name,
+                                project_version=str(tool_remote.get_variable("branch_tag")),
+                                sbom_filename=f"{pipeline_name}_SBOM.json"
+                            )
+                        )
+
+                        if task_id:
+                            logger.info(f"SBOM uploaded to license analyzer with task ID: {task_id}")
+
+                            if config_license[license_tool].get("EXPORT_TASK_ID", False):
+                                tool_remote.set_variable(config_license[license_tool]["TASK_ID_VARIABLE_NAME"], task_id)
+                        else:
+                            logger.warning("SBOM upload to license analyzer failed or returned empty task ID.")
+
             dependencies_scanned = dependencies_sca_scan.process()
             deserialized = (
                 dependencies_sca_scan.deserializator(dependencies_scanned)
