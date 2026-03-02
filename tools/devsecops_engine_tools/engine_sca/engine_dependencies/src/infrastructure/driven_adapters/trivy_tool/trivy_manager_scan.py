@@ -105,3 +105,4 @@ class TrivyScanSBOM(ToolGateway):
 
         except Exception as e:
             logger.error(f"Error during SBOM scan of {sbom_path}: {e}")
+            raise

@@ -82,11 +82,11 @@ class TestTrivyScanSBOM(unittest.TestCase):
         
         mock_subprocess_run.side_effect = Exception(error_message)
         
-        # Act
-        result = self.trivy_scanner._scan_dependencies_sbom(command_prefix, sbom_path)
+        # Act & Assert
+        with self.assertRaises(Exception) as context:
+            self.trivy_scanner._scan_dependencies_sbom(command_prefix, sbom_path)
         
-        # Assert
-        self.assertIsNone(result)
+        self.assertEqual(str(context.exception), error_message)
         mock_logger.error.assert_called_once_with(f"Error during SBOM scan of {sbom_path}: {error_message}")
 
     @patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.driven_adapters.trivy_tool.trivy_manager_scan.os.path.exists')
