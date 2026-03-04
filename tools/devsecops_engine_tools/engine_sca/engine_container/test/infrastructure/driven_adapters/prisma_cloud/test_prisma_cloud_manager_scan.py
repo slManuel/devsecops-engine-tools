@@ -209,8 +209,8 @@ def test_scan_image_retries_with_delay(mock_remoteconfig):
         **mock_remoteconfig,
         "PRISMA_CLOUD": {
             **mock_remoteconfig["PRISMA_CLOUD"],
-            "SCAN_RETRIES": 2,
-            "SCAN_RETRY_DELAY_SECONDS": 0.5,
+            "SCAN_RETRIES_TAR": 2,
+            "SCAN_RETRY_DELAY_TAR_SECONDS": 0.5,
         },
     }
 

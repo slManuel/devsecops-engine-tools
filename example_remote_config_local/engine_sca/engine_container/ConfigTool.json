@@ -4,8 +4,10 @@
         "PRISMA_CONSOLE_URL": "",
         "PRISMA_API_VERSION": "",
         "SBOM_FORMAT": "cyclonedx_json",
-        "SCAN_RETRIES": 1,
-        "SCAN_RETRY_DELAY_SECONDS": 0
+        "SCAN_RETRIES_NORMAL": 1,
+        "SCAN_RETRY_DELAY_NORMAL_SECONDS": 0,
+        "SCAN_RETRIES_TAR": 1,
+        "SCAN_RETRY_DELAY_TAR_SECONDS": 0
     },
     "TRIVY": {
         "TRIVY_VERSION": "0.62.1",
