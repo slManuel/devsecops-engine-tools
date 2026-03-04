@@ -51,14 +51,14 @@ class PrismaCloudManagerScan(ToolGateway):
 
         base_command.extend(["--output-file", result_file, "--details"])
 
-        # First attempt: normal scan
+        # First attempt: normal scan (single try, no retries)
         command = base_command + [image_name]
         if is_compressed_file:
            command = base_command + ["--tarball", image_name]
-        if self._execute_scan(command, image_name, max_attempts, retry_delay):
+        if self._execute_scan(command, image_name, 1, 0):
             return result_file
 
-        # Tarball fallback (Linux only)
+        # Tarball fallback (Linux only) with retries
         tarball_path = f"/tmp/{image_name.replace('/', '_').replace(':', '_')}.tar"
         logger.warning(
             "Normal scan failed for %s, attempting tarball fallback at %s",

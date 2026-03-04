@@ -217,20 +217,30 @@ def test_scan_image_retries_with_delay(mock_remoteconfig):
     with patch(
         "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.subprocess.run"
     ) as mock_run, patch(
-        "time.sleep"
+        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.time.sleep"
     ) as mock_sleep, patch(
         "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.logger.error"
     ) as mock_logger_error, patch(
         "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.logger.warning"
-    ) as mock_logger_warning:
-        # Mock successful second attempt
+    ) as mock_logger_warning, patch(
+        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.logger.info"
+    ), patch(
+        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.os.path.exists",
+        return_value=True,
+    ), patch(
+        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.os.remove"
+    ), patch("builtins.print"):
         mock_success = MagicMock()
         mock_success.stderr = ""
-        
+        mock_docker_save = MagicMock()
+
         error = subprocess.CalledProcessError(1, ["twistcli", "images", "scan"])
         error.stdout = ""
         error.stderr = ""
+        # 1: normal scan fails, 2: docker save ok, 3: tarball attempt 1 fails, 4: tarball attempt 2 ok
         mock_run.side_effect = [
+            error,
+            mock_docker_save,
             error,
             mock_success,
         ]
@@ -248,7 +258,7 @@ def test_scan_image_retries_with_delay(mock_remoteconfig):
         )
 
         assert result == "result.json"
-        assert mock_run.call_count == 2
+        assert mock_run.call_count == 4
         mock_sleep.assert_called_once_with(0.5)
 
 
