@@ -581,3 +581,196 @@ def test_scan_image_compressed_file_uses_tarball_flag(mock_remoteconfig):
         actual_command = mock_run.call_args[0][0]
         assert "--tarball" in actual_command
         assert actual_command[-1] == "/path/to/image.tar.gz"
+
+
+def test_scan_image_normal_retries_success_no_tarball(mock_remoteconfig):
+    """Test that normal scan retries (SCAN_RETRIES > 1) can succeed without tarball fallback."""
+    remoteconfig = {
+        **mock_remoteconfig,
+        "PRISMA_CLOUD": {
+            **mock_remoteconfig["PRISMA_CLOUD"],
+            "SCAN_RETRIES": 3,
+            "SCAN_RETRY_DELAY_SECONDS": 0.1,
+        },
+    }
+
+    _mod = "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan"
+    with patch(f"{_mod}.subprocess.run") as mock_run, \
+         patch(f"{_mod}.time.sleep") as mock_sleep, \
+         patch(f"{_mod}.logger.error"), \
+         patch(f"{_mod}.logger.warning"), \
+         patch("builtins.print"):
+
+        error = subprocess.CalledProcessError(1, ["twistcli"])
+        error.stdout = ""
+        error.stderr = ""
+        mock_success = MagicMock(stderr="")
+
+        # Normal: attempt 1 fails, attempt 2 fails, attempt 3 succeeds
+        mock_run.side_effect = [error, error, mock_success]
+
+        scan_manager = PrismaCloudManagerScan()
+        result = scan_manager.scan_image(
+            "file_path", "image_name", "result.json",
+            remoteconfig, "key:secret", None, False,
+        )
+
+        assert result == "result.json"
+        # Only 3 calls (all normal scan), no docker save, no tarball scan
+        assert mock_run.call_count == 3
+        assert mock_sleep.call_count == 2
+        # Verify no --tarball in any call
+        for call in mock_run.call_args_list:
+            assert "--tarball" not in call[0][0]
+
+
+def test_scan_image_normal_retries_exhaust_then_tarball_succeeds(mock_remoteconfig):
+    """Test that after all normal retries fail, tarball fallback succeeds on first try."""
+    remoteconfig = {
+        **mock_remoteconfig,
+        "PRISMA_CLOUD": {
+            **mock_remoteconfig["PRISMA_CLOUD"],
+            "SCAN_RETRIES": 2,
+            "SCAN_RETRY_DELAY_SECONDS": 0.1,
+        },
+    }
+
+    _mod = "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan"
+    with patch(f"{_mod}.subprocess.run") as mock_run, \
+         patch(f"{_mod}.time.sleep"), \
+         patch(f"{_mod}.logger.error"), \
+         patch(f"{_mod}.logger.warning"), \
+         patch(f"{_mod}.logger.info"), \
+         patch(f"{_mod}.os.path.exists", return_value=True), \
+         patch(f"{_mod}.os.remove") as mock_remove, \
+         patch("builtins.print"):
+
+        error = subprocess.CalledProcessError(1, ["twistcli"])
+        error.stdout = ""
+        error.stderr = ""
+        mock_docker_save = MagicMock()
+        mock_success = MagicMock(stderr="")
+
+        # Normal: 2 fails, docker save ok, tarball: 1 success
+        mock_run.side_effect = [error, error, mock_docker_save, mock_success]
+
+        scan_manager = PrismaCloudManagerScan()
+        result = scan_manager.scan_image(
+            "file_path", "image_name", "result.json",
+            remoteconfig, "key:secret", None, False,
+        )
+
+        assert result == "result.json"
+        assert mock_run.call_count == 4
+        # Verify tarball scan used --tarball flag
+        tarball_scan_call = mock_run.call_args_list[3]
+        assert "--tarball" in tarball_scan_call[0][0]
+        mock_remove.assert_called_once()
+
+
+def test_scan_image_docker_save_failure(mock_remoteconfig):
+    """Test that when docker save fails, error is logged and None is returned."""
+    _mod = "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan"
+    with patch(f"{_mod}.subprocess.run") as mock_run, \
+         patch(f"{_mod}.logger.error") as mock_logger_error, \
+         patch(f"{_mod}.logger.warning"), \
+         patch(f"{_mod}.os.path.exists", return_value=False):
+
+        scan_error = subprocess.CalledProcessError(1, ["twistcli"])
+        scan_error.stdout = ""
+        scan_error.stderr = ""
+
+        docker_save_error = subprocess.CalledProcessError(1, ["docker", "save"])
+        docker_save_error.stdout = ""
+        docker_save_error.stderr = "no space left on device"
+
+        # Normal scan fails, docker save fails
+        mock_run.side_effect = [scan_error, docker_save_error]
+
+        scan_manager = PrismaCloudManagerScan()
+        result = scan_manager.scan_image(
+            "file_path", "ubuntu:latest", "result.json",
+            mock_remoteconfig, "key:secret", None, False,
+        )
+
+        assert result is None
+        assert mock_run.call_count == 2
+        # Verify docker save error was logged
+        save_error_calls = [
+            c for c in mock_logger_error.call_args_list
+            if "Error saving image" in str(c)
+        ]
+        assert len(save_error_calls) == 1
+
+
+def test_scan_image_tar_retries_clamped_to_one_when_zero(mock_remoteconfig):
+    """Test that SCAN_RETRIES_TAR < 1 is clamped to 1 (at least one tarball attempt)."""
+    remoteconfig = {
+        **mock_remoteconfig,
+        "PRISMA_CLOUD": {
+            **mock_remoteconfig["PRISMA_CLOUD"],
+            "SCAN_RETRIES_TAR": 0,
+        },
+    }
+
+    _mod = "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan"
+    with patch(f"{_mod}.subprocess.run") as mock_run, \
+         patch(f"{_mod}.logger.error"), \
+         patch(f"{_mod}.logger.warning"), \
+         patch(f"{_mod}.logger.info"), \
+         patch(f"{_mod}.os.path.exists", return_value=True), \
+         patch(f"{_mod}.os.remove"), \
+         patch("builtins.print"):
+
+        error = subprocess.CalledProcessError(1, ["twistcli"])
+        error.stdout = ""
+        error.stderr = ""
+        mock_docker_save = MagicMock()
+        mock_success = MagicMock(stderr="")
+
+        # Normal fails, docker save ok, tarball succeeds
+        mock_run.side_effect = [error, mock_docker_save, mock_success]
+
+        scan_manager = PrismaCloudManagerScan()
+        result = scan_manager.scan_image(
+            "file_path", "image:tag", "result.json",
+            remoteconfig, "key:secret", None, False,
+        )
+
+        assert result == "result.json"
+        assert mock_run.call_count == 3
+
+
+def test_scan_image_compressed_file_failure_triggers_tarball_fallback(mock_remoteconfig):
+    """Test that when is_compressed_file=True and first scan fails, tarball fallback is attempted."""
+    _mod = "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan"
+    with patch(f"{_mod}.subprocess.run") as mock_run, \
+         patch(f"{_mod}.logger.error"), \
+         patch(f"{_mod}.logger.warning"), \
+         patch(f"{_mod}.logger.info"), \
+         patch(f"{_mod}.os.path.exists", return_value=True), \
+         patch(f"{_mod}.os.remove") as mock_remove, \
+         patch("builtins.print"):
+
+        error = subprocess.CalledProcessError(1, ["twistcli"])
+        error.stdout = ""
+        error.stderr = ""
+        mock_docker_save = MagicMock()
+        mock_success = MagicMock(stderr="")
+
+        # First scan (with --tarball) fails, docker save ok, tarball fallback succeeds
+        mock_run.side_effect = [error, mock_docker_save, mock_success]
+
+        scan_manager = PrismaCloudManagerScan()
+        result = scan_manager.scan_image(
+            "file_path", "/path/to/image.tar.gz", "result.json",
+            mock_remoteconfig, "key:secret", None, True,
+        )
+
+        assert result == "result.json"
+        assert mock_run.call_count == 3
+        # First call should have --tarball (compressed file)
+        first_call_cmd = mock_run.call_args_list[0][0][0]
+        assert "--tarball" in first_call_cmd
+        # Cleanup should happen
+        mock_remove.assert_called_once()
