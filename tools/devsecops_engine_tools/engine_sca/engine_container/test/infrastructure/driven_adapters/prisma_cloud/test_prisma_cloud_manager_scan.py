@@ -129,7 +129,8 @@ def test_scan_image_success(mock_remoteconfig):
             "result.json",
             mock_remoteconfig,
             "prisma_access_key:some_secret_key",
-            "unix:///var/run/docker.sock"
+            "unix:///var/run/docker.sock",
+            False,
         )
 
        
@@ -189,6 +190,7 @@ def test_scan_image_error_logs_details(mock_remoteconfig):
             mock_remoteconfig,
             "prisma_access_key:some_secret_key",
             None,
+            False,
         )
 
         assert result is None
@@ -242,6 +244,7 @@ def test_scan_image_retries_with_delay(mock_remoteconfig):
             remoteconfig,
             "prisma_access_key:some_secret_key",
             None,
+            False,
         )
 
         assert result == "result.json"
@@ -464,6 +467,7 @@ def test_scan_image_tarball_fallback_success(mock_remoteconfig):
             mock_remoteconfig,
             "prisma_access_key:some_secret_key",
             None,
+            False,
         )
 
         assert result == "result.json"
@@ -507,6 +511,7 @@ def test_scan_image_tarball_fallback_cleanup_on_failure(mock_remoteconfig):
             mock_remoteconfig,
             "prisma_access_key:some_secret_key",
             None,
+            False,
         )
 
         assert result is None
@@ -514,21 +519,55 @@ def test_scan_image_tarball_fallback_cleanup_on_failure(mock_remoteconfig):
         mock_remove.assert_called_once_with("/tmp/ubuntu_latest.tar")
 
 
-def test_run_tool_container_sca_compressed_file():
-    """Test that Prisma Cloud returns None for compressed files with proper warning"""
-    scan_manager = PrismaCloudManagerScan()
-    
-    result = scan_manager.run_tool_container_sca(
-        remoteconfig={},
-        secret_tool=None,
-        token_engine_container=None,
-        image_name="/path/to/image.tar.gz",
-        result_file="result.json",
-        base_image=None,
-        exclusions={},
-        generate_sbom=False,
-        docker_address="unix:///var/run/docker.sock",
-        is_compressed_file=True
-    )
-    
-    assert result == ("", None)
+def test_run_tool_container_sca_compressed_file(mock_remoteconfig):
+    """Test that compressed files are scanned with --tarball flag via scan_image"""
+    with patch("os.path.join", return_value="/fake/twistcli"), \
+         patch("os.path.exists", return_value=True), \
+         patch.object(
+             PrismaCloudManagerScan, "scan_image", return_value="result.json"
+         ) as mock_scan:
+        scan_manager = PrismaCloudManagerScan()
+
+        result = scan_manager.run_tool_container_sca(
+            remoteconfig=mock_remoteconfig,
+            secret_tool={"access_prisma": "key", "token_prisma": "secret"},
+            token_engine_container=None,
+            image_name="/path/to/image.tar.gz",
+            result_file="result.json",
+            base_image=None,
+            exclusions={},
+            generate_sbom=False,
+            docker_address="unix:///var/run/docker.sock",
+            is_compressed_file=True,
+        )
+
+        assert result == ("result.json", None)
+        # Verify scan_image was called with is_compressed_file=True
+        mock_scan.assert_called_once()
+        call_kwargs_or_args = mock_scan.call_args
+        assert call_kwargs_or_args[0][-1] is True  # last positional arg = is_compressed_file
+
+
+def test_scan_image_compressed_file_uses_tarball_flag(mock_remoteconfig):
+    """Test that scan_image uses --tarball flag when is_compressed_file=True"""
+    with patch(
+        "devsecops_engine_tools.engine_sca.engine_container.src.infrastructure.driven_adapters.prisma_cloud.prisma_cloud_manager_scan.subprocess.run"
+    ) as mock_run, patch("builtins.print"):
+        mock_run.return_value = MagicMock(stderr="")
+
+        scan_manager = PrismaCloudManagerScan()
+        result = scan_manager.scan_image(
+            "file_path",
+            "/path/to/image.tar.gz",
+            "result.json",
+            mock_remoteconfig,
+            "prisma_access_key:some_secret_key",
+            None,
+            True,
+        )
+
+        assert result == "result.json"
+        # Verify the command used --tarball flag with image as last arg
+        actual_command = mock_run.call_args[0][0]
+        assert "--tarball" in actual_command
+        assert actual_command[-1] == "/path/to/image.tar.gz"

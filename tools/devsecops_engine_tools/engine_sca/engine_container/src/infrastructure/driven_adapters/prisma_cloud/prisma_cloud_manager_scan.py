@@ -26,7 +26,7 @@ class PrismaCloudManagerScan(ToolGateway):
         """
         return download_twistcli(file_path, prisma_key, prisma_console_url, prisma_api_version)
     def scan_image(
-        self, file_path, image_name, result_file, remoteconfig, prisma_key, docker_address
+        self, file_path, image_name, result_file, remoteconfig, prisma_key, docker_address, is_compressed_file
     ):
         prisma_config = remoteconfig.get("PRISMA_CLOUD", {})
         max_attempts = int(prisma_config.get("SCAN_RETRIES", 1))
@@ -53,6 +53,8 @@ class PrismaCloudManagerScan(ToolGateway):
 
         # First attempt: normal scan
         command = base_command + [image_name]
+        if is_compressed_file:
+           command = base_command + ["--tarball", image_name]
         if self._execute_scan(command, image_name, max_attempts, retry_delay):
             return result_file
 
@@ -198,10 +200,7 @@ class PrismaCloudManagerScan(ToolGateway):
     def run_tool_container_sca(
         self, remoteconfig, secret_tool, token_engine_container, image_name, result_file, base_image, exclusions, generate_sbom, docker_address, is_compressed_file=False
     ):
-        if is_compressed_file:
-            logger.warning("Prisma Cloud does not support compressed file scanning. Skipping.")
-            return "", None
-            
+
         prisma_key = (
             f"{secret_tool['access_prisma']}:{secret_tool['token_prisma']}" if secret_tool else token_engine_container
         )
@@ -223,7 +222,8 @@ class PrismaCloudManagerScan(ToolGateway):
             result_file,
             remoteconfig,
             prisma_key,
-            docker_address
+            docker_address,
+            is_compressed_file
         )
         if base_image:
             self._write_image_base(result_file, base_image, exclusions, remoteconfig)
