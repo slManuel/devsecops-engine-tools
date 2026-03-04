@@ -29,10 +29,12 @@ class PrismaCloudManagerScan(ToolGateway):
         self, file_path, image_name, result_file, remoteconfig, prisma_key, docker_address, is_compressed_file
     ):
         prisma_config = remoteconfig.get("PRISMA_CLOUD", {})
-        max_attempts = int(prisma_config.get("SCAN_RETRIES", 1))
-        retry_delay = float(prisma_config.get("SCAN_RETRY_DELAY_SECONDS", 0))
-        if max_attempts < 1:
-            max_attempts = 1
+        max_attempts_normal = int(prisma_config.get("SCAN_RETRIES", 1))
+        retry_delay_normal = float(prisma_config.get("SCAN_RETRY_DELAY_SECONDS", 0))
+        max_attempts_tar = int(prisma_config.get("SCAN_RETRIES_TAR", 1))
+        retry_delay_tar = float(prisma_config.get("SCAN_RETRY_DELAY_TAR_SECONDS", 0))
+        if max_attempts_tar < 1:
+            max_attempts_tar = 1
 
         base_command = [
             file_path,
@@ -51,14 +53,14 @@ class PrismaCloudManagerScan(ToolGateway):
 
         base_command.extend(["--output-file", result_file, "--details"])
 
-        # First attempt: normal scan
+        # First attempt: normal scan (single try, no retries)
         command = base_command + [image_name]
         if is_compressed_file:
            command = base_command + ["--tarball", image_name]
-        if self._execute_scan(command, image_name, max_attempts, retry_delay):
+        if self._execute_scan(command, image_name, max_attempts_normal, retry_delay_normal):
             return result_file
 
-        # Tarball fallback (Linux only)
+        # Tarball fallback (Linux only) with retries
         tarball_path = f"/tmp/{image_name.replace('/', '_').replace(':', '_')}.tar"
         logger.warning(
             "Normal scan failed for %s, attempting tarball fallback at %s",
@@ -77,7 +79,7 @@ class PrismaCloudManagerScan(ToolGateway):
             )
             logger.info("Image %s saved as tarball at %s", image_name, tarball_path)
             tarball_command = base_command + ["--tarball", tarball_path]
-            if self._execute_scan(tarball_command, image_name, max_attempts, retry_delay):
+            if self._execute_scan(tarball_command, image_name, max_attempts_tar, retry_delay_tar):
                 return result_file
         except subprocess.CalledProcessError as e:
             logger.error(
