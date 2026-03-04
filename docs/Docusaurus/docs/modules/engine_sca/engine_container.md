@@ -20,8 +20,7 @@ Main configuration file that defines scanning behavior, tool versions, and secur
     "PRISMA_API_VERSION": "",
     "SBOM_FORMAT": "cyclonedx_json",
     "SCAN_RETRIES": 1,
-    "SCAN_RETRIES_NORMAL": 1,
-    "SCAN_RETRY_DELAY_NORMAL_SECONDS": 0,
+    "SCAN_RETRY_DELAY_SECONDS": 0,
     "SCAN_RETRIES_TAR": 1,
     "SCAN_RETRY_DELAY_TAR_SECONDS": 0
   },
@@ -124,8 +123,8 @@ Main configuration file that defines scanning behavior, tool versions, and secur
 - **PRISMA_CONSOLE_URL**: URL of the Prisma Cloud console for API access
 - **PRISMA_API_VERSION**: API version to use for Prisma Cloud integration
 - **SBOM_FORMAT**: SBOM output format (`"cyclonedx_json"` for CycloneDX JSON format)
-- **SCAN_RETRIES_NORMAL**: Number of retry attempts for normal image scans (minimum 1)
-- **SCAN_RETRY_DELAY_NORMAL_SECONDS**: Delay (seconds) between retries for normal image scans
+- **SCAN_RETRIES**: Number of retry attempts for normal image scans (minimum 1)
+- **SCAN_RETRY_DELAY_SECONDS**: Delay (seconds) between retries for normal image scans
 - **SCAN_RETRIES_TAR**: Number of retry attempts for TAR image scans (minimum 1)
 - **SCAN_RETRY_DELAY_TAR_SECONDS**: Delay (seconds) between retries for TAR image scans
 

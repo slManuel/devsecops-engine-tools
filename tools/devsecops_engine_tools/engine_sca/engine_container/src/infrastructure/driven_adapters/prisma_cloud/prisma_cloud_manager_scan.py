@@ -29,8 +29,8 @@ class PrismaCloudManagerScan(ToolGateway):
         self, file_path, image_name, result_file, remoteconfig, prisma_key, docker_address, is_compressed_file
     ):
         prisma_config = remoteconfig.get("PRISMA_CLOUD", {})
-        max_attempts_normal = int(prisma_config.get("SCAN_RETRIES_NORMAL", 1))
-        retry_delay_normal = float(prisma_config.get("SCAN_RETRY_DELAY_NORMAL_SECONDS", 0))
+        max_attempts_normal = int(prisma_config.get("SCAN_RETRIES", 1))
+        retry_delay_normal = float(prisma_config.get("SCAN_RETRY_DELAY_SECONDS", 0))
         max_attempts_tar = int(prisma_config.get("SCAN_RETRIES_TAR", 1))
         retry_delay_tar = float(prisma_config.get("SCAN_RETRY_DELAY_TAR_SECONDS", 0))
         if max_attempts_tar < 1:
