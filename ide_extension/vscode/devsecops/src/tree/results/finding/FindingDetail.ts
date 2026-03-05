@@ -7,21 +7,24 @@ export function findingDetailWebview(finding: Finding, sourceType?: string): str
 
     switch (severity) {
         case "critical":
-        case "high":
             codicon = "codicon-error";
             color = "#e51400";
             break;
-        case "medium":
+        case "high":
             codicon = "codicon-warning";
+            color = "#ff8c00";
+            break;
+        case "medium":
+            codicon = "codicon-info";
             color = "#cca700";
             break;
         case "low":
-            codicon = "codicon-info";
-            color = "#007acc";
+            codicon = "codicon-circle-outline";
+            color = "#16a34a";
             break;
         default:
-            codicon = "codicon-error";
-            color = "#e51400";
+            codicon = "codicon-shield";
+            color = "#858585";
     }
 
     function scanInfoRow(label: string, value: string | undefined): string {
@@ -49,7 +52,7 @@ export function findingDetailWebview(finding: Finding, sourceType?: string): str
                         <span class="codicon codicon-package"></span>
                         Generate Update Solution
                     </button>
-                    <button class="copilot-button agent-button" onclick="autoFixWithAgent()">
+                    <button class="copilot-button agent-button" onclick="autoFixWithAgent()" title="Requires Copilot Chat in Agent Mode to automatically edit files">
                         <span class="codicon codicon-robot"></span>
                         Auto-Fix with Agent
                     </button>`;
@@ -289,6 +292,7 @@ export function findingDetailWebview(finding: Finding, sourceType?: string): str
     <div class="section" id="scanSection">
         <h3>Scan Info</h3>
         ${scanInfoRow("Severity", finding.getSeverity())}
+        ${scanInfoRow("Priority", finding.getPriority())}
         ${scanInfoRow("Where", finding.getWhere())}
         ${scanInfoRow("Module", finding.getModule())}
         ${scanInfoRow("Tool", finding.getTool())}

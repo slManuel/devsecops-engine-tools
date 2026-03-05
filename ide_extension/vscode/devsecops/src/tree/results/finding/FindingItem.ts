@@ -29,14 +29,15 @@ export class FindingItem extends vscode.TreeItem {
     }
 
     const severityIcons: Record<string, vscode.ThemeIcon> = {
-      high: new vscode.ThemeIcon("error", new vscode.ThemeColor("errorForeground")),
-      medium: new vscode.ThemeIcon("warning", new vscode.ThemeColor("editorWarning.foreground")),
-      low: new vscode.ThemeIcon("info", new vscode.ThemeColor("editorInfo.foreground")),
+      critical: new vscode.ThemeIcon("error", new vscode.ThemeColor("errorForeground")),
+      high: new vscode.ThemeIcon("warning", new vscode.ThemeColor("list.warningForeground")),
+      medium: new vscode.ThemeIcon("info", new vscode.ThemeColor("editorWarning.foreground")),
+      low: new vscode.ThemeIcon("circle-outline", new vscode.ThemeColor("terminal.ansiGreen")),
     };
 
     this.iconPath =
       severityIcons[finding.getSeverity().toLowerCase()] ||
-      new vscode.ThemeIcon("error", new vscode.ThemeColor("errorForeground"));
+      new vscode.ThemeIcon("shield", new vscode.ThemeColor("foreground"));
 
     this.command = {
       command: "devsecops.showVulnContext",
@@ -88,9 +89,9 @@ export class FindingItem extends vscode.TreeItem {
 
     let filePath: string | null = null;
 
-    const pathMatch = where.match(/\/ms_artifact(\/.+?)(?::|$|\s)/);
-    if (pathMatch && pathMatch[1] && this.scanPath) {
-      filePath = path.join(this.scanPath, pathMatch[1].substring(1));
+    const pathMatch = where.match(/\/(ms_artifact|extracted)(\/.+?)(?::|$|\s)/);
+    if (pathMatch && pathMatch[2] && this.scanPath) {
+      filePath = path.join(this.scanPath, pathMatch[2].substring(1));
     } else {
       const genericPathMatch = where.match(/([^\s/]+(?:\.[^\s/]+)*)\s*(?:\(line|$|\s)/);
       if (genericPathMatch && this.scanPath) {

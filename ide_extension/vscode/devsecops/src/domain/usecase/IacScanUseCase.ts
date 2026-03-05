@@ -1,17 +1,20 @@
 import { OutputChannel } from "vscode";
 import { IIacScanUseCase } from "./interfaces/IIacScanUseCase";
-import { IacScanner } from "../../infraestructure/drivenAdapter/IacScanner";
+import { IacScanner } from "../../infrastructure/scanners/IacScanner";
 import { IRestClientGateway } from "../model/gateways/IRestClientGateway";
 import {
   VARIABLE_GROUPS_AD_BY_RELEASE_DEFINITION_ID,
   VARIABLE_GROUPS_AD_BY_ID,
 } from "../../application/appService/Constants";
-import { AuthEncoder } from "../../infraestructure/helper/AuthEncoder";
+import { AuthEncoder } from "../../infrastructure/helper/AuthEncoder";
 import { promises as fs } from "fs";
 import * as path from "path";
 import { ScannerRes } from "../model/ScannerRes";
 import { ScanConfiguration } from "../model/ScanConfiguration";
 import { Finding } from "../model/Finding";
+import { ScanExecutionOrchestrator } from "../../infrastructure/executors/ScanExecutionOrchestrator";
+import { IScanExecutionConfig } from "../../infrastructure/executors/IScanExecutor";
+import { Mappers } from "../model/mappers/Mappers";
 
 interface IVariableData {
   value: string;
@@ -42,6 +45,128 @@ export class IacScanUseCase implements IIacScanUseCase {
     scanConfiguration: ScanConfiguration,
     scanLoader: any
   ): Promise<ScannerRes> {
+    // Select executor based on configuration
+    const executor = await ScanExecutionOrchestrator.selectExecutor();
+    await ScanExecutionOrchestrator.getExecutionModeStatus(outputChannel);
+
+    // Check if we should use remote executor
+    if (executor.getExecutionMode() === 'remote-microservice') {
+      return await this.executeScanViaRemote(
+        folderToScan,
+        outputChannel,
+        scanConfiguration,
+        executor
+      );
+    }
+
+    // Use local Docker execution (traditional flow)
+    return await this.executeScanViaLocal(
+      folderToScan,
+      outputChannel,
+      scanConfiguration,
+      scanLoader
+    );
+  }
+
+  private async executeScanViaRemote(
+    folderToScan: string,
+    outputChannel: OutputChannel,
+    scanConfiguration: ScanConfiguration,
+    executor: any
+  ): Promise<ScannerRes> {
+    // Show output channel
+    outputChannel.show();
+    
+    // Process variable replacement if needed (same as local)
+    const scanLocation = await this.prepareFilesForScan(folderToScan, outputChannel, scanConfiguration);
+
+    try {
+      // Build config for remote execution
+      const scanConfig: IScanExecutionConfig = {
+        scanType: 'iac',
+        target: scanLocation,
+        containerImageName: scanConfiguration.getContainerImageName(),
+        toolVersion: this.toolVersion,
+        iacTool: scanConfiguration.getIacTool()
+      };
+
+      // Execute via remote microservice
+      const result = await executor.execute(scanConfig, outputChannel);
+
+      if (!result.success || !result.contextJson) {
+        throw new Error(result.error || 'Remote scan failed');
+      }
+
+      // Parse context JSON and map to findings
+      const contextData = JSON.parse(result.contextJson);
+      const findings = (contextData.iac_context || []).map((ctx: any) => 
+        Mappers.mapIacContextToFinding(ctx)
+      );
+
+      // Get rule codes for findings
+      const findingsWithRuleCode = await Promise.all(
+        findings.map((finding: Finding) =>
+          this.iacScanner.getRuleCode(
+            finding.getId(),
+            finding,
+            this.containerEnginePath,
+            scanConfiguration.getContainerImageName(),
+            this.toolVersion
+          )
+        )
+      );
+
+      const scannerRes = new ScannerRes(result.success, findingsWithRuleCode);
+      return scannerRes;
+    } finally {
+      // Cleanup replaced files if necessary
+      if (scanLocation !== folderToScan) {
+        await this.cleanFolder(folderToScan);
+      }
+    }
+  }
+
+  private async executeScanViaLocal(
+    folderToScan: string,
+    outputChannel: OutputChannel,
+    scanConfiguration: ScanConfiguration,
+    scanLoader: any
+  ): Promise<ScannerRes> {
+    // Process variable replacement if needed
+    const scanLocation = await this.prepareFilesForScan(folderToScan, outputChannel, scanConfiguration);
+
+    const scannerRes: ScannerRes = await this.iacScanner.scan(
+      scanLocation,
+      outputChannel,
+      scanConfiguration.getContainerImageName(),
+      scanConfiguration.getIacTool(),
+      this.toolVersion,
+      this.containerEnginePath,
+      scanLoader
+    ).finally(() => {
+      if (scanLocation !== folderToScan) {
+        this.cleanFolder(folderToScan);
+      }
+    });
+
+    const findingsWithRuleCode: Promise<Finding>[] = scannerRes.getFindings().map((finding: Finding) => {
+      return this.iacScanner.getRuleCode(
+        finding.getId(),
+        finding,
+        this.containerEnginePath,
+        scanConfiguration.getContainerImageName(),
+        this.toolVersion
+      );
+    });
+    scannerRes.setFindings(await Promise.all(findingsWithRuleCode));
+    return scannerRes;
+  }
+
+  private async prepareFilesForScan(
+    folderToScan: string,
+    outputChannel: OutputChannel,
+    scanConfiguration: ScanConfiguration
+  ): Promise<string> {
     let releaseIdData: IReleaseIdData;
     let variablesFromLibrary: { [key: string]: IVariableData } = {};
     let releaseEnvironments: number[] = [];
@@ -51,23 +176,23 @@ export class IacScanUseCase implements IIacScanUseCase {
 
     if (!scanConfiguration.isValidAdReplace()) {
       outputChannel.appendLine("Configuration values are missing≤ avoiding variable replace");
-    } else {
-      variableReplace = true;
-      releaseIdData = await this.fetchReleaseDefinitionData(scanConfiguration);
-      variablesFromLibrary = releaseIdData.variables;
-      releaseEnvironments = releaseIdData.environments
-        .map((environment: { variableGroups: number[] }) => environment.variableGroups)
-        .flat();
-      const releaseVariableGroups = (releaseIdData as any).variableGroups || [];
-      variableGroupsIds = [...new Set([...releaseEnvironments, ...releaseVariableGroups])];
-      variableGroupsData = await this.fetchGroupIdData(scanConfiguration, this.variablesIdString(variableGroupsIds));
-      variablesFromLibrary = this.combineVariables(variablesFromLibrary, variableGroupsData);
+      return folderToScan;
     }
+
+    variableReplace = true;
+    releaseIdData = await this.fetchReleaseDefinitionData(scanConfiguration);
+    variablesFromLibrary = releaseIdData.variables;
+    releaseEnvironments = releaseIdData.environments
+      .map((environment: { variableGroups: number[] }) => environment.variableGroups)
+      .flat();
+    const releaseVariableGroups = (releaseIdData as any).variableGroups || [];
+    variableGroupsIds = [...new Set([...releaseEnvironments, ...releaseVariableGroups])];
+    variableGroupsData = await this.fetchGroupIdData(scanConfiguration, this.variablesIdString(variableGroupsIds));
+    variablesFromLibrary = this.combineVariables(variablesFromLibrary, variableGroupsData);
 
     this.files = await fs.readdir(folderToScan);
     const regex = /#{|}#/g;
     let replacedFile: string = "";
-
 
     const replacedFilesDir = path.join(folderToScan, 'replacedFiles');
     try {
@@ -96,34 +221,7 @@ export class IacScanUseCase implements IIacScanUseCase {
       this.files = this.files.filter((value) => value !== file);
     }
 
-
-    const scanLocation = variableReplace ? path.join(folderToScan, 'replacedFiles') : folderToScan;
-
-    const scannerRes: ScannerRes = await this.iacScanner.scan(
-      scanLocation,
-      outputChannel,
-      scanConfiguration.getContainerImageName(),
-      scanConfiguration.getIacTool(),
-      this.toolVersion,
-      this.containerEnginePath,
-      scanLoader
-    ).finally(() => {
-      if (variableReplace) {
-        this.cleanFolder(folderToScan);
-      }
-    });
-
-    const findingsWithRuleCode: Promise<Finding>[] = scannerRes.getFindings().map((finding: Finding) => {
-      return this.iacScanner.getRuleCode(
-        finding.getId(),
-        finding,
-        this.containerEnginePath,
-        scanConfiguration.getContainerImageName(),
-        this.toolVersion
-      );
-    });
-    scannerRes.setFindings(await Promise.all(findingsWithRuleCode));
-    return scannerRes;
+    return variableReplace ? path.join(folderToScan, 'replacedFiles') : folderToScan;
   }
 
   private async cleanFolder(folderToScan: string): Promise<void> {

@@ -1,14 +1,11 @@
-import { IacScanner } from "../infraestructure/drivenAdapter/IacScanner";
-import { IacScanRequest } from "../infraestructure/entryPoint/IacScanRequest";
+import { IacScanner } from "../infrastructure/scanners/IacScanner";
 import { IacScanUseCase } from "../domain/usecase/IacScanUseCase";
-import { RestClient } from "../infraestructure/drivenAdapter/RestClient";
-import { ImageScanRequest } from "../infraestructure/entryPoint/ImageScanRequest";
-import { ImageScanner } from "../infraestructure/drivenAdapter/ImageScanner";
+import { RestClient } from "../infrastructure/clients/RestClient";
+import { ImageScanner } from "../infrastructure/scanners/ImageScanner";
 import { ImageScanUseCase } from "../domain/usecase/ImageScanUseCase";
 import { DependenciesScanUseCase } from "../domain/usecase/DependenciesScanUseCase";
-import { DependenciesScanRequest } from "../infraestructure/entryPoint/DependenciesScanRequest";
-import { DependenciesScanner } from "../infraestructure/drivenAdapter/DependenciesScanner";
-import ContainerEngineManager from "../infraestructure/helper/ContainerEngineManager";
+import { DependenciesScanner } from "../infrastructure/scanners/DependenciesScanner";
+import ContainerEngineManager from "../infrastructure/helper/ContainerEngineManager";
 import { ScanConfiguration } from "../domain/model/ScanConfiguration";
 
 interface IResult {
@@ -22,25 +19,25 @@ interface IContainerApiResponse {
     results: IResult[];
 }
 
-export async function iacScanRequest(): Promise<IacScanRequest> {
+export async function iacScanRequest(): Promise<IacScanUseCase> {
     const containerEnginePath = ContainerEngineManager.getContainerEnginePath();
     const containerImageVersion = await getLatestContainerImageVersion();
     const iacScanUseCase = new IacScanUseCase(new IacScanner(), new RestClient(), containerImageVersion, containerEnginePath);
-    return new IacScanRequest(iacScanUseCase);
+    return iacScanUseCase;
 }
 
-export async function imageScanRequest(): Promise<ImageScanRequest>{
+export async function imageScanRequest(): Promise<ImageScanUseCase>{
     const containerEnginePath = ContainerEngineManager.getContainerEnginePath();
     const containerImageVersion = await getLatestContainerImageVersion();
     const imageScanUseCase = new ImageScanUseCase(new ImageScanner(), containerImageVersion, containerEnginePath);
-    return new ImageScanRequest(imageScanUseCase);
+    return imageScanUseCase;
 }
 
-export async function dependenciesScanRequest(): Promise<DependenciesScanRequest> {
+export async function dependenciesScanRequest(): Promise<DependenciesScanUseCase> {
     const containerEnginePath = ContainerEngineManager.getContainerEnginePath();
     const containerImageVersion = await getLatestContainerImageVersion();
     const dependenciesScanUseCase = new DependenciesScanUseCase(new DependenciesScanner(), containerImageVersion, containerEnginePath);
-    return new DependenciesScanRequest(dependenciesScanUseCase);
+    return dependenciesScanUseCase;
 }
 
 async function getLatestContainerImageVersion(repository: string = 'bancolombia/devsecops-engine-tools'): Promise<string> {

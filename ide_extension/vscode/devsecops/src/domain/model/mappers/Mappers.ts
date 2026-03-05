@@ -1,7 +1,6 @@
-import { List } from "lodash";
 import { Finding } from "../Finding";
-import { formatImpactPathsCollapsed, formatImpactPathsForPrompt } from "../../../infraestructure/helper/ImpactPathFormatter";
-import { ImpactPath } from "../../../infraestructure/helper/ImpactPathFormatter";
+import { formatImpactPathsCollapsed, formatImpactPathsForPrompt } from "../../../infrastructure/helper/ImpactPathFormatter";
+import { ImpactPath } from "../../../infrastructure/helper/ImpactPathFormatter";
 
 export interface IIacContext {
   id: string;
@@ -16,6 +15,7 @@ export interface IIacContext {
   module: string;
   vulnerability_status: string;
   tool: string;
+  priority: string;
 }
 
 export interface IImageScanContext {
@@ -38,6 +38,7 @@ export interface IImageScanContext {
   references: string[];
   module: string;
   source_tool: string;
+  priority: string;
 }
 
 export interface IDependenciesScanContext {
@@ -51,6 +52,7 @@ export interface IDependenciesScanContext {
   description: string;
   references: string[];
   source_tool: string;
+  priority: string;
 }
 
 export interface ISeverityCounts {
@@ -67,6 +69,7 @@ export class Mappers {
     return new Finding(
       iacContext.custom_vuln_id || iacContext.id || "",
       iacContext.severity || "unknown",
+      iacContext.priority || "",
       iacContext.where || "",
       iacContext.description || "",
       iacContext.module || "engine_iac",
@@ -88,6 +91,7 @@ export class Mappers {
     return new Finding(
       imageScanContext.cve_id || "",
       imageScanContext.severity || "unknown",
+      imageScanContext.priority || "",
       imageScanContext.package_name +
       " " +
       imageScanContext.os_type +
@@ -119,6 +123,7 @@ export class Mappers {
     return new Finding(
       dependenciesScanContext.cve_id.join(",") || "",
       dependenciesScanContext.severity || "unknown",
+      dependenciesScanContext.priority || "",
       dependenciesScanContext.component || "",
       dependenciesScanContext.description || "",
       "engine_dependencies",
@@ -129,7 +134,7 @@ export class Mappers {
         installed_version: dependenciesScanContext.installed_version || "",
         fixed_version: dependenciesScanContext.fixed_version.join(",") || "",
         impact_paths: formatImpactPathsCollapsed(dependenciesScanContext.impact_paths),
-        impact_paths_prompt: formatImpactPathsForPrompt(dependenciesScanContext.impact_paths),
+        impact_paths_prompt: formatImpactPathsForPrompt(dependenciesScanContext.impact_paths)
       }
     );
   }

@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { DiagnosticService } from "./tree/DiagnosticService";
-import { DevSecOpsTreeDataProvider } from "./tree/DevSecOpsTreeDataProvider";
+import { PracticesTreeDataProvider } from "./tree/PracticesTreeDataProvider";
+import { ResultsTreeDataProvider } from "./tree/ResultsTreeDataProvider";
 import { registerIacScanCommand } from "./commands/IacScanCommand";
 import { Finding } from "./domain/model/Finding";
 import { SecurityCodeActionProvider } from "./actions/SecurityCodeActionProvider";
@@ -14,17 +15,27 @@ export function activate(context: vscode.ExtensionContext): void {
 
   DiagnosticService.initialize();
 
-  const treeDataProvider = new DevSecOpsTreeDataProvider(context);
-  vscode.window.registerTreeDataProvider("devsecops", treeDataProvider);
-  vscode.window.createTreeView("devsecops", {
-    treeDataProvider: treeDataProvider,
+  // Register Practices view
+  const practicesProvider = new PracticesTreeDataProvider();
+  vscode.window.registerTreeDataProvider("devsecops-practices", practicesProvider);
+  vscode.window.createTreeView("devsecops-practices", {
+    treeDataProvider: practicesProvider,
     showCollapseAll: false,
     canSelectMany: false,
   });
 
-  const iacScanDisposable = registerIacScanCommand(context, treeDataProvider);
-  const imageScanDisposable = registerImageScanCommand(context, treeDataProvider);
-  const dependenciesScanDisposable = registerDependenciesScanCommand(context, treeDataProvider);
+  // Register Results view
+  const resultsProvider = new ResultsTreeDataProvider(context);
+  vscode.window.registerTreeDataProvider("devsecops-results", resultsProvider);
+  vscode.window.createTreeView("devsecops-results", {
+    treeDataProvider: resultsProvider,
+    showCollapseAll: true,
+    canSelectMany: false,
+  });
+
+  const iacScanDisposable = registerIacScanCommand(context, resultsProvider);
+  const imageScanDisposable = registerImageScanCommand(context, resultsProvider);
+  const dependenciesScanDisposable = registerDependenciesScanCommand(context, resultsProvider);
 
   const codeActionProvider = vscode.languages.registerCodeActionsProvider(
     { scheme: 'file' },
@@ -69,11 +80,52 @@ export function activate(context: vscode.ExtensionContext): void {
       );
 
       if (result === "Delete") {
-        treeDataProvider.deleteScanResult(scanResultItem);
+        resultsProvider.deleteScanResult(scanResultItem);
         vscode.window.showInformationMessage(`Scan result "${scanResultItem.label}" has been deleted.`);
       }
     }
   );
+
+  const filterBySeverityDisposable = vscode.commands.registerCommand(
+    "devsecops.filterBySeverity",
+    async () => {
+      const currentFilter = resultsProvider.getFilterState();
+      
+      const severityOptions = [
+        { label: "Critical", picked: currentFilter.severities.includes("critical") },
+        { label: "High", picked: currentFilter.severities.includes("high") },
+        { label: "Medium", picked: currentFilter.severities.includes("medium") },
+        { label: "Low", picked: currentFilter.severities.includes("low") }
+      ];
+
+      const selected = await vscode.window.showQuickPick(severityOptions, {
+        canPickMany: true,
+        placeHolder: "Select severities to show (leave empty to show all)",
+        title: "Filter Findings by Severity"
+      });
+
+      if (selected !== undefined) {
+        const severities = selected.map(item => item.label.toLowerCase());
+        resultsProvider.setFilterSeverities(severities);
+      }
+    }
+  );
+
+  const toggleSortDisposable = vscode.commands.registerCommand(
+    "devsecops.toggleSort",
+    () => {
+      resultsProvider.toggleSort();
+    }
+  );
+
+  const clearFiltersDisposable = vscode.commands.registerCommand(
+    "devsecops.clearFilters",
+    () => {
+      resultsProvider.clearFilters();
+      vscode.window.showInformationMessage('All filters and sorting cleared');
+    }
+  );
+
   context.subscriptions.push(iacScanDisposable);
   context.subscriptions.push(imageScanDisposable);
   context.subscriptions.push(dependenciesScanDisposable);
@@ -82,6 +134,9 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(showVulnContextDisposable);
   context.subscriptions.push(showGeneralFindingWebviewDisposable);
   context.subscriptions.push(deleteScanResultDisposable);
+  context.subscriptions.push(filterBySeverityDisposable);
+  context.subscriptions.push(toggleSortDisposable);
+  context.subscriptions.push(clearFiltersDisposable);
 
 
   context.subscriptions.push({

@@ -3,17 +3,19 @@ import IScannerGateway from "../../domain/model/gateways/IScannerGateway";
 import OutputManager from "../helper/OutputManager";
 import { ScannerRes } from "../../domain/model/ScannerRes";
 import { Finding } from "../../domain/model/Finding";
+import { ScanConfigurationService } from "../config/ScanConfigurationService";
 import { exec, execSync } from "child_process";
 import { IIacContext, ISeverityCounts, Mappers } from "../../domain/model/mappers/Mappers";
 import { ScannerImageManager } from "../helper/ScannerImageManager";
-import { ScannerMetricsHelper } from "../helper/ScannerMetricsHelper";
-import { DockerErrorHandler } from "../helper/DockerErrorHandler";
-import { NetworkErrorHandler } from "../helper/NetworkErrorHandler";
+import ContainerEngineManager from "../helper/ContainerEngineManager";
+import { MetricsService } from "../services/MetricsService";
+import { DockerService } from "../services/DockerService";
+import { ErrorHandlingService } from "../services/ErrorHandlingService";
 
 export class IacScanner implements IScannerGateway {
-  private metricsHelper = new ScannerMetricsHelper();
-  private dockerErrorHandler = new DockerErrorHandler();
-  private networkErrorHandler = new NetworkErrorHandler();
+  private metricsHelper = new MetricsService();
+  private dockerErrorHandler = new DockerService();
+  private networkErrorHandler = new ErrorHandlingService();
   async scan(
     elementToScan: string,
     outputChannel: OutputChannel,
@@ -28,13 +30,14 @@ export class IacScanner implements IScannerGateway {
     this.dockerErrorHandler.reset();
     this.networkErrorHandler.reset();
 
-    return new Promise(async (resolve, _reject) => {
+    return new Promise((resolve, _reject) => {
       let scanResult: boolean = false;
       let findings: Finding[] = [];
       let severityCounts: ISeverityCounts | null = null;
 
-      try {
-        const scannerImageAvailable = await ScannerImageManager.ensureScannerImageExists(
+      void (async () => {
+        try {
+          const scannerImageAvailable = await ScannerImageManager.ensureScannerImageExists(
           containerEnginePath,
           containerImageName,
           toolVersion,
@@ -53,20 +56,35 @@ export class IacScanner implements IScannerGateway {
           scanLoader.start(`Infrastructure as Code for: ${elementToScan.split('/').pop()} `);
         }
 
-        const timeout = setTimeout(async () => {
-          outputChannel.appendLine("Scan timed out after 10 minutes");
+        const scanTimeout = ScanConfigurationService.getScanTimeout();
+        const timeoutMinutes = Math.floor(scanTimeout / 60000);
+        const timeout = setTimeout(() => {
+          outputChannel.appendLine(`Scan timed out after ${timeoutMinutes} minutes`);
           outputChannel.appendLine("Container command may be hanging. Check container engine configuration.");
-          this.metricsHelper.captureLog(outputChannel, "Scan timed out after 10 minutes");
-          await this.collectFailedScanMetrics(elementToScan);
-          resolve(new ScannerRes(false, [], null));
-        }, 600000);
+          this.metricsHelper.captureLog(outputChannel, `Scan timed out after ${timeoutMinutes} minutes`);
+          void this.collectFailedScanMetrics(elementToScan).then(() => {
+            resolve(new ScannerRes(false, [], null));
+          }).catch((error) => {
+            this.metricsHelper.captureError(outputChannel, error, "collecting timeout metrics");
+            resolve(new ScannerRes(false, [], null));
+          });
+        }, scanTimeout);
 
-        const containerCommand = `${containerEnginePath} run --rm -v ${elementToScan}:/ms_artifact ${containerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo docker_default_remote_config --module engine_iac --tool ${iacTool}${iacTool === "kics" ? " --platform openapi" : ""} --folder_path /ms_artifact --context true"`;
+        const normalizedElementPath = ContainerEngineManager.normalizePathForDocker(elementToScan);
+        const containerCommand = `${containerEnginePath} run --rm -v ${normalizedElementPath}:/ms_artifact ${containerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo docker_default_remote_config --module engine_iac --tool ${iacTool}${iacTool === "kics" ? " --platform openapi" : ""} --folder_path /ms_artifact --context true"`;
+
+        const debugMode = ScanConfigurationService.getDebugMode();
 
         const childProcess = exec(containerCommand, (error, stdout, stderr) => {
           clearTimeout(timeout);
           if (error) {
             this.errorHandler(outputChannel, error, stderr, containerImageName, toolVersion);
+          }
+
+          // Show stderr in debug mode
+          if (debugMode && stderr) {
+            outputChannel.appendLine("\n📋 STDERR OUTPUT:");
+            outputChannel.appendLine(stderr);
           }
 
           if (stdout) {
@@ -108,22 +126,25 @@ export class IacScanner implements IScannerGateway {
               scanResult = false;
             }
 
-            const cleanedOutput = OutputManager.removeAnsiEscapeCodes(normalOutput);
-
-            outputChannel.appendLine("SCAN OUTPUT:");
-            outputChannel.appendLine(cleanedOutput);
+            if (debugMode) {
+              const cleanedOutput = OutputManager.removeAnsiEscapeCodes(normalOutput);
+              outputChannel.appendLine("\n📄 SCAN OUTPUT:");
+              outputChannel.appendLine(cleanedOutput);
+            }
             this.metricsHelper.captureLog(outputChannel, `Found ${findings.length} issues in scan`);
           } else {
             outputChannel.appendLine("Docker command completed with no output");
           }
 
-          this.metricsHelper.collectAndstoreMetricsData(
+          void this.metricsHelper.collectAndstoreMetricsData(
             elementToScan,
             findings,
             severityCounts,
             scanResult,
             "engine_iac"
-          );
+          ).catch((error) => {
+            this.metricsHelper.captureError(outputChannel, error, "storing metrics");
+          });
 
           resolve(new ScannerRes(scanResult, findings, severityCounts));
         });
@@ -134,11 +155,12 @@ export class IacScanner implements IScannerGateway {
           }
         });
 
-      } catch (error) {
-        this.metricsHelper.captureError(outputChannel, error, "during IaC scanning");
-        await this.collectFailedScanMetrics(elementToScan);
-        resolve(new ScannerRes(false, [], null));
-      }
+        } catch (error) {
+          this.metricsHelper.captureError(outputChannel, error, "during IaC scanning");
+          await this.collectFailedScanMetrics(elementToScan);
+          resolve(new ScannerRes(false, [], null));
+        }
+      })();
     });
   }
 

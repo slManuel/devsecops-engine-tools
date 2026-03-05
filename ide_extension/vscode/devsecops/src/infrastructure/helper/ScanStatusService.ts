@@ -1,5 +1,5 @@
 import { IMetricsData } from "../../domain/model/metrics/IMetricsData";
-import { LogAnalysisService } from "./LogAnalysisService";
+import { ErrorHandlingService } from "../services/ErrorHandlingService";
 
 export class ScanStatusService {
     public static determineScanStatus(
@@ -10,16 +10,16 @@ export class ScanStatusService {
     ): IMetricsData['scan_status'] {
         if (hasLogErrors || !scanSuccess) {
             if (logs && logs.length > 0) {
-                if (LogAnalysisService.hasCriticalDockerErrors(logs)) {
+                if (ErrorHandlingService.hasCriticalDockerErrors(logs)) {
                     return 'Error: Docker inactive';
                 }
-                if (LogAnalysisService.hasNetworkErrors(logs)) {
+                if (ErrorHandlingService.hasNetworkErrors(logs)) {
                     return 'Error: VPN inactive';
                 }
-                if (LogAnalysisService.hasDockerErrors(logs)) {
+                if (ErrorHandlingService.hasDockerErrors(logs)) {
                     return 'Error: Docker inactive';
                 }
-                if (LogAnalysisService.hasConfigurationErrors(logs)) {
+                if (ErrorHandlingService.hasConfigurationErrors(logs)) {
                     return 'Error: Configuration issues';
                 }
             }

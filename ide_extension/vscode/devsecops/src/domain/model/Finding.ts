@@ -9,10 +9,12 @@ export class Finding {
     private references: string[];
     private additionalFields: { [key: string]: string | undefined } = {};
     private validationRuleCode?: string;
+    private priority: string;
     
     constructor(
         id: string,
         severity: string,
+        priority: string = "",
         where: string,
         description: string,
         module: string,
@@ -30,6 +32,7 @@ export class Finding {
         this.references = references;
         this.additionalFields = additionalFields;
         this.validationRuleCode = validationRuleCode;
+        this.priority = priority;
     }
 
     public getId(): string {
@@ -74,6 +77,14 @@ export class Finding {
 
     public setValidationRuleCode(validationRuleCode: string): void {
         this.validationRuleCode = validationRuleCode;
+    }
+
+    public getPriority(): string {
+        return this.priority;
+    }
+
+    public setPriority(priority: string): void {
+        this.priority = priority;
     }
 
 }

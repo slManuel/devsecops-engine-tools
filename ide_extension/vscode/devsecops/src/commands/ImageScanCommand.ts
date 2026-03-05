@@ -1,13 +1,13 @@
 import * as vscode from "vscode";
-import { DevSecOpsTreeDataProvider } from "../tree/DevSecOpsTreeDataProvider";
+import { ResultsTreeDataProvider } from "../tree/ResultsTreeDataProvider";
 import { imageScanRequest } from "../application/InitEngineCore";
 import { ScanConfiguration } from "../domain/model/ScanConfiguration";
-import { ScanOutputLoader } from "../infraestructure/helper/LoadingAnimator";
-import ContainerEngineManager from "../infraestructure/helper/ContainerEngineManager";
+import { ScanOutputLoader } from "../infrastructure/helper/LoadingAnimator";
+import ContainerEngineManager from "../infrastructure/helper/ContainerEngineManager";
 
 export function registerImageScanCommand(
   context: vscode.ExtensionContext,
-  treeDataProvider: DevSecOpsTreeDataProvider
+  treeDataProvider: ResultsTreeDataProvider
 ): vscode.Disposable {
   const imageScanDisposable = vscode.commands.registerCommand(
     "devsecops.imageScan",
@@ -40,14 +40,21 @@ export function registerImageScanCommand(
         `DevSecOps Image Scanning: ${imageName}`
       );
 
-      const scanner = await imageScanRequest();
+      const useCase = await imageScanRequest();
       const outputChannel = vscode.window.createOutputChannel("Image Scan Results");
       outputChannel.clear(); 
 
       const scanLoader = new ScanOutputLoader(outputChannel);
 
+      // Add loading placeholder
+      const scanId = treeDataProvider.addLoadingScanResult(
+        `Image: ${imageName}`,
+        "image",
+        outputChannel
+      );
+
       try {
-        const scanResult = await scanner.makeScan(
+        const scanResult = await useCase.scan(
           imageName,
           outputChannel,
           new ScanConfiguration(),
@@ -60,19 +67,25 @@ export function registerImageScanCommand(
           void vscode.window.showInformationMessage(
             "Image Scan completed successfully"
           );
-          treeDataProvider.addScanResult(
-            "IMAGE SCAN RESULT",
+          
+          // Update the loading placeholder with actual results
+          treeDataProvider.updateScanResult(
+            scanId,
             scanResult.getFindings(),
             "image"
           );
         } else {
           scanLoader.showError("Image Scan failed - No results returned");
           void vscode.window.showErrorMessage("Image Scan failed");
+          // Remove the loading placeholder
+          treeDataProvider.removeScanResult(scanId);
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
         scanLoader.showError(`Image Scan failed: ${errorMessage}`);
         void vscode.window.showErrorMessage("Image Scan failed");
+        // Remove the loading placeholder
+        treeDataProvider.removeScanResult(scanId);
       }
     }
   );

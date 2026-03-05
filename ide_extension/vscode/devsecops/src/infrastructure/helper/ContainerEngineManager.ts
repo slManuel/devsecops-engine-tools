@@ -16,6 +16,42 @@ export default class ContainerEngineManager {
   private static detectedEngine: ContainerEngine | null = null;
   private static tempDirectoryPath: string | null = null;
 
+  /**
+   * Check if running on Windows
+   */
+  private static isWindows(): boolean {
+    return process.platform === 'win32';
+  }
+
+  /**
+   * Get the appropriate command to find executables based on platform
+   */
+  private static getWhichCommand(): string {
+    return this.isWindows() ? 'where' : 'which';
+  }
+
+  /**
+   * Normalize a Windows path to Docker-compatible format
+   * Converts C:\Users\... to /c/Users/... for Docker on Windows
+   */
+  static normalizePathForDocker(filePath: string): string {
+    if (!this.isWindows()) {
+      return filePath;
+    }
+
+    // Convert Windows path to Unix-style for Docker
+    // C:\Users\... -> /c/Users/...
+    let normalized = filePath.replace(/\\/g, '/');
+    
+    // Handle drive letter (C: -> /c)
+    if (normalized.match(/^[a-zA-Z]:/)) {
+      const driveLetter = normalized.charAt(0).toLowerCase();
+      normalized = `/${driveLetter}${normalized.substring(2)}`;
+    }
+
+    return normalized;
+  }
+
   static getContainerEnginePath(): string {
     const engine = this.detectContainerEngine();
     return engine.path;
@@ -35,11 +71,15 @@ export default class ContainerEngineManager {
       return this.detectedEngine;
     }
 
+    const whichCommand = this.getWhichCommand();
+
     try {
-      const dockerPath = execSync("which docker", { encoding: "utf-8" }).trim();
+      const dockerPath = execSync(`${whichCommand} docker`, { encoding: "utf-8" }).trim();
       if (dockerPath) {
+        // On Windows, 'where' returns multiple paths, take the first one
+        const firstPath = dockerPath.split('\n')[0].trim();
         this.detectedEngine = {
-          path: dockerPath,
+          path: this.isWindows() ? 'docker' : firstPath,
           type: 'docker'
         };
         return this.detectedEngine;
@@ -49,10 +89,12 @@ export default class ContainerEngineManager {
     }
 
     try {
-      const podmanPath = execSync("which podman", { encoding: "utf-8" }).trim();
+      const podmanPath = execSync(`${whichCommand} podman`, { encoding: "utf-8" }).trim();
       if (podmanPath) {
+        // On Windows, 'where' returns multiple paths, take the first one
+        const firstPath = podmanPath.split('\n')[0].trim();
         this.detectedEngine = {
-          path: podmanPath,
+          path: this.isWindows() ? 'podman' : firstPath,
           type: 'podman'
         };
         return this.detectedEngine;
@@ -61,8 +103,9 @@ export default class ContainerEngineManager {
       // Ignore error if podman command is not found
     }
 
+    // Default fallback
     this.detectedEngine = {
-      path: "/usr/local/bin/docker",
+      path: this.isWindows() ? 'docker' : '/usr/local/bin/docker',
       type: 'docker'
     };
     return this.detectedEngine;
@@ -72,10 +115,12 @@ export default class ContainerEngineManager {
     const engine = this.detectContainerEngine();
     
     try {
+      const pathSeparator = this.isWindows() ? ';' : ':';
+      const engineDir = this.isWindows() ? path.dirname(engine.path) : engine.path.replace(/\/(docker|podman)$/, "");
       const { stdout } = await execAsync(`${engine.path} images --format "table {{.Repository}}\\t{{.Tag}}\\t{{.ID}}"`, {
         env: {
           ...process.env,
-          PATH: process.env.PATH + ':' + engine.path.replace(/\/(docker|podman)$/, ""),
+          PATH: process.env.PATH + pathSeparator + engineDir,
         }
       });
 
@@ -115,10 +160,12 @@ export default class ContainerEngineManager {
     const engine = this.detectContainerEngine();
     
     try {
+      const pathSeparator = this.isWindows() ? ';' : ':';
+      const engineDir = this.isWindows() ? path.dirname(engine.path) : engine.path.replace(/\/(docker|podman)$/, "");
       const { stdout } = await execAsync(`${engine.path} version --format "{{.Client.Version}}"`, {
         env: {
           ...process.env,
-          PATH: process.env.PATH + ':' + engine.path.replace(/\/(docker|podman)$/, ""),
+          PATH: process.env.PATH + pathSeparator + engineDir,
         }
       });
 
@@ -146,10 +193,12 @@ export default class ContainerEngineManager {
     const fullCommand = `${engine.path} ${command}`;
     
     try {
+      const pathSeparator = this.isWindows() ? ';' : ':';
+      const engineDir = this.isWindows() ? path.dirname(engine.path) : engine.path.replace(/\/(docker|podman)$/, "");
       const { stdout, stderr } = await execAsync(fullCommand, {
         env: {
           ...process.env,
-          PATH: process.env.PATH + ':' + engine.path.replace(/\/(docker|podman)$/, ""),
+          PATH: process.env.PATH + pathSeparator + engineDir,
         }
       });
       
@@ -161,7 +210,8 @@ export default class ContainerEngineManager {
 
   static async exportImageToTar(imageName: string, outputPath: string): Promise<boolean> {
     try {
-      await this.executeCommand(`save -o "${outputPath}" "${imageName}"`);
+      const normalizedPath = this.normalizePathForDocker(outputPath);
+      await this.executeCommand(`save -o "${normalizedPath}" "${imageName}"`);
       return true;
     } catch (error) {
       console.error(`Error exporting image ${imageName}:`, error);
@@ -175,10 +225,16 @@ export default class ContainerEngineManager {
       const dirName = path.basename(dirPath);
       
       if (dirName.startsWith('devsecops-tmp-')) {
-        await execAsync(`rm -rf "${dirPath}"`);
+        // Remove entire temp directory
+        if (fs.existsSync(dirPath)) {
+          fs.rmSync(dirPath, { recursive: true, force: true });
+        }
         this.tempDirectoryPath = null;
       } else {
-        await execAsync(`rm -f "${filePath}"`);
+        // Remove single file
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
       }
     } catch (error) {
       console.error(`Error removing file/directory ${filePath}:`, error);

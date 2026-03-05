@@ -6,6 +6,7 @@ import * as path from "path";
 import IScannerGateway from "../../domain/model/gateways/IScannerGateway";
 import { Finding } from "../../domain/model/Finding";
 import { ScannerRes } from "../../domain/model/ScannerRes";
+import { ScanConfigurationService } from "../config/ScanConfigurationService";
 import {
   IImageScanContext,
   ISeverityCounts,
@@ -13,14 +14,14 @@ import {
 } from "../../domain/model/mappers/Mappers";
 import ContainerEngineManager from "../helper/ContainerEngineManager";
 import { ScannerImageManager } from "../helper/ScannerImageManager";
-import { ScannerMetricsHelper } from "../helper/ScannerMetricsHelper";
-import { DockerErrorHandler } from "../helper/DockerErrorHandler";
-import { NetworkErrorHandler } from "../helper/NetworkErrorHandler";
+import { MetricsService } from "../services/MetricsService";
+import { DockerService } from "../services/DockerService";
+import { ErrorHandlingService } from "../services/ErrorHandlingService";
 
 export class ImageScanner implements IScannerGateway {
-  private metricsHelper = new ScannerMetricsHelper();
-  private dockerErrorHandler = new DockerErrorHandler();
-  private networkErrorHandler = new NetworkErrorHandler();
+  private metricsHelper = new MetricsService();
+  private dockerErrorHandler = new DockerService();
+  private networkErrorHandler = new ErrorHandlingService();
   async scan(
     elementToScan: string,
     outputChannel: OutputChannel,
@@ -36,14 +37,15 @@ export class ImageScanner implements IScannerGateway {
     this.dockerErrorHandler.reset();
     this.networkErrorHandler.reset();
 
-    return new Promise(async (resolve, _reject) => {
+    return new Promise((resolve, _reject) => {
       let scanResult: boolean = false;
       let findings: Finding[] = [];
       let severityCounts: ISeverityCounts | null = null;
       let imageTarPath: string = "";
 
-      try {
-        const scannerImageAvailable = await ScannerImageManager.ensureScannerImageExists(
+      void (async () => {
+        try {
+          const scannerImageAvailable = await ScannerImageManager.ensureScannerImageExists(
           containerEnginePath,
           containerImageName,
           toolVersion,
@@ -75,20 +77,29 @@ export class ImageScanner implements IScannerGateway {
         }
         const imageTarName = path.basename(imageTarPath);
 
-        const containerCommand = `${containerEnginePath} run --rm -v "${imageTarPath}:/tmp/${imageTarName}" ${containerImageName}:${toolVersion} sh -c "
+        const normalizedTarPath = ContainerEngineManager.normalizePathForDocker(imageTarPath);
+        const containerCommand = `${containerEnginePath} run --rm -v "${normalizedTarPath}:/tmp/${imageTarName}" ${containerImageName}:${toolVersion} sh -c "
           devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo docker_default_remote_config --module engine_container --tool trivy --image_to_scan /tmp/${imageTarName} --context true
         "`;
 
-        const timeout = setTimeout(async () => {
-          outputChannel.appendLine("Scan timed out after 10 minutes");
+        const scanTimeout = ScanConfigurationService.getScanTimeout();
+        const timeoutMinutes = Math.floor(scanTimeout / 60000);
+        const timeout = setTimeout(() => {
+          outputChannel.appendLine(`Scan timed out after ${timeoutMinutes} minutes`);
           outputChannel.appendLine("Container command may be hanging. Check container engine configuration.");
-          this.metricsHelper.captureLog(outputChannel, "Scan timed out after 10 minutes");
+          this.metricsHelper.captureLog(outputChannel, `Scan timed out after ${timeoutMinutes} minutes`);
           if (imageTarPath) {
             ContainerEngineManager.removeFile(imageTarPath).catch(console.error);
           }
-          await this.collectFailedScanMetrics(elementToScan);
-          resolve(new ScannerRes(false, [], null));
-        }, 600000);
+          void this.collectFailedScanMetrics(elementToScan).then(() => {
+            resolve(new ScannerRes(false, [], null));
+          }).catch((error) => {
+            this.metricsHelper.captureError(outputChannel, error, "collecting timeout metrics");
+            resolve(new ScannerRes(false, [], null));
+          });
+        }, scanTimeout);
+
+        const debugMode = ScanConfigurationService.getDebugMode();
 
         const childProcess = exec(containerCommand, (error, stdout, stderr) => {
           clearTimeout(timeout);
@@ -99,6 +110,12 @@ export class ImageScanner implements IScannerGateway {
 
           if (error) {
             this.errorHandler(outputChannel, error, stderr, containerImageName, toolVersion);
+          }
+
+          // Show stderr in debug mode
+          if (debugMode && stderr) {
+            outputChannel.appendLine("\n📋 STDERR OUTPUT:");
+            outputChannel.appendLine(stderr);
           }
 
           if (stdout) {
@@ -139,21 +156,25 @@ export class ImageScanner implements IScannerGateway {
               scanResult = false;
             }
 
-            const cleanedOutput = OutputManager.removeAnsiEscapeCodes(normalOutput);
-            outputChannel.appendLine("SCAN OUTPUT:");
-            outputChannel.appendLine(cleanedOutput);
+            if (debugMode) {
+              const cleanedOutput = OutputManager.removeAnsiEscapeCodes(normalOutput);
+              outputChannel.appendLine("\n📄 SCAN OUTPUT:");
+              outputChannel.appendLine(cleanedOutput);
+            }
             this.metricsHelper.captureLog(outputChannel, `Found ${findings.length} issues in scan`);
           } else {
             outputChannel.appendLine("Container command completed with no output");
           }
 
-          this.metricsHelper.collectAndstoreMetricsData(
+          void this.metricsHelper.collectAndstoreMetricsData(
             elementToScan,
             findings,
             severityCounts,
             scanResult,
             "engine_container"
-          );
+          ).catch((error) => {
+            this.metricsHelper.captureError(outputChannel, error, "storing metrics");
+          });
 
           resolve(new ScannerRes(scanResult, findings, severityCounts));
         });
@@ -164,14 +185,15 @@ export class ImageScanner implements IScannerGateway {
           }
         });
 
-      } catch (error) {
-        this.metricsHelper.captureError(outputChannel, error, "during image scanning");
-        if (imageTarPath) {
-          ContainerEngineManager.removeFile(imageTarPath).catch(console.error);
+        } catch (error) {
+          this.metricsHelper.captureError(outputChannel, error, "during image scanning");
+          if (imageTarPath) {
+            ContainerEngineManager.removeFile(imageTarPath).catch(console.error);
+          }
+          await this.collectFailedScanMetrics(elementToScan);
+          resolve(new ScannerRes(false, [], null));
         }
-        await this.collectFailedScanMetrics(elementToScan);
-        resolve(new ScannerRes(false, [], null));
-      }
+      })();
     });
   }
 

@@ -11,12 +11,7 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onView:devsecops",
-    "onCommand:devsecops.iacScan",
-    "onCommand:devsecops.imageScan",
-    "onCommand:devsecops.dependenciesScan"
-  ],
+  "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -31,8 +26,13 @@
     "views": {
       "devsecops": [
         {
-          "id": "devsecops",
-          "name": "DevSecOps IDE Extension",
+          "id": "devsecops-practices",
+          "name": "Practices",
+          "icon": "resources/logo.svg"
+        },
+        {
+          "id": "devsecops-results",
+          "name": "Results",
           "icon": "resources/logo.svg"
         }
       ]
@@ -54,6 +54,38 @@
           "devsecops.general.imageVersion": {
             "type": "string",
             "description": "Container image version to use for scanning"
+          },
+          "devsecops.scanExecutionMode": {
+            "type": "string",
+            "default": "local-docker",
+            "enum": [
+              "local-docker",
+              "remote-microservice",
+              "auto"
+            ],
+            "enumDescriptions": [
+              "Execute scans locally using Docker containers",
+              "Execute scans remotely using the DevSecOps microservice",
+              "Automatically choose the best available execution mode"
+            ],
+            "description": "Scan execution mode: local Docker containers or remote microservice"
+          },
+          "devsecops.microserviceUrl": {
+            "type": "string",
+            "description": "URL of the DevSecOps scanning microservice (required for remote execution)",
+            "pattern": "^https?://.*",
+            "patternErrorMessage": "Must be a valid HTTP or HTTPS URL"
+          },
+          "devsecops.general.timeout": {
+            "type": "number",
+            "default": 600,
+            "minimum": 60,
+            "description": "Maximum time (in seconds) to wait for scan completion. Default: 600 seconds (10 minutes)"
+          },
+          "devsecops.general.debugMode": {
+            "type": "boolean",
+            "default": false,
+            "description": "Enable debug mode to show detailed request/response logs"
           }
         }
       },
@@ -80,7 +112,7 @@
           "devsecops.azuredevops.releaseId": {
             "type": "string",
             "description": "Azure Release Definition ID",
-            "title":"Definition ID"
+            "title": "Definition ID"
           },
           "devsecops.azuredevops.environment": {
             "type": "string",
@@ -145,7 +177,10 @@
           "devsecops.iac.iacTool": {
             "type": "string",
             "default": "checkov",
-            "enum": ["checkov", "kics"],
+            "enum": [
+              "checkov",
+              "kics"
+            ],
             "description": "IaC Scan Tool to use (Checkov to scan Terraform, CloudFormation, Kubernetes, Dockerfile and OpenAPI; KICS to scan OpenAPI)"
           }
         }
@@ -199,80 +234,110 @@
       {
         "command": "devsecops.deleteScanResult",
         "title": "Delete Scan Result"
+      },
+      {
+        "command": "devsecops.filterBySeverity",
+        "title": "Filter by Severity",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "devsecops.toggleSort",
+        "title": "Toggle Sort by Severity",
+        "icon": "$(sort-precedence)"
+      },
+      {
+        "command": "devsecops.clearFilters",
+        "title": "Clear Filters",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "devsecops.compareWithPrevious",
+        "title": "Compare with Previous Scan",
+        "icon": "$(diff)"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "devsecops.imageScan",
-          "when": "view == devsecopsView",
-          "group": "navigation"
+          "command": "devsecops.filterBySeverity",
+          "when": "view == devsecops-results",
+          "group": "navigation@1"
         },
         {
-          "command": "devsecops.imageScan",
-          "when": "view == devsecops",
-          "group": "navigation"
+          "command": "devsecops.toggleSort",
+          "when": "view == devsecops-results",
+          "group": "navigation@2"
         },
         {
-          "command": "devsecops.dependenciesScan",
-          "when": "view == devsecopsView",
-          "group": "navigation"
+          "command": "devsecops.clearFilters",
+          "when": "view == devsecops-results",
+          "group": "navigation@3"
         }
       ],
       "view/item/context": [
         {
           "command": "devsecops.fixVulnerabilityWithCopilot",
-          "when": "view == devsecops && viewItem == findingItem",
+          "when": "view == devsecops-results && viewItem == findingItem",
           "group": "copilot@1"
         },
         {
           "command": "devsecops.explainVulnerabilityWithCopilot",
-          "when": "view == devsecops && viewItem == findingItem",
+          "when": "view == devsecops-results && viewItem == findingItem",
           "group": "copilot@2"
         },
         {
           "command": "devsecops.fixVulnerabilityWithCopilot",
-          "when": "view == devsecops && viewItem == engine_iac",
+          "when": "view == devsecops-results && viewItem == engine_iac",
           "group": "copilot@1"
         },
         {
           "command": "devsecops.explainVulnerabilityWithCopilot",
-          "when": "view == devsecops && viewItem == engine_iac",
+          "when": "view == devsecops-results && viewItem == engine_iac",
           "group": "copilot@2"
         },
         {
           "command": "devsecops.showGeneralFindingWebview",
-          "when": "view == devsecops && viewItem == engine_iac",
+          "when": "view == devsecops-results && viewItem == engine_iac",
           "group": "details@1"
         },
         {
           "command": "devsecops.fixVulnerabilityWithCopilot",
-          "when": "view == devsecops && viewItem == engine_secrets",
+          "when": "view == devsecops-results && viewItem == engine_secrets",
           "group": "copilot@1"
         },
         {
           "command": "devsecops.explainVulnerabilityWithCopilot",
-          "when": "view == devsecops && viewItem == engine_secrets",
+          "when": "view == devsecops-results && viewItem == engine_secrets",
           "group": "copilot@2"
         },
         {
           "command": "devsecops.generateDependencyUpdate",
-          "when": "view == devsecops && viewItem == findingItem-dependencies",
+          "when": "view == devsecops-results && viewItem == findingItem-dependencies",
           "group": "copilot@3"
         },
         {
           "command": "devsecops.autoFixDependenciesWithAgent",
-          "when": "view == devsecops && viewItem == findingItem-dependencies",
+          "when": "view == devsecops-results && viewItem == findingItem-dependencies",
           "group": "copilot@4"
         },
         {
           "command": "devsecops.showGeneralFindingWebview",
-          "when": "view == devsecops && viewItem == engine_secrets",
+          "when": "view == devsecops-results && viewItem == engine_secrets",
           "group": "details@1"
         },
         {
+          "command": "devsecops.compareWithPrevious",
+          "when": "view == devsecops-results && viewItem == scanResult-with-comparison",
+          "group": "comparison@1"
+        },
+        {
           "command": "devsecops.deleteScanResult",
-          "when": "view == devsecops && viewItem == scanResult",
+          "when": "view == devsecops-results && viewItem == scanResult",
+          "group": "management@1"
+        },
+        {
+          "command": "devsecops.deleteScanResult",
+          "when": "view == devsecops-results && viewItem == scanResult-with-comparison",
           "group": "management@1"
         }
       ]
@@ -329,7 +394,7 @@
     "@semantic-release/release-notes-generator": "^14.0.3",
     "@types/lodash": "^4.17.16",
     "@types/mocha": "^10.0.9",
-    "@types/node": "20.x",
+    "@types/node": "^20.19.35",
     "@types/sinon": "^17.0.4",
     "@types/vscode": "^1.91.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
@@ -344,11 +409,13 @@
     "mocha-lcov-reporter": "^1.3.0",
     "nyc": "^17.1.0",
     "prettier": "^3.5.3",
-    "sinon": "^20.0.0",
     "semantic-release": "^24.2.4",
+    "sinon": "^20.0.0",
     "typescript": "^5.4.5"
   },
   "dependencies": {
+    "@types/form-data": "^2.5.2",
+    "form-data": "^4.0.5",
     "generator-code": "^1.11.9",
     "lodash": "^4.17.21"
   }

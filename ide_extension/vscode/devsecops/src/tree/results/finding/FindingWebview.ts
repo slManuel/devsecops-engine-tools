@@ -11,12 +11,36 @@ export function showVulnContextWebview(finding: Finding, sourceType?: string): v
         const existingPanel = vulnPanels.get(panelId);
         existingPanel?.reveal(vscode.ViewColumn.Beside);
     } else {
+        // Determine icon based on severity to match tree view
+        const severity = (finding.getSeverity() || "unknown").toLowerCase();
+        let icon: vscode.ThemeIcon;
+        
+        switch (severity) {
+            case "critical":
+                icon = new vscode.ThemeIcon("error", new vscode.ThemeColor("errorForeground"));
+                break;
+            case "high":
+                icon = new vscode.ThemeIcon("warning", new vscode.ThemeColor("list.warningForeground"));
+                break;
+            case "medium":
+                icon = new vscode.ThemeIcon("info", new vscode.ThemeColor("editorWarning.foreground"));
+                break;
+            case "low":
+                icon = new vscode.ThemeIcon("circle-outline", new vscode.ThemeColor("terminal.ansiGreen"));
+                break;
+            default:
+                icon = new vscode.ThemeIcon("shield", new vscode.ThemeColor("foreground"));
+        }
+
         const vulnPanel = vscode.window.createWebviewPanel(
             'vulnContext',
             `Finding: ${finding.getId()}`,
             vscode.ViewColumn.Beside,
             { enableScripts: true, retainContextWhenHidden: true }
         );
+
+        // Set the icon for the webview panel tab
+        vulnPanel.iconPath = icon;
 
         // Determine sourceType from finding module if not provided
         const actualSourceType = sourceType || getSourceTypeFromModule(finding.getModule());

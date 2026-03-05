@@ -1,11 +1,11 @@
-import { DockerErrorHandler } from './DockerErrorHandler';
-import { NetworkErrorHandler } from './NetworkErrorHandler';
+import { DockerService } from '../services/DockerService';
+import { ErrorHandlingService } from '../services/ErrorHandlingService';
 
 
 export const ERROR_PATTERNS = {
     
-    docker: DockerErrorHandler.getErrorPatterns(),
-    network: NetworkErrorHandler.getErrorPatterns(),
+    docker: DockerService.getErrorPatterns(),
+    network: ErrorHandlingService.getNetworkErrorPatterns(),
 
     configuration: [
         'no dependencies token provided',
