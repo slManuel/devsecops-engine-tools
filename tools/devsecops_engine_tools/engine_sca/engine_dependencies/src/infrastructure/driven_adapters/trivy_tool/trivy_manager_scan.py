@@ -40,6 +40,9 @@ class TrivyScanSBOM(ToolGateway):
         if not os.path.exists(sbom):
             raise FileNotFoundError("SBOM file not found, enable SBOM generation to scan with Trivy.")
 
+        if remote_config["TRIVY"].get("PRINT_SBOM", False):
+            with open(sbom, "r") as file: print(json.dumps(json.load(file), indent=4))
+            
         dependencies_scanned = self._scan_dependencies_sbom(command_prefix, sbom)
 
         return dependencies_scanned
