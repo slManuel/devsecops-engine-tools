@@ -103,6 +103,9 @@ class TrivyScanSBOM(ToolGateway):
 
             return result_file
 
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Error scanning SBOM with Trivy: {e} \nCommand stdout: {e.stdout} \nCommand stderr: {e.stderr}")
+
         except Exception as e:
             logger.error(f"Error during SBOM scan of {sbom_path}: {e}")
             raise
