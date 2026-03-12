@@ -249,11 +249,6 @@
         "command": "devsecops.clearFilters",
         "title": "Clear Filters",
         "icon": "$(clear-all)"
-      },
-      {
-        "command": "devsecops.compareWithPrevious",
-        "title": "Compare with Previous Scan",
-        "icon": "$(diff)"
       }
     ],
     "menus": {
@@ -326,18 +321,8 @@
           "group": "details@1"
         },
         {
-          "command": "devsecops.compareWithPrevious",
-          "when": "view == devsecops-results && viewItem == scanResult-with-comparison",
-          "group": "comparison@1"
-        },
-        {
           "command": "devsecops.deleteScanResult",
           "when": "view == devsecops-results && viewItem == scanResult",
-          "group": "management@1"
-        },
-        {
-          "command": "devsecops.deleteScanResult",
-          "when": "view == devsecops-results && viewItem == scanResult-with-comparison",
           "group": "management@1"
         }
       ]
