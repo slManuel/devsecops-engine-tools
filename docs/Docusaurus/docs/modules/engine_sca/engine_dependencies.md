@@ -50,7 +50,8 @@ Main configuration file that defines scanning behavior, tool versions, and secur
     "VULNERABILITY_CONFIDENCE": ["highest"]
   },
   "TRIVY": {
-    "CLI_VERSION": "0.65.0"
+    "CLI_VERSION": "0.65.0",
+    "PRINT_SBOM": false
   }
 }
 ```
