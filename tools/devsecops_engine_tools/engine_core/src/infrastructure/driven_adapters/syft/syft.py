@@ -4,6 +4,7 @@ import subprocess
 import tarfile
 import zipfile
 import platform
+import os
 
 from devsecops_engine_tools.engine_core.src.domain.model.gateway.sbom_manager import (
     SbomManagerGateway,
@@ -87,10 +88,13 @@ class Syft(SbomManagerGateway):
         )
         if installed.returncode == 1:
             try:
-                self._download_tool(file, url)
-                with tarfile.open(file, "r:gz") as tar_file:
-                    tar_file.extract(member=tar_file.getmember("syft"))
-                    return "./syft"
+                tmp_file = os.path.join("/tmp", file)
+                tmp_syft = "/tmp/syft"
+                self._download_tool(tmp_file, url)
+                with tarfile.open(tmp_file, "r:gz") as tar_file:
+                    tar_file.extract(member=tar_file.getmember("syft"), path="/tmp")
+                    os.chmod(tmp_syft, 0o755)
+                    return tmp_syft
             except Exception as e:
                 logger.error(f"Error installing syft: {e}")
         else:
@@ -106,17 +110,19 @@ class Syft(SbomManagerGateway):
             return installed.stdout.decode("utf-8").strip()
         except:
             try:
-                self._download_tool(file, url)
-                with zipfile.ZipFile(file, "r") as zip_file:
-                    zip_file.extract(member="syft.exe")
-                    return "./syft.exe"
+                tmp_file = os.path.join("/tmp", file)
+                tmp_syft = "/tmp/syft.exe"
+                self._download_tool(tmp_file, url)
+                with zipfile.ZipFile(tmp_file, "r") as zip_file:
+                    zip_file.extract(member="syft.exe", path="/tmp")
+                    return tmp_syft
             except Exception as e:
                 logger.error(f"Error installing syft: {e}")
 
-    def _download_tool(self, file, url):
+    def _download_tool(self, file_path, url):
         try:
             response = requests.get(url, allow_redirects=True)
-            with open(file, "wb") as compress_file:
+            with open(file_path, "wb") as compress_file:
                 compress_file.write(response.content)
         except Exception as e:
             logger.error(f"Error downloading syft: {e}")

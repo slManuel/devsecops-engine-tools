@@ -121,7 +121,8 @@ class TestSyft(unittest.TestCase):
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.subprocess.run')
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.tarfile.open')
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.requests.get')
-    def test_install_tool_unix_success(self, mock_requests_get, mock_tarfile_open, mock_subprocess_run):
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.os.chmod')
+    def test_install_tool_unix_success(self, mock_chmod, mock_requests_get, mock_tarfile_open, mock_subprocess_run):
         # Configurar los mocks
         mock_subprocess_run.side_effect = [MagicMock(returncode=1), MagicMock()]
         mock_requests_get.return_value.content = b"fake content"
@@ -135,8 +136,9 @@ class TestSyft(unittest.TestCase):
 
         # Verificar que se llamaron las funciones esperadas
         mock_requests_get.assert_called_once_with("http://example.com/syft.tar.gz", allow_redirects=True)
-        mock_tarfile_open.return_value.__enter__.return_value.extract.assert_called_once_with(member=mock_tarfile_open.return_value.__enter__.return_value.getmember("syft"))
-        self.assertEqual(command_prefix, "./syft")
+        mock_tarfile_open.return_value.__enter__.return_value.extract.assert_called_once_with(member=mock_tarfile_open.return_value.__enter__.return_value.getmember("syft"), path="/tmp")
+        mock_chmod.assert_called_once_with("/tmp/syft", 0o755)
+        self.assertEqual(command_prefix, "/tmp/syft")
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.subprocess.run')
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.tarfile.open')
@@ -187,8 +189,8 @@ class TestSyft(unittest.TestCase):
 
         # Verificar que se llamaron las funciones esperadas
         mock_requests_get.assert_called_once_with("http://example.com/syft.zip", allow_redirects=True)
-        mock_zipfile.return_value.__enter__.return_value.extract.assert_called_once_with(member="syft.exe")
-        self.assertEqual(command_prefix, "./syft.exe")
+        mock_zipfile.return_value.__enter__.return_value.extract.assert_called_once_with(member="syft.exe", path="/tmp")
+        self.assertEqual(command_prefix, "/tmp/syft.exe")
 
         
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.subprocess.run')
