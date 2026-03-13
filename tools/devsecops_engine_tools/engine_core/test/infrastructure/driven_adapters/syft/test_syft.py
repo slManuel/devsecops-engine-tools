@@ -16,7 +16,10 @@ class TestSyft(unittest.TestCase):
         config = {
             "SYFT": {
                 "SYFT_VERSION": "0.30.1",
-                "OUTPUT_FORMAT": "json"
+                "OUTPUT_FORMAT": "json",
+                "EXCLUDE_PATHS": [],
+                "EXCLUDE_CATALOGERS": [],
+                "DEBUG_PIPELINES": []
             }
         }
         service_name = "test_service"
@@ -80,7 +83,10 @@ class TestSyft(unittest.TestCase):
         artifact = "artifact"
         config = {
             "SYFT": {
-                "OUTPUT_FORMAT": "json"
+                "OUTPUT_FORMAT": "json",
+                "EXCLUDE_PATHS": [],
+                "EXCLUDE_CATALOGERS": [],
+                "DEBUG_PIPELINES": []
             }
         }
         service_name = "test_service"
@@ -88,26 +94,157 @@ class TestSyft(unittest.TestCase):
         result_file = syft._run_syft(command_prefix, artifact, config, service_name)
 
         self.assertEqual(result_file, "test_service_SBOM.json")
-    
+        mock_subprocess_run.assert_called_once()
+        
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.subprocess.run')
-    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.logger')
-    def test_run_syft_failure(self, mock_logger ,mock_subprocess_run):
-        mock_subprocess_run.side_effect = [Exception("Error install"), MagicMock()]
+    def test_run_syft_with_exclude_paths(self, mock_subprocess_run):
+        mock_subprocess_run.return_value = MagicMock(returncode=0, stdout="output", stderr="")
 
         syft = Syft()
         command_prefix = "./syft"
         artifact = "artifact"
         config = {
             "SYFT": {
-                "OUTPUT_FORMAT": "json"
+                "OUTPUT_FORMAT": "json",
+                "EXCLUDE_PATHS": ["**/test/**", "**/node_modules/**"],
+                "EXCLUDE_CATALOGERS": [],
+                "DEBUG_PIPELINES": []
             }
         }
         service_name = "test_service"
 
         result_file = syft._run_syft(command_prefix, artifact, config, service_name)
 
-        self.assertIsNone(result_file)
-        mock_logger.error.assert_called_once_with("Error running syft: Error install")
+        self.assertEqual(result_file, "test_service_SBOM.json")
+        call_args = mock_subprocess_run.call_args[0][0]
+        self.assertIn("--exclude", call_args)
+        self.assertIn("**/test/**", call_args)
+        self.assertIn("**/node_modules/**", call_args)
+        
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.subprocess.run')
+    def test_run_syft_with_exclude_catalogers(self, mock_subprocess_run):
+        mock_subprocess_run.return_value = MagicMock(returncode=0, stdout="output", stderr="")
+
+        syft = Syft()
+        command_prefix = "./syft"
+        artifact = "artifact"
+        config = {
+            "SYFT": {
+                "OUTPUT_FORMAT": "json",
+                "EXCLUDE_PATHS": [],
+                "EXCLUDE_CATALOGERS": ["java-archive-cataloger", "binary-cataloger"],
+                "DEBUG_PIPELINES": []
+            }
+        }
+        service_name = "test_service"
+
+        result_file = syft._run_syft(command_prefix, artifact, config, service_name)
+
+        self.assertEqual(result_file, "test_service_SBOM.json")
+        call_args = mock_subprocess_run.call_args[0][0]
+        self.assertIn("--select-catalogers", call_args)
+        self.assertIn("-java-archive-cataloger,-binary-cataloger", call_args)
+        
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.logger')
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.subprocess.run')
+    def test_run_syft_with_debug_mode(self, mock_subprocess_run, mock_logger):
+        mock_subprocess_run.return_value = MagicMock(returncode=0, stdout="debug output", stderr="debug stderr")
+
+        syft = Syft()
+        command_prefix = "./syft"
+        artifact = "artifact"
+        config = {
+            "SYFT": {
+                "OUTPUT_FORMAT": "json",
+                "EXCLUDE_PATHS": [],
+                "EXCLUDE_CATALOGERS": [],
+                "DEBUG_PIPELINES": ["test_service"]
+            }
+        }
+        service_name = "test_service"
+
+        result_file = syft._run_syft(command_prefix, artifact, config, service_name)
+
+        self.assertEqual(result_file, "test_service_SBOM.json")
+        call_args = mock_subprocess_run.call_args[0][0]
+        self.assertIn("-v", call_args)
+        mock_logger.info.assert_any_call("Enabling debug mode for pipeline: test_service")
+        mock_logger.info.assert_any_call("SYFT stdout: debug output")
+        mock_logger.info.assert_any_call("SYFT stderr: debug stderr")
+        
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.logger')
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.subprocess.run')
+    def test_run_syft_without_debug_mode(self, mock_subprocess_run, mock_logger):
+        mock_subprocess_run.return_value = MagicMock(returncode=0, stdout="output", stderr="")
+
+        syft = Syft()
+        command_prefix = "./syft"
+        artifact = "artifact"
+        config = {
+            "SYFT": {
+                "OUTPUT_FORMAT": "json",
+                "EXCLUDE_PATHS": [],
+                "EXCLUDE_CATALOGERS": [],
+                "DEBUG_PIPELINES": ["other_pipeline"]
+            }
+        }
+        service_name = "test_service"
+
+        result_file = syft._run_syft(command_prefix, artifact, config, service_name)
+
+        self.assertEqual(result_file, "test_service_SBOM.json")
+        call_args = mock_subprocess_run.call_args[0][0]
+        self.assertNotIn("-v", call_args)
+        # Verify that debug logs are not called
+        self.assertEqual(mock_logger.info.call_count, 0)
+    
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.subprocess.run')
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.logger')
+    def test_run_syft_failure(self, mock_logger, mock_subprocess_run):
+        mock_subprocess_run.return_value = MagicMock(returncode=1, stdout="", stderr="error")
+
+        syft = Syft()
+        command_prefix = "./syft"
+        artifact = "artifact"
+        config = {
+            "SYFT": {
+                "OUTPUT_FORMAT": "json",
+                "EXCLUDE_PATHS": [],
+                "EXCLUDE_CATALOGERS": [],
+                "DEBUG_PIPELINES": []
+            }
+        }
+        service_name = "test_service"
+
+        with self.assertRaises(Exception) as context:
+            syft._run_syft(command_prefix, artifact, config, service_name)
+        
+        self.assertIn("Syft command failed with return code: 1", str(context.exception))
+        mock_logger.error.assert_called_once()
+        
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.subprocess.run')
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.logger')
+    def test_run_syft_subprocess_exception(self, mock_logger, mock_subprocess_run):
+        mock_subprocess_run.side_effect = Exception("Subprocess error")
+
+        syft = Syft()
+        command_prefix = "./syft"
+        artifact = "artifact"
+        config = {
+            "SYFT": {
+                "OUTPUT_FORMAT": "json",
+                "EXCLUDE_PATHS": [],
+                "EXCLUDE_CATALOGERS": [],
+                "DEBUG_PIPELINES": []
+            }
+        }
+        service_name = "test_service"
+
+        with self.assertRaises(Exception) as context:
+            syft._run_syft(command_prefix, artifact, config, service_name)
+        
+        self.assertIn("Subprocess error", str(context.exception))
+        mock_logger.error.assert_called_once_with("Error running syft: Subprocess error")
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.subprocess.run')
     def test_install_tool_unix_already_installed(self, mock_subprocess_run):
@@ -121,7 +258,8 @@ class TestSyft(unittest.TestCase):
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.subprocess.run')
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.tarfile.open')
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.requests.get')
-    def test_install_tool_unix_success(self, mock_requests_get, mock_tarfile_open, mock_subprocess_run):
+    @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.os.chmod')
+    def test_install_tool_unix_success(self, mock_chmod, mock_requests_get, mock_tarfile_open, mock_subprocess_run):
         # Configurar los mocks
         mock_subprocess_run.side_effect = [MagicMock(returncode=1), MagicMock()]
         mock_requests_get.return_value.content = b"fake content"
@@ -135,8 +273,9 @@ class TestSyft(unittest.TestCase):
 
         # Verificar que se llamaron las funciones esperadas
         mock_requests_get.assert_called_once_with("http://example.com/syft.tar.gz", allow_redirects=True)
-        mock_tarfile_open.return_value.__enter__.return_value.extract.assert_called_once_with(member=mock_tarfile_open.return_value.__enter__.return_value.getmember("syft"))
-        self.assertEqual(command_prefix, "./syft")
+        mock_tarfile_open.return_value.__enter__.return_value.extract.assert_called_once_with(member=mock_tarfile_open.return_value.__enter__.return_value.getmember("syft"), path="/tmp")
+        mock_chmod.assert_called_once_with("/tmp/syft", 0o755)
+        self.assertEqual(command_prefix, "/tmp/syft")
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.subprocess.run')
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.tarfile.open')
@@ -187,8 +326,8 @@ class TestSyft(unittest.TestCase):
 
         # Verificar que se llamaron las funciones esperadas
         mock_requests_get.assert_called_once_with("http://example.com/syft.zip", allow_redirects=True)
-        mock_zipfile.return_value.__enter__.return_value.extract.assert_called_once_with(member="syft.exe")
-        self.assertEqual(command_prefix, "./syft.exe")
+        mock_zipfile.return_value.__enter__.return_value.extract.assert_called_once_with(member="syft.exe", path="/tmp")
+        self.assertEqual(command_prefix, "/tmp/syft.exe")
 
         
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.syft.syft.subprocess.run')

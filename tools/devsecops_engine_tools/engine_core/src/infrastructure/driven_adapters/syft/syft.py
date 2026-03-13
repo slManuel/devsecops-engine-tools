@@ -4,6 +4,7 @@ import subprocess
 import tarfile
 import zipfile
 import platform
+import os
 
 from devsecops_engine_tools.engine_core.src.domain.model.gateway.sbom_manager import (
     SbomManagerGateway,
@@ -60,24 +61,53 @@ class Syft(SbomManagerGateway):
 
     def _run_syft(self, command_prefix, artifact, config, service_name):
         result_file = f"{service_name}_SBOM.json"
+        syft_config = config['SYFT']
+        
         command = [
             command_prefix,
             artifact,
             "-o",
-            f"{config['SYFT']['OUTPUT_FORMAT']}={result_file}",
+            f"{syft_config['OUTPUT_FORMAT']}={result_file}",
         ]
+        
+        exclude_paths = syft_config.get('EXCLUDE_PATHS', [])
+        for path in exclude_paths:
+            command.extend(["--exclude", path])
+
+        exclude_catalogers = syft_config.get('EXCLUDE_CATALOGERS', [])
+        if exclude_catalogers:
+            catalogers_with_prefix = [f"-{cat}" for cat in exclude_catalogers]
+            command.extend(["--select-catalogers", ",".join(catalogers_with_prefix)])
+
+        debug_pipelines = syft_config.get('DEBUG_PIPELINES', [])
+        enable_debug = service_name in debug_pipelines if debug_pipelines else False
+        
+        if enable_debug:
+            logger.info(f"Enabling debug mode for pipeline: {service_name}")
+            command.append("-v")
+        
         try:
-            subprocess.run(
+            result = subprocess.run(
                 command,
-                check=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
             )
-            print(f"SBOM generated and saved to: {result_file}")
-            return result_file
+            
+            if enable_debug:
+                if result.stdout:
+                    logger.info(f"SYFT stdout: {result.stdout}")
+                if result.stderr:
+                    logger.info(f"SYFT stderr: {result.stderr}")
+            
+            if result.returncode == 0:
+                print(f"SBOM generated and saved to: {result_file}")
+                return result_file
+            else:
+                raise Exception(f"Syft command failed with return code: {result.returncode}")
         except Exception as e:
             logger.error(f"Error running syft: {e}")
+            raise
 
     def _install_tool_unix(self, file, url, command_prefix):
         installed = subprocess.run(
@@ -87,10 +117,13 @@ class Syft(SbomManagerGateway):
         )
         if installed.returncode == 1:
             try:
-                self._download_tool(file, url)
-                with tarfile.open(file, "r:gz") as tar_file:
-                    tar_file.extract(member=tar_file.getmember("syft"))
-                    return "./syft"
+                tmp_file = os.path.join("/tmp", file)
+                tmp_syft = "/tmp/syft"
+                self._download_tool(tmp_file, url)
+                with tarfile.open(tmp_file, "r:gz") as tar_file:
+                    tar_file.extract(member=tar_file.getmember("syft"), path="/tmp")
+                    os.chmod(tmp_syft, 0o755)
+                    return tmp_syft
             except Exception as e:
                 logger.error(f"Error installing syft: {e}")
         else:
@@ -106,17 +139,19 @@ class Syft(SbomManagerGateway):
             return installed.stdout.decode("utf-8").strip()
         except:
             try:
-                self._download_tool(file, url)
-                with zipfile.ZipFile(file, "r") as zip_file:
-                    zip_file.extract(member="syft.exe")
-                    return "./syft.exe"
+                tmp_file = os.path.join("/tmp", file)
+                tmp_syft = "/tmp/syft.exe"
+                self._download_tool(tmp_file, url)
+                with zipfile.ZipFile(tmp_file, "r") as zip_file:
+                    zip_file.extract(member="syft.exe", path="/tmp")
+                    return tmp_syft
             except Exception as e:
                 logger.error(f"Error installing syft: {e}")
 
-    def _download_tool(self, file, url):
+    def _download_tool(self, file_path, url):
         try:
             response = requests.get(url, allow_redirects=True)
-            with open(file, "wb") as compress_file:
+            with open(file_path, "wb") as compress_file:
                 compress_file.write(response.content)
         except Exception as e:
             logger.error(f"Error downloading syft: {e}")
