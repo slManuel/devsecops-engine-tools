@@ -61,24 +61,53 @@ class Syft(SbomManagerGateway):
 
     def _run_syft(self, command_prefix, artifact, config, service_name):
         result_file = f"{service_name}_SBOM.json"
+        syft_config = config['SYFT']
+        
         command = [
             command_prefix,
             artifact,
             "-o",
-            f"{config['SYFT']['OUTPUT_FORMAT']}={result_file}",
+            f"{syft_config['OUTPUT_FORMAT']}={result_file}",
         ]
+        
+        exclude_paths = syft_config.get('EXCLUDE_PATHS', [])
+        for path in exclude_paths:
+            command.extend(["--exclude", path])
+
+        exclude_catalogers = syft_config.get('EXCLUDE_CATALOGERS', [])
+        if exclude_catalogers:
+            catalogers_with_prefix = [f"-{cat}" for cat in exclude_catalogers]
+            command.extend(["--select-catalogers", ",".join(catalogers_with_prefix)])
+
+        debug_pipelines = syft_config.get('DEBUG_PIPELINES', [])
+        enable_debug = service_name in debug_pipelines if debug_pipelines else False
+        
+        if enable_debug:
+            logger.info(f"Enabling debug mode for pipeline: {service_name}")
+            command.append("-v")
+        
         try:
-            subprocess.run(
+            result = subprocess.run(
                 command,
-                check=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
             )
-            print(f"SBOM generated and saved to: {result_file}")
-            return result_file
+            
+            if enable_debug:
+                if result.stdout:
+                    logger.info(f"SYFT stdout: {result.stdout}")
+                if result.stderr:
+                    logger.info(f"SYFT stderr: {result.stderr}")
+            
+            if result.returncode == 0:
+                print(f"SBOM generated and saved to: {result_file}")
+                return result_file
+            else:
+                raise Exception(f"Syft command failed with return code: {result.returncode}")
         except Exception as e:
             logger.error(f"Error running syft: {e}")
+            raise
 
     def _install_tool_unix(self, file, url, command_prefix):
         installed = subprocess.run(

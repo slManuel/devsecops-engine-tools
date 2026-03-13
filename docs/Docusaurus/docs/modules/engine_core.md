@@ -126,7 +126,10 @@ Configuration of the driven adapters in the main layer and management of on/off 
         },
         "SYFT": {
             "SYFT_VERSION": "1.17.0",
-            "OUTPUT_FORMAT": "cyclonedx-json"
+            "OUTPUT_FORMAT": "cyclonedx-json",
+            "EXCLUDE_PATHS": ["**/test/**", "**/node_modules/**"],
+            "EXCLUDE_CATALOGERS": [],
+            "DEBUG_PIPELINES": ["pipeline_name1", "pipeline_name2"]
         },
         "CDXGEN": {
             "CDXGEN_VERSION": "11.7.0",
@@ -354,6 +357,13 @@ Configuration of the driven adapters in the main layer and management of on/off 
         - **TASK_ID_VARIABLE_NAME**: Name of the pipeline variable where the task token will be stored (only used when `EXPORT_TASK_ID` is `true`).
 
 - **SBOM_MANAGER**: Configuration for SBOM generation. Requires `ENABLED: true` for `LICENSE_ANALYZER` to run. Additionally, `CDXGEN.FETCH_LICENSE` should be set to `true` to enrich the SBOM with license metadata before uploading to the license analyzer.
+    - **SYFT**
+        - **SYFT_VERSION**: Version of Syft to download and use. Example: `"1.17.0"`.
+        - **OUTPUT_FORMAT**: Output format for the SBOM. Default: `"cyclonedx-json"`. Other options include `"spdx-json"`, `"syft-json"`, `"table"`.
+        - **EXCLUDE_PATHS**: Array of glob patterns to exclude directories/files from analysis. Example: `["**/test/**", "**/node_modules/**"]`. Useful for skipping test files, build artifacts, or vendor directories.
+        - **EXCLUDE_CATALOGERS**: Array of cataloger names to exclude from the default set. Catalogers are specialized modules that detect specific package types (e.g., `"java-archive-cataloger"`, `"python-package-cataloger"`). When specified, Syft uses `--select-catalogers -NAME` to remove these catalogers from analysis. Example: `["java-archive-cataloger", "binary-cataloger"]`.
+        - **DEBUG_PIPELINES**: Array of pipeline names where Syft should run in verbose mode (`-v` flag). Useful for troubleshooting SBOM generation issues in specific pipelines. Example: `["pipeline_name1", "pipeline_name2"]`.
+                
     - **CDXGEN**
         - **FETCH_LICENSE**: `true` or `false`. When enabled, cdxgen fetches license information for each component from public registries and includes it in the generated SBOM. Recommended when `LICENSE_ANALYZER` is enabled.
         - **INSTALL_DEPENDENCIES**: `true` or `false`. When enabled, cdxgen installs project dependencies before generating the SBOM, improving component coverage.

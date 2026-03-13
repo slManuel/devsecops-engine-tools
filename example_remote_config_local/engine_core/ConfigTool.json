@@ -106,7 +106,10 @@
         },
         "SYFT": {
             "SYFT_VERSION": "1.17.0",
-            "OUTPUT_FORMAT": "cyclonedx-json"
+            "OUTPUT_FORMAT": "cyclonedx-json",
+            "EXCLUDE_PATHS": ["**/test/**"],
+            "EXCLUDE_CATALOGERS": ["java-archive-cataloger"],
+            "DEBUG_PIPELINES": ["pipeline_name1", "pipeline_name2"]
         },
         "CDXGEN": {
             "CDXGEN_VERSION": "11.7.0",
