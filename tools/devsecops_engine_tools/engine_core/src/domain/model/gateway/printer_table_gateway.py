@@ -12,9 +12,13 @@ class PrinterTableGateway(metaclass=ABCMeta):
         "print_table_findings"
 
     @abstractmethod
-    def print_table_report(self, report_list: "list[Report]", finding_score_model):
+    def print_table_report(self, report_list: "list[Report]", model):
         "print_table_report"
 
     @abstractmethod
-    def print_table_exclusions(self, exclusions_list, break_build_manager):
+    def print_table_report_exclusions(self, exclusions):
+        "print_table_report_exclusions"
+
+    @abstractmethod
+    def print_table_exclusions(self, exclusions, break_build_manager):
         "print_table_exclusions"

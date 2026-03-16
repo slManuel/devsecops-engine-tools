@@ -15,6 +15,10 @@ from devsecops_engine_tools.engine_core.src.infrastructure.helpers.util import (
 from rich.console import Console
 from rich.table import Table
 from rich import box
+from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
+from devsecops_engine_tools.engine_utilities import settings
+
+logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
 
 @dataclass
@@ -46,30 +50,36 @@ class PrinterRichTable(PrinterTableGateway):
         console = Console()
         console.print(table)
 
-    def print_table_exclusions(self, exclusions_list, break_build_manager):
-        headers = []
-        if exclusions_list:
-            headers = ["ID", "Tags", "Service", "Create Date", "Expired Date", "Reason"]
+    def print_table_exclusions(self, exclusions, break_build_manager):
+        headers = ["ID", "Tags", "Service", "Create Date", "Expired Date", "Reason"]
         table = Table(
             show_header=True, header_style="bold magenta", box=box.DOUBLE_EDGE
         )
         for header in headers:
             table.add_column(header)
-        for exclusion in exclusions_list:
-            row_data = [
-                self._check_spaces(exclusion["vm_id"], exclusion["vm_id_url"]),
-                ", ".join(exclusion["tags"]),
-                exclusion["service"],
-                format_date(exclusion["create_date"], "%d%m%Y", "%d/%m/%Y"),
-                (
-                    format_date(exclusion["expired_date"], "%d%m%Y", "%d/%m/%Y")
-                    if exclusion["expired_date"]
-                    and exclusion["expired_date"] != "undefined"
-                    else "NA"
-                ),
-                exclusion["reason"],
-            ]
-            table.add_row(*row_data)
+        for exclusion in exclusions:
+            try:
+                row_data = [
+                    self._check_spaces(exclusion["vm_id"], exclusion["vm_id_url"]),
+                    ", ".join(exclusion["tags"]),
+                    exclusion["service"],
+                    format_date(exclusion["create_date"], "%d%m%Y", "%d/%m/%Y"),
+                    (
+                        format_date(exclusion["expired_date"], "%d%m%Y", "%d/%m/%Y")
+                        if exclusion["expired_date"]
+                        and exclusion["expired_date"] != "undefined"
+                        else "NA"
+                    ),
+                    exclusion["reason"],
+                ]
+                table.add_row(*row_data)
+            except (KeyError, TypeError, ValueError) as e:
+                error_msg = (
+                    f"Error processing exclusion VM ID "
+                    f"{exclusion.get('vm_id', 'Unknown')}: {type(e).__name__}: {str(e)}"
+                )
+                logger.error(error_msg)
+                raise RuntimeError(error_msg) from e
         console = Console()
         console.print(table)
 
