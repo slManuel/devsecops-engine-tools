@@ -224,7 +224,7 @@ export class RemoteMicroserviceExecutor implements IScanExecutor {
                 if (scanConfig.iacTool) {
                     config['--tool'] = scanConfig.iacTool;
                 }
-                config['--platform'] = 'k8s';
+                config['--use_secrets_manager'] = 'true';
                 break;
 
             case 'dependencies':
@@ -236,14 +236,7 @@ export class RemoteMicroserviceExecutor implements IScanExecutor {
             case 'image':
                 config['--tool'] = 'trivy';
                 break;
-
-            case 'secrets':
-                config['--tool'] = 'detect-secrets';
-                break;
         }
-
-        // Add common options
-        config['--use_secrets_manager'] = 'true';
 
         return JSON.stringify(config);
     }
@@ -255,8 +248,7 @@ export class RemoteMicroserviceExecutor implements IScanExecutor {
         const practiceMap: Record<string, string> = {
             'iac': 'engine_iac',
             'dependencies': 'engine_dependencies',
-            'image': 'engine_container',
-            'secrets': 'engine_secrets'
+            'image': 'engine_container'
         };
 
         return practiceMap[scanType] || scanType;
@@ -506,7 +498,23 @@ export class RemoteMicroserviceExecutor implements IScanExecutor {
             outputChannel.appendLine('');
 
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${responseText}`);
+                // Show detailed error information
+                outputChannel.appendLine('❌ HTTP ERROR DETAILS:');
+                outputChannel.appendLine(`Status: ${response.status} ${response.statusText || ''}`);
+                outputChannel.appendLine(`Response Body:`);
+                
+                // Try to format as JSON first
+                try {
+                    const errorJson = JSON.parse(responseText);
+                    outputChannel.appendLine(JSON.stringify(errorJson, null, 2));
+                } catch {
+                    // Show as text if not JSON (limit to 1000 chars)
+                    const truncated = responseText.length > 1000 ? responseText.substring(0, 1000) + '...' : responseText;
+                    outputChannel.appendLine(truncated);
+                }
+                outputChannel.appendLine('');
+                
+                throw new Error(`HTTP ${response.status}: ${response.statusText || 'Request failed'}`);
             }
 
             return response;
@@ -532,7 +540,35 @@ export class RemoteMicroserviceExecutor implements IScanExecutor {
                     
                     // Log exit code for debugging
                     if (output.exit_code !== undefined) {
-                        outputChannel.appendLine(`Remote scan exit code: ${String(output.exit_code)}`);
+                        const exitCode = Number(output.exit_code);
+                        outputChannel.appendLine(`Remote scan exit code: ${exitCode}`);
+                        
+                        // If exit code is not 0, show error details
+                        if (exitCode !== 0) {
+                            outputChannel.appendLine('');
+                            outputChannel.appendLine('⚠️ SCAN EXECUTION ERROR:');
+                            outputChannel.appendLine(`Exit code: ${exitCode} (non-zero indicates failure)`);
+                            
+                            // Show error logs if available
+                            if (output.error) {
+                                outputChannel.appendLine('Error message:');
+                                outputChannel.appendLine(String(output.error));
+                            }
+                            
+                            // Show stdout/stderr if available
+                            if (output.stdout) {
+                                outputChannel.appendLine('');
+                                outputChannel.appendLine('Standard Output:');
+                                outputChannel.appendLine(String(output.stdout));
+                            }
+                            
+                            if (output.stderr) {
+                                outputChannel.appendLine('');
+                                outputChannel.appendLine('Standard Error:');
+                                outputChannel.appendLine(String(output.stderr));
+                            }
+                            outputChannel.appendLine('');
+                        }
                     }
                     
                     if (output.context) {
@@ -542,6 +578,16 @@ export class RemoteMicroserviceExecutor implements IScanExecutor {
                     }
                     
                     outputChannel.appendLine('⚠️ Warning: output object found but context is missing');
+                    outputChannel.appendLine('Available keys in output:');
+                    outputChannel.appendLine(Object.keys(output).join(', '));
+                    
+                    // Show sample of output structure
+                    outputChannel.appendLine('');
+                    outputChannel.appendLine('Output structure preview:');
+                    const preview = JSON.stringify(output, null, 2);
+                    const truncated = preview.length > 500 ? preview.substring(0, 500) + '...' : preview;
+                    outputChannel.appendLine(truncated);
+                    outputChannel.appendLine('');
                 }
                 
                 // Fallback: Check if response contains context data at root level
@@ -551,8 +597,18 @@ export class RemoteMicroserviceExecutor implements IScanExecutor {
                     return JSON.stringify(jsonResponse);
                 }
                 
-                // Last resort: return the full response
-                outputChannel.appendLine('⚠️ Warning: Unexpected response structure, returning full JSON');
+                // Last resort: return the full response but log warning with details
+                outputChannel.appendLine('⚠️ WARNING: Unexpected response structure');
+                outputChannel.appendLine('Expected structure: { output: { context: {...} } }');
+                outputChannel.appendLine('Available top-level keys:');
+                outputChannel.appendLine(Object.keys(jsonResponse).join(', '));
+                outputChannel.appendLine('');
+                outputChannel.appendLine('Full response preview:');
+                const fullPreview = JSON.stringify(jsonResponse, null, 2);
+                const truncatedPreview = fullPreview.length > 1000 ? fullPreview.substring(0, 1000) + '...' : fullPreview;
+                outputChannel.appendLine(truncatedPreview);
+                outputChannel.appendLine('');
+                
                 return JSON.stringify(jsonResponse);
             } catch (parseError) {
                 // Response might be plain text with JSON embedded
@@ -561,11 +617,20 @@ export class RemoteMicroserviceExecutor implements IScanExecutor {
                 const match = responseText.match(contextRegex);
                 
                 if (match && match[1]) {
+                    outputChannel.appendLine('✓ Context extracted from text markers');
                     return match[1].trim();
                 }
                 
+                // Could not parse response as JSON or extract context
+                outputChannel.appendLine('❌ PARSE ERROR: Response is not valid JSON and does not contain context markers');
+                outputChannel.appendLine(`Parse error: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+                outputChannel.appendLine('');
+                outputChannel.appendLine('Raw response (first 1000 characters):');
+                const rawPreview = responseText.length > 1000 ? responseText.substring(0, 1000) + '...' : responseText;
+                outputChannel.appendLine(rawPreview);
+                outputChannel.appendLine('');
+                
                 // Return the full response if we can't extract context
-                outputChannel.appendLine('Warning: Could not extract context JSON from response');
                 return responseText;
             }
         } catch (error) {

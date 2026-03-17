@@ -76,16 +76,16 @@ export function registerImageScanCommand(
           );
         } else {
           scanLoader.showError("Image Scan failed - No results returned");
-          void vscode.window.showErrorMessage("Image Scan failed");
-          // Remove the loading placeholder
-          treeDataProvider.removeScanResult(scanId);
+          void vscode.window.showErrorMessage("Image Scan failed - Check Output for details");
+          // Mark the scan as failed but keep it visible
+          treeDataProvider.updateScanResultWithError(scanId, "No results returned");
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
         scanLoader.showError(`Image Scan failed: ${errorMessage}`);
-        void vscode.window.showErrorMessage("Image Scan failed");
-        // Remove the loading placeholder
-        treeDataProvider.removeScanResult(scanId);
+        void vscode.window.showErrorMessage("Image Scan failed - Check Output for details");
+        // Mark the scan as failed but keep it visible
+        treeDataProvider.updateScanResultWithError(scanId, errorMessage);
       }
     }
   );

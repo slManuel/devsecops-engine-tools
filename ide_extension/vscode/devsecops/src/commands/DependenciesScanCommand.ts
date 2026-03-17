@@ -61,16 +61,16 @@ export function registerDependenciesScanCommand(
                     );
                 } else {
                     scanLoader.showError("Dependencies Scan failed - No results returned");
-                    void vscode.window.showErrorMessage("Dependencies Scan failed");
-                    // Remove the loading placeholder
-                    treeDataProvider.removeScanResult(scanId);
+                    void vscode.window.showErrorMessage("Dependencies Scan failed - Check Output for details");
+                    // Mark the scan as failed but keep it visible
+                    treeDataProvider.updateScanResultWithError(scanId, "No results returned");
                 }
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
                 scanLoader.showError(`Dependencies Scan failed: ${errorMessage}`);
-                void vscode.window.showErrorMessage("Dependencies Scan failed");
-                // Remove the loading placeholder
-                treeDataProvider.removeScanResult(scanId);
+                void vscode.window.showErrorMessage("Dependencies Scan failed - Check Output for details");
+                // Mark the scan as failed but keep it visible
+                treeDataProvider.updateScanResultWithError(scanId, errorMessage);
             }
         }
     }

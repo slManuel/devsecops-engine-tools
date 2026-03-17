@@ -58,16 +58,16 @@ export function registerIacScanCommand(
           );
         } else {
           scanLoader.showError("Iac Scan failed - No results returned");
-          void vscode.window.showErrorMessage("Iac Scan failed");
-          // Remove the loading placeholder
-          treeDataProvider.removeScanResult(scanId);
+          void vscode.window.showErrorMessage("Iac Scan failed - Check Output for details");
+          // Mark the scan as failed but keep it visible
+          treeDataProvider.updateScanResultWithError(scanId, "No results returned");
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
         scanLoader.showError(`Iac Scan failed: ${errorMessage}`);
-        void vscode.window.showErrorMessage("Iac Scan failed");
-        // Remove the loading placeholder
-        treeDataProvider.removeScanResult(scanId);
+        void vscode.window.showErrorMessage("Iac Scan failed - Check Output for details");
+        // Mark the scan as failed but keep it visible
+        treeDataProvider.updateScanResultWithError(scanId, errorMessage);
       }
     }
   });

@@ -160,6 +160,14 @@ export class UploadProgressTracker {
         const avgSpeed = this.formatSpeed(this.totalBytes / (elapsed / 1000));
         const elapsedFormatted = this.formatETA(elapsed / 1000);
 
+        // Update VS Code progress notification with completion message
+        if (this.progressReporter) {
+            this.progressReporter.report({
+                message: `✓ File sent successfully - ${totalMB} MB in ${elapsedFormatted}`,
+                increment: 100 - this.lastReportedPercentage
+            });
+        }
+
         // Always log completion to output channel
         this.outputChannel.appendLine(`✅ Upload complete: ${totalMB} MB in ${elapsedFormatted} (avg: ${avgSpeed})`);
         this.outputChannel.appendLine('');

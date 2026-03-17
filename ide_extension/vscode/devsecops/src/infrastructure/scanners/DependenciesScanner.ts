@@ -29,7 +29,6 @@ export class DependenciesScanner implements IScannerGateway {
     dependencyCheckDatabase: string,
     scanLoader: any
   ): Promise<ScannerRes> {
-    outputChannel.clear();
     outputChannel.show();
 
     this.metricsHelper.clearLogs();

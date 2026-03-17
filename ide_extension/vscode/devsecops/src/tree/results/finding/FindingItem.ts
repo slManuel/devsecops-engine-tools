@@ -9,6 +9,7 @@ export class FindingItem extends vscode.TreeItem {
     private readonly sourceType?: "iac" | "image" | "dependencies"
   ) {
     super(finding.getDescription() || "Unknown Issue", vscode.TreeItemCollapsibleState.None);
+    
     this.label = finding.getId() || "Unknown Issue";
     this.description = finding.getSeverity() || "Unknown";
     this.tooltip = `

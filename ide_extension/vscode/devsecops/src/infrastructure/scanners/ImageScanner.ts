@@ -30,7 +30,6 @@ export class ImageScanner implements IScannerGateway {
     containerEnginePath: string,
     scanLoader: any
   ): Promise<ScannerRes> {
-    outputChannel.clear();
     outputChannel.show();
 
     this.metricsHelper.clearLogs();

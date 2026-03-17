@@ -324,6 +324,16 @@
           "command": "devsecops.deleteScanResult",
           "when": "view == devsecops-results && viewItem == scanResult",
           "group": "management@1"
+        },
+        {
+          "command": "devsecops.deleteScanResult",
+          "when": "view == devsecops-results && viewItem == scanResult-loading",
+          "group": "management@1"
+        },
+        {
+          "command": "devsecops.deleteScanResult",
+          "when": "view == devsecops-results && viewItem == scanResult-error",
+          "group": "management@1"
         }
       ]
     }

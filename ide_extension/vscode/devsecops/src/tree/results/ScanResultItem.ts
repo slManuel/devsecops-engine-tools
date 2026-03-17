@@ -5,6 +5,7 @@ export class ScanResultItem extends vscode.TreeItem {
   public isLoading: boolean = false;
   public scanId: string;
   public outputChannel?: vscode.OutputChannel;
+  public comparisonSummary?: { delta: number, oldCount: number, newCount: number };
 
   constructor(
     public readonly label: string,
@@ -36,20 +37,57 @@ export class ScanResultItem extends vscode.TreeItem {
     }
   }
 
-  public updateWithResults(findings: vscode.TreeItem[]): void {
+  public updateWithResults(
+    findings: vscode.TreeItem[],
+    comparisonSummary?: { delta: number, oldCount: number, newCount: number }
+  ): void {
     this.isLoading = false;
     this.children = findings;
+    this.comparisonSummary = comparisonSummary;
     this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
     this.tooltip = `${this.label} - ${findings.length} findings`;
-    this.description = `${findings.length} findings - ${this.timestamp.toLocaleString()}`;
+    
+    // Build description with comparison info
+    let description = `${findings.length} findings`;
+    
+    if (comparisonSummary) {
+      const delta = comparisonSummary.delta;
+      if (delta > 0) {
+        description += ` (+${delta} from previous)`;
+        this.tooltip += `\nIncreased by ${delta} findings`;
+      } else if (delta < 0) {
+        description += ` (${delta} from previous)`;
+        this.tooltip += `\nDecreased by ${Math.abs(delta)} findings`;
+      } else {
+        description += ` (no change)`;
+        this.tooltip += `\nNo change from previous scan`;
+      }
+    }
+    
+    description += ` - ${this.timestamp.toLocaleString()}`;
+    this.description = description;
+    
     this.iconPath = findings.length > 0
       ? new vscode.ThemeIcon("warning", new vscode.ThemeColor("errorForeground"))
       : new vscode.ThemeIcon("pass", new vscode.ThemeColor("terminal.ansiGreen"));
     this.contextValue = "scanResult";
   }
 
-  public dispose(): void {
-    if (this.outputChannel) {
+  /**
+   * Mark the scan as failed with an error
+   */
+  public updateWithError(errorMessage: string): void {
+    this.isLoading = false;
+    this.children = [];
+    this.collapsibleState = vscode.TreeItemCollapsibleState.None;
+    this.tooltip = `${this.label} - Scan failed: ${errorMessage}`;
+    this.description = `❌ Failed - ${this.timestamp.toLocaleString()}`;
+    this.iconPath = new vscode.ThemeIcon("error", new vscode.ThemeColor("errorForeground"));
+    this.contextValue = "scanResult-error";
+  }
+
+  public dispose(keepOutputChannel: boolean = false): void {
+    if (this.outputChannel && !keepOutputChannel) {
       this.outputChannel.dispose();
       this.outputChannel = undefined;
     }
@@ -121,6 +159,16 @@ export class ScanResultItem extends vscode.TreeItem {
       description = `${visibleFindings}/${totalFindings} findings [Filter: ${severityLabels}]`;
     } else if (visibleFindings !== totalFindings) {
       description = `${visibleFindings}/${totalFindings} findings`;
+    }
+
+    // Add comparison delta
+    if (this.comparisonSummary) {
+      const delta = this.comparisonSummary.delta;
+      if (delta > 0) {
+        description += ` (+${delta})`;
+      } else if (delta < 0) {
+        description += ` (${delta})`;
+      }
     }
 
     // Add sort indicator
