@@ -83,6 +83,39 @@ class PrinterRichTable(PrinterTableGateway):
         console = Console()
         console.print(table)
 
+    def print_table_report_exclusions(self, exclusions):
+        headers = ["VM ID", "Services", "Tags", "Created Date", "Expired Date", "Reason"]
+        table = Table(
+            show_header=True, header_style="bold magenta", box=box.DOUBLE_EDGE
+        )
+        for header in headers:
+            table.add_column(header)
+        for exclusion in exclusions:
+            try:
+                row_data = [
+                    self._check_spaces(exclusion["vm_id"], exclusion["vm_id_url"]),
+                    exclusion.get("service", ""),
+                    ", ".join(exclusion["tags"]),
+                    format_date(exclusion["create_date"], "%d%m%Y", "%d/%m/%Y"),
+                    (
+                        format_date(exclusion["expired_date"], "%d%m%Y", "%d/%m/%Y")
+                        if exclusion["expired_date"]
+                        and exclusion["expired_date"] != "undefined"
+                        else "NA"
+                    ),
+                    exclusion["reason"],
+                ]
+                table.add_row(*row_data)
+            except (KeyError, TypeError, ValueError) as e:
+                error_msg = (
+                    f"Error processing exclusion VM ID "
+                    f"{exclusion.get('vm_id', 'Unknown')}: {type(e).__name__}: {str(e)}"
+                )
+                logger.error(error_msg)
+                raise RuntimeError(error_msg) from e
+        console = Console()
+        console.print(table)
+
     def _check_spaces(self, value, url):
         values = value.split()
         urls = url.split()

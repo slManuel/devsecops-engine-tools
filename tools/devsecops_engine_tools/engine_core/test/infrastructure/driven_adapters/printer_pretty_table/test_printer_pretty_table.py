@@ -190,7 +190,7 @@ class TestPrinterPrettyTable(unittest.TestCase):
         printer = PrinterPrettyTable()
 
         # Act
-        printer.print_table_report_exlusions(exclusions)
+        printer.print_table_report_exclusions(exclusions)
 
         # Assert
         assert mock_print.called
