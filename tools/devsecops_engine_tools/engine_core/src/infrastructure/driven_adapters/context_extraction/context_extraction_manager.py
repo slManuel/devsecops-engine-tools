@@ -138,12 +138,10 @@ class ContextExtractionManager(ContextExtractionGateway):
         self._risk_score_gateway.get_risk_score(findings_for_priority, config_tool, module_name)
         
         # Update context objects with calculated priorities
+        # Store only the scale as a string for all modules
         for context_item, finding in zip(context_list, findings_for_priority):
             if finding.priority:
-                context_item.priority = {
-                    "score": finding.priority.score,
-                    "scale": finding.priority.scale
-                }
+                context_item.priority = finding.priority.scale
     
     def _print_context(self, module_name: str, context_list: List) -> None:
         context_key = self._context_key_mapping.get(module_name, f"{module_name}_context")
