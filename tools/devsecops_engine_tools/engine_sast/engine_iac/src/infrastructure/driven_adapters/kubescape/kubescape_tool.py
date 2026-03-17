@@ -48,57 +48,8 @@ class KubescapeTool(ToolGateway):
             return [], None
 
     def get_iac_context_from_results(self, path_file_results) -> List:
-        with open(path_file_results, "r") as file:
-            data = json.load(file)
-            context_iac_list = []
-            
-            # Extract failed controls from Kubescape results
-            results = data.get("results", [])
-            for result in results:
-                controls = result.get("controls", [])
-                for control in controls:
-                    status = control.get("status", {}).get("status", "")
-                    if status.lower() == "failed":
-                        control_id = control.get("controlID", "")
-                        control_name = control.get("name", "")
-                        severity = control.get("scoreFactor", 0)
-                        
-                        # Map score factor to severity
-                        if severity >= 9:
-                            severity_str = "critical"
-                        elif severity >= 7:
-                            severity_str = "high"
-                        elif severity >= 4:
-                            severity_str = "medium"
-                        else:
-                            severity_str = "low"
-                        
-                        # Get failed resources
-                        rules = control.get("rules", [])
-                        for rule in rules:
-                            rule_status = rule.get("status", "")
-                            if rule_status.lower() == "failed":
-                                paths = rule.get("paths", [])
-                                for path_info in paths:
-                                    failed_path = path_info.get("failedPath", "")
-                                    fix_path = path_info.get("fixPath", {})
-                                    resource_name = path_info.get("resourceName", "unknown")
-                                    
-                                    from devsecops_engine_tools.engine_sast.engine_iac.src.domain.model.context_iac import ContextIac
-                                    context_iac = ContextIac(
-                                        id=control_id,
-                                        check_name=control_name,
-                                        check_class=control.get("category", {}).get("name", "unknown"),
-                                        severity=severity_str,
-                                        where=f"{resource_name}: {failed_path}",
-                                        resource=resource_name,
-                                        description=control.get("description", ""),
-                                        module="engine_iac",
-                                        tool="Kubescape",
-                                    )
-                                    context_iac_list.append(context_iac)
-            
-            return context_iac_list
+        # TODO: Implement this method
+        return []
 
     def _select_operative_system(self, os_platform, base_url):
         if os_platform == "Linux":
