@@ -609,7 +609,7 @@ class BreakBuild:
                     "warning", "Bellow are all findings that were excepted"
                 )
             )
-            self.printer_table_gateway.print_table_report_exlusions(applied_exclusions)
+            self.printer_table_gateway.print_table_report_exclusions(applied_exclusions)
             for reason, total in Counter(
                 map(lambda x: x["reason"], applied_exclusions)
             ).items():

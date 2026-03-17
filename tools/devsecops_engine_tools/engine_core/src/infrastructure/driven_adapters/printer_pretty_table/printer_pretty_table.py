@@ -11,8 +11,12 @@ from devsecops_engine_tools.engine_core.src.domain.model.report import (
 )
 from devsecops_engine_tools.engine_core.src.infrastructure.helpers.util import (
     format_date,
+    format_expired_date,
 )
 from prettytable import PrettyTable, DOUBLE_BORDER
+from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
+from devsecops_engine_tools.engine_utilities import settings
+logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
 
 @dataclass
@@ -98,34 +102,37 @@ class PrinterPrettyTable(PrinterTableGateway):
         if len(sorted_table.rows) > 0:
             print(sorted_table)
 
-    def print_table_report_exlusions(self, exclusions):
-        if exclusions:
-            headers = [
-                "VM ID",
-                "Services",
-                "Tags",
-                "Created Date",
-                "Expired Date",
-                "Reason",
-            ]
+    def print_table_report_exclusions(self, exclusions):
+        headers = [
+            "VM ID",
+            "Services",
+            "Tags",
+            "Created Date",
+            "Expired Date",
+            "Reason",
+        ]
 
         table = PrettyTable(headers)
 
         for exclusion in exclusions:
-            row_data = [
-                self._check_spaces(exclusion["vm_id"]),
-                self._check_spaces(exclusion["service"]),
-                ", ".join(exclusion["tags"]),
-                format_date(exclusion["create_date"], "%d%m%Y", "%d/%m/%Y"),
-                (
-                    format_date(exclusion["expired_date"], "%d%m%Y", "%d/%m/%Y")
-                    if exclusion["expired_date"]
-                    and exclusion["expired_date"] != "undefined"
-                    else "NA"
-                ),
-                exclusion["reason"],
-            ]
-            table.add_row(row_data)
+            try:
+                row_data = [
+                    self._check_spaces(exclusion["vm_id"]),
+                    self._check_spaces(exclusion["service"]),
+                    ", ".join(exclusion["tags"]),
+                    format_date(exclusion["create_date"], "%d%m%Y", "%d/%m/%Y"),
+                    format_expired_date(exclusion["expired_date"]),
+                    exclusion["reason"],
+                ]
+                table.add_row(row_data)
+            
+            except (KeyError, TypeError, ValueError) as e:
+                error_msg = (
+                    f"Error processing exclusion entry for VM ID "
+                    f"{exclusion.get('vm_id', 'Unknown')}: {type(e).__name__}: {str(e)}"
+                )
+                logger.error(error_msg)
+                raise RuntimeError(error_msg) from e
 
         for column in table.field_names:
             table.align[column] = "l"
@@ -136,15 +143,14 @@ class PrinterPrettyTable(PrinterTableGateway):
 
     def print_table_exclusions(self, exclusions, break_build_manager):
         model_header = "Priority" if break_build_manager.get("MODEL", "Severity") == "priority" else "Severity"
-        if exclusions:
-            headers = [
-                model_header,
-                "ID",
-                "Where",
-                "Create Date",
-                "Expired Date",
-                "Reason",
-            ]
+        headers = [
+            model_header,
+            "ID",
+            "Where",
+            "Create Date",
+            "Expired Date",
+            "Reason",
+        ]
         
         if exclusions[0].get("module") in ("engine_container", "engine_dependencies", "engine_function"):
             headers.insert(6, "Fixed in")
@@ -152,22 +158,25 @@ class PrinterPrettyTable(PrinterTableGateway):
         table = PrettyTable(headers)
         
         for exclusion in exclusions:
-            row_data = [
-                exclusion["severity"],
-                exclusion["id"],
-                exclusion["where"],
-                format_date(exclusion["create_date"], "%d%m%Y", "%d/%m/%Y"),
-                (
-                    format_date(exclusion["expired_date"], "%d%m%Y", "%d/%m/%Y")
-                    if exclusion["expired_date"]
-                    and exclusion["expired_date"] != "undefined"
-                    else "NA"
-                ),
-                exclusion["reason"],
-            ]
-            if exclusion.get("module") in ("engine_container", "engine_dependencies", "engine_function"):
-                row_data.append(exclusion["fixed in"])
-            table.add_row(row_data)
+            try:
+                row_data = [
+                    exclusion["severity"],
+                    exclusion["id"],
+                    exclusion["where"],
+                    format_date(exclusion["create_date"], "%d%m%Y", "%d/%m/%Y"),
+                    format_expired_date(exclusion["expired_date"]),
+                    exclusion["reason"],
+                ]
+                if exclusion.get("module") in ("engine_container", "engine_dependencies", "engine_function"):
+                    row_data.append(exclusion["fixed in"])
+                table.add_row(row_data)
+            except (KeyError, TypeError, ValueError) as e:
+                error_msg = (
+                    f"Error processing exclusion finding ID "
+                    f"{exclusion.get('id', 'Unknown')}: {type(e).__name__}: {str(e)}"
+                )
+                logger.error(error_msg)
+                raise RuntimeError(error_msg) from e
 
         for column in table.field_names:
             table.align[column] = "l"
