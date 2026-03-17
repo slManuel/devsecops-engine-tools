@@ -11,6 +11,7 @@ from devsecops_engine_tools.engine_core.src.domain.model.report import (
 )
 from devsecops_engine_tools.engine_core.src.infrastructure.helpers.util import (
     format_date,
+    format_expired_date,
 )
 from prettytable import PrettyTable, DOUBLE_BORDER
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
@@ -120,12 +121,7 @@ class PrinterPrettyTable(PrinterTableGateway):
                     self._check_spaces(exclusion["service"]),
                     ", ".join(exclusion["tags"]),
                     format_date(exclusion["create_date"], "%d%m%Y", "%d/%m/%Y"),
-                    (
-                        format_date(exclusion["expired_date"], "%d%m%Y", "%d/%m/%Y")
-                        if exclusion["expired_date"]
-                        and exclusion["expired_date"] != "undefined"
-                        else "NA"
-                    ),
+                    format_expired_date(exclusion["expired_date"]),
                     exclusion["reason"],
                 ]
                 table.add_row(row_data)
@@ -168,12 +164,7 @@ class PrinterPrettyTable(PrinterTableGateway):
                     exclusion["id"],
                     exclusion["where"],
                     format_date(exclusion["create_date"], "%d%m%Y", "%d/%m/%Y"),
-                    (
-                        format_date(exclusion["expired_date"], "%d%m%Y", "%d/%m/%Y")
-                        if exclusion["expired_date"]
-                        and exclusion["expired_date"] != "undefined"
-                        else "NA"
-                    ),
+                    format_expired_date(exclusion["expired_date"]),
                     exclusion["reason"],
                 ]
                 if exclusion.get("module") in ("engine_container", "engine_dependencies", "engine_function"):

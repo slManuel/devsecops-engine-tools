@@ -11,6 +11,7 @@ from devsecops_engine_tools.engine_core.src.domain.model.report import (
 )
 from devsecops_engine_tools.engine_core.src.infrastructure.helpers.util import (
     format_date,
+    format_expired_date,
 )
 from rich.console import Console
 from rich.table import Table
@@ -64,22 +65,12 @@ class PrinterRichTable(PrinterTableGateway):
                     ", ".join(exclusion["tags"]),
                     exclusion["service"],
                     format_date(exclusion["create_date"], "%d%m%Y", "%d/%m/%Y"),
-                    (
-                        format_date(exclusion["expired_date"], "%d%m%Y", "%d/%m/%Y")
-                        if exclusion["expired_date"]
-                        and exclusion["expired_date"] != "undefined"
-                        else "NA"
-                    ),
+                    format_expired_date(exclusion["expired_date"]),
                     exclusion["reason"],
                 ]
                 table.add_row(*row_data)
             except (KeyError, TypeError, ValueError) as e:
-                error_msg = (
-                    f"Error processing exclusion VM ID "
-                    f"{exclusion.get('vm_id', 'Unknown')}: {type(e).__name__}: {str(e)}"
-                )
-                logger.error(error_msg)
-                raise RuntimeError(error_msg) from e
+                self._raise_exclusion_error(exclusion, e)
         console = Console()
         console.print(table)
 
@@ -97,24 +88,22 @@ class PrinterRichTable(PrinterTableGateway):
                     exclusion.get("service", ""),
                     ", ".join(exclusion["tags"]),
                     format_date(exclusion["create_date"], "%d%m%Y", "%d/%m/%Y"),
-                    (
-                        format_date(exclusion["expired_date"], "%d%m%Y", "%d/%m/%Y")
-                        if exclusion["expired_date"]
-                        and exclusion["expired_date"] != "undefined"
-                        else "NA"
-                    ),
+                    format_expired_date(exclusion["expired_date"]),
                     exclusion["reason"],
                 ]
                 table.add_row(*row_data)
             except (KeyError, TypeError, ValueError) as e:
-                error_msg = (
-                    f"Error processing exclusion VM ID "
-                    f"{exclusion.get('vm_id', 'Unknown')}: {type(e).__name__}: {str(e)}"
-                )
-                logger.error(error_msg)
-                raise RuntimeError(error_msg) from e
+                self._raise_exclusion_error(exclusion, e)
         console = Console()
         console.print(table)
+
+    def _raise_exclusion_error(self, exclusion, e):
+        error_msg = (
+            f"Error processing exclusion VM ID "
+            f"{exclusion.get('vm_id', 'Unknown')}: {type(e).__name__}: {str(e)}"
+        )
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
 
     def _check_spaces(self, value, url):
         values = value.split()
