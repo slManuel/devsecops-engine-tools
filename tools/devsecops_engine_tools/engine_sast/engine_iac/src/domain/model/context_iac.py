@@ -13,4 +13,4 @@ class ContextIac:
     description: str
     module: str
     tool: str
-    priority: Optional[dict] = field(default=None)
+    priority: Optional[str] = field(default=None)

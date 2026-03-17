@@ -144,14 +144,7 @@ class CheckovTool(ToolGateway):
 
                 context_iac_list.append(context_iac)
 
-            print("===== BEGIN CONTEXT OUTPUT =====")
-            print(
-                json.dumps(
-                    {"iac_context": [obj.__dict__ for obj in context_iac_list]},
-                    indent=4,
-                )
-            )
-            print("===== END CONTEXT OUTPUT =====")
+            return context_iac_list
 
     def _retryable_install_package(self, package: str, version: str) -> bool:
         MAX_RETRIES = 3

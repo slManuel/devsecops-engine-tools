@@ -13,4 +13,4 @@ class ContextDependencies:
     description: str
     references: Optional[List[str]]
     source_tool: str
-    priority: Optional[dict] = field(default=None)
+    priority: Optional[str] = field(default=None)
