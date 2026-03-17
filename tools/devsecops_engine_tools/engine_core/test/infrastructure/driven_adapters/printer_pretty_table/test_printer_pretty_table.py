@@ -1,9 +1,10 @@
 import unittest
+import pytest
 from unittest.mock import patch
 from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.printer_pretty_table.printer_pretty_table import (
     PrinterPrettyTable,
 )
-from devsecops_engine_tools.engine_core.src.domain.model.finding import Finding
+from devsecops_engine_tools.engine_core.src.domain.model.finding import Finding, EngineCodeFinding
 from devsecops_engine_tools.engine_core.src.domain.model.report import Report
 
 
@@ -190,7 +191,78 @@ class TestPrinterPrettyTable(unittest.TestCase):
         printer = PrinterPrettyTable()
 
         # Act
-        printer.print_table_report_exlusions(exclusions)
+        printer.print_table_report_exclusions(exclusions)
 
         # Assert
         assert mock_print.called
+
+    @patch("builtins.print")
+    def test_print_table_with_findings_engine_code(self, mock_print):
+        finding_list = [
+            EngineCodeFinding(
+                id="1",
+                cvss="7.8",
+                where="Location 1",
+                description="Description 1",
+                severity="high",
+                identification_date="2021-01-01",
+                published_date_cve=None,
+                module="engine_code",
+                category="vulnerability",
+                requirements="",
+                tool="Tool 1",
+                analysis_url="http://example.com",
+                analysis_code="code1",
+                label="label1",
+                application_business_value="high",
+                defect_type="SQL Injection",
+            )
+        ]
+        manager = {"MODEL": "severity", "CLASSIFICATION": ["critical", "high", "medium", "low"]}
+        printer = PrinterPrettyTable()
+
+        printer.print_table_findings(finding_list, manager)
+
+        assert mock_print.called
+
+    def test_print_table_report_exclusions_raises_error(self):
+        exclusions = [{"vm_id": "id"}]  # missing required keys
+        printer = PrinterPrettyTable()
+
+        with pytest.raises(RuntimeError):
+            printer.print_table_report_exclusions(exclusions)
+
+    @patch("builtins.print")
+    def test_print_table_exclusions_engine_container(self, mock_print):
+        exclusions = [
+            {
+                "severity": "high",
+                "id": "CVE-2021-001",
+                "where": "path/to/file",
+                "create_date": "01042023",
+                "expired_date": "04032023",
+                "reason": "reason",
+                "module": "engine_container",
+                "fixed in": "1.0.1",
+            }
+        ]
+        manager = {"MODEL": "severity", "CLASSIFICATION": ["critical", "high", "medium", "low"]}
+        printer = PrinterPrettyTable()
+
+        printer.print_table_exclusions(exclusions, manager)
+
+        assert mock_print.called
+
+    def test_print_table_exclusions_raises_error(self):
+        exclusions = [
+            {
+                "severity": "high",
+                "id": "CVE-2021-001",
+                "module": None,
+            }  # missing required keys like 'where', 'create_date', etc.
+        ]
+        manager = {"MODEL": "severity", "CLASSIFICATION": ["critical", "high", "medium", "low"]}
+        printer = PrinterPrettyTable()
+
+        with pytest.raises(RuntimeError):
+            printer.print_table_exclusions(exclusions, manager)

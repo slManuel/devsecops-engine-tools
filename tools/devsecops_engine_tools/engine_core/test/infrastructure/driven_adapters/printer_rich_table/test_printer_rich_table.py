@@ -60,7 +60,7 @@ class TestPrinterRichTable:
                 "create_date": "01012021",
                 "expired_date": "02012021",
                 "reason": "reason1",
-                "vm_id_url": "url1",
+                "vm_id_url": "url1 url2",
             }
         ]
         manager = {"MODEL": "severity", "CLASSIFICATION": ["critical", "high", "medium", "low"]}
@@ -69,3 +69,41 @@ class TestPrinterRichTable:
         printer.print_table_exclusions(exclusions_list, manager)
 
         mock_console().print.assert_called_once()
+
+    def test_print_table_exclusions_raises_error(self):
+        exclusions_list = [{"vm_id": "1", "tags": ["tag1"]}]  # missing required keys
+        manager = {"MODEL": "severity", "CLASSIFICATION": ["critical", "high", "medium", "low"]}
+        printer = PrinterRichTable()
+
+        import pytest
+        with pytest.raises(RuntimeError):
+            printer.print_table_exclusions(exclusions_list, manager)
+
+    @patch(
+        "devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.printer_rich_table.printer_rich_table.Console"
+    )
+    def test_print_table_report_exclusions(self, mock_console):
+        exclusions_list = [
+            {
+                "vm_id": "1",
+                "vm_id_url": "url1",
+                "tags": ["tag1"],
+                "service": "service1",
+                "create_date": "01012021",
+                "expired_date": "02012021",
+                "reason": "reason1",
+            }
+        ]
+        printer = PrinterRichTable()
+
+        printer.print_table_report_exclusions(exclusions_list)
+
+        mock_console().print.assert_called_once()
+
+    def test_print_table_report_exclusions_raises_error(self):
+        exclusions_list = [{"vm_id": "1", "vm_id_url": "url1"}]  # missing required keys
+        printer = PrinterRichTable()
+
+        import pytest
+        with pytest.raises(RuntimeError):
+            printer.print_table_report_exclusions(exclusions_list)
