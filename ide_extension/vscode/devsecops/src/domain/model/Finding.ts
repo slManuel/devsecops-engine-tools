@@ -1,3 +1,5 @@
+import { getEffectiveSeverity as getEffectiveSeverityHelper } from "./ClassificationModel";
+
 export class Finding {
 
     private id: string;
@@ -85,6 +87,15 @@ export class Finding {
 
     public setPriority(priority: string): void {
         this.priority = priority;
+    }
+
+    /**
+     * Gets the effective severity based on the current classification model configuration
+     * If the model is "priority", returns the mapped priority value
+     * Otherwise, returns the standard severity
+     */
+    public getEffectiveSeverity(): string {
+        return getEffectiveSeverityHelper(this.severity, this.priority);
     }
 
 }

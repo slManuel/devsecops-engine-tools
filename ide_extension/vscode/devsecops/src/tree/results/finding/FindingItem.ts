@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import { Finding } from "../../../domain/model/Finding";
+import { getClassificationModel } from "../../../domain/model/ClassificationModel";
 
 export class FindingItem extends vscode.TreeItem {
   constructor(
@@ -10,11 +11,16 @@ export class FindingItem extends vscode.TreeItem {
   ) {
     super(finding.getDescription() || "Unknown Issue", vscode.TreeItemCollapsibleState.None);
     
+    // Use effective severity based on classification model configuration
+    const effectiveSeverity = finding.getEffectiveSeverity();
+    const classificationModel = getClassificationModel();
+    const classificationLabel = classificationModel === "priority" ? "Priority" : "Severity";
+    
     this.label = finding.getId() || "Unknown Issue";
-    this.description = finding.getSeverity() || "Unknown";
+    this.description = effectiveSeverity || "Unknown";
     this.tooltip = `
     ${finding.getDescription()}\n
-    Severity: ${finding.getSeverity()}\n
+    ${classificationLabel}: ${effectiveSeverity}\n
     Location: ${finding.getWhere() || "N/A"}
     Validation Rule Code: ${finding.getValidationRuleCode() || "N/A"}`;
 
@@ -30,14 +36,16 @@ export class FindingItem extends vscode.TreeItem {
     }
 
     const severityIcons: Record<string, vscode.ThemeIcon> = {
+      "very critical": new vscode.ThemeIcon("alert", new vscode.ThemeColor("errorForeground")),
       critical: new vscode.ThemeIcon("error", new vscode.ThemeColor("errorForeground")),
       high: new vscode.ThemeIcon("warning", new vscode.ThemeColor("list.warningForeground")),
       medium: new vscode.ThemeIcon("info", new vscode.ThemeColor("editorWarning.foreground")),
+      "medium low": new vscode.ThemeIcon("circle-outline", new vscode.ThemeColor("terminal.ansiGreen")),
       low: new vscode.ThemeIcon("circle-outline", new vscode.ThemeColor("terminal.ansiGreen")),
     };
 
     this.iconPath =
-      severityIcons[finding.getSeverity().toLowerCase()] ||
+      severityIcons[effectiveSeverity.toLowerCase()] ||
       new vscode.ThemeIcon("shield", new vscode.ThemeColor("foreground"));
 
     this.command = {

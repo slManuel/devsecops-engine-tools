@@ -106,7 +106,7 @@ export class ScanResultItem extends vscode.TreeItem {
     if (filterSeverities.size > 0) {
       filteredChildren = this.children.filter(child => {
         if (child instanceof FindingItem) {
-          const severity = child.finding.getSeverity().toLowerCase();
+          const severity = child.finding.getEffectiveSeverity().toLowerCase();
           return filterSeverities.has(severity);
         }
         return true;
@@ -116,16 +116,18 @@ export class ScanResultItem extends vscode.TreeItem {
     // Apply sorting by severity
     if (sortBySeverity) {
       const severityOrder: Record<string, number> = {
-        critical: 0,
-        high: 1,
-        medium: 2,
-        low: 3
+        "very critical": 0,
+        critical: 1,
+        high: 2,
+        medium: 3,
+        "medium low": 4,
+        low: 5
       };
 
       filteredChildren = [...filteredChildren].sort((a, b) => {
         if (a instanceof FindingItem && b instanceof FindingItem) {
-          const severityA = a.finding.getSeverity().toLowerCase();
-          const severityB = b.finding.getSeverity().toLowerCase();
+          const severityA = a.finding.getEffectiveSeverity().toLowerCase();
+          const severityB = b.finding.getEffectiveSeverity().toLowerCase();
           const orderA = severityOrder[severityA] ?? 999;
           const orderB = severityOrder[severityB] ?? 999;
           return orderA - orderB;

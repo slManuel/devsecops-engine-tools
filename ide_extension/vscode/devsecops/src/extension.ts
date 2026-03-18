@@ -10,6 +10,7 @@ import { registerDependenciesScanCommand } from "./commands/DependenciesScanComm
 import { registerCopilotCommands } from "./commands/copilotCommands";
 import { registerVulnerabilityCopilotCommands } from "./commands/vulnerabilityCopilotCommands";
 import { showVulnContextWebview, disposeVulnPanel, showGeneralFindingWebview } from './tree/results/finding/FindingWebview';
+import { getClassificationModel } from './domain/model/ClassificationModel';
 
 export function activate(context: vscode.ExtensionContext): void {
 
@@ -89,19 +90,36 @@ export function activate(context: vscode.ExtensionContext): void {
   const filterBySeverityDisposable = vscode.commands.registerCommand(
     "devsecops.filterBySeverity",
     async () => {
+      const classificationModel = getClassificationModel();
       const currentFilter = resultsProvider.getFilterState();
       
-      const severityOptions = [
-        { label: "Critical", picked: currentFilter.severities.includes("critical") },
-        { label: "High", picked: currentFilter.severities.includes("high") },
-        { label: "Medium", picked: currentFilter.severities.includes("medium") },
-        { label: "Low", picked: currentFilter.severities.includes("low") }
-      ];
+      let severityOptions: { label: string, picked: boolean }[];
+      let title: string;
+      
+      if (classificationModel === "priority") {
+        // Priority-based options 
+        title = "Filter Findings by Priority";
+        severityOptions = [
+          { label: "Very Critical", picked: currentFilter.severities.includes("very critical") },
+          { label: "Critical", picked: currentFilter.severities.includes("critical") },
+          { label: "High", picked: currentFilter.severities.includes("high") },
+          { label: "Medium Low", picked: currentFilter.severities.includes("medium low") }
+        ];
+      } else {
+        // Severity-based options
+        title = "Filter Findings by Severity";
+        severityOptions = [
+          { label: "Critical", picked: currentFilter.severities.includes("critical") },
+          { label: "High", picked: currentFilter.severities.includes("high") },
+          { label: "Medium", picked: currentFilter.severities.includes("medium") },
+          { label: "Low", picked: currentFilter.severities.includes("low") }
+        ];
+      }
 
       const selected = await vscode.window.showQuickPick(severityOptions, {
         canPickMany: true,
-        placeHolder: "Select severities to show (leave empty to show all)",
-        title: "Filter Findings by Severity"
+        placeHolder: "Select items to show (leave empty to show all)",
+        title: title
       });
 
       if (selected !== undefined) {

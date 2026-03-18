@@ -86,6 +86,19 @@
             "type": "boolean",
             "default": false,
             "description": "Enable debug mode to show detailed request/response logs"
+          },
+          "devsecops.general.classificationModel": {
+            "type": "string",
+            "default": "severity",
+            "enum": [
+              "severity",
+              "priority"
+            ],
+            "enumDescriptions": [
+              "Use the severity model for classification (critical, high, medium, low)",
+              "Use the priority model for classification (very critical, critical, high, medium low)"
+            ],
+            "description": "Choose which model to use for vulnerability classification"
           }
         }
       },
@@ -237,12 +250,12 @@
       },
       {
         "command": "devsecops.filterBySeverity",
-        "title": "Filter by Severity",
+        "title": "Filter by Severity/Priority",
         "icon": "$(filter)"
       },
       {
         "command": "devsecops.toggleSort",
-        "title": "Toggle Sort by Severity",
+        "title": "Toggle Sort by Severity/Priority",
         "icon": "$(sort-precedence)"
       },
       {
