@@ -10,5 +10,4 @@
 	"typescript.tsc.autoDetect": "off",
 	// Disable ESLint
 	"eslint.enable": false,
-	"devsecops.general.imageVersion": "1.140.0"
 }
