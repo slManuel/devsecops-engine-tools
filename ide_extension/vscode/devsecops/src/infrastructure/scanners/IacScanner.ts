@@ -1,13 +1,14 @@
 import { OutputChannel } from "vscode";
 import IScannerGateway from "../../domain/model/gateways/IScannerGateway";
-import OutputManager from "../helper/OutputManager";
 import { ScannerRes } from "../../domain/model/ScannerRes";
 import { Finding } from "../../domain/model/Finding";
 import { ScanConfigurationService } from "../config/ScanConfigurationService";
 import { exec, execSync } from "child_process";
-import { IIacContext, ISeverityCounts, Mappers } from "../../domain/model/mappers/Mappers";
+import { ISeverityCounts } from "../../domain/model/mappers/Mappers";
 import { ScannerImageManager } from "../helper/ScannerImageManager";
 import ContainerEngineManager from "../helper/ContainerEngineManager";
+import { BaseScannerHelper } from "../helper/BaseScannerHelper";
+import { ScanContextMapper } from "../mappers/ScanContextMapper";
 import { MetricsService } from "../services/MetricsService";
 import { DockerService } from "../services/DockerService";
 import { ErrorHandlingService } from "../services/ErrorHandlingService";
@@ -25,10 +26,12 @@ export class IacScanner implements IScannerGateway {
     containerEnginePath: string,
     scanLoader?: any
   ): Promise<ScannerRes> {
-    outputChannel.show();
-    this.metricsHelper.clearLogs();
-    this.dockerErrorHandler.reset();
-    this.networkErrorHandler.reset();
+    BaseScannerHelper.initializeScan(
+      outputChannel,
+      this.metricsHelper,
+      this.dockerErrorHandler,
+      this.networkErrorHandler
+    );
 
     return new Promise((resolve, _reject) => {
       let scanResult: boolean = false;
@@ -38,127 +41,101 @@ export class IacScanner implements IScannerGateway {
       void (async () => {
         try {
           const scannerImageAvailable = await ScannerImageManager.ensureScannerImageExists(
-          containerEnginePath,
-          containerImageName,
-          toolVersion,
-          outputChannel,
-          (message) => this.metricsHelper.captureOnly(message)
-        );
+            containerEnginePath,
+            containerImageName,
+            toolVersion,
+            outputChannel,
+            (message) => this.metricsHelper.captureOnly(message)
+          );
 
-        if (!scannerImageAvailable) {
-          this.metricsHelper.captureLog(outputChannel, "Failed to ensure scanner image is available. Aborting scan.");
-          await this.collectFailedScanMetrics(elementToScan);
-          resolve(new ScannerRes(false, [], null));
-          return;
-        }
-
-        if (scanLoader) {
-          scanLoader.start(`Infrastructure as Code for: ${elementToScan.split('/').pop()} `);
-        }
-
-        const scanTimeout = ScanConfigurationService.getScanTimeout();
-        const timeoutMinutes = Math.floor(scanTimeout / 60000);
-        const timeout = setTimeout(() => {
-          outputChannel.appendLine(`Scan timed out after ${timeoutMinutes} minutes`);
-          outputChannel.appendLine("Container command may be hanging. Check container engine configuration.");
-          this.metricsHelper.captureLog(outputChannel, `Scan timed out after ${timeoutMinutes} minutes`);
-          void this.collectFailedScanMetrics(elementToScan).then(() => {
-            resolve(new ScannerRes(false, [], null));
-          }).catch((error) => {
-            this.metricsHelper.captureError(outputChannel, error, "collecting timeout metrics");
-            resolve(new ScannerRes(false, [], null));
-          });
-        }, scanTimeout);
-
-        const normalizedElementPath = ContainerEngineManager.normalizePathForDocker(elementToScan);
-        const containerCommand = `${containerEnginePath} run --rm -v ${normalizedElementPath}:/ms_artifact ${containerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo docker_default_remote_config --module engine_iac --tool ${iacTool}${iacTool === "kics" ? " --platform openapi" : ""} --folder_path /ms_artifact --context true"`;
-
-        const debugMode = ScanConfigurationService.getDebugMode();
-
-        const childProcess = exec(containerCommand, (error, stdout, stderr) => {
-          clearTimeout(timeout);
-          if (error) {
-            this.errorHandler(outputChannel, error, stderr, containerImageName, toolVersion);
+          if (!scannerImageAvailable) {
+            await BaseScannerHelper.handleScanFailure(
+              elementToScan,
+              new Error("Failed to ensure scanner image is available"),
+              "scanner image availability",
+              "engine_iac",
+              this.metricsHelper,
+              outputChannel,
+              resolve
+            );
+            return;
           }
 
-          // Show stderr in debug mode
-          if (debugMode && stderr) {
-            outputChannel.appendLine("\n📋 STDERR OUTPUT:");
-            outputChannel.appendLine(stderr);
+          if (scanLoader) {
+            scanLoader.start(`Infrastructure as Code for: ${elementToScan.split('/').pop()} `);
           }
 
-          if (stdout) {
-            let contextJson: { iac_context: IIacContext[] } | null = null;
-            let normalOutput = stdout;
-
-            const contextRegex =
-              /===== BEGIN CONTEXT OUTPUT =====\s*([\s\S]*?)\s*===== END CONTEXT OUTPUT =====/;
-            const match = stdout.match(contextRegex);
-
-            if (match && match[1]) {
-              try {
-                contextJson = JSON.parse(match[1].trim()) as { iac_context: IIacContext[] };
-                normalOutput = stdout.replace(contextRegex, "");
-                findings = contextJson.iac_context.map(
-                  (finding: IIacContext) =>
-                    Mappers.mapIacContextToFinding(finding)
-                );
-                severityCounts = this.calculateRawSeverityCounts(contextJson.iac_context);
-                scanResult = true;
-                outputChannel.appendLine(
-                  `Successfully extracted context data with ${findings.length} findings`
-                );
-              } catch (jsonError: unknown) {
-                let errorMsg = "Unknown error";
-                if (jsonError instanceof Error) {
-                  errorMsg = jsonError.message;
-                } else if (typeof jsonError === "string") {
-                  errorMsg = jsonError;
-                }
-                outputChannel.appendLine(`Error parsing context JSON: ${errorMsg}`);
-                outputChannel.appendLine("Raw context data:");
-                outputChannel.appendLine(match[1]);
-              }
-            } else {
-              outputChannel.appendLine(
-                "No context data found in scanner output. Using default context."
-              );
-              scanResult = false;
-            }
-
-            if (debugMode) {
-              const cleanedOutput = OutputManager.removeAnsiEscapeCodes(normalOutput);
-              outputChannel.appendLine("\n📄 SCAN OUTPUT:");
-              outputChannel.appendLine(cleanedOutput);
-            }
-            this.metricsHelper.captureLog(outputChannel, `Found ${findings.length} issues in scan`);
-          } else {
-            outputChannel.appendLine("Docker command completed with no output");
-          }
-
-          void this.metricsHelper.collectAndstoreMetricsData(
+          const timeout = BaseScannerHelper.createScanTimeout(
+            outputChannel,
+            this.metricsHelper,
             elementToScan,
-            findings,
-            severityCounts,
-            scanResult,
-            "engine_iac"
-          ).catch((error) => {
-            this.metricsHelper.captureError(outputChannel, error, "storing metrics");
+            "engine_iac",
+            () => resolve(new ScannerRes(false, [], null))
+          );
+
+          const normalizedElementPath = ContainerEngineManager.normalizePathForDocker(elementToScan);
+          const containerCommand = `${containerEnginePath} run --rm -v ${normalizedElementPath}:/ms_artifact ${containerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo docker_default_remote_config --module engine_iac --tool ${iacTool}${iacTool === "kics" ? " --platform openapi" : ""} --folder_path /ms_artifact --context true"`;
+
+          const debugMode = ScanConfigurationService.getDebugMode();
+
+          const childProcess = exec(containerCommand, (error, stdout, stderr) => {
+            clearTimeout(timeout);
+            
+            if (error) {
+              this.errorHandler(outputChannel, error, stderr, containerImageName, toolVersion);
+            }
+
+            if (stdout) {
+              // Use centralized context extraction
+              const result = ScanContextMapper.extractContextFromOutput(stdout, 'iac');
+              
+              if (result.success) {
+                findings = result.findings;
+                severityCounts = result.severityCounts;
+                scanResult = true;
+                outputChannel.appendLine(`Successfully extracted context data with ${findings.length} findings`);
+              } else {
+                outputChannel.appendLine(result.errorMessage || "No context data found in scanner output");
+                if (result.errorMessage?.includes("Error parsing")) {
+                  outputChannel.appendLine("Raw context data available in debug mode");
+                }
+                scanResult = false;
+              }
+
+              // Handle debug output
+              BaseScannerHelper.handleDebugOutput(outputChannel, debugMode, stderr, result.normalOutput);
+            } else {
+              outputChannel.appendLine("Docker command completed with no output");
+            }
+
+            void BaseScannerHelper.completeScan(
+              elementToScan,
+              findings,
+              severityCounts,
+              scanResult,
+              "engine_iac",
+              this.metricsHelper,
+              outputChannel,
+              resolve
+            );
           });
 
-          resolve(new ScannerRes(scanResult, findings, severityCounts));
-        });
-
-        childProcess.on("exit", (code) => {
-          if (code !== 0 && code !== null) {
-            this.metricsHelper.captureExitCode(outputChannel, code);
-          }
-        });
+          childProcess.on("exit", (code) => {
+            if (code !== 0 && code !== null) {
+              this.metricsHelper.captureExitCode(outputChannel, code);
+            }
+          });
 
         } catch (error) {
-          this.metricsHelper.captureError(outputChannel, error, "during IaC scanning");
-          await this.collectFailedScanMetrics(elementToScan);
-          resolve(new ScannerRes(false, [], null));
+          await BaseScannerHelper.handleScanFailure(
+            elementToScan,
+            error,
+            "during IaC scanning",
+            "engine_iac",
+            this.metricsHelper,
+            outputChannel,
+            resolve
+          );
         }
       })();
     });
@@ -218,61 +195,14 @@ export class IacScanner implements IScannerGateway {
     containerImageName: string,
     toolVersion: string
   ): void {
-    const errorContext = {
-      imageTag: `${containerImageName}:${toolVersion}`,
+    this.metricsHelper.handleScanError(
+      error,
+      stderr,
       containerImageName,
-      toolVersion
-    };
-
-    const logCapture = (message: string) => {
-      this.metricsHelper.captureOnly(message);
-    };
-
-    this.dockerErrorHandler.handle(error.message, outputChannel, errorContext, logCapture);
-
-    if (stderr) {
-      this.dockerErrorHandler.handle(stderr, outputChannel, errorContext, logCapture);
-      this.networkErrorHandler.handle(stderr, outputChannel, errorContext, logCapture);
-    }
-  }
-
-  private async collectFailedScanMetrics(elementToScan: string): Promise<void> {
-    await this.metricsHelper.collectAndstoreMetricsData(
-      elementToScan,
-      [],
-      null,
-      false,
-      "engine_iac"
+      toolVersion,
+      outputChannel,
+      this.dockerErrorHandler,
+      this.networkErrorHandler
     );
-  }
-
-  private calculateRawSeverityCounts(contexts: IIacContext[]): ISeverityCounts {
-    let counts = {
-      critical: 0,
-      high: 0,
-      medium: 0,
-      low: 0
-    };
-
-    contexts.forEach((context) => {
-      const severity = context.severity?.toLowerCase();
-
-      if (severity === 'critical') {
-        counts.critical++;
-      } else if (severity === 'high') {
-        counts.high++;
-      } else if (severity === 'medium') {
-        counts.medium++;
-      } else if (severity === 'low') {
-        counts.low++;
-      }
-    });
-
-    return {
-      critical: counts.critical.toString(),
-      high: counts.high.toString(),
-      medium: counts.medium.toString(),
-      low: counts.low.toString()
-    };
   }
 }

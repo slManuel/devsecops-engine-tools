@@ -6,7 +6,7 @@ import {
   VARIABLE_GROUPS_AD_BY_RELEASE_DEFINITION_ID,
   VARIABLE_GROUPS_AD_BY_ID,
 } from "../../application/appService/Constants";
-import { AuthEncoder } from "../../infrastructure/helper/AuthEncoder";
+import { StringUtils } from "../../infrastructure/helper/StringUtils";
 import { promises as fs } from "fs";
 import * as path from "path";
 import { ScannerRes } from "../model/ScannerRes";
@@ -14,7 +14,8 @@ import { ScanConfiguration } from "../model/ScanConfiguration";
 import { Finding } from "../model/Finding";
 import { ScanExecutionOrchestrator } from "../../infrastructure/executors/ScanExecutionOrchestrator";
 import { IScanExecutionConfig } from "../../infrastructure/executors/IScanExecutor";
-import { Mappers } from "../model/mappers/Mappers";
+import { ScanContextMapper } from "../../infrastructure/mappers/ScanContextMapper";
+import { MetricsService } from "../../infrastructure/services/MetricsService";
 
 interface IVariableData {
   value: string;
@@ -77,47 +78,76 @@ export class IacScanUseCase implements IIacScanUseCase {
     // Show output channel
     outputChannel.show();
     
+    // Create MetricsService instance to capture logs during remote execution
+    const metricsService = new MetricsService();
+    metricsService.clearLogs();
+    
     // Process variable replacement if needed (same as local)
     const scanLocation = await this.prepareFilesForScan(folderToScan, outputChannel, scanConfiguration);
 
     try {
-      // Build config for remote execution
-      const scanConfig: IScanExecutionConfig = {
-        scanType: 'iac',
-        target: scanLocation,
-        containerImageName: scanConfiguration.getContainerImageName(),
-        toolVersion: this.toolVersion,
-        iacTool: scanConfiguration.getIacTool()
-      };
+      try {
+        // Build config for remote execution
+        const scanConfig: IScanExecutionConfig = {
+          scanType: 'iac',
+          target: scanLocation,
+          containerImageName: scanConfiguration.getContainerImageName(),
+          toolVersion: this.toolVersion,
+          iacTool: scanConfiguration.getIacTool()
+        };
 
-      // Execute via remote microservice
-      const result = await executor.execute(scanConfig, outputChannel);
+        // Execute via remote microservice with log capture
+        const logCapture = (message: string) => metricsService.captureOnly(message);
+        const result = await executor.execute(scanConfig, outputChannel, logCapture);
 
-      if (!result.success || !result.contextJson) {
-        throw new Error(result.error || 'Remote scan failed');
-      }
+        if (!result.success || !result.contextJson) {
+          throw new Error(result.error || 'Remote scan failed');
+        }
 
-      // Parse context JSON and map to findings
-      const contextData = JSON.parse(result.contextJson);
-      const findings = (contextData.iac_context || []).map((ctx: any) => 
-        Mappers.mapIacContextToFinding(ctx)
-      );
+        // Parse context JSON and map to findings using centralized mapper
+        const mappedResult = ScanContextMapper.parseAndMapContext(result.contextJson, 'iac');
+        
+        if (!mappedResult.success) {
+          throw new Error(mappedResult.errorMessage || 'Failed to parse scan results');
+        }
+        
+        const findings = mappedResult.findings;
 
-      // Get rule codes for findings
-      const findingsWithRuleCode = await Promise.all(
-        findings.map((finding: Finding) =>
-          this.iacScanner.getRuleCode(
-            finding.getId(),
-            finding,
-            this.containerEnginePath,
-            scanConfiguration.getContainerImageName(),
-            this.toolVersion
+        // Get rule codes for findings
+        const findingsWithRuleCode = await Promise.all(
+          findings.map((finding: Finding) =>
+            this.iacScanner.getRuleCode(
+              finding.getId(),
+              finding,
+              this.containerEnginePath,
+              scanConfiguration.getContainerImageName(),
+              this.toolVersion
+            )
           )
-        )
-      );
+        );
 
-      const scannerRes = new ScannerRes(result.success, findingsWithRuleCode);
-      return scannerRes;
+        // Send metrics for remote execution (non-blocking)
+        try {
+          await metricsService.collectAndstoreMetricsData(
+            folderToScan,
+            findingsWithRuleCode,
+            mappedResult.severityCounts,
+            mappedResult.success,
+            'engine_iac'
+          );
+        } catch (metricsError) {
+          // Log but don't fail the scan if metrics upload fails
+          console.error('Failed to send metrics:', metricsError);
+        }
+
+        const scannerRes = new ScannerRes(mappedResult.success, findingsWithRuleCode, mappedResult.severityCounts);
+        return scannerRes;
+      } catch (error) {
+        // Send metrics for failed scan before throwing error
+        metricsService.captureError(outputChannel, error, 'remote scan execution');
+        await metricsService.collectFailedScanMetrics(folderToScan, 'engine_iac');
+        throw error;
+      }
     } finally {
       // Cleanup replaced files if necessary
       if (scanLocation !== folderToScan) {
@@ -316,7 +346,7 @@ export class IacScanUseCase implements IIacScanUseCase {
         .replace("{organization}", scanConfiguration.getOrganizationName())
         .replace("{project}", scanConfiguration.getProjectName())
         .replace("{definitionId}", scanConfiguration.getDefinitionId()),
-      AuthEncoder.encode(
+      StringUtils.encodeBasicAuth(
         scanConfiguration.getAdUserName(),
         scanConfiguration.getAdPersonalAccessToken()
       )
@@ -329,7 +359,7 @@ export class IacScanUseCase implements IIacScanUseCase {
         .replace("{organization}", scanConfiguration.getOrganizationName())
         .replace("{project}", scanConfiguration.getProjectName())
         .replace("{groupIds}", groupIds),
-      AuthEncoder.encode(
+      StringUtils.encodeBasicAuth(
         scanConfiguration.getAdUserName(),
         scanConfiguration.getAdPersonalAccessToken()
       )

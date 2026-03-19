@@ -31,4 +31,4 @@ export { ScanContextMapper } from './mappers/ScanContextMapper';
 // Helpers (commonly used)
 export { default as ContainerEngineManager } from './helper/ContainerEngineManager';
 export { ScanOutputLoader } from './helper/LoadingAnimator';
-export { AuthEncoder } from './helper/AuthEncoder';
+export { StringUtils } from './helper/StringUtils';

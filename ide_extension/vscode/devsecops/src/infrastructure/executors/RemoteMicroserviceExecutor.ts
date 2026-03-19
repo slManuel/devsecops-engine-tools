@@ -9,6 +9,7 @@ const config: Record<string, string> = {
     '--remote_config_repo': 'docker_default_remote_config'
 };import { IScanExecutor, IScanExecutionConfig, IScanExecutionResult } from "./IScanExecutor";
 import { ScanConfigurationService } from "../config/ScanConfigurationService";
+import { ScanContextMapper } from "../mappers/ScanContextMapper";
 import FileCompressionHelper from "../helper/FileCompressionHelper";
 import ContainerEngineManager from "../helper/ContainerEngineManager";
 import { UploadProgressTracker } from "../helper/UploadProgressTracker";
@@ -75,14 +76,26 @@ export class RemoteMicroserviceExecutor implements IScanExecutor {
             outputChannel.appendLine(`✓ File prepared: ${FileCompressionHelper.formatFileSize(fileSize)}`);
             outputChannel.appendLine('');
 
+            if (logCapture) {
+                logCapture(`File prepared for upload: ${FileCompressionHelper.formatFileSize(fileSize)}`);
+            }
+
             // Step 2: Build configuration JSON
             const configJson = this.buildConfigJson(scanConfig);
             outputChannel.appendLine('⚙️ Configuration prepared');
             outputChannel.appendLine('');
 
+            if (logCapture) {
+                logCapture('Configuration prepared for remote scan');
+            }
+
             // Step 3: Send request to microservice
             outputChannel.appendLine('🚀 Uploading to microservice...');
             const practice = this.getPracticeFromScanType(scanConfig.scanType);
+
+            if (logCapture) {
+                logCapture(`Uploading to microservice (practice: ${practice})`);
+            }
             
             // Show native VS Code progress for large files (≥1MB)
             const showProgress = UploadProgressTracker.shouldShowProgress(fileSize);
@@ -120,9 +133,21 @@ export class RemoteMicroserviceExecutor implements IScanExecutor {
             outputChannel.appendLine('✓ Upload completed');
             outputChannel.appendLine('');
 
+            if (logCapture) {
+                logCapture('Upload completed successfully');
+            }
+
             // Step 4: Parse response
             outputChannel.appendLine('📥 Processing response...');
+
+            if (logCapture) {
+                logCapture('Processing response from microservice');
+            }
             const contextJson = await this.parseResponse(response, outputChannel);
+            
+            if (logCapture) {
+                logCapture('Response parsed successfully');
+            }
             
             const executionTime = Date.now() - startTime;
 
@@ -612,7 +637,11 @@ export class RemoteMicroserviceExecutor implements IScanExecutor {
                 return JSON.stringify(jsonResponse);
             } catch (parseError) {
                 // Response might be plain text with JSON embedded
-                // Look for context output markers (same as local execution)
+                // Use centralized extraction from ScanContextMapper
+                outputChannel.appendLine('⚠️ Response is not valid JSON, attempting to extract context markers...');
+                
+                // Note: We don't know the scan type here, but the regex is type-agnostic
+                // Just extract the raw JSON string and let the UseCase handle the mapping
                 const contextRegex = /===== BEGIN CONTEXT OUTPUT =====\s*([\s\S]*?)\s*===== END CONTEXT OUTPUT =====/;
                 const match = responseText.match(contextRegex);
                 

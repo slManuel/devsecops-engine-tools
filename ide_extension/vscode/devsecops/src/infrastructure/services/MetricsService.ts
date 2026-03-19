@@ -5,12 +5,11 @@ import { ISeverityCounts } from "../../domain/model/mappers/Mappers";
 import { IMetricsData, IMetricsInput } from "../../domain/model/metrics/IMetricsData";
 import { METRICS_DATA_UPLOAD_URL } from '../../application/appService/Constants';
 import { ErrorHandlingService } from './ErrorHandlingService';
-import { ScanStatusService } from '../helper/ScanStatusService';
-import { ToolIdentificationService } from '../helper/ToolIdentificationService';
 
 /**
  * MetricsService - Consolidated service for metrics collection, storage, and management
- * Combines functionality from MetricsCollectorService, MetricsStorageService, and ScannerMetricsHelper
+ * Combines functionality from MetricsCollectorService, MetricsStorageService, ScannerMetricsHelper,
+ * ScanStatusService, and ToolIdentificationService
  */
 export class MetricsService {
     private static readonly REQUEST_TIMEOUT = 30000;
@@ -52,7 +51,7 @@ export class MetricsService {
     public static collectMetrics(input: IMetricsInput): IMetricsData {
         const severityCounts = this.parseSeverityCounts(input.severityCounts);
         const hasLogErrors = ErrorHandlingService.hasErrors(input.output_logs);
-        const scanStatus = ScanStatusService.determineScanStatus(
+        const scanStatus = this.determineScanStatus(
             input.scan_success,
             input.findings.length,
             hasLogErrors,
@@ -63,7 +62,7 @@ export class MetricsService {
             input.findings.length,
             input.exception_message
         );
-        const tool = ToolIdentificationService.determine(
+        const tool = this.determineToolName(
             input.findings,
             input.tool
         );
@@ -95,6 +94,54 @@ export class MetricsService {
             medium: severityCounts.medium || "0",
             low: severityCounts.low || "0"
         };
+    }
+
+    /**
+     * Determines scan status based on success, findings, and log errors
+     * (consolidated from ScanStatusService)
+     */
+    private static determineScanStatus(
+        scanSuccess: boolean,
+        findingsCount: number,
+        hasLogErrors: boolean,
+        logs?: string[]
+    ): IMetricsData['scan_status'] {
+        if (hasLogErrors || !scanSuccess) {
+            if (logs && logs.length > 0) {
+                if (ErrorHandlingService.hasCriticalDockerErrors(logs)) {
+                    return 'Error: Docker inactive';
+                }
+                if (ErrorHandlingService.hasNetworkErrors(logs)) {
+                    return 'Error: VPN inactive';
+                }
+                if (ErrorHandlingService.hasDockerErrors(logs)) {
+                    return 'Error: Docker inactive';
+                }
+                if (ErrorHandlingService.hasConfigurationErrors(logs)) {
+                    return 'Error: Configuration issues';
+                }
+            }
+            return 'Error: Unknown';
+        }
+
+        return findingsCount > 0
+            ? 'Success with findings'
+            : 'Success with no findings';
+    }
+
+    /**
+     * Determines tool name from findings
+     * (consolidated from ToolIdentificationService)
+     */
+    private static determineToolName(findings: any[], fallbackTool?: string): string {
+        if (findings && findings.length > 0) {
+            const firstFinding = findings[0];
+            if (firstFinding && firstFinding.module) {
+                return firstFinding.module;
+            }
+        }
+
+        return fallbackTool || 'unknown';
     }
 
     // ===== Metrics Storage Methods (from MetricsStorageService) =====
@@ -184,5 +231,86 @@ export class MetricsService {
             const errorMessage = `Failed to collect metrics: ${error instanceof Error ? error.message : String(error)}`;
             this.outputLogs.push(errorMessage);
         }
+    }
+
+    // ===== Scanner Helper Methods =====
+
+    /**
+     * Handles errors from scanner execution
+     */
+    handleScanError(
+        error: Error,
+        stderr: string,
+        containerImageName: string,
+        toolVersion: string,
+        outputChannel: OutputChannel,
+        dockerErrorHandler: any,
+        networkErrorHandler: any
+    ): void {
+        const errorContext = {
+            imageTag: `${containerImageName}:${toolVersion}`,
+            containerImageName,
+            toolVersion
+        };
+
+        const logCapture = (message: string) => {
+            this.captureOnly(message);
+        };
+
+        dockerErrorHandler.handle(error.message, outputChannel, errorContext, logCapture);
+
+        if (stderr) {
+            dockerErrorHandler.handle(stderr, outputChannel, errorContext, logCapture);
+            networkErrorHandler.handle(stderr, outputChannel, errorContext, logCapture);
+        }
+    }
+
+    /**
+     * Collects metrics for a failed scan
+     */
+    async collectFailedScanMetrics(
+        elementToScan: string,
+        scanType: "engine_iac" | "engine_container" | "engine_dependencies"
+    ): Promise<void> {
+        await this.collectAndstoreMetricsData(
+            elementToScan,
+            [],
+            null,
+            false,
+            scanType
+        );
+    }
+
+    /**
+     * Calculates severity counts from scan context
+     */
+    static calculateRawSeverityCounts<T extends { severity?: string }>(contexts: T[]): ISeverityCounts {
+        const counts = {
+            critical: 0,
+            high: 0,
+            medium: 0,
+            low: 0
+        };
+
+        contexts.forEach((context) => {
+            const severity = context.severity?.toLowerCase();
+
+            if (severity === 'critical') {
+                counts.critical++;
+            } else if (severity === 'high') {
+                counts.high++;
+            } else if (severity === 'medium') {
+                counts.medium++;
+            } else if (severity === 'low') {
+                counts.low++;
+            }
+        });
+
+        return {
+            critical: counts.critical.toString(),
+            high: counts.high.toString(),
+            medium: counts.medium.toString(),
+            low: counts.low.toString()
+        };
     }
 }
