@@ -13,6 +13,7 @@ from devsecops_engine_tools.engine_utilities.twistcli_utils.twistcli_utils impor
 
 
 logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
+ANSI_ESCAPE_RE = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
 
 
 class PrismaCloudManagerScan:
@@ -165,10 +166,8 @@ class PrismaCloudManagerScan:
             } if match else {}
 
         def clean_text(text) -> str:
-            cleaned_text = text.replace('\x1b[0m', '')
-            cleaned_text = cleaned_text.replace('\x1b[91;1m', '')
-            cleaned_text = cleaned_text.replace('\x1b[33;1m','')
-            return cleaned_text
+            cleaned_text = ANSI_ESCAPE_RE.sub("", str(text))
+            return cleaned_text.strip()
 
         def extract_table() -> list:
             lines = stdout.splitlines()
