@@ -7,6 +7,9 @@ from devsecops_engine_tools.engine_core.src.domain.model.finding import (
 )
 from datetime import datetime
 from dataclasses import dataclass
+import re
+
+ANSI_ESCAPE_RE = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
 
 @dataclass
 class PrismaDeserealizator(DeseralizatorGateway):
@@ -29,6 +32,10 @@ class PrismaDeserealizator(DeseralizatorGateway):
         }
         vuls_data = function_scanned["results"][0]["vulnerabilities"]
 
+        def normalize_severity(value: str) -> str:
+            clean_value = ANSI_ESCAPE_RE.sub("", str(value or "")).strip().lower()
+            return SEVERITY_MAP.get(clean_value, "")
+                    
         if len(vuls_data) > 0:
             vulnerabilities = [
                 Finding(
@@ -38,7 +45,7 @@ class PrismaDeserealizator(DeseralizatorGateway):
                     + ":"
                     + vul.get("packageVersion", ""),
                     description=vul.get("description", "")[:150],
-                    severity=SEVERITY_MAP.get(vul.get("severity", ""), ""),
+                    severity=normalize_severity(vul.get("severity", "")),
                     identification_date=vul.get("discoveredDate", ""),
                     published_date_cve=vul.get("publishedDate", "").replace(
                         "Z", "+00:00"
