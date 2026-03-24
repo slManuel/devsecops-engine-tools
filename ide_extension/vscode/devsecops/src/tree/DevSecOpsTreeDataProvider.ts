@@ -72,22 +72,7 @@ export class DevSecOpsTreeDataProvider
   }
 
   private getItems(): void {
-    const iacScanItems: vscode.TreeItem[] = [];
-    const imageScanItems: vscode.TreeItem[] = [];
-    const dependenciesScanItems: vscode.TreeItem[] = [];
-
-    const imageScanItem = new vscode.TreeItem(
-      "Image Scan",
-      vscode.TreeItemCollapsibleState.None
-    );
-    imageScanItem.command = {
-      command: "devsecops.imageScan",
-      title: "IMAGE_SCAN",
-      arguments: [imageScanItem],
-    };
-    imageScanItem.iconPath = new vscode.ThemeIcon("breakpoints-view-icon");
-    imageScanItem.tooltip = "Scan an image";
-    imageScanItems.push(imageScanItem);
+    const practicesItems: vscode.TreeItem[] = [];
 
     const iacScanItem = new vscode.TreeItem(
       "Infrastructure as Code Scan",
@@ -101,7 +86,20 @@ export class DevSecOpsTreeDataProvider
     iacScanItem.iconPath = new vscode.ThemeIcon("breakpoints-view-icon");
     iacScanItem.tooltip =
       "Scan a folder for IaC vulnerabilities like k8s or dockerfiles";
-    iacScanItems.push(iacScanItem);
+    practicesItems.push(iacScanItem);
+
+    const imageScanItem = new vscode.TreeItem(
+      "Image Scan",
+      vscode.TreeItemCollapsibleState.None
+    );
+    imageScanItem.command = {
+      command: "devsecops.imageScan",
+      title: "IMAGE_SCAN",
+      arguments: [imageScanItem],
+    };
+    imageScanItem.iconPath = new vscode.ThemeIcon("breakpoints-view-icon");
+    imageScanItem.tooltip = "Scan an image";
+    practicesItems.push(imageScanItem);
 
     const dependenciesScanItem = new vscode.TreeItem(
       "Dependencies Scan",
@@ -115,26 +113,16 @@ export class DevSecOpsTreeDataProvider
     dependenciesScanItem.iconPath = new vscode.ThemeIcon("breakpoints-view-icon");
     dependenciesScanItem.tooltip =
       "Scan a folder for dependencies vulnerabilities like npm, pip, gradle, maven, yarn, etc.";
-    dependenciesScanItems.push(dependenciesScanItem);
+    practicesItems.push(dependenciesScanItem);
 
     this.categories = [
       new CategoryTreeItem(
-        "Infrastructure as code scans",
+        "Practices",
         vscode.TreeItemCollapsibleState.Expanded,
-        iacScanItems
+        practicesItems
       ),
       new CategoryTreeItem(
-        "Containers scans",
-        vscode.TreeItemCollapsibleState.Collapsed,
-        imageScanItems
-      ),
-      new CategoryTreeItem(
-        "Dependencies scans",
-        vscode.TreeItemCollapsibleState.Collapsed,
-        dependenciesScanItems
-      ),
-      new CategoryTreeItem(
-        "Scan results",
+        "Results",
         vscode.TreeItemCollapsibleState.Expanded,
         this.scanResults
       ),

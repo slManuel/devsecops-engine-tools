@@ -1,3 +1,5 @@
+import { getEffectiveSeverity as getEffectiveSeverityHelper } from "./ClassificationModel";
+
 export class Finding {
 
     private id: string;
@@ -9,10 +11,12 @@ export class Finding {
     private references: string[];
     private additionalFields: { [key: string]: string | undefined } = {};
     private validationRuleCode?: string;
+    private priority: string;
     
     constructor(
         id: string,
         severity: string,
+        priority: string = "",
         where: string,
         description: string,
         module: string,
@@ -30,6 +34,7 @@ export class Finding {
         this.references = references;
         this.additionalFields = additionalFields;
         this.validationRuleCode = validationRuleCode;
+        this.priority = priority;
     }
 
     public getId(): string {
@@ -74,6 +79,23 @@ export class Finding {
 
     public setValidationRuleCode(validationRuleCode: string): void {
         this.validationRuleCode = validationRuleCode;
+    }
+
+    public getPriority(): string {
+        return this.priority;
+    }
+
+    public setPriority(priority: string): void {
+        this.priority = priority;
+    }
+
+    /**
+     * Gets the effective severity based on the current classification model configuration
+     * If the model is "priority", returns the mapped priority value
+     * Otherwise, returns the standard severity
+     */
+    public getEffectiveSeverity(): string {
+        return getEffectiveSeverityHelper(this.severity, this.priority);
     }
 
 }

@@ -1,18 +1,17 @@
 import { OutputChannel } from "vscode";
 import { exec } from "child_process";
 import { promisify } from "util";
-import { DockerErrorHandler, ErrorContext } from "./DockerErrorHandler";
-import { NetworkErrorHandler } from "./NetworkErrorHandler";
-import { DockerValidator } from "./DockerValidator";
+import { DockerService, ErrorContext } from "../services/DockerService";
+import { ErrorHandlingService } from "../services/ErrorHandlingService";
 
 const execAsync = promisify(exec);
 export class ScannerImageManager {
-  private readonly dockerErrorHandler: DockerErrorHandler;
-  private readonly networkErrorHandler: NetworkErrorHandler;
+  private readonly dockerErrorHandler: DockerService;
+  private readonly networkErrorHandler: ErrorHandlingService;
 
   constructor() {
-    this.dockerErrorHandler = new DockerErrorHandler();
-    this.networkErrorHandler = new NetworkErrorHandler();
+    this.dockerErrorHandler = new DockerService();
+    this.networkErrorHandler = new ErrorHandlingService();
   }
 
   public getLastErrorCategory(): 'critical-docker' | 'docker' | 'network' | null {
@@ -38,7 +37,7 @@ export class ScannerImageManager {
     this.dockerErrorHandler.reset();
     this.networkErrorHandler.reset();
 
-    if (!DockerValidator.isDockerInstalled(containerEnginePath, outputChannel)) {
+    if (!DockerService.isDockerInstalled(containerEnginePath, outputChannel)) {
       if (logCapture) {
         logCapture("Docker is not installed or not accessible");
       }
@@ -134,16 +133,16 @@ export class ScannerImageManager {
   }
 
   private handleError(errorMessage: string, outputChannel: OutputChannel, context: ErrorContext, logCapture?: (message: string) => void): void {
-    const dockerPatterns = DockerErrorHandler.getErrorPatterns();
-    const isDockerError = dockerPatterns.some(pattern => errorMessage.includes(pattern));
+    const dockerPatterns = DockerService.getErrorPatterns();
+    const isDockerError = dockerPatterns.some((pattern: string) => errorMessage.includes(pattern));
     
     if (isDockerError) {
       this.dockerErrorHandler.handle(errorMessage, outputChannel, context, logCapture);
       return;
     }
     
-    const networkPatterns = NetworkErrorHandler.getErrorPatterns();
-    const isNetworkError = networkPatterns.some(pattern => errorMessage.includes(pattern));
+    const networkPatterns = ErrorHandlingService.getNetworkErrorPatterns();
+    const isNetworkError = networkPatterns.some((pattern: string) => errorMessage.includes(pattern));
     
     if (isNetworkError) {
       this.networkErrorHandler.handle(errorMessage, outputChannel, context, logCapture);

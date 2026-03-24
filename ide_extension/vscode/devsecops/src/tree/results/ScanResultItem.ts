@@ -1,20 +1,185 @@
 import * as vscode from "vscode";
+import { FindingItem } from "./finding/FindingItem";
 
 export class ScanResultItem extends vscode.TreeItem {
+  public isLoading: boolean = false;
+  public scanId: string;
+  public outputChannel?: vscode.OutputChannel;
+  public comparisonSummary?: { delta: number, oldCount: number, newCount: number };
+
   constructor(
     public readonly label: string,
-    public readonly description: string,
+    public sourceType: string,
     public readonly timestamp: Date,
-    public readonly children: vscode.TreeItem[]
+    public children: vscode.TreeItem[],
+    isLoading: boolean = false,
+    scanId?: string,
+    outputChannel?: vscode.OutputChannel
   ) {
-    super(label, vscode.TreeItemCollapsibleState.Collapsed);
-    this.tooltip = `${label} - ${children.length} findings`;
-    this.description = `${children.length} findings - ${timestamp.toLocaleString()}`;
-    this.iconPath = children.length > 0
+    super(label, isLoading ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Collapsed);
+    this.isLoading = isLoading;
+    this.scanId = scanId || `scan-${Date.now()}-${Math.random()}`;
+    this.sourceType = sourceType;
+    this.outputChannel = outputChannel;
+    
+    if (isLoading) {
+      this.tooltip = `${label} - Scanning in progress...`;
+      this.description = "⏳ Scanning...";
+      this.iconPath = new vscode.ThemeIcon("sync~spin", new vscode.ThemeColor("charts.blue"));
+      this.contextValue = "scanResult-loading";
+    } else {
+      this.tooltip = `${label} - ${children.length} findings`;
+      this.description = `${children.length} findings - ${timestamp.toLocaleString()}`;
+      this.iconPath = children.length > 0
+        ? new vscode.ThemeIcon("warning", new vscode.ThemeColor("errorForeground"))
+        : new vscode.ThemeIcon("pass", new vscode.ThemeColor("terminal.ansiGreen"));
+      this.contextValue = "scanResult";
+    }
+  }
+
+  public updateWithResults(
+    findings: vscode.TreeItem[],
+    comparisonSummary?: { delta: number, oldCount: number, newCount: number }
+  ): void {
+    this.isLoading = false;
+    this.children = findings;
+    this.comparisonSummary = comparisonSummary;
+    this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+    this.tooltip = `${this.label} - ${findings.length} findings`;
+    
+    // Build description with comparison info
+    let description = `${findings.length} findings`;
+    
+    if (comparisonSummary) {
+      const delta = comparisonSummary.delta;
+      if (delta > 0) {
+        description += ` (+${delta} from previous)`;
+        this.tooltip += `\nIncreased by ${delta} findings`;
+      } else if (delta < 0) {
+        description += ` (${delta} from previous)`;
+        this.tooltip += `\nDecreased by ${Math.abs(delta)} findings`;
+      } else {
+        description += ` (no change)`;
+        this.tooltip += `\nNo change from previous scan`;
+      }
+    }
+    
+    description += ` - ${this.timestamp.toLocaleString()}`;
+    this.description = description;
+    
+    this.iconPath = findings.length > 0
       ? new vscode.ThemeIcon("warning", new vscode.ThemeColor("errorForeground"))
       : new vscode.ThemeIcon("pass", new vscode.ThemeColor("terminal.ansiGreen"));
-
-    // Set context value for right-click menu
     this.contextValue = "scanResult";
+  }
+
+  /**
+   * Mark the scan as failed with an error
+   */
+  public updateWithError(errorMessage: string): void {
+    this.isLoading = false;
+    this.children = [];
+    this.collapsibleState = vscode.TreeItemCollapsibleState.None;
+    this.tooltip = `${this.label} - Scan failed: ${errorMessage}`;
+    this.description = `❌ Failed - ${this.timestamp.toLocaleString()}`;
+    this.iconPath = new vscode.ThemeIcon("error", new vscode.ThemeColor("errorForeground"));
+    this.contextValue = "scanResult-error";
+  }
+
+  public dispose(keepOutputChannel: boolean = false): void {
+    if (this.outputChannel && !keepOutputChannel) {
+      this.outputChannel.dispose();
+      this.outputChannel = undefined;
+    }
+  }
+
+  /**
+   * Get children filtered and sorted according to current settings
+   */
+  public getFilteredAndSortedChildren(
+    filterSeverities: Set<string>,
+    sortBySeverity: boolean
+  ): vscode.TreeItem[] {
+    let filteredChildren = this.children;
+
+    // Apply severity filter
+    if (filterSeverities.size > 0) {
+      filteredChildren = this.children.filter(child => {
+        if (child instanceof FindingItem) {
+          const severity = child.finding.getEffectiveSeverity().toLowerCase();
+          return filterSeverities.has(severity);
+        }
+        return true;
+      });
+    }
+
+    // Apply sorting by severity
+    if (sortBySeverity) {
+      const severityOrder: Record<string, number> = {
+        "very critical": 0,
+        critical: 1,
+        high: 2,
+        medium: 3,
+        "medium low": 4,
+        low: 5
+      };
+
+      filteredChildren = [...filteredChildren].sort((a, b) => {
+        if (a instanceof FindingItem && b instanceof FindingItem) {
+          const severityA = a.finding.getEffectiveSeverity().toLowerCase();
+          const severityB = b.finding.getEffectiveSeverity().toLowerCase();
+          const orderA = severityOrder[severityA] ?? 999;
+          const orderB = severityOrder[severityB] ?? 999;
+          return orderA - orderB;
+        }
+        return 0;
+      });
+    }
+
+    return filteredChildren;
+  }
+
+  /**
+   * Update description to reflect active filters
+   */
+  public updateDescription(filterSeverities: Set<string>, sortBySeverity: boolean): void {
+    if (this.isLoading) {
+      return; // Don't update if still loading
+    }
+
+    const totalFindings = this.children.length;
+    const filteredChildren = this.getFilteredAndSortedChildren(filterSeverities, sortBySeverity);
+    const visibleFindings = filteredChildren.length;
+
+    let description = `${totalFindings} findings`;
+
+    // Add filter indicator
+    if (filterSeverities.size > 0) {
+      const severityLabels = Array.from(filterSeverities)
+        .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+        .join(', ');
+      description = `${visibleFindings}/${totalFindings} findings [Filter: ${severityLabels}]`;
+    } else if (visibleFindings !== totalFindings) {
+      description = `${visibleFindings}/${totalFindings} findings`;
+    }
+
+    // Add comparison delta
+    if (this.comparisonSummary) {
+      const delta = this.comparisonSummary.delta;
+      if (delta > 0) {
+        description += ` (+${delta})`;
+      } else if (delta < 0) {
+        description += ` (${delta})`;
+      }
+    }
+
+    // Add sort indicator
+    if (sortBySeverity) {
+      description += ' [Sorted]';
+    }
+
+    description += ` - ${this.timestamp.toLocaleString()}`;
+    this.description = description;
+    this.tooltip = `${this.label} - ${description}`;
   }
 }

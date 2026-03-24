@@ -2,13 +2,13 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as os from "os";
 import { iacScanRequest } from "../application/InitEngineCore";
-import { DevSecOpsTreeDataProvider } from "../tree/DevSecOpsTreeDataProvider";
+import { ResultsTreeDataProvider } from "../tree/ResultsTreeDataProvider";
 import { ScanConfiguration } from "../domain/model/ScanConfiguration";
-import { ScanOutputLoader } from "../infraestructure/helper/LoadingAnimator";
+import { ScanOutputLoader } from "../infrastructure/helper/LoadingAnimator";
 
 export function registerIacScanCommand(
   context: vscode.ExtensionContext,
-  treeDataProvider: DevSecOpsTreeDataProvider
+  treeDataProvider: ResultsTreeDataProvider
 ): vscode.Disposable {
   const iacScanDisposable = vscode.commands.registerCommand("devsecops.iacScan", async () => {
     const selectedFolder = await vscode.window.showOpenDialog({
@@ -28,33 +28,46 @@ export function registerIacScanCommand(
 
       void vscode.window.showInformationMessage(`DevSecOps Iac Scanning: ${folderPath}`);
 
-      const scanner = await iacScanRequest();
+      const useCase = await iacScanRequest();
       const outputChannel = vscode.window.createOutputChannel("IaC Scan Results");
       outputChannel.clear();
 
       const scanLoader = new ScanOutputLoader(outputChannel);
 
+      // Add loading placeholder
+      const scanId = treeDataProvider.addLoadingScanResult(
+        `IaC: ${folderPath.split('/').pop() || 'folder'}`,
+        "iac",
+        outputChannel
+      );
+
       try {
-        const scanResult = await scanner.makeScan(folderPath, outputChannel, new ScanConfiguration(), scanLoader);
+        const scanResult = await useCase.scan(folderPath, outputChannel, new ScanConfiguration(), scanLoader);
 
         if (scanResult) {
           scanLoader.stop(scanResult.getFindings().length, "Infrastructure as Code");
 
           void vscode.window.showInformationMessage("Iac Scan completed successfully");
-          treeDataProvider.addScanResult(
-            "IAC SCAN RESULT",
+          
+          // Update the loading placeholder with actual results
+          treeDataProvider.updateScanResult(
+            scanId,
             scanResult.getFindings(),
             "iac",
             folderPath
           );
         } else {
           scanLoader.showError("Iac Scan failed - No results returned");
-          void vscode.window.showErrorMessage("Iac Scan failed");
+          void vscode.window.showErrorMessage("Iac Scan failed - Check Output for details");
+          // Mark the scan as failed but keep it visible
+          treeDataProvider.updateScanResultWithError(scanId, "No results returned");
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
         scanLoader.showError(`Iac Scan failed: ${errorMessage}`);
-        void vscode.window.showErrorMessage("Iac Scan failed");
+        void vscode.window.showErrorMessage("Iac Scan failed - Check Output for details");
+        // Mark the scan as failed but keep it visible
+        treeDataProvider.updateScanResultWithError(scanId, errorMessage);
       }
     }
   });

@@ -1,4 +1,5 @@
 import { OutputChannel } from "vscode";
+import { execSync } from "child_process";
 
 // Types and Interfaces
 export interface ErrorContext {
@@ -39,9 +40,30 @@ const DOCKER_ERROR_MESSAGES: Record<string, ErrorHandler> = {
     "request cancelled": () => { throw new Error("Scan operation cancelled."); }
 };
 
-export class DockerErrorHandler {
+/**
+ * DockerService - Consolidated service for Docker operations and error handling
+ * Combines functionality from DockerErrorHandler and DockerValidator
+ */
+export class DockerService {
     private lastErrorKey: string | null = null;
     private lastErrorCategory: 'critical-docker' | 'docker' | null = null;
+
+    // ===== Docker Validation Methods =====
+
+    /**
+     * Checks if Docker is installed and accessible
+     */
+    static isDockerInstalled(containerEnginePath: string, outputChannel: OutputChannel): boolean {
+        try {
+            execSync(`${containerEnginePath} --version`, { stdio: 'ignore' });
+            return true;
+        } catch (err) {
+            outputChannel.appendLine('❌ Docker is not installed or not found in the PATH. Please install Docker to continue.');
+            return false;
+        }
+    }
+
+    // ===== Error Handling Methods =====
 
     public static getErrorPatterns(): string[] {
         return Object.keys(DOCKER_ERROR_MESSAGES);
