@@ -87,7 +87,6 @@
         }
     },
     "LICENSE_ANALYZER": {
-        "ENABLED": false,
         "TOOL": "DEPENDENCY_TRACK",
         "DEPENDENCY_TRACK": {
             "HOST": "",

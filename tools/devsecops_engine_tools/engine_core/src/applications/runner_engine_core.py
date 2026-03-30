@@ -220,6 +220,14 @@ def get_inputs_from_cli(args):
         help="Token to execute license analyzer if is necessary. The expected value is the API key to connect with the license analyzer tool, for example, Dependency Track API key.",
     )
     parser.add_argument(
+        "--use_license_analyzer",
+        choices=["true", "false"],
+        type=str,
+        required=False,
+        default="false",
+        help="Enable or disable the license analyzer upload to a third-party tool. Only runs if SBOM_MANAGER is enabled for the current branch.",
+    )
+    parser.add_argument(
         "--xray_mode",
         choices=["scan", "audit","build-scan"],
         required=False,
@@ -292,6 +300,7 @@ def get_inputs_from_cli(args):
         "token_external_checks": args.token_external_checks,
         "token_engine_code": args.token_engine_code,
         "token_license_analyzer": args.token_license_analyzer,
+        "use_license_analyzer": args.use_license_analyzer,
         "xray_mode": args.xray_mode,
         "image_to_scan": args.image_to_scan,
         "dast_file_path": args.dast_file_path,
