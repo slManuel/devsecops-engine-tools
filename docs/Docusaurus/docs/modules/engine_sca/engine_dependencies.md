@@ -51,7 +51,7 @@ Main configuration file that defines scanning behavior, tool versions, and secur
   },
   "TRIVY": {
     "CLI_VERSION": "0.65.0",
-    "PRINT_SBOM": false
+    "PRINT_SBOM": ["pipeline_name_1"]
   }
 }
 ```
