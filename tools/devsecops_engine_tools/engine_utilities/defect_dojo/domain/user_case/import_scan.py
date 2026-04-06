@@ -68,7 +68,7 @@ class ImportScanUserCase:
 
     def execute(self, request: ImportScanRequest) -> ImportScanRequest:
         product_id = None
-
+        
         if (request.product_name or request.product_type_name) == "":
             log = f"Name product {request.product_name} or product type {request.product_type_name} is empty"
             logger.error(log)
@@ -129,9 +129,24 @@ class ImportScanUserCase:
             engagement = self.__rest_engagement.post_engagement(request, product_id, request.tool_scm_configuration)
             logger.debug(f"Engagement created: {engagement.name}")
         else:
-            engagement = [engagement for engagement in engagement.results if engagement.product == product_id and engagement.name == request.engagement_name]
+            if request.hold_found_product_engagement:
+                engagement = [engagement for engagement in engagement.results if engagement.name == request.engagement_name]
+            else:
+                engagement = [engagement for engagement in engagement.results if engagement.product == product_id and engagement.name == request.engagement_name]
+
             if engagement:
                 logger.debug(f"Engagement found: {engagement[0].name} whit product id: {engagement[0].product}")
+                if request.hold_found_product_engagement and product_id != engagement[0].product:
+                    product_engagement = self.__rest_product.get_products({"id": engagement[0].product, "prefetch": "prod_type"})
+                    if len(product_engagement.results) > 0:
+                        product_eng = product_engagement.results[0]
+                        request.product_name = product_eng.name
+                        request.product_type_name = product_engagement.prefetch.prod_type[str(product_eng.prod_type)].name
+                        logger.debug(f"Hold Product engagement found: {request.product_name} with product type: {request.product_type_name}")
+                if request.engagement_description:
+                    engagement = self.__rest_engagement.put_engagement(request, engagement[0].id)
+                    logger.debug(f"Engagement updated: {engagement.name}")
+
             else:
                 engagement = self.__rest_engagement.post_engagement(request, product_id, request.tool_scm_configuration)
                 logger.debug(f"Engagement created: {engagement.name} whit product id {engagement.product}")

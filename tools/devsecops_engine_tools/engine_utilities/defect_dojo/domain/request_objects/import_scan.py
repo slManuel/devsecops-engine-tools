@@ -13,7 +13,9 @@ class ImportScanRequest:
     file: str = ""
     product_type_name: str = ""
     product_name: str = ""
+    hold_found_product_engagement: bool = False
     engagement_name: str = ""
+    engagement_description: str = ""
     engagement_end_date: str = ""
     source_code_management_uri: str = ""
     engagement: int = 0
@@ -77,7 +79,9 @@ class ImportScanRequest:
             file=obj.get("file"),
             product_type_name=obj.get("product_type_name"),
             product_name=obj.get("product_name"),
+            hold_found_product_engagement=obj.get("hold_found_product_engagement"),
             engagement_name=obj.get("engagement_name"),
+            engagement_description=obj.get("engagement_description"),
             engagement_end_date=obj.get("engagement_end_date"),
             source_code_management_uri=obj.get("source_code_management_uri"),
             engagement=obj.get("engagement"),
