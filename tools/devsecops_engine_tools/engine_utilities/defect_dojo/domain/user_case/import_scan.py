@@ -144,7 +144,7 @@ class ImportScanUserCase:
                         request.product_type_name = product_engagement.prefetch.prod_type[str(product_eng.prod_type)].name
                         logger.debug(f"Hold Product engagement found: {request.product_name} with product type: {request.product_type_name}")
                 if request.engagement_description:
-                    engagement = self.__rest_engagement.put_engagement(request, engagement[0].id)
+                    engagement = self.__rest_engagement.patch_engagement(request, engagement[0].id)
                     logger.debug(f"Engagement updated: {engagement.name}")
 
             else:

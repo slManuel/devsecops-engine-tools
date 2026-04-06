@@ -91,7 +91,7 @@ class EngagementRestConsumer:
             raise ApiError(e)
         return response
 
-    def put_engagement(self, request: ImportScanRequest, engagement_id):
+    def patch_engagement(self, request: ImportScanRequest, engagement_id):
         url = f"{self.__host}/api/v2/engagements/{engagement_id}/"
         data = {
             "description": request.engagement_description,
