@@ -4,7 +4,7 @@ from devsecops_engine_tools.engine_utilities.settings import DEVSECOPS_ENGINE_UT
 from unittest.mock import MagicMock
 from devsecops_engine_tools.engine_utilities.defect_dojo.domain.models.product_type_list import ProductTypeList
 from devsecops_engine_tools.engine_utilities.defect_dojo.domain.models.scan_configuration import ScanConfiguration
-from devsecops_engine_tools.engine_utilities.defect_dojo.domain.models.product_list import ProductList
+from devsecops_engine_tools.engine_utilities.defect_dojo.domain.models.product_list import ProductList, Prefetch
 from devsecops_engine_tools.engine_utilities.defect_dojo.domain.models.product import Product
 from devsecops_engine_tools.engine_utilities.defect_dojo.domain.models.product_type import ProductType
 from devsecops_engine_tools.engine_utilities.defect_dojo.domain.models.engagement import Engagement, EngagementList
@@ -366,3 +366,126 @@ def test_request_to_dict_includes_new_fields():
     assert "engagement_description" in request_dict
     assert request_dict["hold_found_product_engagement"] is True
     assert request_dict["engagement_description"] == "My description"
+
+
+def test_execute_hold_found_product_engagement_updates_product_context():
+    request = import_scan_request_instance(
+        par_scan_type="Xray Scan",
+        product_name="local-product",
+        file_name="jfrog-xray_on_demand_binary_scan.json",
+    )
+    request.hold_found_product_engagement = True
+    request.engagement_name = "shared-engagement"
+
+    local_product = Product(id=1, name="local-product", prod_type=1)
+    remote_product = Product(id=999, name="shared-product", prod_type=5)
+    remote_prefetch = Prefetch(
+        prod_type={
+            "5": ProductType(
+                id=5,
+                name="shared-type",
+                description="test",
+                critical_product="false",
+                key_product="false",
+                updated="2023-06-08T19:47:54.838512Z",
+                created="2023-06-08T19:47:54.838527Z",
+            )
+        }
+    )
+
+    mock_product = MagicMock()
+    mock_product.get_products.side_effect = [
+        ProductList(count=1, results=[local_product]),
+        ProductList(count=1, results=[remote_product], prefetch=remote_prefetch),
+    ]
+
+    mock_engagement = MagicMock()
+    mock_engagement.get_engagements.return_value = EngagementList(
+        count=1,
+        results=[Engagement(id=30, name="shared-engagement", product=999)],
+    )
+    mock_engagement.post_engagement.return_value = Engagement(id=30, name="shared-engagement", product=999)
+
+    uc = ImportScanUserCase(
+        rest_import_scan=mock_rest_import_scan(file_path="import_scan.json"),
+        rest_product_type=mock_rest_product_type(),
+        rest_product=mock_product,
+        rest_scan_configuration=mock_rest_scan_configuration(),
+        rest_engagement=mock_engagement,
+    )
+
+    uc.execute(request)
+
+    assert request.product_name == "shared-product"
+    assert request.product_type_name == "shared-type"
+    assert mock_product.get_products.call_args_list[1].args[0] == {
+        "id": 999,
+        "prefetch": "prod_type",
+    }
+
+
+def test_execute_updates_existing_engagement_when_description_present():
+    request = import_scan_request_instance(
+        par_scan_type="Xray Scan",
+        product_name="product name test",
+        file_name="jfrog-xray_on_demand_binary_scan.json",
+    )
+    request.engagement_name = "name engagement test"
+    request.engagement_description = "updated by test"
+
+    mock_engagement = mock_rest_engagement()
+    mock_engagement.get_engagements.return_value = EngagementList(
+        count=1,
+        results=[Engagement(id=3, name="name engagement test", product=1)],
+    )
+    mock_engagement.patch_engagement.return_value = Engagement(
+        id=3,
+        name="name engagement test",
+        product=1,
+    )
+
+    uc = ImportScanUserCase(
+        rest_import_scan=mock_rest_import_scan(file_path="import_scan.json"),
+        rest_product_type=mock_rest_product_type(),
+        rest_product=mock_rest_product(),
+        rest_scan_configuration=mock_rest_scan_configuration(),
+        rest_engagement=mock_engagement,
+    )
+
+    uc.execute(request)
+
+    mock_engagement.patch_engagement.assert_called_once()
+    assert mock_engagement.patch_engagement.call_args.args[1] == 3
+
+
+def test_execute_creates_engagement_when_name_matches_but_product_differs_without_hold():
+    request = import_scan_request_instance(
+        par_scan_type="Xray Scan",
+        product_name="product name test",
+        file_name="jfrog-xray_on_demand_binary_scan.json",
+    )
+    request.hold_found_product_engagement = False
+    request.engagement_name = "shared-engagement"
+
+    mock_engagement = MagicMock()
+    mock_engagement.get_engagements.return_value = EngagementList(
+        count=1,
+        results=[Engagement(id=77, name="shared-engagement", product=999)],
+    )
+    mock_engagement.post_engagement.return_value = Engagement(
+        id=88,
+        name="shared-engagement",
+        product=1,
+    )
+
+    uc = ImportScanUserCase(
+        rest_import_scan=mock_rest_import_scan(file_path="import_scan.json"),
+        rest_product_type=mock_rest_product_type(),
+        rest_product=mock_rest_product(),
+        rest_scan_configuration=mock_rest_scan_configuration(),
+        rest_engagement=mock_engagement,
+    )
+
+    uc.execute(request)
+
+    mock_engagement.post_engagement.assert_called_once()
