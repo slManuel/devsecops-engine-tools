@@ -16,6 +16,7 @@ from datetime import datetime
 from devsecops_engine_tools.engine_utilities.settings import SETTING_LOGGER
 
 logger = MyLogger.__call__(**SETTING_LOGGER).get_logger()
+CONTENT_TYPE_JSON = "application/json"
 
 
 class EngagementRestConsumer:
@@ -32,7 +33,7 @@ class EngagementRestConsumer:
         url = f"{self.__host}/api/v2/engagements/"
         headers = {
             "Authorization": f"Token {self.__token}",
-            "Content-Type": "application/json",
+            "Content-Type": CONTENT_TYPE_JSON,
         }
         try:
             response = self.__session.get(
@@ -77,7 +78,7 @@ class EngagementRestConsumer:
         
         headers = {
             "Authorization": f"Token {self.__token}",
-            "Content-Type": "application/json",
+            "Content-Type": CONTENT_TYPE_JSON,
         }
         try:
             response = self.__session.post(
@@ -98,7 +99,7 @@ class EngagementRestConsumer:
         }
         headers = {
             "Authorization": f"Token {self.__token}",
-            "Content-Type": "application/json",
+            "Content-Type": CONTENT_TYPE_JSON,
         }
         try:
             response = self.__session.patch(url=url, headers=headers, data=json.dumps(data), verify=VERIFY_CERTIFICATE)
