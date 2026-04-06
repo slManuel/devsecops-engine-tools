@@ -294,3 +294,75 @@ def test_execute_reimport_scan(
     assert isinstance(request, ImportScanRequest)
     response = uc.execute(request)
     assert response.scan_type == import_scan_request_instance.scan_type
+
+
+def test_request_has_hold_found_product_engagement_field():
+    """Verify ImportScanRequest has hold_found_product_engagement field"""
+    request = ImportScanRequest(
+        engagement_name="test",
+        token_defect_dojo="token",
+        host_defect_dojo="http://localhost:8000",
+        hold_found_product_engagement=True,
+    )
+    assert hasattr(request, "hold_found_product_engagement")
+    assert request.hold_found_product_engagement is True
+
+def test_request_default_hold_found_product_engagement_is_false():
+    """Verify hold_found_product_engagement defaults to False"""
+    request = ImportScanRequest(
+        engagement_name="test",
+        token_defect_dojo="token",
+        host_defect_dojo="http://localhost:8000",
+    )
+    assert request.hold_found_product_engagement is False
+
+def test_request_has_engagement_description_field():
+    """Verify ImportScanRequest has engagement_description field"""
+    request = ImportScanRequest(
+        engagement_name="test",
+        token_defect_dojo="token",
+        host_defect_dojo="http://localhost:8000",
+        engagement_description="Test description",
+    )
+    assert hasattr(request, "engagement_description")
+    assert request.engagement_description == "Test description"
+
+def test_request_default_engagement_description_is_empty():
+    """Verify engagement_description defaults to empty string"""
+    request = ImportScanRequest(
+        engagement_name="test",
+        token_defect_dojo="token",
+        host_defect_dojo="http://localhost:8000",
+    )
+    assert request.engagement_description == ""
+
+def test_request_from_dict_with_new_fields():
+    """Test ImportScanRequest.from_dict() with new fields"""
+    data = {
+        "product_name": "test product",
+        "engagement_name": "test engagement",
+        "hold_found_product_engagement": True,
+        "engagement_description": "Test description",
+        "token_defect_dojo": "token123",
+        "host_defect_dojo": "http://localhost:8000",
+        "scan_type": "Xray Scan",
+    }
+    request = ImportScanRequest.from_dict(data)
+    assert request.hold_found_product_engagement is True
+    assert request.engagement_description == "Test description"
+
+def test_request_to_dict_includes_new_fields():
+    """Test ImportScanRequest.to_dict() includes new fields"""
+    request = ImportScanRequest(
+        product_name="test product",
+        engagement_name="test engagement",
+        token_defect_dojo="token123",
+        host_defect_dojo="http://localhost:8000",
+        hold_found_product_engagement=True,
+        engagement_description="My description",
+    )
+    request_dict = request.to_dict()
+    assert "hold_found_product_engagement" in request_dict
+    assert "engagement_description" in request_dict
+    assert request_dict["hold_found_product_engagement"] is True
+    assert request_dict["engagement_description"] == "My description"

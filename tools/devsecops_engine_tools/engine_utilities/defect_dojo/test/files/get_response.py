@@ -45,3 +45,23 @@ def session_manager_post(status_code, mock_response):
     mock_session_manager.host = "http://localhsot:800"
     mock_session_manager._instance = session_mock
     return mock_session_manager
+
+
+def session_manager_patch(status_code, mock_response):
+    # mock method patch
+    session_mock = Mock()
+    response_mock_patch = Mock()
+    response_mock_patch.status_code = status_code
+    if re.search(r".+.json", str(mock_response)):
+        response_mock_patch.json.return_value = get_response(mock_response)
+    else:
+        response_mock_patch.json.return_value = mock_response
+    response_mock_patch.text = mock_response
+    # mock method patch
+    session_mock.patch.return_value = response_mock_patch
+    # instance session mock in atribute
+    mock_session_manager = Mock()
+    mock_session_manager.token = "test123"
+    mock_session_manager.host = "http://localhsot:800"
+    mock_session_manager._instance = session_mock
+    return mock_session_manager
