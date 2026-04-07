@@ -16,6 +16,7 @@ from datetime import datetime
 from devsecops_engine_tools.engine_utilities.settings import SETTING_LOGGER
 
 logger = MyLogger.__call__(**SETTING_LOGGER).get_logger()
+CONTENT_TYPE_JSON = "application/json"
 
 
 class EngagementRestConsumer:
@@ -32,7 +33,7 @@ class EngagementRestConsumer:
         url = f"{self.__host}/api/v2/engagements/"
         headers = {
             "Authorization": f"Token {self.__token}",
-            "Content-Type": "application/json",
+            "Content-Type": CONTENT_TYPE_JSON,
         }
         try:
             response = self.__session.get(
@@ -61,6 +62,7 @@ class EngagementRestConsumer:
         url = f"{self.__host}/api/v2/engagements/"
         data = {
                 "name": request.engagement_name,
+                "description": request.engagement_description,
                 "target_start": str(datetime.now().date()),
                 "target_end": str(datetime.now().date()),
                 "product": product_id,
@@ -76,13 +78,32 @@ class EngagementRestConsumer:
         
         headers = {
             "Authorization": f"Token {self.__token}",
-            "Content-Type": "application/json",
+            "Content-Type": CONTENT_TYPE_JSON,
         }
         try:
             response = self.__session.post(
                 url=url, headers=headers, data=json.dumps(data), verify=VERIFY_CERTIFICATE
             )
             if response.status_code != 201:
+                logger.error(response.json())
+                raise ApiError(response.json())
+            response = Engagement().from_dict(response.json())
+        except Exception as e:
+            raise ApiError(e)
+        return response
+
+    def patch_engagement(self, request: ImportScanRequest, engagement_id):
+        url = f"{self.__host}/api/v2/engagements/{engagement_id}/"
+        data = {
+            "description": request.engagement_description,
+        }
+        headers = {
+            "Authorization": f"Token {self.__token}",
+            "Content-Type": CONTENT_TYPE_JSON,
+        }
+        try:
+            response = self.__session.patch(url=url, headers=headers, data=json.dumps(data), verify=VERIFY_CERTIFICATE)
+            if response.status_code != 200:
                 logger.error(response.json())
                 raise ApiError(response.json())
             response = Engagement().from_dict(response.json())
