@@ -19,7 +19,7 @@ def test_init_engine_dependencies():
         tool = {
             "ENGINE_DEPENDENCIES": {"TOOL": "tool"},
             "SBOM_MANAGER": {"ENABLED": True, "BRANCH_FILTER": ["trunk"]},
-            "LICENSE_ANALYZER": {"ENABLED": False, "TOOL": "dep_track"},
+            "LICENSE_ANALYZER": {"TOOL": "dep_track"},
         }
         mock_handle_remote_config_patterns.process_handle_working_directory.return_value = (
             "working_dir"
@@ -68,7 +68,7 @@ def test_init_engine_dependencies_success(mock_exists, mock_dependencies_scan, m
     config_tool = {
         "SBOM_MANAGER": {"ENABLED": True, "BRANCH_FILTER": ["main"]},
         "ENGINE_DEPENDENCIES": {"TOOL": "tool"},
-        "LICENSE_ANALYZER": {"ENABLED": False, "TOOL": "dep_track"},
+        "LICENSE_ANALYZER": {"TOOL": "dep_track"},
     }
 
     # Llamar a la función
@@ -104,7 +104,7 @@ def test_init_engine_dependencies_skip_tool(mock_set_input_core, mock_handle_rem
     config_tool = {
         "SBOM_MANAGER": {"ENABLED": False, "BRANCH_FILTER": []},
         "ENGINE_DEPENDENCIES": {"TOOL": "tool"},
-        "LICENSE_ANALYZER": {"ENABLED": False, "TOOL": "dep_track"},
+        "LICENSE_ANALYZER": {"TOOL": "dep_track"},
     }
     dict_args = {"remote_config_repo": "repo", "folder_path": None, "remote_config_branch": ""}
 
@@ -137,7 +137,7 @@ def test_init_engine_dependencies_path_not_exists(mock_logger, mock_exists, mock
     config_tool = {
         "SBOM_MANAGER": {"ENABLED": False, "BRANCH_FILTER": []},
         "ENGINE_DEPENDENCIES": {"TOOL": "tool"},
-        "LICENSE_ANALYZER": {"ENABLED": False, "TOOL": "dep_track"},
+        "LICENSE_ANALYZER": {"TOOL": "dep_track"},
     }
     dict_args = {"remote_config_repo": "repo", "folder_path": "nonexistent_path", "remote_config_branch": ""}
 
@@ -157,7 +157,7 @@ def test_init_engine_dependencies_path_not_exists(mock_logger, mock_exists, mock
 @patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.os.path.exists')
 @patch('devsecops_engine_tools.engine_sca.engine_dependencies.src.infrastructure.entry_points.entry_point_tool.logger')
 def test_init_engine_dependencies_license_no_token(mock_logger, mock_exists, mock_dependencies_scan, mock_set_input_core, mock_handle_remote_config_patterns):
-    """Covers LICENSE_ANALYZER.ENABLED=True but no token → logger.error."""
+    """Covers --use_license_analyzer=true but no token → logger.error."""
     mock_exists.return_value = True
     mock_handle_remote_config_patterns.return_value.skip_from_exclusion.return_value = False
     mock_handle_remote_config_patterns.return_value.ignore_analysis_pattern.return_value = True
@@ -175,7 +175,6 @@ def test_init_engine_dependencies_license_no_token(mock_logger, mock_exists, moc
         "SBOM_MANAGER": {"ENABLED": True, "BRANCH_FILTER": ["main"]},
         "ENGINE_DEPENDENCIES": {"TOOL": "tool"},
         "LICENSE_ANALYZER": {
-            "ENABLED": True,
             "TOOL": "dep_track",
             "dep_track": {
                 "API_KEY_SECRET_KEY": "api_key_secret",
@@ -184,7 +183,7 @@ def test_init_engine_dependencies_license_no_token(mock_logger, mock_exists, moc
             },
         },
     }
-    dict_args = {"remote_config_repo": "repo", "folder_path": "path", "remote_config_branch": ""}
+    dict_args = {"remote_config_repo": "repo", "folder_path": "path", "remote_config_branch": "", "use_license_analyzer": "true"}
 
     # secret_tool=None and no token_license_analyzer in dict_args → token is None
     init_engine_dependencies(
@@ -222,7 +221,6 @@ def test_init_engine_dependencies_license_upload_with_export_task_id(mock_logger
         "SBOM_MANAGER": {"ENABLED": True, "BRANCH_FILTER": ["main"]},
         "ENGINE_DEPENDENCIES": {"TOOL": "tool"},
         "LICENSE_ANALYZER": {
-            "ENABLED": True,
             "TOOL": "dep_track",
             "dep_track": {
                 "API_KEY_SECRET_KEY": "api_key_secret",
@@ -232,7 +230,7 @@ def test_init_engine_dependencies_license_upload_with_export_task_id(mock_logger
             },
         },
     }
-    dict_args = {"remote_config_repo": "repo", "folder_path": "path", "remote_config_branch": ""}
+    dict_args = {"remote_config_repo": "repo", "folder_path": "path", "remote_config_branch": "", "use_license_analyzer": "true"}
 
     secret_tool = MagicMock()
     secret_tool.get_secret.return_value = "valid_token"
@@ -273,7 +271,6 @@ def test_init_engine_dependencies_license_upload_without_task_id_does_not_export
         "SBOM_MANAGER": {"ENABLED": True, "BRANCH_FILTER": ["main"]},
         "ENGINE_DEPENDENCIES": {"TOOL": "tool"},
         "LICENSE_ANALYZER": {
-            "ENABLED": True,
             "TOOL": "dep_track",
             "dep_track": {
                 "API_KEY_SECRET_KEY": "api_key_secret",
@@ -283,7 +280,7 @@ def test_init_engine_dependencies_license_upload_without_task_id_does_not_export
             },
         },
     }
-    dict_args = {"remote_config_repo": "repo", "folder_path": "path", "remote_config_branch": ""}
+    dict_args = {"remote_config_repo": "repo", "folder_path": "path", "remote_config_branch": "", "use_license_analyzer": "true"}
 
     secret_tool = MagicMock()
     secret_tool.get.return_value = "valid_token"

@@ -98,7 +98,7 @@ def init_engine_dependencies(
                     pipeline_name
                 )
 
-                if config_tool["LICENSE_ANALYZER"]["ENABLED"]:
+                if dict_args.get("use_license_analyzer") == "true":
                     token_license_analyzer = secret_tool.get(config_license[license_tool]["API_KEY_SECRET_KEY"]) if secret_tool else dict_args.get("token_license_analyzer")
                     
                     if not token_license_analyzer:

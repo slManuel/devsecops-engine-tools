@@ -107,7 +107,6 @@ Configuration of the driven adapters in the main layer and management of on/off 
         }
     },
     "LICENSE_ANALYZER": {
-        "ENABLED": true,
         "TOOL": "DEPENDENCY_TRACK",
         "DEPENDENCY_TRACK": {
             "HOST": "",
@@ -347,8 +346,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
         - ROLE_ARN: ARN of the assumed role with permissions over this resource
         - REGION_NAME: AWS region name
 
-- **LICENSE_ANALYZER**: Configuration for the license analysis integration (beta). Uploads the generated SBOM to a license analyzer tool to inspect component licenses. Only runs if `SBOM_MANAGER.ENABLED` is `true` for the current branch.
-    - **ENABLED**: `true` or `false`. Enables or disables the license analyzer upload.
+- **LICENSE_ANALYZER**: Configuration for the license analysis integration (beta). Uploads the generated SBOM to a license analyzer tool to inspect component licenses. Activated via the `--use_license_analyzer true` CLI flag. Only runs if `SBOM_MANAGER.ENABLED` is `true` for the current branch.
     - **TOOL**: License analyzer adapter to use. Currently supported: `DEPENDENCY_TRACK`.
     - **DEPENDENCY_TRACK**
         - **HOST**: Base URL of the Dependency-Track server (e.g., `https://dtrack.example.com`).
@@ -356,7 +354,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
         - **EXPORT_TASK_ID**: `true` or `false`. When enabled, the upload task token returned by Dependency-Track is exported as a pipeline variable, allowing downstream jobs to poll for analysis results.
         - **TASK_ID_VARIABLE_NAME**: Name of the pipeline variable where the task token will be stored (only used when `EXPORT_TASK_ID` is `true`).
 
-- **SBOM_MANAGER**: Configuration for SBOM generation. Requires `ENABLED: true` for `LICENSE_ANALYZER` to run. Additionally, `CDXGEN.FETCH_LICENSE` should be set to `true` to enrich the SBOM with license metadata before uploading to the license analyzer.
+- **SBOM_MANAGER**: Configuration for SBOM generation. Requires `ENABLED: true` and the `--use_license_analyzer true` CLI flag for the license analyzer to run. Additionally, `CDXGEN.FETCH_LICENSE` should be set to `true` to enrich the SBOM with license metadata before uploading to the license analyzer.
     - **SYFT**
         - **SYFT_VERSION**: Version of Syft to download and use. Example: `"1.17.0"`.
         - **OUTPUT_FORMAT**: Output format for the SBOM. Default: `"cyclonedx-json"`. Other options include `"spdx-json"`, `"syft-json"`, `"table"`.
@@ -365,7 +363,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
         - **DEBUG_PIPELINES**: Array of pipeline names where Syft should run in verbose mode (`-v` flag). Useful for troubleshooting SBOM generation issues in specific pipelines. Example: `["pipeline_name1", "pipeline_name2"]`.
                 
     - **CDXGEN**
-        - **FETCH_LICENSE**: `true` or `false`. When enabled, cdxgen fetches license information for each component from public registries and includes it in the generated SBOM. Recommended when `LICENSE_ANALYZER` is enabled.
+        - **FETCH_LICENSE**: `true` or `false`. When enabled, cdxgen fetches license information for each component from public registries and includes it in the generated SBOM. Recommended when `--use_license_analyzer true` is used.
         - **INSTALL_DEPENDENCIES**: `true` or `false`. When enabled, cdxgen installs project dependencies before generating the SBOM, improving component coverage.
         - **OVERRIDE_REGISTRIES**: `true` or `false`. When enabled, the registry URLs defined in `REGISTRIES` are set as environment variables before cdxgen runs, redirecting dependency resolution to internal or private registries.
         - **REGISTRIES**: Map of environment variable names to registry URLs used when `OVERRIDE_REGISTRIES` is `true`.
