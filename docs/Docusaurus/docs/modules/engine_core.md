@@ -21,6 +21,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
 {
     "BANNER": "DevSecOps Engine Tools",
     "WARNING_RELEASE": false,
+    "TRACEBACK": false,
     "SECRET_MANAGER": {
         "AWS": {
             "SECRET_NAME": "",
@@ -253,6 +254,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
 
 - **BANNER**: Application banner
 - **WARNING_RELEASE**: warning in stage release break build
+- **TRACEBACK**: Show the traceback if there are any error in the execution
 - **SECRET_MANAGER**: Driven adapter configuration for secrets manager
     - **AWS**
         - SECRET_NAME: secret name

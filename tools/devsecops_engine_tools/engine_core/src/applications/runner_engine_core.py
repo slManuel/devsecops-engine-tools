@@ -36,6 +36,7 @@ from devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.conte
 )
 import sys
 import argparse
+import traceback
 from devsecops_engine_tools.engine_utilities.dependency_track.infrastructure.driver_adapters.dependency_track import DependencyTrack
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
 from devsecops_engine_tools.engine_utilities import settings
@@ -339,6 +340,12 @@ def application_core():
             "dependency_track": DependencyTrack()
         }
 
+        # Activate traceback
+        config_tool = remote_config_source_gateway.get_remote_config(
+            args["remote_config_repo"], "/engine_core/ConfigTool.json", args["remote_config_branch"]
+        )
+        tb = config_tool.get("TRACEBACK", False)
+
         init_engine_core(
             vulnerability_management_gateway,
             secrets_manager_gateway,
@@ -352,11 +359,15 @@ def application_core():
             license_tool_gateway,
             args
         )
+
     except Exception as e:
+        error_msg = ""
+        if tb: error_msg = " | " + traceback.format_exc().replace("\n", " | ")
+
         logger.error("Error engine_core: {0} ".format(str(e)))
         print(
             devops_platform_gateway.message(
-                "error", "Error engine_core: {0} ".format(str(e))
+                "error", "Error engine_core: {0}{1}".format(str(e), error_msg)
             )
         )
         print(devops_platform_gateway.result_pipeline("failed"))
