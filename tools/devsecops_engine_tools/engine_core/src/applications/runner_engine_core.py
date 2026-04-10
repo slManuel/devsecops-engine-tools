@@ -311,7 +311,7 @@ def get_inputs_from_cli(args):
 
 
 def application_core():
-    tb = False
+    tb = True
     try:
         # Get inputs from CLI
         args = get_inputs_from_cli(sys.argv[1:])
