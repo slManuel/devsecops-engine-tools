@@ -1,6 +1,7 @@
 {
     "BANNER": "DevSecOps Engine Tools",
     "WARNING_RELEASE": false,
+    "TRACEBACK": false,
     "SECRET_MANAGER": {
         "AWS": {
             "SECRET_NAME": "",
