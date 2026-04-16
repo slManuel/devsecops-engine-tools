@@ -4,7 +4,7 @@
   "displayName": "DevSecOps Engine Tools",
   "publisher": "GrupoBancolombiaOSPO",
   "description": "",
-  "version": "1.23.0",
+  "version": "1.25.0",
   "engines": {
     "vscode": "^1.95.0"
   },
@@ -420,7 +420,9 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
+    "@types/archiver": "^7.0.0",
     "@types/form-data": "^2.5.2",
+    "archiver": "^7.0.1",
     "form-data": "^4.0.5",
     "generator-code": "^1.11.9",
     "lodash": "^4.17.21"

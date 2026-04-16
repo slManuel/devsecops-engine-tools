@@ -1,10 +1,7 @@
-import { exec } from "child_process";
-import { promisify } from "util";
 import * as path from "path";
 import * as fs from "fs";
 import * as os from "os";
-
-const execAsync = promisify(exec);
+import archiver from "archiver";
 
 export interface ICompressionResult {
   success: boolean;
@@ -16,11 +13,11 @@ export interface ICompressionResult {
  * FileCompressionHelper - Cross-platform file compression utility
  * 
  * Provides methods to compress files and directories into zip format
- * compatible with Windows, Linux, and macOS.
+ * using the archiver library (pure Node.js, no shell commands).
  */
 export default class FileCompressionHelper {
-  // Directories and file patterns to exclude from compression
-  private static readonly EXCLUDE_PATTERNS = [
+  // Directories to exclude from compression
+  private static readonly EXCLUDE_DIRS = [
     'node_modules',
     '.git',
     'dist',
@@ -33,19 +30,19 @@ export default class FileCompressionHelper {
     '__pycache__',
     '.pytest_cache',
     'venv',
-    '.env',
-    '*.sqlite',
-    '*.sqlite3',
-    '*.db'
+    '.env'
   ];
 
-  private static isWindows(): boolean {
-    return process.platform === 'win32';
-  }
+  // File extensions to exclude from compression
+  private static readonly EXCLUDE_FILE_EXTENSIONS = [
+    '.sqlite',
+    '.sqlite3',
+    '.db'
+  ];
 
   /**
-   * Compress a file or directory to ZIP format
-   * 
+   * Compress a file or directory to ZIP format using archiver (cross-platform, pure Node.js)
+   *
    * @param sourcePath - Path to file or directory to compress
    * @param outputPath - Optional output path for the ZIP file
    * @returns ICompressionResult with success status and file path
@@ -62,7 +59,7 @@ export default class FileCompressionHelper {
 
       // Determine output path
       const finalOutputPath = outputPath || this.generateOutputPath(sourcePath);
-      
+
       // Ensure output directory exists
       const outputDir = path.dirname(finalOutputPath);
       if (!fs.existsSync(outputDir)) {
@@ -74,18 +71,13 @@ export default class FileCompressionHelper {
         fs.unlinkSync(finalOutputPath);
       }
 
-      // Compress using platform-specific command
-      if (this.isWindows()) {
-        await this.compressWindows(sourcePath, finalOutputPath);
-      } else {
-        await this.compressUnix(sourcePath, finalOutputPath);
-      }
+      await this.compressWithArchiver(sourcePath, finalOutputPath);
 
       // Verify output file was created
       if (!fs.existsSync(finalOutputPath)) {
         return {
           success: false,
-          error: 'Compression command completed but output file was not created'
+          error: 'Compression completed but output file was not created'
         };
       }
 
@@ -103,75 +95,37 @@ export default class FileCompressionHelper {
   }
 
   /**
-   * Compress using Windows PowerShell Compress-Archive
+   * Compress using archiver library (pure Node.js, works on Windows, Linux and macOS)
    */
-  private static async compressWindows(sourcePath: string, outputPath: string): Promise<void> {
-    // On Windows, use tar (available on Windows 10+) which supports exclusions
-    try {
-      await this.compressWithTar(sourcePath, outputPath);
-    } catch (error) {
-      // Fallback to PowerShell if tar fails
-      // Note: PowerShell Compress-Archive doesn't support exclusions easily,
-      // so this may include node_modules. Consider this a last resort.
-      const psCommand = `Compress-Archive -Path "${sourcePath}" -DestinationPath "${outputPath}" -Force`;
-      await execAsync(`powershell -Command "${psCommand}"`, {
-        windowsHide: true
-      });
-    }
-  }
+  private static compressWithArchiver(sourcePath: string, outputPath: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const output = fs.createWriteStream(outputPath);
+      const archive = archiver('zip', { zlib: { level: 6 } });
 
-  /**
-   * Compress using Unix zip command
-   */
-  private static async compressUnix(sourcePath: string, outputPath: string): Promise<void> {
-    const stat = fs.statSync(sourcePath);
-    const sourceDir = stat.isDirectory() ? sourcePath : path.dirname(sourcePath);
-    const sourceName = stat.isDirectory() ? '.' : path.basename(sourcePath);
+      output.on('close', resolve);
+      archive.on('error', reject);
+      archive.pipe(output);
 
-    // Build exclusion patterns for zip command
-    // Include both root-level and subdirectory patterns
-    const exclusions = this.EXCLUDE_PATTERNS.flatMap(pattern => 
-      [`-x "${pattern}/*"`, `-x "*/${pattern}/*"`]
-    ).join(' ');
+      const stat = fs.statSync(sourcePath);
 
-    // Use zip command with recursive flag and exclusions
-    const zipCommand = `cd "${sourceDir}" && zip -r "${outputPath}" "${sourceName}" ${exclusions} -q`;
-    
-    try {
-      await execAsync(zipCommand);
-    } catch (error) {
-      // Fallback: try using tar
-      await this.compressWithTar(sourcePath, outputPath);
-    }
-  }
+      if (stat.isDirectory()) {
+        archive.glob('**/*', {
+          cwd: sourcePath,
+          dot: false,
+          ignore: [
+            // Exclude directories
+            ...this.EXCLUDE_DIRS.map(d => `${d}/**`),
+            ...this.EXCLUDE_DIRS.map(d => `**/${d}/**`),
+            // Exclude file extensions
+            ...this.EXCLUDE_FILE_EXTENSIONS.map(ext => `**/*${ext}`)
+          ]
+        });
+      } else {
+        archive.file(sourcePath, { name: path.basename(sourcePath) });
+      }
 
-  /**
-   * Fallback compression using tar (available on all platforms with recent Node.js/OS versions)
-   */
-  private static async compressWithTar(sourcePath: string, outputPath: string): Promise<void> {
-    const stat = fs.statSync(sourcePath);
-    const sourceDir = stat.isDirectory() ? sourcePath : path.dirname(sourcePath);
-    const sourceName = stat.isDirectory() ? '.' : path.basename(sourcePath);
-
-    // Build exclusion patterns for tar command
-    // Exclude both root-level and subdirectory matches
-    const exclusions = this.EXCLUDE_PATTERNS.flatMap(pattern => 
-      [`--exclude="${pattern}"`, `--exclude="*/${pattern}"`]
-    ).join(' ');
-
-    // Create a .tar.gz instead of .zip as fallback
-    const tarOutputPath = outputPath.replace(/\.zip$/, '.tar.gz');
-    
-    const tarCommand = this.isWindows()
-      ? `tar -czf "${tarOutputPath}" ${exclusions} -C "${sourceDir}" "${sourceName}"`
-      : `cd "${sourceDir}" && tar -czf "${tarOutputPath}" ${exclusions} "${sourceName}"`;
-
-    await execAsync(tarCommand);
-    
-    // If we created a .tar.gz but expected .zip, rename it
-    if (tarOutputPath !== outputPath) {
-      fs.renameSync(tarOutputPath, outputPath);
-    }
+      archive.finalize();
+    });
   }
 
   /**
