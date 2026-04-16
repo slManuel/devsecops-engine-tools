@@ -4,7 +4,7 @@
   "displayName": "DevSecOps Engine Tools",
   "publisher": "GrupoBancolombiaOSPO",
   "description": "",
-  "version": "1.22.0",
+  "version": "1.23.0",
   "engines": {
     "vscode": "^1.95.0"
   },
@@ -60,13 +60,11 @@
             "default": "local-docker",
             "enum": [
               "local-docker",
-              "remote-microservice",
-              "auto"
+              "remote-microservice"
             ],
             "enumDescriptions": [
               "Execute scans locally using Docker containers",
-              "Execute scans remotely using the DevSecOps microservice",
-              "Automatically choose the best available execution mode"
+              "Execute scans remotely using the DevSecOps microservice"
             ],
             "description": "Scan execution mode: local Docker containers or remote microservice"
           },

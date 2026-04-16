@@ -19,7 +19,7 @@ export interface ICompressionResult {
  * compatible with Windows, Linux, and macOS.
  */
 export default class FileCompressionHelper {
-  // Directories to exclude from compression
+  // Directories and file patterns to exclude from compression
   private static readonly EXCLUDE_PATTERNS = [
     'node_modules',
     '.git',
@@ -33,7 +33,10 @@ export default class FileCompressionHelper {
     '__pycache__',
     '.pytest_cache',
     'venv',
-    '.env'
+    '.env',
+    '*.sqlite',
+    '*.sqlite3',
+    '*.db'
   ];
 
   private static isWindows(): boolean {
