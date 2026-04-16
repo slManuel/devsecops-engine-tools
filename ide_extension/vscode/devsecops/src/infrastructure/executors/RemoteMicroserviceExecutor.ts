@@ -345,7 +345,12 @@ export class RemoteMicroserviceExecutor implements IScanExecutor {
         formData.append('config', configJson);
         
         // Add file
-        const fileStream = fs.createReadStream(filePath);
+        // Explicitly specify binary mode for cross-platform consistency (Windows/Linux)
+        const fileStream = fs.createReadStream(filePath, {
+            flags: 'r',           // Read-only mode
+            autoClose: true,      // Auto-close on end or error
+            highWaterMark: 64 * 1024  // 64KB buffer for consistent chunking
+        });
         const fileName = path.basename(filePath);
         const fileStats = fs.statSync(filePath);
         const contentType = fileName.endsWith('.tar') ? 'application/x-tar' : 'application/zip';

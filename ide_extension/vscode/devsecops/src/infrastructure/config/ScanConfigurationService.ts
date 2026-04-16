@@ -13,13 +13,13 @@ export class ScanConfigurationService {
 
     /**
      * Gets the configured execution mode from VS Code settings
-     * @returns 'local-docker' | 'remote-microservice' | 'auto'
+     * @returns 'local-docker' | 'remote-microservice'
      */
-    public static getExecutionMode(): 'local-docker' | 'remote-microservice' | 'auto' {
+    public static getExecutionMode(): 'local-docker' | 'remote-microservice' {
         const config = vscode.workspace.getConfiguration(this.configSection);
         const mode = config.get<string>(this.executionModeKey, 'local-docker');
         
-        if (mode === 'remote-microservice' || mode === 'auto') {
+        if (mode === 'remote-microservice') {
             return mode;
         }
         
@@ -39,7 +39,7 @@ export class ScanConfigurationService {
      */
     public static isMicroserviceEnabled(): boolean {
         const mode = this.getExecutionMode();
-        return mode === 'remote-microservice' || mode === 'auto';
+        return mode === 'remote-microservice';
     }
 
     /**
@@ -47,13 +47,13 @@ export class ScanConfigurationService {
      */
     public static isLocalDockerEnabled(): boolean {
         const mode = this.getExecutionMode();
-        return mode === 'local-docker' || mode === 'auto';
+        return mode === 'local-docker';
     }
 
     /**
      * Updates the execution mode in settings
      */
-    public static async setExecutionMode(mode: 'local-docker' | 'remote-microservice' | 'auto'): Promise<void> {
+    public static async setExecutionMode(mode: 'local-docker' | 'remote-microservice'): Promise<void> {
         const config = vscode.workspace.getConfiguration(this.configSection);
         await config.update(this.executionModeKey, mode, vscode.ConfigurationTarget.Global);
     }
@@ -113,7 +113,7 @@ export class ScanConfigurationService {
      * Gets all scan-related configuration
      */
     public static getAllScanConfig(): {
-        executionMode: 'local-docker' | 'remote-microservice' | 'auto';
+        executionMode: 'local-docker' | 'remote-microservice';
         microserviceUrl: string | undefined;
         containerImageName: string | undefined;
         containerImageVersion: string | undefined;

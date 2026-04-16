@@ -31,18 +31,6 @@ export class ScanExecutionOrchestrator {
                 return await this.tryRemoteMicroserviceOrFallback();
             
             case 'local-docker':
-                return new LocalDockerExecutor();
-            
-            case 'auto': {
-                // Try remote first, fallback to local
-                const remoteExecutor = await this.tryRemoteMicroservice();
-                if (remoteExecutor) {
-                    return remoteExecutor;
-                }
-                // Fallback to local Docker
-                return new LocalDockerExecutor();
-            }
-            
             default:
                 return new LocalDockerExecutor();
         }
@@ -100,8 +88,6 @@ export class ScanExecutionOrchestrator {
         } else if (executionMode === 'remote-microservice') {
             message = '⚠️  Remote microservice mode is selected but not available.\n' +
                      'Falling back to local Docker execution.';
-        } else if (executionMode === 'auto') {
-            message = '🔄 Auto mode: Using local Docker';
         } else {
             message = '🐳 Using local Docker execution mode';
         }
