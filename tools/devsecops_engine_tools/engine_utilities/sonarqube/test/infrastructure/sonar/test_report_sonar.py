@@ -139,7 +139,8 @@ class TestSonarAdapter(unittest.TestCase):
         mock_post.assert_called_once_with(
             f"{sonar_url}{endpoint}",
             headers={"Authorization": "Basic encoded_token"},
-            data={"issue": "123", "transition": "reopen"}
+            data={"issue": "123", "transition": "reopen"},
+            timeout=30,
         )
         mock_response.raise_for_status.assert_called_once()
 
@@ -186,7 +187,8 @@ class TestSonarAdapter(unittest.TestCase):
         mock_get.assert_called_once_with(
             f"{sonar_url}{endpoint}",
             headers={"Authorization": "Basic encoded_token"},
-            params=params
+            params=params,
+            timeout=30,
         )
         mock_response.raise_for_status.assert_called_once()
         self.assertEqual(findings, [{"key": "123", "type": "VULNERABILITY"}])
