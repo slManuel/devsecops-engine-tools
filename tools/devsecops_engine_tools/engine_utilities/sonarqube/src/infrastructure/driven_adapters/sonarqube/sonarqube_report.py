@@ -12,6 +12,8 @@ from devsecops_engine_tools.engine_utilities import settings
 
 logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
+REQUEST_TIMEOUT_SECONDS = 30
+
 class SonarAdapter(SonarGateway):
     def get_project_keys(self, pipeline_name):
         project_keys = [pipeline_name]
@@ -37,12 +39,8 @@ class SonarAdapter(SonarGateway):
                 if not file_content or len(file_content) <= 0:
                     logger.warning("[SQ] Error reading file")
                     return None
-                try:
-                    settings = self.create_task_report_from_string(file_content)
-                    return settings.get("projectKey")
-                except Exception as err:
-                    logger.warning(f"[SQ] Parse Task report error: {err}")
-                    return None
+                settings = self.create_task_report_from_string(file_content)
+                return settings.get("projectKey")
         except Exception as err:
             logger.warning(f"[SQ] Error reading file: {str(err)}")
             return None
@@ -67,7 +65,8 @@ class SonarAdapter(SonarGateway):
                     headers={
                         "Authorization": f"Basic {Utils().encode_token_to_base64(sonar_token)}"
                     },
-                    data=data
+                    data=data,
+                    timeout=REQUEST_TIMEOUT_SECONDS,
                 )
                 response.raise_for_status()
 
@@ -85,26 +84,30 @@ class SonarAdapter(SonarGateway):
                 
         except Exception as e:
             logger.warning(f"Unable to change the status of {finding_type} {data[finding_type]}. Error: {e}")
-            pass
 
     def get_findings(self, sonar_url, sonar_token, endpoint, params, finding_type, sonar_max_retry):
         findings = []
         try:
             def request_func():
+                current_page = params["p"]
                 while True:
+                    request_params = dict(params)
+                    request_params["p"] = current_page
                     response = requests.get(
                         f"{sonar_url}{endpoint}",
                         headers={
                             "Authorization": f"Basic {Utils().encode_token_to_base64(sonar_token)}"
                         },
-                        params=params
+                        params=request_params,
+                        timeout=REQUEST_TIMEOUT_SECONDS,
                     )
                     response.raise_for_status()
                     data = response.json()
 
                     findings.extend(data[finding_type])
-                    if len(data[finding_type]) < params["ps"]: break
-                    params["p"] = params["p"] + 1
+                    if len(data[finding_type]) < request_params["ps"]:
+                        break
+                    current_page += 1
             
             Utils().retries_requests(request_func, sonar_max_retry, 5)
 

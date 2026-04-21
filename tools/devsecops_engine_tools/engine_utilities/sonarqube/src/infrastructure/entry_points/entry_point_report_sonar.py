@@ -11,6 +11,12 @@ from devsecops_engine_tools.engine_utilities import settings
 logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
 
+def _matches_exclusion_pattern(pipeline_name, report_config_tool, excluded_pipelines):
+    patterns = [report_config_tool["IGNORE_SEARCH_PATTERN"]]
+    patterns.extend(excluded_pipelines.get("BY_PATTERN_SEARCH", {}).keys())
+    return any(re.match(pattern, pipeline_name, re.IGNORECASE) for pattern in patterns)
+
+
 def init_report_sonar(
     vulnerability_management_gateway,
     secrets_manager_gateway,
@@ -33,16 +39,10 @@ def init_report_sonar(
     pipeline_name = devops_platform_gateway.get_variable("pipeline_name")
     branch = devops_platform_gateway.get_variable("branch_tag")
 
-    is_valid_pipeline = pipeline_name not in excluded_pipelines and not any(
-        [
-            re.match(
-                pattern,
-                pipeline_name,
-                re.IGNORECASE
-            ) for pattern in
-            [report_config_tool["IGNORE_SEARCH_PATTERN"]] +
-            list(excluded_pipelines.get("BY_PATTERN_SEARCH", {}).keys())
-        ]
+    is_valid_pipeline = pipeline_name not in excluded_pipelines and not _matches_exclusion_pattern(
+        pipeline_name,
+        report_config_tool,
+        excluded_pipelines,
     )
     
     is_valid_branch = any(
