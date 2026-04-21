@@ -94,11 +94,13 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                 is not None
                 else vulnerability_management.secret_tool["token_defect_dojo"]
             )
-            token_cmdb = (
-                vulnerability_management.dict_args["token_cmdb"]
-                if vulnerability_management.dict_args["token_cmdb"] is not None
-                else vulnerability_management.secret_tool["token_cmdb"]
-            ) if use_cmdb else None
+            token_cmdb = None
+            if use_cmdb:
+                token_cmdb = (
+                    vulnerability_management.dict_args["token_cmdb"]
+                    if vulnerability_management.dict_args["token_cmdb"] is not None
+                    else vulnerability_management.secret_tool["token_cmdb"]
+                )
 
             tags = []
             if any(
@@ -821,16 +823,14 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
         create_date, expired_date = self._date_reason_based(
             finding, date_fn, reason, tool, **kwargs
         )
+        finding_id = ""
+        if finding.vuln_id_from_tool:
+            finding_id = finding.vuln_id_from_tool
+        elif finding.vulnerability_ids:
+            finding_id = finding.vulnerability_ids[0]["vulnerability_id"]
+        
         return Exclusions(
-            id=(
-                finding.vuln_id_from_tool
-                if finding.vuln_id_from_tool
-                else (
-                    finding.vulnerability_ids[0]["vulnerability_id"]
-                    if finding.vulnerability_ids
-                    else ""
-                )
-            ),
+            id=finding_id,
             where=self._get_where(finding, tool),
             create_date=create_date,
             expired_date=expired_date,
@@ -845,12 +845,14 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
         create_date, expired_date = self._date_reason_based(
             finding, date_fn, reason, tool, **kwargs
         )
+        finding_id = ""
+        if finding.vuln_id_from_tool:
+            finding_id = finding.vuln_id_from_tool
+        elif finding.id:
+            finding_id = finding.id[0]["vulnerability_id"]
+        
         return Exclusions(
-            id=(
-                finding.vuln_id_from_tool
-                if finding.vuln_id_from_tool
-                else finding.id[0]["vulnerability_id"] if finding.id else ""
-            ),
+            id=finding_id,
             where=self._get_where(finding, tool),
             create_date=create_date,
             expired_date=expired_date,

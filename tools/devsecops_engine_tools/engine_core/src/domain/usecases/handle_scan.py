@@ -335,18 +335,20 @@ class HandleScan:
                     pt_profile_priority = pt_info["PROFILE_PRIORITY"] if config_tool["BREAK_BUILD_MANAGER"]["MODEL"] == "priority" else None
                     pt_apps = pt_info["APPS"]
 
-                    input_core.threshold_defined.vulnerability = (
-                        LevelVulnerability(quality_vulnerability_management[pt_profile])
-                        if pt_apps == "ALL"
+                    if pt_profile and (
+                        pt_apps == "ALL"
                         or any(map(lambda pd: pd in input_core.scope_pipeline, pt_apps))
-                        else input_core.threshold_defined.vulnerability
-                    ) if pt_profile else input_core.threshold_defined.vulnerability
-                    input_core.threshold_defined.priority = (
-                        LevelPriority(quality_vulnerability_management[pt_profile_priority])
-                        if pt_apps == "ALL"
+                    ):
+                        input_core.threshold_defined.vulnerability = LevelVulnerability(
+                            quality_vulnerability_management[pt_profile]
+                        )
+                    if pt_profile_priority and (
+                        pt_apps == "ALL"
                         or any(map(lambda pd: pd in input_core.scope_pipeline, pt_apps))
-                        else input_core.threshold_defined.priority
-                    ) if pt_profile_priority else input_core.threshold_defined.priority
+                    ):
+                        input_core.threshold_defined.priority = LevelPriority(
+                            quality_vulnerability_management[pt_profile_priority]
+                        )
 
     def _handle_context_extraction(
         self,
