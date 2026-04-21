@@ -105,14 +105,14 @@
             "pipeline_exception_2": "CDXGEN"
         },
         "SYFT": {
-            "SYFT_VERSION": "1.17.0",
+            "SYFT_VERSION": "1.42.2",
             "OUTPUT_FORMAT": "cyclonedx-json",
             "EXCLUDE_PATHS": ["**/test/**"],
             "EXCLUDE_CATALOGERS": ["java-archive-cataloger"],
             "DEBUG_PIPELINES": ["pipeline_name1", "pipeline_name2"]
         },
         "CDXGEN": {
-            "CDXGEN_VERSION": "11.7.0",
+            "CDXGEN_VERSION": "12.1.2",
             "OUTPUT_FORMAT": "cyclonedx-json",
             "SLIM_BINARY": true,
             "FETCH_LICENSE": false,
