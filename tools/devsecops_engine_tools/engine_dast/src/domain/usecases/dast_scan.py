@@ -104,25 +104,14 @@ class DastScan:
                     finding_list.extend(extra_finding_list)
 
         totalized_exclusions = []
-        (
+        if config_tool.get("EXCLUSIONS_ALL") is not None:
             totalized_exclusions.extend(
-                map(
-                    lambda elem: Exclusions(**elem), config_tool.get("EXCLUSIONS_ALL")
-                )
+                [Exclusions(**elem) for elem in config_tool.get("EXCLUSIONS_ALL")]
             )
-            if config_tool.get("EXCLUSIONS_ALL") is not None
-            else None
-        )
-        (
+        if config_tool.get("EXCLUSIONS_SCOPE") is not None:
             totalized_exclusions.extend(
-                map(
-                    lambda elem: Exclusions(**elem),
-                    config_tool.get("EXCLUSIONS_SCOPE"),
-                )
+                [Exclusions(**elem) for elem in config_tool.get("EXCLUSIONS_SCOPE")]
             )
-            if config_tool.get("EXCLUSIONS_SCOPE") is not None
-            else None
-        )
 
         input_core = InputCore(
             totalized_exclusions=totalized_exclusions,

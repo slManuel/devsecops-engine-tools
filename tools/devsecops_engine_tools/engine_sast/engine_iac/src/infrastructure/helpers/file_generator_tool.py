@@ -21,7 +21,7 @@ def generate_file_from_tool(tool, result_list, rules_doc, config_tool):
                 for result in result_list:
                     failed_checks = result.get("results", {}).get("failed_checks", [])
                     all_failed_checks.extend(
-                        map(lambda x: update_fields(x, rules_doc, config_tool), failed_checks)
+                        [update_fields(x, rules_doc, config_tool) for x in failed_checks]
                     )
                     summary_passed += result.get("summary", {}).get("passed", 0)
                     summary_failed += result.get("summary", {}).get("failed", 0)

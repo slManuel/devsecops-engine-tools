@@ -337,14 +337,14 @@ class HandleScan:
 
                     if pt_profile and (
                         pt_apps == "ALL"
-                        or any(map(lambda pd: pd in input_core.scope_pipeline, pt_apps))
+                        or any(pd in input_core.scope_pipeline for pd in pt_apps)
                     ):
                         input_core.threshold_defined.vulnerability = LevelVulnerability(
                             quality_vulnerability_management[pt_profile]
                         )
                     if pt_profile_priority and (
                         pt_apps == "ALL"
-                        or any(map(lambda pd: pd in input_core.scope_pipeline, pt_apps))
+                        or any(pd in input_core.scope_pipeline for pd in pt_apps)
                     ):
                         input_core.threshold_defined.priority = LevelPriority(
                             quality_vulnerability_management[pt_profile_priority]
