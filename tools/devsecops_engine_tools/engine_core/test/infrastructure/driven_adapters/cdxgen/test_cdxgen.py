@@ -66,7 +66,7 @@ class TestCdxGen(unittest.TestCase):
             "https://github.com/CycloneDX/cdxgen/releases/download/v10.2.0/cdxgen-linux-amd64",
             "cdxgen"
         )
-        mock_run.assert_called_once_with('./cdxgen-linux-amd64', self.artifact, self.service_name, [], [], True, True, {}, False)
+        mock_run.assert_called_once_with('./cdxgen-linux-amd64', self.artifact, self.service_name, [], [], True, True, {}, False, '1.6')
         mock_get_list_component.assert_called_once_with('test_service_SBOM.json', 'json')
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.platform.machine')
@@ -92,7 +92,7 @@ class TestCdxGen(unittest.TestCase):
             "https://github.com/CycloneDX/cdxgen/releases/download/v10.2.0/cdxgen-linux-arm64",
             "cdxgen"
         )
-        mock_run.assert_called_once_with('./cdxgen-linux-arm64', self.artifact, self.service_name, [], [], True, True, {}, False)
+        mock_run.assert_called_once_with('./cdxgen-linux-arm64', self.artifact, self.service_name, [], [], True, True, {}, False, '1.6')
         mock_get_list_component.assert_called_once_with('test_service_SBOM.json', 'json')
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.get_list_component')
@@ -228,7 +228,7 @@ class TestCdxGen(unittest.TestCase):
         mock_result = Mock(returncode=0, stdout="", stderr="")
         mock_subprocess.return_value = mock_result
         expected_result_file = f"{self.service_name}_SBOM.json"
-        expected_command = [command_prefix, self.artifact, "-o", expected_result_file]
+        expected_command = [command_prefix, self.artifact, "-o", expected_result_file, "--spec-version", "1.6"]
         
         # Act
         with patch('builtins.print') as mock_print:
@@ -325,7 +325,7 @@ class TestCdxGen(unittest.TestCase):
         # Assert
         self.assertEqual(result, self.mock_components)
         mock_logger.info.assert_called_with(f"Enabling debug mode for pipeline: {self.service_name}")
-        mock_run.assert_called_once_with('./cdxgen-linux-amd64', self.artifact, self.service_name, [], [], True, False, {}, True)
+        mock_run.assert_called_once_with('./cdxgen-linux-amd64', self.artifact, self.service_name, [], [], True, False, {}, True, '1.6')
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.get_list_component')
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.platform.system')
@@ -356,7 +356,7 @@ class TestCdxGen(unittest.TestCase):
         
         # Assert
         self.assertEqual(result, self.mock_components)
-        mock_run.assert_called_once_with('./cdxgen-linux-amd64', self.artifact, self.service_name, [], [], True, True, {}, False)
+        mock_run.assert_called_once_with('./cdxgen-linux-amd64', self.artifact, self.service_name, [], [], True, True, {}, False, '1.6')
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.get_list_component')
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.platform.system')
@@ -389,7 +389,7 @@ class TestCdxGen(unittest.TestCase):
                     self.assertEqual(result, self.mock_components)
                     self.assertEqual(os.environ.get("FETCH_LICENSE"), "true")
                     mock_install.assert_called_once()
-                    mock_run.assert_called_once_with('/usr/local/bin/cdxgen', self.artifact, self.service_name, [], [], True, True, {}, False)
+                    mock_run.assert_called_once_with('/usr/local/bin/cdxgen', self.artifact, self.service_name, [], [], True, True, {}, False, '1.6')
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.get_list_component')
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.platform.system')
@@ -422,7 +422,7 @@ class TestCdxGen(unittest.TestCase):
                     self.assertEqual(result, self.mock_components)
                     self.assertIsNone(os.environ.get("FETCH_LICENSE"))
                     mock_install.assert_called_once()
-                    mock_run.assert_called_once_with('/usr/local/bin/cdxgen', self.artifact, self.service_name, [], [], True, True, {}, False)
+                    mock_run.assert_called_once_with('/usr/local/bin/cdxgen', self.artifact, self.service_name, [], [], True, True, {}, False, '1.6')
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.subprocess.run')
     def test_run_cdxgen_with_exclude_types_list(self, mock_subprocess):
@@ -437,7 +437,7 @@ class TestCdxGen(unittest.TestCase):
         mock_result = Mock(returncode=0, stdout="", stderr="")
         mock_subprocess.return_value = mock_result
         expected_result_file = f"{self.service_name}_SBOM.json"
-        expected_command = [command_prefix, self.artifact, "-o", expected_result_file, "--exclude-type", "npm", "--exclude-type", "pip"]
+        expected_command = [command_prefix, self.artifact, "-o", expected_result_file, "--spec-version", "1.6", "--exclude-type", "npm", "--exclude-type", "pip"]
         
         # Act
         with patch('builtins.print') as mock_print:
@@ -465,7 +465,7 @@ class TestCdxGen(unittest.TestCase):
         mock_result = Mock(returncode=0, stdout="", stderr="")
         mock_subprocess.return_value = mock_result
         expected_result_file = f"{self.service_name}_SBOM.json"
-        expected_command = [command_prefix, self.artifact, "-o", expected_result_file, "--exclude", "node_modules", "--exclude", "vendor"]
+        expected_command = [command_prefix, self.artifact, "-o", expected_result_file, "--spec-version", "1.6", "--exclude", "node_modules", "--exclude", "vendor"]
         
         # Act
         with patch('builtins.print') as mock_print:
@@ -493,7 +493,7 @@ class TestCdxGen(unittest.TestCase):
         mock_result = Mock(returncode=0, stdout="", stderr="")
         mock_subprocess.return_value = mock_result
         expected_result_file = f"{self.service_name}_SBOM.json"
-        expected_command = [command_prefix, self.artifact, "-o", expected_result_file, "--no-recurse"]
+        expected_command = [command_prefix, self.artifact, "-o", expected_result_file, "--spec-version", "1.6", "--no-recurse"]
         
         # Act
         with patch('builtins.print') as mock_print:
@@ -611,7 +611,7 @@ class TestCdxGen(unittest.TestCase):
         # Assert
         self.assertEqual(result, self.mock_components)
         mock_logger.info.assert_called_with(f"Using cdxgen from PATH: {cdxgen_path}")
-        mock_run.assert_called_once_with(cdxgen_path, self.artifact, self.service_name, [], [], True, True, {}, False)
+        mock_run.assert_called_once_with(cdxgen_path, self.artifact, self.service_name, [], [], True, True, {}, False, '1.6')
 
     @patch('devsecops_engine_tools.engine_core.src.infrastructure.driven_adapters.cdxgen.cdxgen.subprocess.run')
     def test_install_tool_unix_success(self, mock_subprocess):
@@ -766,7 +766,7 @@ class TestCdxGen(unittest.TestCase):
         mock_result = Mock(returncode=0, stdout="", stderr="")
         mock_subprocess.return_value = mock_result
         expected_result_file = f"{self.service_name}_SBOM.json"
-        expected_command = [command_prefix, self.artifact, "-o", expected_result_file, "--lifecycle", "post-build"]
+        expected_command = [command_prefix, self.artifact, "-o", expected_result_file, "--spec-version", "1.6", "--lifecycle", "post-build"]
 
         with patch('builtins.print'):
             result = self.cdxgen._run_cdxgen(
@@ -796,7 +796,7 @@ class TestCdxGen(unittest.TestCase):
         mock_result = Mock(returncode=0, stdout="", stderr="")
         mock_subprocess.return_value = mock_result
         expected_result_file = f"{self.service_name}_SBOM.json"
-        expected_command = [command_prefix, self.artifact, "-o", expected_result_file, "--no-install-deps"]
+        expected_command = [command_prefix, self.artifact, "-o", expected_result_file, "--spec-version", "1.6", "--no-install-deps"]
 
         with patch('builtins.print'):
             result = self.cdxgen._run_cdxgen(
