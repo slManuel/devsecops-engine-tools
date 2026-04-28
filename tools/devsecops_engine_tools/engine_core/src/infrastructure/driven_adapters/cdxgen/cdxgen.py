@@ -34,6 +34,7 @@ class CdxGen(SbomManagerGateway):
             install_deps = config["CDXGEN"].get("INSTALL_DEPENDENCIES", True)
             debug_pipelines = config["CDXGEN"].get("DEBUG_PIPELINES", [])
             lifecycle_pipelines = config["CDXGEN"].get("LIFECYCLE_PIPELINES", {})
+            spec_version = config["CDXGEN"].get("SPEC_VERSION", "1.6")
 
             if config["CDXGEN"].get("OVERRIDE_REGISTRIES", False):
                 registries = config["CDXGEN"].get("REGISTRIES", {})
@@ -85,19 +86,21 @@ class CdxGen(SbomManagerGateway):
                     logger.warning(f"{os_platform} is not supported.")
                     return None
 
-            result_sbom = self._run_cdxgen(command_prefix, artifact, service_name, exclude_types, exclude_paths, recurse, install_deps, lifecycle_pipelines, enable_debug)
+            result_sbom = self._run_cdxgen(command_prefix, artifact, service_name, exclude_types, exclude_paths, recurse, install_deps, lifecycle_pipelines, enable_debug, spec_version)
             return get_list_component(result_sbom, config["CDXGEN"]["OUTPUT_FORMAT"])
         except Exception as e:
             logger.error(f"Error generating SBOM: {e}")
             return None
 
-    def _run_cdxgen(self, command_prefix, artifact, service_name, exclude_types, exclude_paths, recurse, install_deps, lifecycle_pipelines, enable_debug=False):
+    def _run_cdxgen(self, command_prefix, artifact, service_name, exclude_types, exclude_paths, recurse, install_deps, lifecycle_pipelines, enable_debug=False, spec_version="1.6"):
         result_file = f"{service_name}_SBOM.json"
         command = [
             command_prefix,
             artifact,
             "-o",
-            result_file
+            result_file,
+            "--spec-version",
+            spec_version
         ]
 
         if exclude_types:

@@ -136,6 +136,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
             "OUTPUT_FORMAT": "cyclonedx-json",
             "SLIM_BINARY": true,
             "FETCH_LICENSE": false,
+            "SPEC_VERSION": "1.6",
             "EXCLUDE_TYPES": ["jar"],
             "EXCLUDE_PATHS": ["**/test/**"],
             "RECURSE": true,
