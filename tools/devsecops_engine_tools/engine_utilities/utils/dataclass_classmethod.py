@@ -74,7 +74,7 @@ class FromDictMixin:
         transformed_data = {}
         for key, value in data.items():
             internal_key = camel_case_to_snake_case(key)
-            if internal_key in available_fields.keys() and value is not None:
+            if internal_key in available_fields and value is not None:
                 matching_internal_field = available_fields[internal_key]
                 # Resolve Union/Optional types to get the actual type
                 field_type = cls._resolve_union_type(matching_internal_field.type)
