@@ -7,7 +7,7 @@ from devsecops_engine_tools.engine_utilities.defect_dojo.domain.models.product_t
 
 @dataclasses.dataclass
 class Prefetch(FromDictMixin):
-    prod_type: Dict[str, ProductType]
+    prod_type: Dict[str, ProductType] = dataclasses.field(default_factory=dict)
 
 @dataclasses.dataclass
 class ProductList(FromDictMixin):
