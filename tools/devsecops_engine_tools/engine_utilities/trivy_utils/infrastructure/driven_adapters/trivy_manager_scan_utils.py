@@ -1,5 +1,6 @@
 import subprocess
 import platform
+import os
 import requests
 import tarfile
 import zipfile
@@ -46,7 +47,11 @@ class TrivyManagerScanUtils():
         )
         if installed.returncode == 1:
             try:
-                self._download_tool(file, url)
+                if not self._download_tool(file, url):
+                    return None
+                if not tarfile.is_tarfile(file):
+                    logger.error(f"Error installing trivy: downloaded file {file} is not a valid tar archive")
+                    return None
                 with tarfile.open(file, 'r:gz') as tar_file:
                     tar_file.extract(member=tar_file.getmember("trivy"))
                     return "./trivy"
@@ -65,7 +70,11 @@ class TrivyManagerScanUtils():
             return command_prefix
         except:
             try:
-                self._download_tool(file, url)
+                if not self._download_tool(file, url):
+                    return None
+                if not zipfile.is_zipfile(file):
+                    logger.error(f"Error installing trivy: downloaded file {file} is not a valid zip archive")
+                    return None
                 with zipfile.ZipFile(file, 'r') as zip_file:
                     zip_file.extract(member="trivy.exe")
                     return "./trivy.exe"
@@ -74,11 +83,16 @@ class TrivyManagerScanUtils():
     
     def _download_tool(self, file, url):
         try:
-            response = requests.get(url, allow_redirects=True)
+            response = requests.get(url, allow_redirects=True, timeout=60)
+            response.raise_for_status()
             with open(file, "wb") as compress_file:
                 compress_file.write(response.content)
+            return True
         except Exception as e:
+            if os.path.exists(file):
+                os.remove(file)
             logger.error(f"Error downloading trivy: {e}")
+            return False
 
     @staticmethod
     def get_cvss_v3_severity(cvss_score: str, severity: str) -> str:
