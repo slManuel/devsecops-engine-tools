@@ -13,33 +13,49 @@ def test_download_tool_success(trivy_utils_instance):
     with patch("builtins.open") as mock_open, patch(
         "requests.get"
         ) as mock_request:
+        mock_response = Mock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.content = b"binary-content"
+        mock_request.return_value = mock_response
 
-        trivy_utils_instance._download_tool("file", "url")
+        result = trivy_utils_instance._download_tool("file", "url")
 
         assert mock_request.call_count == 1
         assert mock_open.call_count == 1
+        assert result is True
 
 
 def test_download_tool_exception(trivy_utils_instance):
     """Test download_tool exception handling in TrivyManagerScanUtils"""
     with patch("requests.get") as mock_request, patch(
+            "os.path.exists"
+        ) as mock_exists, patch(
+            "os.remove"
+        ) as mock_remove, patch(
             "devsecops_engine_tools.engine_utilities.trivy_utils.infrastructure.driven_adapters.trivy_manager_scan_utils.logger.error"
         ) as mock_logger:
         mock_request.side_effect = Exception("custom error")
+        mock_exists.return_value = True
 
-        trivy_utils_instance._download_tool("file", "url")
+        result = trivy_utils_instance._download_tool("file", "url")
 
         mock_logger.assert_called_with("Error downloading trivy: custom error")
+        mock_remove.assert_called_with("file")
+        assert result is False
 
 
 def test_install_tool_success(trivy_utils_instance):
     """Test _install_tool method in TrivyManagerScanUtils"""
     with patch("subprocess.run") as mock_run, patch(
+        "tarfile.is_tarfile"
+    ) as mock_is_tarfile, patch(
         "tarfile.open"
     ) as mock_tar_open, patch(
         "devsecops_engine_tools.engine_utilities.trivy_utils.infrastructure.driven_adapters.trivy_manager_scan_utils.TrivyManagerScanUtils._download_tool"
     ) as mock_download:
         mock_run.return_value = Mock(returncode=1)
+        mock_download.return_value = True
+        mock_is_tarfile.return_value = True
 
         trivy_utils_instance._install_tool("file", "url", "trivy")
 
@@ -61,14 +77,37 @@ def test_install_tool_exception(trivy_utils_instance):
         mock_logger.assert_called_with("Error installing trivy: custom error")
 
 
+def test_install_tool_invalid_archive(trivy_utils_instance):
+    """Test _install_tool handles invalid downloaded archive"""
+    with patch("subprocess.run") as mock_run, patch(
+        "tarfile.is_tarfile"
+    ) as mock_is_tarfile, patch(
+        "devsecops_engine_tools.engine_utilities.trivy_utils.infrastructure.driven_adapters.trivy_manager_scan_utils.logger.error"
+    ) as mock_logger, patch(
+        "devsecops_engine_tools.engine_utilities.trivy_utils.infrastructure.driven_adapters.trivy_manager_scan_utils.TrivyManagerScanUtils._download_tool"
+    ) as mock_download:
+        mock_run.return_value = Mock(returncode=1)
+        mock_download.return_value = True
+        mock_is_tarfile.return_value = False
+
+        result = trivy_utils_instance._install_tool("file", "url", "trivy")
+
+        mock_logger.assert_called_with("Error installing trivy: downloaded file file is not a valid tar archive")
+        assert result is None
+
+
 def test_install_tool_windows_success(trivy_utils_instance):
     """Test _install_tool_windows method in TrivyManagerScanUtils"""
     with patch("subprocess.run") as mock_run, patch(
+        "zipfile.is_zipfile"
+    ) as mock_is_zipfile, patch(
         "zipfile.ZipFile"
     ) as mock_zipfile, patch(
         "devsecops_engine_tools.engine_utilities.trivy_utils.infrastructure.driven_adapters.trivy_manager_scan_utils.TrivyManagerScanUtils._download_tool"
     ) as mock_download:
         mock_run.side_effect = Exception()
+        mock_download.return_value = True
+        mock_is_zipfile.return_value = True
 
         trivy_utils_instance._install_tool_windows("file", "url", "trivy.exe")
 
