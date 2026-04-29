@@ -107,7 +107,7 @@ jobs:
           python setup.py sdist bdist_wheel
           pip install dist/devsecops_engine_tools-*.whl
 
-          docker pull bancolombia/devsecops-engine-tools:1.149.4
+          docker pull bancolombia/devsecops-engine-tools:1.138.0
 
           # Execute devsecops-engine-tools and handle the output
           output=$(devsecops-engine-tools --platform_devops github --remote_config_source local --remote_config_repo example_remote_config_local --module engine_container --tool trivy --image bancolombia/devsecops-engine-tools:1.149.4)
