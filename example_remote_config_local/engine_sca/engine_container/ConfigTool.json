@@ -10,7 +10,7 @@
         "SCAN_RETRY_DELAY_TAR_SECONDS": 0
     },
     "TRIVY": {
-        "TRIVY_VERSION": "0.62.1",
+        "TRIVY_VERSION": "0.65.0",
         "SBOM_FORMAT": "cyclonedx",
         "VULN_TYPE": "all",
         "IGNORE_UNFIXED": false

@@ -78,8 +78,8 @@ class GithubActions(DevopsPlatformGateway):
                 else BuildVariables.github_repository
             ),
             "pipeline_name": (
-                CustomVariables.Pipeline_Name 
-                if CustomVariables.Pipeline_Name.value() 
+                CustomVariables.Pipeline_Name
+                if CustomVariables.Pipeline_Name.value()
                 else (
                     BuildVariables.github_workflow
                     if SystemVariables.github_job.value() == "build"

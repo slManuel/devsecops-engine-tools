@@ -1,5 +1,5 @@
 import dataclasses
-from typing import List
+from typing import List, Optional
 from devsecops_engine_tools.engine_utilities.utils.dataclass_classmethod import FromDictMixin
 
 
@@ -20,11 +20,11 @@ class Product(FromDictMixin):
     origin = None
     user_records = None
     revenue = None
-    external_audience: bool = None
-    internet_accessible: bool = None
-    enable_simple_risk_acceptance: bool = None
-    enable_full_risk_acceptance: bool = None
-    disable_sla_breach_notifications: bool = None
+    external_audience: Optional[bool] = None
+    internet_accessible: Optional[bool] = None
+    enable_simple_risk_acceptance: Optional[bool] = None
+    enable_full_risk_acceptance: Optional[bool] = None
+    disable_sla_breach_notifications: Optional[bool] = None
     product_manager = None
     technical_contact = None
     team_manager = None

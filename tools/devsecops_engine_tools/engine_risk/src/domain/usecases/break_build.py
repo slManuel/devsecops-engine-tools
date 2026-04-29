@@ -70,16 +70,14 @@ class BreakBuild:
 
         self._breaker()
 
-        self.scan_result["findings_excluded"] = list(
-            map(
-                lambda item: {
-                    "severity": item.severity,
-                    "id": item.id,
-                    "category": item.reason,
-                },
-                all_exclusions,
-            )
-        )
+        self.scan_result["findings_excluded"] = [
+            {
+                "severity": item.severity,
+                "id": item.id,
+                "category": item.reason,
+            }
+            for item in all_exclusions
+        ]
 
         self.scan_result["risk"] = {
             "risk_control": {
@@ -611,6 +609,6 @@ class BreakBuild:
             )
             self.printer_table_gateway.print_table_report_exclusions(applied_exclusions)
             for reason, total in Counter(
-                map(lambda x: x["reason"], applied_exclusions)
+                x["reason"] for x in applied_exclusions
             ).items():
                 print("{0} findings count: {1}".format(reason, total))

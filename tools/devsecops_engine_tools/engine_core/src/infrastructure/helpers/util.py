@@ -14,8 +14,9 @@ def format_expired_date(expired_date, input_format="%d%m%Y", output_format="%d/%
 def define_env(variable_env, branch):
     if variable_env is not None:
         return variable_env.lower()
-    return (
-        "pdn"
-        if branch in ["trunk", "master"]
-        else "qa" if branch=="release" else "dev"
-    )
+    if branch in ["trunk", "master"]:
+        return "pdn"
+    elif branch == "release":
+        return "qa"
+    else:
+        return "dev"

@@ -61,20 +61,14 @@ class IacScan:
             dict_args["use_vulnerability_management"] = "false"
 
         totalized_exclusions = []
-        (
+        if config_tool_core.exclusions_all is not None:
             totalized_exclusions.extend(
-                map(lambda elem: Exclusions(**elem), config_tool_core.exclusions_all)
+                [Exclusions(**elem) for elem in config_tool_core.exclusions_all]
             )
-            if config_tool_core.exclusions_all is not None
-            else None
-        )
-        (
+        if config_tool_core.exclusions_scope is not None:
             totalized_exclusions.extend(
-                map(lambda elem: Exclusions(**elem), config_tool_core.exclusions_scope)
+                [Exclusions(**elem) for elem in config_tool_core.exclusions_scope]
             )
-            if config_tool_core.exclusions_scope is not None
-            else None
-        )
 
         input_core = InputCore(
             totalized_exclusions=totalized_exclusions,

@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch, mock_open
 import json
 from devsecops_engine_tools.engine_utilities.copacetic.src.infrastructure.driven_adapters.copacetic.copacetic_adapter import CopaceticAdapter
 
@@ -42,8 +42,9 @@ class TestCopaceticAdapter(unittest.TestCase):
     @patch('os.path.exists')
     @patch('os.chmod')
     @patch('os.unlink')
+    @patch('builtins.open', new_callable=mock_open)
     def test_install_tool_linux_amd64(self, mock_unlink, mock_chmod, mock_exists, 
-                                      mock_makedirs, mock_temp_file, mock_tarfile_open, 
+                                      mock_open_file, mock_makedirs, mock_temp_file, mock_tarfile_open, 
                                       mock_requests_get, mock_machine, mock_system, mock_run):
         """Test installing Copa tool on Linux AMD64"""
         # Arrange
@@ -67,6 +68,8 @@ class TestCopaceticAdapter(unittest.TestCase):
         mock_member.name = "copa"
         mock_member.isfile.return_value = True
         mock_tar.getmembers.return_value = [mock_member]
+        mock_tar.extractfile.return_value = MagicMock()
+        mock_tar.extractfile.return_value.__enter__.return_value.read.return_value = b"binary-data"
         mock_tarfile_open.return_value.__enter__.return_value = mock_tar
         
         # Act
@@ -87,8 +90,9 @@ class TestCopaceticAdapter(unittest.TestCase):
     @patch('os.path.exists')
     @patch('os.chmod')
     @patch('os.unlink')
+    @patch('builtins.open', new_callable=mock_open)
     def test_install_tool_linux_arm64(self, mock_unlink, mock_chmod, mock_exists, 
-                                      mock_makedirs, mock_temp_file, mock_tarfile_open, 
+                                      mock_open_file, mock_makedirs, mock_temp_file, mock_tarfile_open, 
                                       mock_requests_get, mock_machine, mock_system, mock_run):
         """Test installing Copa tool on Linux ARM64"""
         # Arrange
@@ -112,6 +116,8 @@ class TestCopaceticAdapter(unittest.TestCase):
         mock_member.name = "copa"
         mock_member.isfile.return_value = True
         mock_tar.getmembers.return_value = [mock_member]
+        mock_tar.extractfile.return_value = MagicMock()
+        mock_tar.extractfile.return_value.__enter__.return_value.read.return_value = b"binary-data"
         mock_tarfile_open.return_value.__enter__.return_value = mock_tar
         
         # Act
@@ -131,8 +137,9 @@ class TestCopaceticAdapter(unittest.TestCase):
     @patch('os.path.exists')
     @patch('os.chmod')
     @patch('os.unlink')
+    @patch('builtins.open', new_callable=mock_open)
     def test_install_tool_darwin(self, mock_unlink, mock_chmod, mock_exists, 
-                                mock_makedirs, mock_temp_file, mock_tarfile_open, 
+                                mock_open_file, mock_makedirs, mock_temp_file, mock_tarfile_open, 
                                 mock_requests_get, mock_machine, mock_system, mock_run):
         """Test Copa installation on Darwin"""
         # Arrange
@@ -156,6 +163,8 @@ class TestCopaceticAdapter(unittest.TestCase):
         mock_member.name = "copa"
         mock_member.isfile.return_value = True
         mock_tar.getmembers.return_value = [mock_member]
+        mock_tar.extractfile.return_value = MagicMock()
+        mock_tar.extractfile.return_value.__enter__.return_value.read.return_value = b"binary-data"
         mock_tarfile_open.return_value.__enter__.return_value = mock_tar
         
         # Act

@@ -124,7 +124,7 @@ class Utils:
 
     def update_threshold(self, threshold: Threshold, exclusions_data, pipeline_name):
         def set_threshold(new_threshold):
-            threshold.vulnerability = LevelVulnerability(new_threshold.get("VULNERABILITY"))
+            threshold.vulnerability = LevelVulnerability(new_threshold.get("VULNERABILITY")) if new_threshold.get("VULNERABILITY") else threshold.vulnerability
             threshold.compliance = LevelCompliance(new_threshold.get("COMPLIANCE")) if new_threshold.get("COMPLIANCE") else threshold.compliance
             threshold.cve = new_threshold.get("CVE") if new_threshold.get("CVE") is not None else threshold.cve
             threshold.name = new_threshold.get("reason", "Exclusion")

@@ -1,5 +1,5 @@
 import dataclasses
-from typing import List
+from typing import List, Optional
 from devsecops_engine_tools.engine_utilities.utils.dataclass_classmethod import FromDictMixin
 
 @dataclasses.dataclass
@@ -15,7 +15,7 @@ class Finding(FromDictMixin):
     request_response = None
     req_resp: List[None] = dataclasses.field(default_factory=list)
     accepted_risks: List[None] = dataclasses.field(default_factory=list)
-    transfer_finding: TransferFinding = None
+    transfer_finding: Optional[TransferFinding] = None
     push_to_jira: bool = False
     age: int = 0
     sla_days_remaining: int = 0
@@ -43,17 +43,17 @@ class Finding(FromDictMixin):
     steps_to_reproduce = None
     severity_justification = None
     references = None
-    active: bool = None
-    verified: bool = None
-    false_p: bool = None
-    duplicate: bool = None
-    out_of_scope: bool = None
+    active: Optional[bool] = None
+    verified: Optional[bool] = None
+    false_p: Optional[bool] = None
+    duplicate: Optional[bool] = None
+    out_of_scope: Optional[bool] = None
     risk_status: str = ""
-    risk_accepted: bool = None
-    under_review: bool = None
+    risk_accepted: Optional[bool] = None
+    under_review: Optional[bool] = None
     last_status_update: str = ""
-    under_defect_review: bool = None
-    is_mitigated: bool = None
+    under_defect_review: Optional[bool] = None
+    is_mitigated: Optional[bool] = None
     thread_id: int = -1
     mitigated = None
     numerical_severity: str = ""
@@ -65,8 +65,8 @@ class Finding(FromDictMixin):
     file_path: str = ""
     component_name: str = ""
     component_version: str = ""
-    static_finding: bool = None
-    dynamic_finding: bool = None
+    static_finding: Optional[bool] = None
+    dynamic_finding: Optional[bool] = None
     created: str = ""
     service: str = ""
     scanner_confidence = None

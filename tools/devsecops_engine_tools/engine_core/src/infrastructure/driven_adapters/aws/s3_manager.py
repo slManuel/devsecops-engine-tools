@@ -126,10 +126,26 @@ class S3Manager(MetricsManagerGateway):
         ]
     )
 
+    def _get_expected_bucket_owner(self, aws_config):
+        expected_bucket_owner = aws_config.get("EXPECTED_BUCKET_OWNER")
+        if expected_bucket_owner:
+            return expected_bucket_owner
+
+        role_arn = aws_config.get("ROLE_ARN", "")
+        role_arn_parts = role_arn.split(":")
+        if len(role_arn_parts) > 4 and role_arn_parts[4].isdigit():
+            return role_arn_parts[4]
+
+        raise ValueError(
+            "METRICS_MANAGER.AWS.EXPECTED_BUCKET_OWNER or a valid ROLE_ARN is required."
+        )
+
     def send_metrics(self, config_tool, module, file_path):
+        aws_config = config_tool["METRICS_MANAGER"]["AWS"]
+        expected_bucket_owner = self._get_expected_bucket_owner(aws_config)
         credentials_role = (
-            assume_role(config_tool["METRICS_MANAGER"]["AWS"]["ROLE_ARN"])
-            if config_tool["METRICS_MANAGER"]["AWS"]["USE_ROLE"]
+            assume_role(aws_config["ROLE_ARN"])
+            if aws_config["USE_ROLE"]
             else None
         )
         session = boto3.session.Session()
@@ -137,7 +153,7 @@ class S3Manager(MetricsManagerGateway):
         if credentials_role:
             client = session.client(
                 service_name="s3",
-                region_name=config_tool["METRICS_MANAGER"]["AWS"]["REGION_NAME"],
+                region_name=aws_config["REGION_NAME"],
                 aws_access_key_id=credentials_role["AccessKeyId"],
                 aws_secret_access_key=credentials_role["SecretAccessKey"],
                 aws_session_token=credentials_role["SessionToken"],
@@ -145,17 +161,20 @@ class S3Manager(MetricsManagerGateway):
         else:
             client = session.client(
                 service_name="s3",
-                region_name=config_tool["METRICS_MANAGER"]["AWS"]["REGION_NAME"],
+                region_name=aws_config["REGION_NAME"],
             )
         date = datetime.datetime.now()
-        type_format = config_tool["METRICS_MANAGER"]["AWS"]["TYPE_FORMAT_BUCKET_FILE"]
-        path_bucket_metrics = config_tool["METRICS_MANAGER"]["AWS"]["PATH_BUCKET"]
+        type_format = aws_config["TYPE_FORMAT_BUCKET_FILE"]
+        path_bucket_metrics = aws_config["PATH_BUCKET"]
         filename = file_path.split("/")[-1]
         base_path = f"{path_bucket_metrics}/module={module}/year={date:%Y}/month={date:%m}" if type_format == "parquet" else f"{path_bucket_metrics}/{module}/{date:%Y}/{date:%m}/{date:%d}"
         path_bucket = f"{base_path}/{filename.rsplit('.', 1)[0]}.{type_format}"
 
         existing_data = self._get_s3_data(
-            client, config_tool["METRICS_MANAGER"]["AWS"]["BUCKET"], path_bucket
+            client,
+            aws_config["BUCKET"],
+            path_bucket,
+            expected_bucket_owner,
         )
 
         if (
@@ -198,16 +217,18 @@ class S3Manager(MetricsManagerGateway):
             )
 
         client.put_object(
-            Bucket=config_tool["METRICS_MANAGER"]["AWS"]["BUCKET"],
+            Bucket=aws_config["BUCKET"],
             Key=path_bucket,
             Body=data,
+            ExpectedBucketOwner=expected_bucket_owner,
         )
 
-    def _get_s3_data(self, client, bucket, path):
+    def _get_s3_data(self, client, bucket, path, expected_bucket_owner):
         try:
             response = client.get_object(
                 Bucket=bucket,
                 Key=path,
+                ExpectedBucketOwner=expected_bucket_owner,
             )
             return response["Body"].read()
         except client.exceptions.NoSuchKey:

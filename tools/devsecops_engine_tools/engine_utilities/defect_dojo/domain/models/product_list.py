@@ -1,5 +1,5 @@
 import dataclasses
-from typing import List, Dict
+from typing import List, Dict, Optional
 from devsecops_engine_tools.engine_utilities.utils.dataclass_classmethod import FromDictMixin
 from devsecops_engine_tools.engine_utilities.defect_dojo.domain.models.product import Product
 from devsecops_engine_tools.engine_utilities.defect_dojo.domain.models.product_type import ProductType
@@ -7,7 +7,7 @@ from devsecops_engine_tools.engine_utilities.defect_dojo.domain.models.product_t
 
 @dataclasses.dataclass
 class Prefetch(FromDictMixin):
-    prod_type: Dict[str, ProductType]
+    prod_type: Dict[str, ProductType] = dataclasses.field(default_factory=dict)
 
 @dataclasses.dataclass
 class ProductList(FromDictMixin):
@@ -15,4 +15,4 @@ class ProductList(FromDictMixin):
     next = None
     previous = None
     results: List[Product] = dataclasses.field(default_factory=list)
-    prefetch: Prefetch = None
+    prefetch: Optional[Prefetch] = None

@@ -18,6 +18,7 @@ class CopaceticAdapter:
         self.config = config or {}
 
     def install_tool(self, version, path="."):
+        extracted_path = None
         try:
             installed = subprocess.run(
                 ["which", "copa"],
@@ -56,19 +57,20 @@ class CopaceticAdapter:
             with tempfile.NamedTemporaryFile(delete=False, suffix='.tar.gz') as temp_file:
                 temp_file.write(response.content)
                 temp_path = temp_file.name
-            
+
+            os.makedirs(path, exist_ok=True)
             with tarfile.open(temp_path, 'r:gz') as tar:
                 copa_member = None
                 for member in tar.getmembers():
                     if member.name.endswith('copa') and member.isfile():
                         copa_member = member
                         break
-                
+
                 if copa_member:
-                    tar.extract(copa_member, path=path)
-                    extracted_path = os.path.join(path, copa_member.name)
-                    if os.path.exists(extracted_path):
-                        os.chmod(extracted_path, 0o755)
+                    extracted_path = os.path.join(path, 'copa')
+                    with tar.extractfile(copa_member) as extracted_file, open(extracted_path, 'wb') as output_file:
+                        output_file.write(extracted_file.read())
+                    os.chmod(extracted_path, 0o755)
 
             os.unlink(temp_path)
             return extracted_path

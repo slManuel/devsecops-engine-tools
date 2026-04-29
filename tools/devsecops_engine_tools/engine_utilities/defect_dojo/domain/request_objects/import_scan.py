@@ -1,5 +1,5 @@
 import dataclasses
-from typing import List
+from typing import List, Optional
 
 
 @dataclasses.dataclass
@@ -33,7 +33,7 @@ class ImportScanRequest:
     branch_tag: str = ""
     commit_hash: str = ""
     api_scan_configuration: int = 0
-    sla_configuration: dict = None
+    sla_configuration: Optional[dict] = None
     test_id: int = 0
     service: str = ""
     group_by: str = ""
@@ -44,10 +44,10 @@ class ImportScanRequest:
     tool_scm_configuration: str = ""
     code_app: str = ""
     generate_auth_cmdb: bool = False
-    auth_cmdb_request_response: dict = None
+    auth_cmdb_request_response: Optional[dict] = None
     token_cmdb: str = ""
     host_cmdb: str = ""
-    cmdb_request_response: dict = None
+    cmdb_request_response: Optional[dict] = None
     token_defect_dojo: str = ""
     host_defect_dojo: str = ""
     # *** config map ***
@@ -58,13 +58,13 @@ class ImportScanRequest:
     remote_config_path: str = ""
     remote_config_branch: str = ""
     project_remote_config: str = ""
-    cmdb_mapping: dict = None
-    product_type_name_mapping: dict = None
+    cmdb_mapping: Optional[dict] = None
+    product_type_name_mapping: Optional[dict] = None
     variable_code_app: str = ""
     expression: str = ""
     url: str = ""
-    reimport_scan: bool = None
-    get_exact_product: bool = None
+    reimport_scan: Optional[bool] = None
+    get_exact_product: Optional[bool] = None
     test_title: str = ""
 
     @classmethod

@@ -101,8 +101,8 @@ class AzureDevops(DevopsPlatformGateway):
                 else BuildVariables.Build_Repository_Name
             ),
             "pipeline_name": (
-                CustomVariables.Pipeline_Name 
-                if CustomVariables.Pipeline_Name.value() 
+                CustomVariables.Pipeline_Name
+                if CustomVariables.Pipeline_Name.value()
                 else (
                     BuildVariables.Build_DefinitionName
                     if SystemVariables.System_HostType.value() == "build"
