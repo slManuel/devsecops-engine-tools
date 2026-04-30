@@ -106,7 +106,7 @@ class KicsTool(ToolGateway):
                         id = file.get("similarity_id", ""),
                         check_name = query.get("query_name", ""),
                         check_class = query.get("category", ""),
-                        severity = query.get("severity", ""),
+                        severity = query.get("severity", "").lower(),
                         where = f"{file.get('file_name', '')} (line {file.get('line', '')}) - expected value: {file.get('expected_value', '')}, actual value: {file.get('actual_value', '')}",
                         resource = file.get("issue_type", "unknown"),
                         description = query.get("description", ""),
