@@ -134,7 +134,7 @@
         }
     },
     "PRIORITY_MANAGER":{
-        "USE_PRIORITY": true,
+        "USE_PRIORITY": false,
         "HOST_PRIORITY": "",
         "CVE_REGEX": "CVE-\\d{4}-\\d+",
         "MAX_RETRIES": 3,
