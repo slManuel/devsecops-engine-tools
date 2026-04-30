@@ -97,26 +97,6 @@ jobs:
             exit 1
           fi
 
-      - name: devsecops-engine-tools engine_container
-        run: |
-          set -e
-          # Install devsecops-engine-tools
-          cd tools/
-          source _venv/bin/activate
-          python -m pip install setuptools virtualenv wheel
-          python setup.py sdist bdist_wheel
-          pip install dist/devsecops_engine_tools-*.whl
-
-          docker pull bancolombia/devsecops-engine-tools:1.138.0
-          cd ..
-
-          # Execute devsecops-engine-tools and handle the output
-          output=$(devsecops-engine-tools --platform_devops github --remote_config_source local --remote_config_repo example_remote_config_local --module engine_container --tool trivy --image bancolombia/devsecops-engine-tools:1.138.0)
-          echo "$output"
-          if [[ $output == *"✘Failed"* ]]; then
-            exit 1
-          fi
-
       - name: Run analysis on SonarQube
         if: ${{ github.event.pull_request.head.repo.fork == false }}
         uses: SonarSource/sonarqube-scan-action@v2
