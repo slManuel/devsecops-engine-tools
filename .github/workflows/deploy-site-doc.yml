@@ -45,7 +45,7 @@ jobs:
 
       - name: Install dependencies and Build
         run: |
-          npm ci
+          npm install
           npm run build
         working-directory: docs/Docusaurus/
           
