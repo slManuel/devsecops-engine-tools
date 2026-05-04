@@ -2,13 +2,13 @@ trigger: none
 
 parameters:
   - name: version
-    displayName: 'DevSecOps Engine Tools Version (e.g., 1.0.0)'
+    displayName: 'Engine Tools Version (e.g. 1.0.0) — leave as "none" to skip standard image'
     type: string
-    default: ''
+    default: 'none'
   - name: ide_version
-    displayName: 'IDE image version (e.g. v1, v2). Leave empty to skip. Runs rarely — only when IDE config or base tools change.'
+    displayName: 'IDE image version (e.g. v1, v2) — leave as "none" to skip IDE image'
     type: string
-    default: ''
+    default: 'none'
 
 stages:
 - stage: BuildImage
@@ -55,11 +55,11 @@ stages:
           -t $(artifactory-url)/devops/devsecops-engine-tools:${{ parameters.version }}$(FOR_TEST_TAG) \
           -f docker/Dockerfile .
       displayName: 'Build Docker Image (standard)'
-      condition: ne('${{ parameters.version }}', '')
+      condition: ne('${{ parameters.version }}', 'none')
 
     - task: ArtifactoryDocker@1
       displayName: Docker Push (standard)
-      condition: ne('${{ parameters.version }}', '')
+      condition: ne('${{ parameters.version }}', 'none')
       inputs:
         command: 'push'
         repository: 'devops/devsecops-engine-tools'
@@ -75,11 +75,11 @@ stages:
           -t $(artifactory-url)/devops/devsecops-engine-tools:ide-${{ parameters.ide_version }} \
           -f docker/Dockerfile .
       displayName: 'Build Docker Image (ide-${{ parameters.ide_version }})'
-      condition: ne('${{ parameters.ide_version }}', '')
+      condition: ne('${{ parameters.ide_version }}', 'none')
 
     - task: ArtifactoryDocker@1
       displayName: 'Docker Push (ide-${{ parameters.ide_version }})'
-      condition: ne('${{ parameters.ide_version }}', '')
+      condition: ne('${{ parameters.ide_version }}', 'none')
       inputs:
         command: 'push'
         repository: 'devops/devsecops-engine-tools'
