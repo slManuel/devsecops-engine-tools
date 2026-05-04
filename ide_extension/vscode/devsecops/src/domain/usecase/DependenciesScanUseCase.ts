@@ -40,7 +40,7 @@ export class DependenciesScanUseCase implements IDependenciesScanUseCase {
           scanType: 'dependencies',
           target: folderToScan,
           containerImageName: scanConfiguration.getContainerImageName(),
-          toolVersion: this.containerImageVersion,
+          engineToolsVersion: this.containerImageVersion,
           containerEnginePath: this.containerEnginePath,
           dependenciesTool: scanConfiguration.getDependenciesTool(),
           dependenciesToken: scanConfiguration.getDependenciesToken(),

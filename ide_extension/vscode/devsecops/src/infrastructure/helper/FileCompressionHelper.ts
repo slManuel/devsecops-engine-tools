@@ -30,7 +30,8 @@ export default class FileCompressionHelper {
     '__pycache__',
     '.pytest_cache',
     'venv',
-    '.env'
+    '.env',
+    '.gradle'
   ];
 
   // File extensions to exclude from compression

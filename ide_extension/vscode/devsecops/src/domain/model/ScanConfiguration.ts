@@ -2,7 +2,6 @@ import * as vscode from "vscode";
 
 export class ScanConfiguration {
   private containerImageName: string;
-  private containerImageVersion: string;
   private organizationName: string;
   private projectName: string;
   private definitionId: string;
@@ -14,10 +13,10 @@ export class ScanConfiguration {
   private dependenciesTool: string;
   private dependencyCheckDatabase: string;
   private iacTool: string;
+  private engineToolsVersion: string;
 
   constructor() {
     this.containerImageName = "";
-    this.containerImageVersion = "";
     this.organizationName = "";
     this.projectName = "";
     this.definitionId = "";
@@ -29,6 +28,7 @@ export class ScanConfiguration {
     this.dependenciesTool = "";
     this.dependencyCheckDatabase = "";
     this.iacTool = "";
+    this.engineToolsVersion = "";
 
     this.loadFromVSCodeConfig();
   }
@@ -39,8 +39,7 @@ export class ScanConfiguration {
     const dependenciesConfig = vscode.workspace.getConfiguration("devsecops.dependencies");
     const iacConfig = vscode.workspace.getConfiguration("devsecops.iac");
     
-    this.containerImageName = generalConfig.get("imageToUse") || "bancolombia/devsecops-engine-tools";
-    this.containerImageVersion = generalConfig.get("imageVersion") || "";
+    this.containerImageName = generalConfig.get("imageToUse") || "bancolombia/devsecops-engine-tools:ide-v1";
     this.organizationName = azureDevopsConfig.get("organizationName") || "";
     this.projectName = azureDevopsConfig.get("projectName") || "";
     this.definitionId = azureDevopsConfig.get("releaseId") || "";
@@ -52,6 +51,7 @@ export class ScanConfiguration {
     this.dependenciesTool = dependenciesConfig.get("dependenciesTool") || "xray";
     this.dependencyCheckDatabase = dependenciesConfig.get("dependencyCheckDatabase") || "";
     this.iacTool = iacConfig.get("iacTool") || "checkov";
+    this.engineToolsVersion = generalConfig.get("engineToolsVersion") || "";
   }
 
   public refresh(): void {
@@ -77,7 +77,11 @@ export class ScanConfiguration {
   }
 
   public getContainerImageVersion(): string {
-    return this.containerImageVersion;
+    return this.engineToolsVersion;
+  }
+
+  public getEngineToolsVersion(): string {
+    return this.engineToolsVersion;
   }
 
   public getOrganizationName(): string {
@@ -118,19 +122,6 @@ export class ScanConfiguration {
 
   public getDependencyCheckDatabase(): string {
     return this.dependencyCheckDatabase;
-  }
-
-  public async setContainerImageVersion(version: string): Promise<void> {
-    const config = vscode.workspace.getConfiguration('devsecops.general');
-
-    const targetScope = vscode.workspace.workspaceFolders 
-      ? vscode.ConfigurationTarget.Workspace 
-      : vscode.ConfigurationTarget.Global;
-    
-    await config.update('imageVersion', version, targetScope);
-    this.containerImageVersion = version;
-    
-    console.log(`Saved container image version "${version}" to ${targetScope === vscode.ConfigurationTarget.Workspace ? 'Workspace' : 'Global'} settings`);
   }
 
   public getIacTool(): string {

@@ -91,7 +91,58 @@ export class ScanConfigurationService {
     }
 
     /**
-     * Checks if debug mode is enabled (shows detailed request/response logs)
+     * Validates that a given engine tools version exists on PyPI.
+     * Returns the version if valid, throws an error if not found.
+     */
+    public static async validateEngineToolsVersion(version: string): Promise<void> {
+        const url = `https://pypi.org/pypi/devsecops-engine-tools/${version}/json`;
+        let status: number;
+        try {
+            const response = await fetch(url, { method: 'GET' });
+            status = response.status;
+        } catch (error) {
+            throw new Error(
+                `Could not reach PyPI to validate engine tools version "${version}". Check your internet connection. Original error: ${
+                    error instanceof Error ? error.message : String(error)
+                }`
+            );
+        }
+
+        if (status === 404) {
+            throw new Error(
+                `Engine tools version "${version}" does not exist on PyPI. Please check the version in settings.`
+            );
+        }
+
+        if (status !== 200) {
+            throw new Error(
+                `Unexpected response from PyPI (HTTP ${status}) while validating engine tools version "${version}".`
+            );
+        }
+    }
+
+    /**
+     * Gets the custom rules URL for fetching custom IaC validation rules
+     */
+    public static getCustomRulesUrl(): string | undefined {
+        const config = vscode.workspace.getConfiguration(this.configSection);
+        return config.get<string>('iac.customRulesUrl');
+    }
+
+    /**
+     * Gets the optional custom remote config path configured by the user.
+     * When set, the scanners mount this host directory inside the container
+     * at /ms_remote_config and pass it as --remote_config_repo to the CLI.
+     * When not set, the image's built-in docker_default_remote_config is used.
+     */
+    public static getCustomRemoteConfigPath(): string | undefined {
+        const config = vscode.workspace.getConfiguration(this.configSection);
+        const value = config.get<string>('general.customRemoteConfigPath');
+        return value && value.trim() !== '' ? value.trim() : undefined;
+    }
+
+    /**
+     * Checks if debug mode is enabled (shows detailed scan logs)
      */
     public static getDebugMode(): boolean {
         const config = vscode.workspace.getConfiguration(this.configSection);
@@ -116,7 +167,7 @@ export class ScanConfigurationService {
         executionMode: 'local-docker' | 'remote-microservice';
         microserviceUrl: string | undefined;
         containerImageName: string | undefined;
-        containerImageVersion: string | undefined;
+        engineToolsVersion: string | undefined;
         dependenciesToken: string | undefined;
         xrayMode: string | undefined;
         dependenciesTool: string | undefined;
@@ -130,11 +181,11 @@ export class ScanConfigurationService {
             executionMode: this.getExecutionMode(),
             microserviceUrl: this.getMicroserviceUrl(),
             containerImageName: config.get<string>('general.imageToUse'),
-            containerImageVersion: config.get<string>('general.imageVersion'),
-            dependenciesToken: config.get<string>('dependencies.token'),
+            engineToolsVersion: config.get<string>('general.engineToolsVersion'),
+            dependenciesToken: config.get<string>('dependencies.dependenciesToken'),
             xrayMode: config.get<string>('dependencies.xrayMode'),
-            dependenciesTool: config.get<string>('dependencies.tool'),
-            iacTool: config.get<string>('iac.tool'),
+            dependenciesTool: config.get<string>('dependencies.dependenciesTool'),
+            iacTool: config.get<string>('iac.iacTool'),
             timeout: this.getScanTimeout(),
             debugMode: this.getDebugMode()
         };

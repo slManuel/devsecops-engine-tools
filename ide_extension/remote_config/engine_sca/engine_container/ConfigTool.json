@@ -1,0 +1,55 @@
+{
+    "PRISMA_CLOUD": {
+        "TWISTCLI_PATH": "twistcli",
+        "PRISMA_CONSOLE_URL": "",
+        "PRISMA_API_VERSION": "",
+        "SBOM_FORMAT": "cyclonedx_json",
+        "SCAN_RETRIES": 1,
+        "SCAN_RETRY_DELAY_SECONDS": 0,
+        "SCAN_RETRIES_TAR": 1,
+        "SCAN_RETRY_DELAY_TAR_SECONDS": 0
+    },
+    "TRIVY": {
+        "TRIVY_VERSION": "0.70.0",
+        "SBOM_FORMAT": "cyclonedx",
+        "VULN_TYPE": "all",
+        "IGNORE_UNFIXED": false
+    },
+    "SBOM": {
+        "ENABLED": false,
+        "BRANCH_FILTER": []
+    },
+    "GET_IMAGE_BASE": {
+        "ENABLED": false,
+        "BASE_IMAGE_LABELS": [],
+        "LABEL_KEYS": {}
+    },
+    "VALIDATE_BASE_IMAGE_DATE": {
+        "ENABLED": false,
+        "REFERENCE_IMAGE_DATE": ""
+    },
+    "BLACK_LIST_BASE_IMAGE": {
+        "ENABLED": false,
+        "BLACK_LIST": []
+    },
+    "MESSAGE_INFO_ENGINE_CONTAINER": "engine_container run successfully",
+    "IGNORE_SEARCH_PATTERN": "",
+    "REGEX_CLEAN_END_PIPELINE_NAME": "",
+    "THRESHOLD": {
+        "VULNERABILITY": {
+            "Critical": 1,
+            "High": 4,
+            "Medium": 10,
+            "Low": 15
+        },
+        "COMPLIANCE": {
+            "Critical": 1
+        },
+        "PRIORITY": {
+            "Very Critical": 1,
+            "Critical": 3,
+            "High": 5,
+            "Medium Low": 15
+        }
+    }
+}

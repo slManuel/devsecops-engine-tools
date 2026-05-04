@@ -28,7 +28,15 @@ export function registerIacScanCommand(
 
       void vscode.window.showInformationMessage(`DevSecOps Iac Scanning: ${folderPath}`);
 
-      const useCase = await iacScanRequest();
+      let useCase;
+      try {
+        useCase = await iacScanRequest();
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+        void vscode.window.showErrorMessage(`IaC Scan configuration error: ${errorMessage}`);
+        return;
+      }
+
       const outputChannel = vscode.window.createOutputChannel("IaC Scan Results");
       outputChannel.clear();
 

@@ -1,0 +1,186 @@
+{
+    "BANNER": "DevSecOps Engine Tools - IDE",
+    "WARNING_RELEASE": false,
+    "TRACEBACK": false,
+    "SECRET_MANAGER": {
+        "AWS": {
+            "SECRET_NAME": "",
+            "USE_ROLE": false,
+            "ROLE_ARN": "",
+            "REGION_NAME": ""
+        }
+    },
+    "VULNERABILITY_MANAGER": {
+        "BRANCH_FILTER": [],
+        "DEFECT_DOJO": {
+            "HOST_DEFECT_DOJO": "",
+            "PRINT_DOMAIN": "",
+            "LIMITS_QUERY": 100,
+            "MAX_RETRIES_QUERY": 5,
+            "GET_EXACT_PRODUCT": false,
+            "TOOL_SCM_MAPPING": {
+                "DEFAULT": 2
+            },
+            "TOOL_SONAR_MAPPING": {
+                "DEFAULT": 4
+            },
+            "TOOL_SLA_MAPPING": {
+                "DEFAULT": 1
+            },
+            "REGEX_EXPRESSION_CODE_APP": "^([^-]+)",
+            "REIMPORT_SCAN": false,
+            "CMDB": {
+                "USE_CMDB": false,
+                "HOST_CMDB": "",
+                "GENERATE_AUTH_CMDB": false,
+                "AUTH_CMDB_REQUEST_REPONSE": {
+                    "URL": "",
+                    "HEADERS": {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
+                    "METHOD": "POST",
+                    "PARAMS": "",
+                    "RESPONSE": null
+                },
+                "CMDB_MAPPING_PATH": "",
+                "CMDB_MAPPING": {
+                    "PRODUCT_TYPE_NAME": "",
+                    "PRODUCT_NAME": "",
+                    "TAG_PRODUCT": "",
+                    "PRODUCT_DESCRIPTION": "",
+                    "CODIGO_APP": ""
+                },
+                "CMDB_REQUEST_RESPONSE": {
+                    "HEADERS": {},
+                    "METHOD": "GET",
+                    "PARAMS": {},
+                    "BODY": {},
+                    "RESPONSE": [0],
+                    "MAX_RETRIES": 3,
+                    "RETRY_DELAY": 5
+                }
+            }
+        }
+    },
+    "METRICS_MANAGER": {
+        "AWS": {
+            "BUCKET": "",
+            "TYPE_FORMAT_BUCKET_FILE": "json",
+            "PATH_BUCKET": "engine_tools",
+            "USE_ROLE": false,
+            "ROLE_ARN": "",
+            "REGION_NAME": ""
+        }
+    },
+    "LICENSE_ANALYZER": {
+        "TOOL": "DEPENDENCY_TRACK",
+        "DEPENDENCY_TRACK": {
+            "HOST": "",
+            "API_KEY_SECRET_KEY": "",
+            "EXPORT_TASK_ID": false,
+            "TASK_ID_VARIABLE_NAME": ""
+        }
+    },
+    "SBOM_MANAGER": {
+        "ENABLED": false,
+        "TOOL": "SYFT",
+        "BRANCH_FILTER": [],
+        "TOOL_OVERRIDE_PIPELINES": {},
+        "SYFT": {
+            "SYFT_VERSION": "1.42.2",
+            "OUTPUT_FORMAT": "cyclonedx-json",
+            "EXCLUDE_PATHS": [],
+            "EXCLUDE_CATALOGERS": [],
+            "DEBUG_PIPELINES": []
+        },
+        "CDXGEN": {
+            "CDXGEN_VERSION": "12.1.2",
+            "OUTPUT_FORMAT": "cyclonedx-json",
+            "SLIM_BINARY": true,
+            "FETCH_LICENSE": false,
+            "SPEC_VERSION": "1.6",
+            "EXCLUDE_TYPES": [],
+            "EXCLUDE_PATHS": [],
+            "RECURSE": true,
+            "DEBUG_PIPELINES": [],
+            "LIFECYCLE_PIPELINES": {},
+            "OVERRIDE_REGISTRIES": false,
+            "REGISTRIES": {}
+        }
+    },
+    "PRIORITY_MANAGER": {
+        "USE_PRIORITY": false,
+        "HOST_PRIORITY": "",
+        "CVE_REGEX": "CVE-\\d{4}-\\d+",
+        "MAX_RETRIES": 3,
+        "HOMOLOGATION_PRIORITY": {
+            "STANDARD": {
+                "critical": {
+                    "SCORE": 1.00,
+                    "CLASSIFICATION": "very critical"
+                },
+                "high": {
+                    "SCORE": 0.74,
+                    "CLASSIFICATION": "critical"
+                },
+                "medium": {
+                    "SCORE": 0.46,
+                    "CLASSIFICATION": "high"
+                },
+                "low": {
+                    "SCORE": 0.01,
+                    "CLASSIFICATION": "medium low"
+                }
+            }
+        },
+        "MAPPING_HOST": {}
+    },
+    "BREAK_BUILD_MANAGER": {
+        "MODEL": "severity",
+        "CLASSIFICATION": ["critical", "high", "medium", "low"]
+    },
+    "ENGINE_IAC": {
+        "ENABLED": true,
+        "TOOL": "CHECKOV|KICS",
+        "PRIORITY": "STANDARD"
+    },
+    "ENGINE_CONTAINER": {
+        "ENABLED": true,
+        "TOOL": "TRIVY",
+        "PRIORITY": "STANDARD"
+    },
+    "ENGINE_DEPENDENCIES": {
+        "ENABLED": true,
+        "TOOL": "TRIVY"
+    },
+    "ENGINE_FUNCTION": {
+        "ENABLED": false,
+        "TOOL": "PRISMA",
+        "PRIORITY": "STANDARD"
+    },
+    "ENGINE_DAST": {
+        "ENABLED": false,
+        "TOOL": "NUCLEI",
+        "EXTRA_TOOLS": [],
+        "PRIORITY": "STANDARD"
+    },
+    "ENGINE_SECRET": {
+        "ENABLED": false,
+        "TOOL": "TRUFFLEHOG",
+        "PRIORITY": "STANDARD"
+    },
+    "ENGINE_CODE": {
+        "ENABLED": false,
+        "TOOL": "BEARER",
+        "PRIORITY": "STANDARD"
+    },
+    "ENGINE_RISK": {
+        "ENABLED": false
+    },
+    "REPORT_SONAR": {
+        "ENABLED": false
+    },
+    "COPACETIC": {
+        "ENABLED": false
+    }
+}

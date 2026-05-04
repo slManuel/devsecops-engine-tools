@@ -40,7 +40,7 @@ export class ImageScanUseCase implements IImageScanUseCase {
           scanType: 'image',
           target: imageToScan,
           containerImageName: scanConfiguration.getContainerImageName(),
-          toolVersion: this.containerImageVersion,
+          engineToolsVersion: this.containerImageVersion,
           containerEnginePath: this.containerEnginePath
         };
 

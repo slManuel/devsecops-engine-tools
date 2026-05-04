@@ -3,11 +3,7 @@ import { OutputChannel } from "vscode";
 import * as https from 'https';
 import * as http from 'http';
 import { URL } from 'url';
-const config: Record<string, string> = {
-    '--platform_devops': 'local',
-    '--remote_config_source': 'local',
-    '--remote_config_repo': 'docker_default_remote_config'
-};import { IScanExecutor, IScanExecutionConfig, IScanExecutionResult } from "./IScanExecutor";
+import { IScanExecutor, IScanExecutionConfig, IScanExecutionResult } from "./IScanExecutor";
 import { ScanConfigurationService } from "../config/ScanConfigurationService";
 import { ScanContextMapper } from "../mappers/ScanContextMapper";
 import FileCompressionHelper from "../helper/FileCompressionHelper";
@@ -248,6 +244,9 @@ export class RemoteMicroserviceExecutor implements IScanExecutor {
             case 'iac':
                 if (scanConfig.iacTool) {
                     config['--tool'] = scanConfig.iacTool;
+                    if (scanConfig.iacTool === 'kics') {
+                        config['--platform'] = 'openapi';
+                    }
                 }
                 config['--use_secrets_manager'] = 'true';
                 break;

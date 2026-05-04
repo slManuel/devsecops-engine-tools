@@ -7,9 +7,14 @@ on:
         description: 'DevSecOps Engine Tools Version (e.g., 1.0.0)'
         required: true
         type: string
+      ide_version:
+        description: 'IDE image version (e.g. v1, v2). Leave empty to skip. Runs rarely — only when IDE config or base tools change.'
+        required: false
+        type: string
+        default: ''
 
 jobs:
-  manual-docker-release:
+  docker-release:
     runs-on: ubuntu-latest
     environment: release
     permissions:
@@ -23,7 +28,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -49,6 +54,7 @@ jobs:
         run: |
           mkdir -p bin
           go build -o ./bin/kics cmd/console/main.go
+
       - name: Validate KICS
         run: |
           if [ ! -f /tmp/kics/bin/kics ]; then
@@ -58,26 +64,25 @@ jobs:
           file /tmp/kics/bin/kics
           chmod +x /tmp/kics/bin/kics
           /tmp/kics/bin/kics version || echo "Error: KICS compiled, but does not run correctly"
+
       - name: Move KICS binary to custom folder
         run: |
           mkdir -p ./kics_binary/kics-devsecops
           cp /tmp/kics/bin/kics ./kics_binary/kics-devsecops/
-          ls -la ./kics_binary
-          ls -la ./kics_binary/kics-devsecops
-          
-      - name: Build and tag Docker image
-        timeout-minutes: 3
-        run: |
-          docker build --build-arg VERSION=${{ github.event.inputs.version }} -t bancolombia/devsecops-engine-tools:${{ github.event.inputs.version }} -f docker/Dockerfile .
-          docker tag bancolombia/devsecops-engine-tools:${{ github.event.inputs.version }} bancolombia/devsecops-engine-tools:${{ github.event.inputs.version }}
 
-      - name: devsecops-engine-tools engine_container
+      # ── Standard image ──────────────────────────────────────────────────────
+
+      - name: Build standard Docker image
+        timeout-minutes: 30
+        run: |
+          docker build --target standard --build-arg VERSION=${{ github.event.inputs.version }} \
+            -t bancolombia/devsecops-engine-tools:${{ github.event.inputs.version }} \
+            -f docker/Dockerfile .
+
+      - name: Scan standard image (engine_container)
         run: |
           set -e
-          # Install devsecops-engine-tools
           pip3 install devsecops-engine-tools -q
-
-          # Execute devsecops-engine-tools and handle the output
           output=$(devsecops-engine-tools --platform_devops github --remote_config_source local --remote_config_repo example_remote_config_local --module engine_container --tool trivy --image bancolombia/devsecops-engine-tools:${{ github.event.inputs.version }})
           echo "$output"
           if [[ $output == *"✘Failed"* ]]; then
@@ -90,6 +95,19 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name: Publish a Docker image to Dockerhub
+      - name: Publish standard image to Dockerhub
+        run: docker image push bancolombia/devsecops-engine-tools:${{ github.event.inputs.version }}
+
+      # ── IDE image (only when ide_version is provided) ────────────────────────
+
+      - name: Build :ide-vN Docker image
+        if: ${{ github.event.inputs.ide_version != '' }}
+        timeout-minutes: 30
         run: |
-          docker image push bancolombia/devsecops-engine-tools:${{ github.event.inputs.version }}
+          docker build --target ide \
+            -t bancolombia/devsecops-engine-tools:ide-${{ github.event.inputs.ide_version }} \
+            -f docker/Dockerfile .
+
+      - name: Publish :ide-vN image to Dockerhub
+        if: ${{ github.event.inputs.ide_version != '' }}
+        run: docker image push bancolombia/devsecops-engine-tools:ide-${{ github.event.inputs.ide_version }}

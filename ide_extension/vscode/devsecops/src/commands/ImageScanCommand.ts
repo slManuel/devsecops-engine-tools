@@ -40,7 +40,15 @@ export function registerImageScanCommand(
         `DevSecOps Image Scanning: ${imageName}`
       );
 
-      const useCase = await imageScanRequest();
+      let useCase;
+      try {
+        useCase = await imageScanRequest();
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+        void vscode.window.showErrorMessage(`Image Scan configuration error: ${errorMessage}`);
+        return;
+      }
+
       const outputChannel = vscode.window.createOutputChannel("Image Scan Results");
       outputChannel.clear(); 
 

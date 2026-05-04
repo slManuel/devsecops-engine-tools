@@ -39,51 +39,12 @@
     },
     "configuration": [
       {
-        "title": "General Settings",
+        "title": "General",
         "properties": {
           "devsecops.general.enabled": {
             "type": "boolean",
             "default": true,
             "description": "Enable/Disable DevSecOps IDE Extension"
-          },
-          "devsecops.general.imageToUse": {
-            "type": "string",
-            "default": "bancolombia/devsecops-engine-tools",
-            "description": "Container image to use for scanning"
-          },
-          "devsecops.general.imageVersion": {
-            "type": "string",
-            "description": "Container image version to use for scanning"
-          },
-          "devsecops.scanExecutionMode": {
-            "type": "string",
-            "default": "local-docker",
-            "enum": [
-              "local-docker",
-              "remote-microservice"
-            ],
-            "enumDescriptions": [
-              "Execute scans locally using Docker containers",
-              "Execute scans remotely using the DevSecOps microservice"
-            ],
-            "description": "Scan execution mode: local Docker containers or remote microservice"
-          },
-          "devsecops.microserviceUrl": {
-            "type": "string",
-            "description": "URL of the DevSecOps scanning microservice (required for remote execution)",
-            "pattern": "^https?://.*",
-            "patternErrorMessage": "Must be a valid HTTP or HTTPS URL"
-          },
-          "devsecops.general.timeout": {
-            "type": "number",
-            "default": 600,
-            "minimum": 60,
-            "description": "Maximum time (in seconds) to wait for scan completion. Default: 600 seconds (10 minutes)"
-          },
-          "devsecops.general.debugMode": {
-            "type": "boolean",
-            "default": false,
-            "description": "Enable debug mode to show detailed request/response logs"
           },
           "devsecops.general.classificationModel": {
             "type": "string",
@@ -97,11 +58,112 @@
               "Use the priority model for classification (very critical, critical, high, medium low)"
             ],
             "description": "Choose which model to use for vulnerability classification"
+          },
+          "devsecops.general.timeout": {
+            "type": "number",
+            "default": 600,
+            "minimum": 60,
+            "description": "Maximum time (in seconds) to wait for scan completion. Default: 600 seconds (10 minutes)"
+          },
+          "devsecops.general.debugMode": {
+            "type": "boolean",
+            "default": false,
+            "description": "Enable debug mode to show detailed scan logs"
           }
         }
       },
       {
-        "title": "Azure DevOps Settings",
+        "title": "Execution",
+        "properties": {
+          "devsecops.scanExecutionMode": {
+            "type": "string",
+            "default": "local-docker",
+            "enum": [
+              "local-docker",
+              "remote-microservice"
+            ],
+            "enumDescriptions": [
+              "Execute scans locally using Docker containers",
+              "Execute scans remotely using the DevSecOps microservice"
+            ],
+            "description": "Scan execution mode: local Docker containers or remote microservice"
+          },
+          "devsecops.general.imageToUse": {
+            "type": "string",
+            "default": "bancolombia/devsecops-engine-tools:ide-v1",
+            "description": "Base container image used for local Docker scanning. Should include a tag."
+          },
+          "devsecops.general.engineToolsVersion": {
+            "type": "string",
+            "description": "DevSecOps Engine Tools version to install inside the container. Leave empty to use the latest available version."
+          },
+          "devsecops.general.customRemoteConfigPath": {
+            "type": "string",
+            "description": "Optional path to a local directory containing a custom remote config for the scanner image. When set, this directory is mounted into the container at runtime and used instead of the default config baked into the image. Leave empty to use the image's default config (ide_extension/remote_config)."
+          },
+          "devsecops.microserviceUrl": {
+            "type": "string",
+            "description": "URL of the DevSecOps scanning microservice (required for remote-microservice mode)",
+            "pattern": "^https?://.*",
+            "patternErrorMessage": "Must be a valid HTTP or HTTPS URL"
+          }
+        }
+      },
+      {
+        "title": "IaC Scan",
+        "properties": {
+          "devsecops.iac.iacTool": {
+            "type": "string",
+            "default": "checkov",
+            "enum": [
+              "checkov",
+              "kics"
+            ],
+            "description": "IaC Scan Tool to use (Checkov to scan Terraform, CloudFormation, Kubernetes, Dockerfile and OpenAPI; KICS to scan OpenAPI)"
+          },
+          "devsecops.iac.customRulesUrl": {
+            "type": "string",
+            "description": "URL of the custom rules service used to fetch custom IaC validation rules",
+            "pattern": "^https?://.*",
+            "patternErrorMessage": "Must be a valid HTTP or HTTPS URL"
+          }
+        }
+      },
+      {
+        "title": "Dependencies Scan",
+        "properties": {
+          "devsecops.dependencies.dependenciesToken": {
+            "type": "string",
+            "description": "Token for dependencies scan (Jfrog Token for Xray or NVD Api Key for Dependency Check)",
+            "format": "password"
+          },
+          "devsecops.dependencies.dependenciesTool": {
+            "type": "string",
+            "default": "trivy",
+            "enum": [
+              "xray",
+              "dependency_check",
+              "trivy"
+            ],
+            "description": "Dependency Scan Tool to use"
+          },
+          "devsecops.dependencies.xrayMode": {
+            "type": "string",
+            "default": "audit",
+            "enum": [
+              "audit",
+              "scan"
+            ],
+            "description": "Dependency scan mode with JFrog Xray (audit = dependency tree scanning, scan = compiled file scan)"
+          },
+          "devsecops.dependencies.dependencyCheckDatabase": {
+            "type": "string",
+            "description": "Dependency Check Database path (if using dependency_check tool, will increase performance)"
+          }
+        }
+      },
+      {
+        "title": "Azure DevOps",
         "properties": {
           "devsecops.azuredevops.organizationName": {
             "type": "string",
@@ -146,53 +208,6 @@
             "default": "",
             "description": "Set your user personal access token generated at Azure DevOps",
             "format": "password"
-          }
-        }
-      },
-      {
-        "title": "Dependencies Scan Settings",
-        "properties": {
-          "devsecops.dependencies.dependenciesToken": {
-            "type": "string",
-            "description": "Token for dependencies scan (Jfrog Token for Xray or NVD Api Key for Dependency Check)",
-            "format": "password"
-          },
-          "devsecops.dependencies.xrayMode": {
-            "type": "string",
-            "default": "audit",
-            "enum": [
-              "audit",
-              "scan"
-            ],
-            "description": "Dependency scan mode with JFrog Xray (audit = dependency tree scanning, scan = compiled file scan)"
-          },
-          "devsecops.dependencies.dependenciesTool": {
-            "type": "string",
-            "default": "trivy",
-            "enum": [
-              "xray",
-              "dependency_check",
-              "trivy"
-            ],
-            "description": "Dependency Scan Tool to use"
-          },
-          "devsecops.dependencies.dependencyCheckDatabase": {
-            "type": "string",
-            "description": "Dependency Check Database path (if using dependency_check tool, will increase performance)"
-          }
-        }
-      },
-      {
-        "title": "IaC Scan Settings",
-        "properties": {
-          "devsecops.iac.iacTool": {
-            "type": "string",
-            "default": "checkov",
-            "enum": [
-              "checkov",
-              "kics"
-            ],
-            "description": "IaC Scan Tool to use (Checkov to scan Terraform, CloudFormation, Kubernetes, Dockerfile and OpenAPI; KICS to scan OpenAPI)"
           }
         }
       }
@@ -398,7 +413,6 @@
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/github": "^11.0.2",
     "@semantic-release/release-notes-generator": "^14.0.3",
-    "@types/lodash": "^4.17.16",
     "@types/mocha": "^10.0.9",
     "@types/node": "^20.19.35",
     "@types/sinon": "^17.0.4",
@@ -424,7 +438,6 @@
     "@types/form-data": "^2.5.2",
     "archiver": "^7.0.1",
     "form-data": "^4.0.5",
-    "generator-code": "^1.11.9",
-    "lodash": "^4.17.21"
+    "generator-code": "^1.11.9"
   }
 }

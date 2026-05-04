@@ -28,7 +28,15 @@ export function registerDependenciesScanCommand(
 
             void vscode.window.showInformationMessage(`DevSecOps Dependencies Scanning: ${folderPath}`);
 
-            const useCase = await dependenciesScanRequest();
+            let useCase;
+            try {
+                useCase = await dependenciesScanRequest();
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+                void vscode.window.showErrorMessage(`Dependencies Scan configuration error: ${errorMessage}`);
+                return;
+            }
+
             const outputChannel = vscode.window.createOutputChannel("Dependencies Scan Results");
             outputChannel.clear();
 

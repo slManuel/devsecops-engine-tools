@@ -16,6 +16,7 @@ import { ScanExecutionOrchestrator } from "../../infrastructure/executors/ScanEx
 import { IScanExecutionConfig } from "../../infrastructure/executors/IScanExecutor";
 import { ScanContextMapper } from "../../infrastructure/mappers/ScanContextMapper";
 import { MetricsService } from "../../infrastructure/services/MetricsService";
+import { ScanConfigurationService } from "../../infrastructure/config/ScanConfigurationService";
 
 interface IVariableData {
   value: string;
@@ -92,7 +93,7 @@ export class IacScanUseCase implements IIacScanUseCase {
           scanType: 'iac',
           target: scanLocation,
           containerImageName: scanConfiguration.getContainerImageName(),
-          toolVersion: this.toolVersion,
+          engineToolsVersion: this.toolVersion,
           iacTool: scanConfiguration.getIacTool()
         };
 
@@ -114,17 +115,12 @@ export class IacScanUseCase implements IIacScanUseCase {
         const findings = mappedResult.findings;
 
         // Get rule codes for findings
-        const findingsWithRuleCode = await Promise.all(
-          findings.map((finding: Finding) =>
-            this.iacScanner.getRuleCode(
-              finding.getId(),
-              finding,
-              this.containerEnginePath,
-              scanConfiguration.getContainerImageName(),
-              this.toolVersion
-            )
-          )
-        );
+        const customRulesUrl = ScanConfigurationService.getCustomRulesUrl();
+        const findingsWithRuleCode = customRulesUrl
+          ? await Promise.all(findings.map((finding: Finding) =>
+              this.iacScanner.getRuleCode(finding.getId(), finding)
+            ))
+          : findings;
 
         // Send metrics for remote execution (non-blocking)
         try {
@@ -179,16 +175,15 @@ export class IacScanUseCase implements IIacScanUseCase {
       }
     });
 
-    const findingsWithRuleCode: Promise<Finding>[] = scannerRes.getFindings().map((finding: Finding) => {
-      return this.iacScanner.getRuleCode(
-        finding.getId(),
-        finding,
-        this.containerEnginePath,
-        scanConfiguration.getContainerImageName(),
-        this.toolVersion
+    const customRulesUrl = ScanConfigurationService.getCustomRulesUrl();
+    if (customRulesUrl) {
+      const findingsWithRuleCode = await Promise.all(
+        scannerRes.getFindings().map((finding: Finding) =>
+          this.iacScanner.getRuleCode(finding.getId(), finding)
+        )
       );
-    });
-    scannerRes.setFindings(await Promise.all(findingsWithRuleCode));
+      scannerRes.setFindings(findingsWithRuleCode);
+    }
     return scannerRes;
   }
 
