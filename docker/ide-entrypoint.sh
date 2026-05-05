@@ -8,10 +8,16 @@
 
 if [ -n "$ENGINE_VERSION" ]; then
     echo "[IDE] Installing devsecops-engine-tools==$ENGINE_VERSION ..."
-    pip install "devsecops-engine-tools==$ENGINE_VERSION" -q
+    pip install "devsecops-engine-tools==$ENGINE_VERSION" -q \
+        --trusted-host pypi.org \
+        --trusted-host files.pythonhosted.org \
+        --trusted-host pypi.python.org
 else
     echo "[IDE] No ENGINE_VERSION specified, installing latest devsecops-engine-tools ..."
-    pip install "devsecops-engine-tools" --upgrade -q
+    pip install "devsecops-engine-tools" --upgrade -q \
+        --trusted-host pypi.org \
+        --trusted-host files.pythonhosted.org \
+        --trusted-host pypi.python.org
 fi
 
 exec "$@"

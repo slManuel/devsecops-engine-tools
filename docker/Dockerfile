@@ -197,7 +197,7 @@ RUN if [ -d /tmp/certificates ]; then \
 CMD ["sh", "-c", "dockerd & while ! docker info > /dev/null 2>&1; do sleep 1; done; sh"]
 
 # ─── Stage 5: ide ────────────────────────────────────────────────────────────
-# IDE final target. Tagged :ide (bancolombia/devsecops-engine-tools:ide).
+# IDE final target. Tagged :ide-vN (bancolombia/devsecops-engine-tools:ide-vN).
 # Engine-tools version resolved at container startup by ide-entrypoint.sh.
 FROM runtime_base AS ide
 

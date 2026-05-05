@@ -248,7 +248,7 @@ export class MetricsService {
         networkErrorHandler: any
     ): void {
         const errorContext = {
-            imageTag: `${containerImageName}:${toolVersion}`,
+            imageTag: containerImageName,
             containerImageName,
             toolVersion
         };

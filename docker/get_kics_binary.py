@@ -6,7 +6,6 @@ import base64
 
 def download_artifact(organization, project, artifact_name, token, pipeline_id):
     try:
-        # Azure DevOps Basic auth requires base64(:<PAT>) — empty username + colon + PAT
         token_b64 = base64.b64encode(f":{token}".encode()).decode()
         headers = {
             "Authorization": f"Basic {token_b64}"
