@@ -14,11 +14,12 @@
 #             docker build --target ide \
 #               -t bancolombia/devsecops-engine-tools:ide .
 #
-# CUSTOM REMOTE CONFIG (ide target only):
-#   Default config baked from example_remote_config_local/.
-#   Override at build time:  --build-arg IDE_REMOTE_CONFIG=./my_custom_config
-#   Override at runtime: mount host path via VSCode setting
-#     devsecops.general.customRemoteConfigPath
+# CUSTOM REMOTE CONFIG:
+#   Both targets bake a default config from example_remote_config_local/.
+#   standard — override at build time:  --build-arg REMOTE_CONFIG=./my_config
+#   ide      — override at build time:  --build-arg IDE_REMOTE_CONFIG=./my_config
+#            — override at runtime: mount host path via VSCode setting
+#                devsecops.general.customRemoteConfigPath
 # =============================================================================
 
 # ─── Stage 1: remote_config_standard ─────────────────────────────────────────
