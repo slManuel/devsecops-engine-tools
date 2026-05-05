@@ -99,7 +99,7 @@
           },
           "devsecops.general.customRemoteConfigPath": {
             "type": "string",
-            "description": "Optional path to a local directory containing a custom remote config for the scanner image. When set, this directory is mounted into the container at runtime and used instead of the default config baked into the image. Leave empty to use the image's default config (ide_extension/remote_config)."
+            "description": "Optional path to a local directory containing a custom remote config for the scanner image. Leave empty to use the image's default config (example_remote_config_local)."
           },
           "devsecops.microserviceUrl": {
             "type": "string",

@@ -15,8 +15,8 @@
 #               -t bancolombia/devsecops-engine-tools:ide .
 #
 # CUSTOM REMOTE CONFIG (ide target only):
-#   Default config baked from ide_extension/remote_config/.
-#   Override at build time:  --build-arg IDE_REMOTE_CONFIG=./my_config
+#   Default config baked from example_remote_config_local/.
+#   Override at build time:  --build-arg IDE_REMOTE_CONFIG=./my_custom_config
 #   Override at runtime: mount host path via VSCode setting
 #     devsecops.general.customRemoteConfigPath
 # =============================================================================
@@ -64,7 +64,7 @@ FROM debian:stable-20250520-slim AS remote_config_ide
 
 WORKDIR /app
 
-ARG IDE_REMOTE_CONFIG="./ide_extension/remote_config"
+ARG IDE_REMOTE_CONFIG="./example_remote_config_local"
 
 RUN apt-get update && apt-get install -y bash dos2unix
 

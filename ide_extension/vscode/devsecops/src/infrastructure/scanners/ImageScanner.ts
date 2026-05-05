@@ -89,7 +89,7 @@ export class ImageScanner implements IScannerGateway {
         const versionEnv = toolVersion ? `-e ENGINE_VERSION=${toolVersion}` : '';
         const customConfigPath = ScanConfigurationService.getCustomRemoteConfigPath();
         const remoteConfigVolume = customConfigPath
-          ? `-v "${ContainerEngineManager.normalizePathForDocker(customConfigPath)}:/ms_remote_config"`
+          ? `-v "${ContainerEngineManager.normalizePathForDocker(customConfigPath)}:/app/ms_remote_config"`
           : '';
         const remoteConfigRepo = customConfigPath ? 'ms_remote_config' : 'docker_default_remote_config';
         const containerCommand = `${containerEnginePath} run --rm ${versionEnv} ${remoteConfigVolume} -v "${normalizedTarPath}:/tmp/${imageTarName}" ${containerImageName} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo ${remoteConfigRepo} --module engine_container --tool trivy --image_to_scan /tmp/${imageTarName} --context true"`;
