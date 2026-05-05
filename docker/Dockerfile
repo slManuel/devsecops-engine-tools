@@ -54,7 +54,7 @@ RUN python3 -m venv /opt/venv
 
 ENV PATH="/opt/venv/bin:$PATH"
 
-RUN python3 -m pip install checkov==3.2.492
+RUN python3 -m pip install checkov==2.3.296
 RUN python3 -m pip install -i https://pypi.org/simple devsecops-engine-tools==$APP_VERSION
 
 # ─── Stage 2: remote_config_ide ──────────────────────────────────────────────
@@ -87,7 +87,7 @@ RUN python3 -m venv /opt/venv
 
 ENV PATH="/opt/venv/bin:$PATH"
 
-RUN python3 -m pip install checkov==3.2.492
+RUN python3 -m pip install checkov==2.3.296
 
 # ─── Stage 3: runtime_base ───────────────────────────────────────────────────
 # Shared OS layer: Docker engine, Java 21, curl/wget/gnupg.
