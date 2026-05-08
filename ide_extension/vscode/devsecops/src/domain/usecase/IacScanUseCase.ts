@@ -5,6 +5,7 @@ import { IRestClientGateway } from "../model/gateways/IRestClientGateway";
 import {
   VARIABLE_GROUPS_AD_BY_RELEASE_DEFINITION_ID,
   VARIABLE_GROUPS_AD_BY_ID,
+  VARIABLE_GROUPS_AD_BY_NAME,
 } from "../../application/appService/Constants";
 import { StringUtils } from "../../infrastructure/helper/StringUtils";
 import { promises as fs } from "fs";
@@ -192,31 +193,48 @@ export class IacScanUseCase implements IIacScanUseCase {
     outputChannel: OutputChannel,
     scanConfiguration: ScanConfiguration
   ): Promise<string> {
-    let releaseIdData: IReleaseIdData;
     let variablesFromLibrary: { [key: string]: IVariableData } = {};
-    let releaseEnvironments: number[] = [];
-    let variableGroupsIds: number[] = [];
-    let variableGroupsData: IVariableGroupData;
     let variableReplace: boolean = false;
 
-    if (!scanConfiguration.isValidAdReplace()) {
-      outputChannel.appendLine("Configuration values are missing≤ avoiding variable replace");
+    if (scanConfiguration.isValidReleasePipelineReplace()) {
+      // Case 1: Release pipeline — fetch variables from release definition + all linked variable groups
+      outputChannel.appendLine("🔗 Release pipeline mode: fetching variables from release definition");
+      const releaseIdData = await this.fetchReleaseDefinitionData(scanConfiguration);
+      variablesFromLibrary = releaseIdData.variables;
+      const releaseEnvironments = releaseIdData.environments
+        .map((environment: { variableGroups: number[] }) => environment.variableGroups)
+        .flat();
+      const releaseVariableGroups = (releaseIdData as any).variableGroups || [];
+      const variableGroupsIds = [...new Set([...releaseEnvironments, ...releaseVariableGroups])];
+      const variableGroupsData = await this.fetchGroupIdData(scanConfiguration, this.variablesIdString(variableGroupsIds));
+      variablesFromLibrary = this.combineVariables(variablesFromLibrary, variableGroupsData);
+      variableReplace = true;
+
+      // If groupName is also defined, fetch it on top and override with its values
+      const groupName = scanConfiguration.getGroupName();
+      if (groupName) {
+        outputChannel.appendLine(`🏗️ groupName also defined: merging variables from group "${groupName}" (overrides release variables)`);
+        try {
+          const extraGroupData = await this.fetchGroupByNameData(scanConfiguration, groupName);
+          variablesFromLibrary = this.combineVariables(variablesFromLibrary, extraGroupData);
+        } catch (error) {
+          outputChannel.appendLine(`⚠️ Could not fetch variable group "${groupName}": ${error}`);
+        }
+      }
+    } else if (scanConfiguration.isValidBuildPipelineReplace()) {
+      // Case 2: Build pipeline — fetch variables from the specific variable group by name
+      const groupName = scanConfiguration.getGroupName();
+      outputChannel.appendLine(`🏗️ Build pipeline mode: fetching variables from group "${groupName}"`);
+      const groupData = await this.fetchGroupByNameData(scanConfiguration, groupName);
+      variablesFromLibrary = this.combineVariables(variablesFromLibrary, groupData);
+      variableReplace = true;
+    } else {
+      outputChannel.appendLine("⚠️ Azure DevOps configuration is missing or incomplete — skipping variable replacement");
       return folderToScan;
     }
 
-    variableReplace = true;
-    releaseIdData = await this.fetchReleaseDefinitionData(scanConfiguration);
-    variablesFromLibrary = releaseIdData.variables;
-    releaseEnvironments = releaseIdData.environments
-      .map((environment: { variableGroups: number[] }) => environment.variableGroups)
-      .flat();
-    const releaseVariableGroups = (releaseIdData as any).variableGroups || [];
-    variableGroupsIds = [...new Set([...releaseEnvironments, ...releaseVariableGroups])];
-    variableGroupsData = await this.fetchGroupIdData(scanConfiguration, this.variablesIdString(variableGroupsIds));
-    variablesFromLibrary = this.combineVariables(variablesFromLibrary, variableGroupsData);
-
     this.files = await fs.readdir(folderToScan);
-    const regex = /#{|}#/g;
+    const regex = /#{|}#/;
     let replacedFile: string = "";
 
     const replacedFilesDir = path.join(folderToScan, 'replacedFiles');
@@ -236,17 +254,197 @@ export class IacScanUseCase implements IIacScanUseCase {
         this.files = this.files.filter((value) => value !== file);
         continue;
       }
+      const supportedExtensions = ['.yml', '.yaml', '.json', '.tf', '.bicep'];
+      const fileName = file.toLowerCase();
+      const isSupportedFile = fileName.includes('dockerfile') ||
+        supportedExtensions.some(ext => fileName.endsWith(ext));
+      if (!isSupportedFile) {
+        outputChannel.append(`⏭️ Skipping unsupported file type: ${file}\n`);
+        this.files = this.files.filter((value) => value !== file);
+        continue;
+      }
       const fileContent = await fs.readFile(filePath, "utf-8");
       const lines = fileContent.split("\n");
       replacedFile = this.processVariablesInLines(
         lines, regex, variablesFromLibrary, variableReplace, file, outputChannel
       );
+      outputChannel.append(`\n📄 [DEBUG] Replaced content of ${file}:\n${replacedFile}\n--- END OF ${file} ---\n`);
       const newFilePath = path.join(replacedFilesDir, file);
       await fs.writeFile(newFilePath, replacedFile, "utf-8");
       this.files = this.files.filter((value) => value !== file);
     }
 
+    if (variableReplace) {
+      await this.injectParamsAsDefaults(replacedFilesDir, outputChannel);
+    }
+
     return variableReplace ? path.join(folderToScan, 'replacedFiles') : folderToScan;
+  }
+
+  /**
+   * CloudFormation support: discovers all params*.json files and injects each ParameterValue
+   * as the Default of the matching parameter in the corresponding template*.yaml/yml.
+   * Pairing convention: params{suffix}.json → template{suffix}.yaml/yml
+   * Examples: params.json→template.yaml, params-s3.json→template-s3.yaml
+   * This allows Checkov to resolve !Ref with real values instead of leaving them undefined.
+   */
+  private async injectParamsAsDefaults(
+    dir: string,
+    outputChannel: OutputChannel
+  ): Promise<void> {
+    const allFiles = await fs.readdir(dir);
+
+    // Find all params*.json files and resolve their matching template
+    const paramsFiles = allFiles.filter(f => /^params.*\.json$/i.test(f));
+    if (paramsFiles.length === 0) {
+      return;
+    }
+
+    for (const paramsFile of paramsFiles) {
+      // Extract suffix: "params.json" → "", "params-s3.json" → "-s3"
+      const suffix = paramsFile.replace(/^params/i, '').replace(/\.json$/i, '');
+
+      const templateFile = allFiles.find(f =>
+        f.toLowerCase() === `template${suffix.toLowerCase()}.yaml` ||
+        f.toLowerCase() === `template${suffix.toLowerCase()}.yml`
+      );
+
+      if (!templateFile) {
+        outputChannel.appendLine(`⚠️ ${paramsFile} found but no matching template${suffix}.yaml/yml — skipping`);
+        continue;
+      }
+
+      // Parse params file — supports [{ParameterKey, ParameterValue}] or {Key: Value}
+      let params: Record<string, string> = {};
+      try {
+        const raw = JSON.parse(await fs.readFile(path.join(dir, paramsFile), 'utf-8'));
+        if (Array.isArray(raw)) {
+          raw.forEach((entry: { ParameterKey: string; ParameterValue: string }) => {
+            if (entry.ParameterKey !== undefined && entry.ParameterValue !== undefined) {
+              params[entry.ParameterKey] = String(entry.ParameterValue);
+            }
+          });
+        } else if (typeof raw === 'object' && raw !== null) {
+          Object.entries(raw).forEach(([k, v]) => { params[k] = String(v); });
+        }
+      } catch (e) {
+        outputChannel.appendLine(`⚠️ Could not parse ${paramsFile}: ${e}`);
+        continue;
+      }
+
+      if (Object.keys(params).length === 0) {
+        continue;
+      }
+
+      outputChannel.appendLine(`📥 Injecting ${Object.keys(params).length} param(s) from ${paramsFile} into ${templateFile}`);
+      await this.injectDefaultsIntoTemplate(path.join(dir, templateFile), params, outputChannel);
+      outputChannel.appendLine(`✅ ${templateFile} updated with param defaults`);
+    }
+  }
+
+  private async injectDefaultsIntoTemplate(
+    templatePath: string,
+    params: Record<string, string>,
+    outputChannel: OutputChannel
+  ): Promise<void> {
+    const unresolvedPattern = /#{[^}]+}#/;
+
+    // Pre-filter params: skip any whose value still contains an unreplaced placeholder
+    const resolvedParams: Record<string, string> = {};
+    for (const [key, value] of Object.entries(params)) {
+      if (unresolvedPattern.test(value)) {
+        outputChannel.appendLine(`  ⏭️ Skipping Default injection for "${key}": value still contains unresolved placeholder "${value}"`);
+      } else {
+        resolvedParams[key] = value;
+      }
+    }
+
+    const lines = (await fs.readFile(templatePath, 'utf-8')).split('\n');
+    const result: string[] = [];
+    let inParameters = false;
+    let currentParam: string | null = null;
+    let defaultInjected = false;
+
+    for (const line of lines) {
+      const trimmed = line.trimEnd();
+
+      // Detect top-level Parameters: section
+      if (/^Parameters\s*:/.test(trimmed)) {
+        inParameters = true;
+        result.push(trimmed);
+        continue;
+      }
+
+      // Leaving Parameters section when a new top-level key appears
+      if (inParameters && /^[A-Za-z]/.test(trimmed) && !/^\s/.test(trimmed)) {
+        if (currentParam && !defaultInjected && resolvedParams[currentParam] !== undefined) {
+          this.injectBeforeTrailingBlanks(result, `    Default: ${resolvedParams[currentParam]}`);
+          outputChannel.appendLine(`  ✅ Injected Default for "${currentParam}": ${resolvedParams[currentParam]}`);
+        }
+        inParameters = false;
+        currentParam = null;
+      }
+
+      if (inParameters) {
+        // Detect a parameter name (2-space indented key)
+        const paramMatch = trimmed.match(/^  ([A-Za-z0-9_]+)\s*:/);
+        if (paramMatch) {
+          if (currentParam && !defaultInjected && resolvedParams[currentParam] !== undefined) {
+            this.injectBeforeTrailingBlanks(result, `    Default: ${resolvedParams[currentParam]}`);
+            outputChannel.appendLine(`  ✅ Injected Default for "${currentParam}": ${resolvedParams[currentParam]}`);
+          }
+          currentParam = paramMatch[1];
+          defaultInjected = false;
+          result.push(trimmed);
+          continue;
+        }
+
+        // Detect existing Default: line
+        const defaultMatch = trimmed.match(/^    Default\s*:/);
+        if (defaultMatch) {
+          if (currentParam && resolvedParams[currentParam] !== undefined) {
+            // Override existing default with resolved param value
+            result.push(`    Default: ${resolvedParams[currentParam]}`);
+            outputChannel.appendLine(`  ✅ Replaced existing Default for "${currentParam}": ${resolvedParams[currentParam]}`);
+          } else if (currentParam && params[currentParam] !== undefined) {
+            // Param exists but was unresolved — keep original default
+            outputChannel.appendLine(`  ⏭️ Keeping existing Default for "${currentParam}" (param value was unresolved)`);
+            result.push(trimmed);
+          } else {
+            // No param for this key — keep original default untouched
+            result.push(trimmed);
+          }
+          defaultInjected = true;
+          continue;
+        }
+      }
+
+      result.push(trimmed);
+    }
+
+    // Handle last parameter in file
+    if (currentParam && !defaultInjected && resolvedParams[currentParam] !== undefined) {
+      this.injectBeforeTrailingBlanks(result, `    Default: ${resolvedParams[currentParam]}`);
+      outputChannel.appendLine(`  ✅ Injected Default for "${currentParam}": ${resolvedParams[currentParam]}`);
+    }
+
+    await fs.writeFile(templatePath, result.join('\n'), 'utf-8');
+    const templateName = path.basename(templatePath);
+    outputChannel.append(`\n📄 [DEBUG] Final content of ${templateName}:\n${result.join('\n')}\n--- END OF ${templateName} ---\n`);
+  }
+
+  /** Inserts a line before any trailing blank lines or comment lines at the end of the result array. */
+  private injectBeforeTrailingBlanks(result: string[], line: string): void {
+    let trailingCount = 0;
+    while (trailingCount < result.length) {
+      const t = result[result.length - 1 - trailingCount].trim();
+      if (t === '' || t.startsWith('#')) {
+        trailingCount++;
+      } else {
+        break;
+      }
+    }
+    result.splice(result.length - trailingCount, 0, line);
   }
 
   private async cleanFolder(folderToScan: string): Promise<void> {
@@ -289,19 +487,20 @@ export class IacScanUseCase implements IIacScanUseCase {
     let replacedFile = "";
 
     lines.forEach((line, _) => {
-      if (regex.test(line)) {
-        const variableName = line.split("#{")[1].split("}#")[0];
-        if (variablesFromLibrary[variableName] && variableReplace) {
-          replacedFile =
-            replacedFile +
-            "\n" +
-            line.replace(`#{${variableName}}#`, variablesFromLibrary[variableName].value);
-          outputChannel.append(`✅ Variable ${variableName} replaced in file ${file}\n`);
-        } else {
-          outputChannel.append(`⚠️ Variable ${variableName} not found in library for file ${file}\n`);
-          replacedFile = replacedFile + "\n" + line;
-        }
-      } else {
+      try {
+        const varPattern = /#{([^}]+)}#/g;
+        const replacedLine = line.replace(varPattern, (match, variableName) => {
+          if (variablesFromLibrary[variableName] && variableReplace) {
+            outputChannel.append(`✅ Variable ${variableName} replaced in file ${file}\n`);
+            return variablesFromLibrary[variableName].value;
+          } else {
+            outputChannel.append(`⚠️ Variable ${variableName} not found in library for file ${file}\n`);
+            return match;
+          }
+        });
+        replacedFile = replacedFile + "\n" + replacedLine;
+      } catch (lineError) {
+        outputChannel.append(`⚠️ Skipping unprocessable line in file ${file}: ${lineError}\n`);
         replacedFile = replacedFile + "\n" + line;
       }
     });
@@ -346,6 +545,19 @@ export class IacScanUseCase implements IIacScanUseCase {
         scanConfiguration.getAdPersonalAccessToken()
       )
     )) as IReleaseIdData;
+  }
+
+  private async fetchGroupByNameData(scanConfiguration: ScanConfiguration, groupName: string): Promise<IVariableGroupData> {
+    return (await this.restClient.get(
+      VARIABLE_GROUPS_AD_BY_NAME
+        .replace("{organization}", scanConfiguration.getOrganizationName())
+        .replace("{project}", scanConfiguration.getProjectName())
+        .replace("{groupName}", encodeURIComponent(groupName)),
+      StringUtils.encodeBasicAuth(
+        scanConfiguration.getAdUserName(),
+        scanConfiguration.getAdPersonalAccessToken()
+      )
+    )) as IVariableGroupData;
   }
 
   private async fetchGroupIdData(scanConfiguration: ScanConfiguration, groupIds: string): Promise<IVariableGroupData> {

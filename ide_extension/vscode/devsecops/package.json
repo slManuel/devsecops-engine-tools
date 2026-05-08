@@ -173,11 +173,6 @@
             "type": "string",
             "description": "Project Name"
           },
-          "devsecops.azuredevops.variablePlaceholder": {
-            "type": "string",
-            "default": "#{ ... }#",
-            "description": "Characters to identify variables"
-          },
           "devsecops.azuredevops.groupName": {
             "type": "string",
             "description": "Variables group name"
@@ -186,17 +181,6 @@
             "type": "string",
             "description": "Azure Release Definition ID",
             "title": "Definition ID"
-          },
-          "devsecops.azuredevops.environment": {
-            "type": "string",
-            "default": "dev",
-            "enum": [
-              "pdn",
-              "cer",
-              "qa",
-              "dev"
-            ],
-            "description": "Environment to evaluate"
           },
           "devsecops.azuredevops.username": {
             "type": "string",

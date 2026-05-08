@@ -5,7 +5,6 @@ export class ScanConfiguration {
   private organizationName: string;
   private projectName: string;
   private definitionId: string;
-  private environment: string;
   private adUserName: string;
   private adPersonalAccessToken: string;
   private dependenciesToken: string;
@@ -14,13 +13,13 @@ export class ScanConfiguration {
   private dependencyCheckDatabase: string;
   private iacTool: string;
   private engineToolsVersion: string;
+  private groupName: string;
 
   constructor() {
     this.containerImageName = "";
     this.organizationName = "";
     this.projectName = "";
     this.definitionId = "";
-    this.environment = "dev";
     this.adUserName = "";
     this.adPersonalAccessToken = "";
     this.dependenciesToken = "";
@@ -29,6 +28,7 @@ export class ScanConfiguration {
     this.dependencyCheckDatabase = "";
     this.iacTool = "";
     this.engineToolsVersion = "";
+    this.groupName = "";
 
     this.loadFromVSCodeConfig();
   }
@@ -43,7 +43,6 @@ export class ScanConfiguration {
     this.organizationName = azureDevopsConfig.get("organizationName") || "";
     this.projectName = azureDevopsConfig.get("projectName") || "";
     this.definitionId = azureDevopsConfig.get("releaseId") || "";
-    this.environment = azureDevopsConfig.get("environment") || "dev";
     this.adUserName = azureDevopsConfig.get("username") || "";
     this.adPersonalAccessToken = azureDevopsConfig.get("personalAccessToken") || "";
     this.dependenciesToken = dependenciesConfig.get("dependenciesToken") || "";
@@ -52,13 +51,15 @@ export class ScanConfiguration {
     this.dependencyCheckDatabase = dependenciesConfig.get("dependencyCheckDatabase") || "";
     this.iacTool = iacConfig.get("iacTool") || "checkov";
     this.engineToolsVersion = generalConfig.get("engineToolsVersion") || "";
+    this.groupName = azureDevopsConfig.get("groupName") || "";
   }
 
   public refresh(): void {
     this.loadFromVSCodeConfig();
   }
 
-  public isValidAdReplace(): boolean {
+  // Release pipeline: requires releaseId to pull all linked variable groups automatically
+  public isValidReleasePipelineReplace(): boolean {
     return (
       this.organizationName !== "" &&
       this.projectName !== "" &&
@@ -66,6 +67,21 @@ export class ScanConfiguration {
       this.adUserName !== "" &&
       this.adPersonalAccessToken !== ""
     );
+  }
+
+  // Build pipeline: requires groupName to pull variables from a specific variable group
+  public isValidBuildPipelineReplace(): boolean {
+    return (
+      this.organizationName !== "" &&
+      this.projectName !== "" &&
+      this.groupName !== "" &&
+      this.adUserName !== "" &&
+      this.adPersonalAccessToken !== ""
+    );
+  }
+
+  public isValidAdReplace(): boolean {
+    return this.isValidReleasePipelineReplace() || this.isValidBuildPipelineReplace();
   }
 
   public hasValidAdAuthentication(): boolean {
@@ -96,10 +112,6 @@ export class ScanConfiguration {
     return this.definitionId;
   }
 
-  public getEnvironment(): string {
-    return this.environment;
-  }
-
   public getAdUserName(): string {
     return this.adUserName;
   }
@@ -126,5 +138,9 @@ export class ScanConfiguration {
 
   public getIacTool(): string {
     return this.iacTool;
+  }
+
+  public getGroupName(): string {
+    return this.groupName;
   }
 }
