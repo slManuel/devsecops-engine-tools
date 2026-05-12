@@ -27,7 +27,7 @@ export class ImageScanner implements IScannerGateway {
     containerEnginePath: string,
     scanLoader: any
   ): Promise<ScannerRes> {
-    BaseScannerHelper.initializeScan(
+    const startTime = BaseScannerHelper.initializeScan(
       outputChannel,
       this.metricsHelper,
       this.dockerErrorHandler,
@@ -57,7 +57,9 @@ export class ImageScanner implements IScannerGateway {
             "engine_container",
             this.metricsHelper,
             outputChannel,
-            resolve
+            resolve,
+            undefined,
+            startTime
           );
           return;
         }
@@ -73,7 +75,9 @@ export class ImageScanner implements IScannerGateway {
             "engine_container",
             this.metricsHelper,
             outputChannel,
-            resolve
+            resolve,
+            undefined,
+            startTime
           );
           return;
         }
@@ -106,6 +110,7 @@ export class ImageScanner implements IScannerGateway {
           elementToScan,
           "engine_container",
           () => resolve(new ScannerRes(false, [], null)),
+          startTime,
           cleanupImageTar
         );
 
@@ -147,7 +152,8 @@ export class ImageScanner implements IScannerGateway {
             "engine_container",
             this.metricsHelper,
             outputChannel,
-            resolve
+            resolve,
+            startTime
           );
         });
 
@@ -170,7 +176,8 @@ export class ImageScanner implements IScannerGateway {
               if (imageTarPath) {
                 ContainerEngineManager.removeFile(imageTarPath).catch(console.error);
               }
-            }
+            },
+            startTime
           );
         }
       })();

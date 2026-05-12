@@ -26,7 +26,7 @@ export class IacScanner implements IScannerGateway {
     containerEnginePath: string,
     scanLoader?: any
   ): Promise<ScannerRes> {
-    BaseScannerHelper.initializeScan(
+    const startTime = BaseScannerHelper.initializeScan(
       outputChannel,
       this.metricsHelper,
       this.dockerErrorHandler,
@@ -55,7 +55,9 @@ export class IacScanner implements IScannerGateway {
               "engine_iac",
               this.metricsHelper,
               outputChannel,
-              resolve
+              resolve,
+              undefined,
+              startTime
             );
             return;
           }
@@ -69,7 +71,8 @@ export class IacScanner implements IScannerGateway {
             this.metricsHelper,
             elementToScan,
             "engine_iac",
-            () => resolve(new ScannerRes(false, [], null))
+            () => resolve(new ScannerRes(false, [], null)),
+            startTime
           );
 
           const normalizedElementPath = ContainerEngineManager.normalizePathForDocker(elementToScan);
@@ -121,7 +124,8 @@ export class IacScanner implements IScannerGateway {
               "engine_iac",
               this.metricsHelper,
               outputChannel,
-              resolve
+              resolve,
+              startTime
             );
           });
 
@@ -139,7 +143,9 @@ export class IacScanner implements IScannerGateway {
             "engine_iac",
             this.metricsHelper,
             outputChannel,
-            resolve
+            resolve,
+            undefined,
+            startTime
           );
         }
       })();

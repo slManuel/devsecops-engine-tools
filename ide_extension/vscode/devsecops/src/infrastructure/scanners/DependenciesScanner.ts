@@ -30,7 +30,7 @@ export class DependenciesScanner implements IScannerGateway {
     dependencyCheckDatabase: string,
     scanLoader: any
   ): Promise<ScannerRes> {
-    BaseScannerHelper.initializeScan(
+    const startTime = BaseScannerHelper.initializeScan(
       outputChannel,
       this.metricsHelper,
       this.dockerErrorHandler,
@@ -61,7 +61,9 @@ export class DependenciesScanner implements IScannerGateway {
             "engine_dependencies",
             this.metricsHelper,
             outputChannel,
-            resolve
+            resolve,
+            undefined,
+            startTime
           );
           return;
         }
@@ -75,7 +77,8 @@ export class DependenciesScanner implements IScannerGateway {
           this.metricsHelper,
           elementToScan,
           "engine_dependencies",
-          () => resolve(new ScannerRes(false, [], null))
+          () => resolve(new ScannerRes(false, [], null)),
+          startTime
         );
 
         if ((dependenciesTool === "xray" || dependenciesTool === "dependency_check") && !dependenciesToken) {
@@ -88,7 +91,9 @@ export class DependenciesScanner implements IScannerGateway {
             "engine_dependencies",
             this.metricsHelper,
             outputChannel,
-            resolve
+            resolve,
+            undefined,
+            startTime
           );
           return;
         }
@@ -148,7 +153,8 @@ export class DependenciesScanner implements IScannerGateway {
             "engine_dependencies",
             this.metricsHelper,
             outputChannel,
-            resolve
+            resolve,
+            startTime
           );
         });
 
@@ -166,7 +172,9 @@ export class DependenciesScanner implements IScannerGateway {
             "engine_dependencies",
             this.metricsHelper,
             outputChannel,
-            resolve
+            resolve,
+            undefined,
+            startTime
           );
         }
       })();

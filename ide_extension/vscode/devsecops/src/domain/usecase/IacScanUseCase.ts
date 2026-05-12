@@ -83,6 +83,7 @@ export class IacScanUseCase implements IIacScanUseCase {
     // Create MetricsService instance to capture logs during remote execution
     const metricsService = new MetricsService();
     metricsService.clearLogs();
+    const startTime = Date.now();
     
     // Process variable replacement if needed (same as local)
     const scanLocation = await this.prepareFilesForScan(folderToScan, outputChannel, scanConfiguration);
@@ -130,7 +131,9 @@ export class IacScanUseCase implements IIacScanUseCase {
             findingsWithRuleCode,
             mappedResult.severityCounts,
             mappedResult.success,
-            'engine_iac'
+            'engine_iac',
+            'remote-microservice',
+            result.executionTime ?? 0
           );
         } catch (metricsError) {
           // Log but don't fail the scan if metrics upload fails
@@ -142,7 +145,7 @@ export class IacScanUseCase implements IIacScanUseCase {
       } catch (error) {
         // Send metrics for failed scan before throwing error
         metricsService.captureError(outputChannel, error, 'remote scan execution');
-        await metricsService.collectFailedScanMetrics(folderToScan, 'engine_iac');
+        await metricsService.collectFailedScanMetrics(folderToScan, 'engine_iac', 'remote-microservice', Date.now() - startTime);
         throw error;
       }
     } finally {
@@ -229,7 +232,11 @@ export class IacScanUseCase implements IIacScanUseCase {
       variablesFromLibrary = this.combineVariables(variablesFromLibrary, groupData);
       variableReplace = true;
     } else {
-      outputChannel.appendLine("⚠️ Azure DevOps configuration is missing or incomplete — skipping variable replacement");
+      if (scanConfiguration.hasValidAzureDevOpsConfig()) {
+        outputChannel.appendLine("⚠️ Variable replacement skipped: 'releaseId' or 'groupName' must be configured in Azure DevOps settings to enable variable replacement");
+      } else {
+        outputChannel.appendLine("⚠️ Azure DevOps configuration is missing or incomplete (organizationName, projectName, username and personalAccessToken are required) — skipping variable replacement");
+      }
       return folderToScan;
     }
 
@@ -268,7 +275,6 @@ export class IacScanUseCase implements IIacScanUseCase {
       replacedFile = this.processVariablesInLines(
         lines, regex, variablesFromLibrary, variableReplace, file, outputChannel
       );
-      outputChannel.append(`\n📄 [DEBUG] Replaced content of ${file}:\n${replacedFile}\n--- END OF ${file} ---\n`);
       const newFilePath = path.join(replacedFilesDir, file);
       await fs.writeFile(newFilePath, replacedFile, "utf-8");
       this.files = this.files.filter((value) => value !== file);
@@ -337,15 +343,13 @@ export class IacScanUseCase implements IIacScanUseCase {
       }
 
       outputChannel.appendLine(`📥 Injecting ${Object.keys(params).length} param(s) from ${paramsFile} into ${templateFile}`);
-      await this.injectDefaultsIntoTemplate(path.join(dir, templateFile), params, outputChannel);
-      outputChannel.appendLine(`✅ ${templateFile} updated with param defaults`);
+      await this.injectDefaultsIntoTemplate(path.join(dir, templateFile), params);
     }
   }
 
   private async injectDefaultsIntoTemplate(
     templatePath: string,
-    params: Record<string, string>,
-    outputChannel: OutputChannel
+    params: Record<string, string>
   ): Promise<void> {
     const unresolvedPattern = /#{[^}]+}#/;
 
@@ -353,7 +357,7 @@ export class IacScanUseCase implements IIacScanUseCase {
     const resolvedParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (unresolvedPattern.test(value)) {
-        outputChannel.appendLine(`  ⏭️ Skipping Default injection for "${key}": value still contains unresolved placeholder "${value}"`);
+        // skip unresolved placeholders silently
       } else {
         resolvedParams[key] = value;
       }
@@ -379,7 +383,6 @@ export class IacScanUseCase implements IIacScanUseCase {
       if (inParameters && /^[A-Za-z]/.test(trimmed) && !/^\s/.test(trimmed)) {
         if (currentParam && !defaultInjected && resolvedParams[currentParam] !== undefined) {
           this.injectBeforeTrailingBlanks(result, `    Default: ${resolvedParams[currentParam]}`);
-          outputChannel.appendLine(`  ✅ Injected Default for "${currentParam}": ${resolvedParams[currentParam]}`);
         }
         inParameters = false;
         currentParam = null;
@@ -391,7 +394,6 @@ export class IacScanUseCase implements IIacScanUseCase {
         if (paramMatch) {
           if (currentParam && !defaultInjected && resolvedParams[currentParam] !== undefined) {
             this.injectBeforeTrailingBlanks(result, `    Default: ${resolvedParams[currentParam]}`);
-            outputChannel.appendLine(`  ✅ Injected Default for "${currentParam}": ${resolvedParams[currentParam]}`);
           }
           currentParam = paramMatch[1];
           defaultInjected = false;
@@ -405,10 +407,8 @@ export class IacScanUseCase implements IIacScanUseCase {
           if (currentParam && resolvedParams[currentParam] !== undefined) {
             // Override existing default with resolved param value
             result.push(`    Default: ${resolvedParams[currentParam]}`);
-            outputChannel.appendLine(`  ✅ Replaced existing Default for "${currentParam}": ${resolvedParams[currentParam]}`);
           } else if (currentParam && params[currentParam] !== undefined) {
             // Param exists but was unresolved — keep original default
-            outputChannel.appendLine(`  ⏭️ Keeping existing Default for "${currentParam}" (param value was unresolved)`);
             result.push(trimmed);
           } else {
             // No param for this key — keep original default untouched
@@ -425,12 +425,9 @@ export class IacScanUseCase implements IIacScanUseCase {
     // Handle last parameter in file
     if (currentParam && !defaultInjected && resolvedParams[currentParam] !== undefined) {
       this.injectBeforeTrailingBlanks(result, `    Default: ${resolvedParams[currentParam]}`);
-      outputChannel.appendLine(`  ✅ Injected Default for "${currentParam}": ${resolvedParams[currentParam]}`);
     }
 
     await fs.writeFile(templatePath, result.join('\n'), 'utf-8');
-    const templateName = path.basename(templatePath);
-    outputChannel.append(`\n📄 [DEBUG] Final content of ${templateName}:\n${result.join('\n')}\n--- END OF ${templateName} ---\n`);
   }
 
   /** Inserts a line before any trailing blank lines or comment lines at the end of the result array. */

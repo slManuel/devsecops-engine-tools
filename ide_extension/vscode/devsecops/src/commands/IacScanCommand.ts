@@ -5,6 +5,7 @@ import { iacScanRequest } from "../application/InitEngineCore";
 import { ResultsTreeDataProvider } from "../tree/ResultsTreeDataProvider";
 import { ScanConfiguration } from "../domain/model/ScanConfiguration";
 import { ScanOutputLoader } from "../infrastructure/helper/LoadingAnimator";
+import { ErrorHandlingService } from "../infrastructure/services/ErrorHandlingService";
 
 export function registerIacScanCommand(
   context: vscode.ExtensionContext,
@@ -73,7 +74,12 @@ export function registerIacScanCommand(
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
         scanLoader.showError(`Iac Scan failed: ${errorMessage}`);
-        void vscode.window.showErrorMessage("Iac Scan failed - Check Output for details");
+        const userMessage = ErrorHandlingService.isVpnError(errorMessage)
+          ? "Cannot reach the microservice. Please check your VPN or internal Wi-Fi connection and try again."
+          : ErrorHandlingService.isMicroserviceError(errorMessage)
+          ? "The microservice is unavailable or the connection was interrupted. Please try again."
+          : "Iac Scan failed - Check Output for details";
+        void vscode.window.showErrorMessage(userMessage);
         // Mark the scan as failed but keep it visible
         treeDataProvider.updateScanResultWithError(scanId, errorMessage);
       }

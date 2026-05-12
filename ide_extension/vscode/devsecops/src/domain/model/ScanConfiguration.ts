@@ -58,26 +58,24 @@ export class ScanConfiguration {
     this.loadFromVSCodeConfig();
   }
 
-  // Release pipeline: requires releaseId to pull all linked variable groups automatically
-  public isValidReleasePipelineReplace(): boolean {
+  // Base Azure DevOps connectivity (org + project + credentials)
+  public hasValidAzureDevOpsConfig(): boolean {
     return (
       this.organizationName !== "" &&
       this.projectName !== "" &&
-      this.definitionId !== "" &&
       this.adUserName !== "" &&
       this.adPersonalAccessToken !== ""
     );
   }
 
-  // Build pipeline: requires groupName to pull variables from a specific variable group
+  // Release pipeline: base config + releaseId
+  public isValidReleasePipelineReplace(): boolean {
+    return this.hasValidAzureDevOpsConfig() && this.definitionId !== "";
+  }
+
+  // Build pipeline: base config + groupName
   public isValidBuildPipelineReplace(): boolean {
-    return (
-      this.organizationName !== "" &&
-      this.projectName !== "" &&
-      this.groupName !== "" &&
-      this.adUserName !== "" &&
-      this.adPersonalAccessToken !== ""
-    );
+    return this.hasValidAzureDevOpsConfig() && this.groupName !== "";
   }
 
   public isValidAdReplace(): boolean {

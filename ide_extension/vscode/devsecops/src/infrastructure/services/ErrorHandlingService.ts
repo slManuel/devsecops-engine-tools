@@ -38,6 +38,17 @@ export const ERROR_PATTERNS = {
         'container not found',
         'scan timed out',
         'command failed'
+    ],
+    microservice: [
+        'HTTP 503',
+        'HTTP 502',
+        'HTTP 504',
+        'Service Unavailable',
+        'upstream connect error',
+        'disconnect/reset before headers',
+        'connection termination',
+        'ENOTFOUND',
+        'getaddrinfo'
     ]
 } as const;
 
@@ -162,6 +173,31 @@ export class ErrorHandlingService {
 
     public static hasConfigurationErrors(logs: string[]): boolean {
         return this.hasErrorCategory(logs, 'configuration');
+    }
+
+    public static hasMicroserviceErrors(logs: string[]): boolean {
+        return this.hasErrorCategory(logs, 'microservice');
+    }
+
+    /**
+     * Checks if a single error message string indicates microservice unavailability.
+     * Used by scan commands to determine which user-facing message to show.
+     */
+    public static isVpnError(errorMessage: string): boolean {
+        const lower = errorMessage.toLowerCase();
+        return lower.includes('enotfound') || lower.includes('getaddrinfo');
+    }
+
+    public static isMicroserviceError(errorMessage: string): boolean {
+        const lower = errorMessage.toLowerCase();
+        return lower.includes('http 503') ||
+            lower.includes('http 502') ||
+            lower.includes('http 504') ||
+            lower.includes('service unavailable') ||
+            lower.includes('upstream connect error') ||
+            lower.includes('connection termination') ||
+            lower.includes('enotfound') ||
+            lower.includes('getaddrinfo');
     }
 
     private static hasErrorCategory(logs: string[], category: keyof typeof ERROR_PATTERNS): boolean {

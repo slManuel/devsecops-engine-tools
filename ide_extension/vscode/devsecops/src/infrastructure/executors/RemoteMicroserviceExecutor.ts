@@ -76,6 +76,9 @@ export class RemoteMicroserviceExecutor implements IScanExecutor {
                 logCapture(`File prepared for upload: ${FileCompressionHelper.formatFileSize(fileSize)}`);
             }
 
+            // Start measuring from here: excludes file preparation (compression/export)
+            const scanStartTime = Date.now();
+
             // Step 2: Build configuration JSON
             const configJson = this.buildConfigJson(scanConfig);
             outputChannel.appendLine('⚙️ Configuration prepared');
@@ -145,7 +148,7 @@ export class RemoteMicroserviceExecutor implements IScanExecutor {
                 logCapture('Response parsed successfully');
             }
             
-            const executionTime = Date.now() - startTime;
+            const executionTime = Date.now() - scanStartTime;
 
             if (logCapture) {
                 logCapture(`Remote scan completed in ${executionTime}ms`);
