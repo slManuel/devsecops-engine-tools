@@ -30,6 +30,7 @@ export default class FileCompressionHelper {
     '__pycache__',
     '.pytest_cache',
     'venv',
+    '.venv',
     '.env',
     '.gradle'
   ];
