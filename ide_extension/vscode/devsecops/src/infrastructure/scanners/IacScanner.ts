@@ -3,7 +3,7 @@ import IScannerGateway from "../../domain/model/gateways/IScannerGateway";
 import { ScannerRes } from "../../domain/model/ScannerRes";
 import { Finding } from "../../domain/model/Finding";
 import { ScanConfigurationService } from "../config/ScanConfigurationService";
-import { exec, execSync } from "child_process";
+import { exec } from "child_process";
 import { ISeverityCounts } from "../../domain/model/mappers/Mappers";
 import { ScannerImageManager } from "../helper/ScannerImageManager";
 import ContainerEngineManager from "../helper/ContainerEngineManager";
@@ -26,7 +26,7 @@ export class IacScanner implements IScannerGateway {
     containerEnginePath: string,
     scanLoader?: any
   ): Promise<ScannerRes> {
-    BaseScannerHelper.initializeScan(
+    const startTime = BaseScannerHelper.initializeScan(
       outputChannel,
       this.metricsHelper,
       this.dockerErrorHandler,
@@ -43,7 +43,6 @@ export class IacScanner implements IScannerGateway {
           const scannerImageAvailable = await ScannerImageManager.ensureScannerImageExists(
             containerEnginePath,
             containerImageName,
-            toolVersion,
             outputChannel,
             (message) => this.metricsHelper.captureOnly(message)
           );
@@ -56,7 +55,9 @@ export class IacScanner implements IScannerGateway {
               "engine_iac",
               this.metricsHelper,
               outputChannel,
-              resolve
+              resolve,
+              undefined,
+              startTime
             );
             return;
           }
@@ -70,11 +71,18 @@ export class IacScanner implements IScannerGateway {
             this.metricsHelper,
             elementToScan,
             "engine_iac",
-            () => resolve(new ScannerRes(false, [], null))
+            () => resolve(new ScannerRes(false, [], null)),
+            startTime
           );
 
           const normalizedElementPath = ContainerEngineManager.normalizePathForDocker(elementToScan);
-          const containerCommand = `${containerEnginePath} run --rm -v ${normalizedElementPath}:/ms_artifact ${containerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo docker_default_remote_config --module engine_iac --tool ${iacTool}${iacTool === "kics" ? " --platform openapi" : ""} --folder_path /ms_artifact --context true"`;
+          const versionEnv = toolVersion ? `-e ENGINE_VERSION=${toolVersion}` : '';
+          const customConfigPath = ScanConfigurationService.getCustomRemoteConfigPath();
+          const remoteConfigVolume = customConfigPath
+            ? `-v "${ContainerEngineManager.normalizePathForDocker(customConfigPath)}:/app/ms_remote_config"`
+            : '';
+          const remoteConfigRepo = customConfigPath ? 'ms_remote_config' : 'docker_default_remote_config';
+          const containerCommand = `${containerEnginePath} run --rm ${versionEnv} ${remoteConfigVolume} -v ${normalizedElementPath}:/ms_artifact ${containerImageName} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --remote_config_repo ${remoteConfigRepo} --module engine_iac --tool ${iacTool}${iacTool === "kics" ? " --platform openapi" : ""} --folder_path /ms_artifact --context true"`;
 
           const debugMode = ScanConfigurationService.getDebugMode();
 
@@ -116,7 +124,8 @@ export class IacScanner implements IScannerGateway {
               "engine_iac",
               this.metricsHelper,
               outputChannel,
-              resolve
+              resolve,
+              startTime
             );
           });
 
@@ -134,7 +143,9 @@ export class IacScanner implements IScannerGateway {
             "engine_iac",
             this.metricsHelper,
             outputChannel,
-            resolve
+            resolve,
+            undefined,
+            startTime
           );
         }
       })();
@@ -143,42 +154,28 @@ export class IacScanner implements IScannerGateway {
 
   async getRuleCode(
     ruleId: string,
-    finding: Finding,
-    containerEnginePath: string,
-    containerImageName: string,
-    toolVersion: string
+    finding: Finding
   ): Promise<Finding> {
     if (!ruleId.includes('_BC_')) {
       return finding;
     }
 
-    let secret = "";
-    let url = "";
-    try {
-      const { execSync } = require("child_process");
-      secret = execSync(
-        `${containerEnginePath} run --rm ${containerImageName}:${toolVersion} sh -c 'echo $DEFECT_DOJO_SECRET'`
-      ).toString().trim();
-      url = execSync(
-        `${containerEnginePath} run --rm ${containerImageName}:${toolVersion} sh -c 'echo $CONTEXT_MANAGER'`
-      ).toString().trim();
-    } catch (error) {
-      console.error("Error obtaining context manager", error);
+    const baseUrl = ScanConfigurationService.getCustomRulesUrl();
+    if (!baseUrl) {
+      console.warn('Custom rules URL is not configured (devsecops.iac.customRulesUrl). Skipping rule fetch.');
       return finding;
     }
 
     try {
-      url = `${url}/${ruleId}`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': secret
-        }
-      });
+      const url = `${baseUrl}/${ruleId}`;
+      const response = await fetch(url, { method: 'GET' });
 
       if (response.status === 200) {
-        const rulePrint = (await response.text()).replace(/\\n/g, '\n');
-        finding.setValidationRuleCode(rulePrint);
+        const body = await response.json() as { rule?: string };
+        const rulePrint = (body.rule ?? '').replace(/\\n/g, '\n');
+        if (rulePrint) {
+          finding.setValidationRuleCode(rulePrint);
+        }
       }
     } catch (error) {
       console.error(`Error fetching rule code for ${ruleId}:`, error);

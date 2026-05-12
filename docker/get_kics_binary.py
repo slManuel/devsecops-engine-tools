@@ -1,34 +1,69 @@
 import requests
 import sys
 import os
+import base64
 
 
 def download_artifact(organization, project, artifact_name, token, pipeline_id):
     try:
+        token_b64 = base64.b64encode(f":{token}".encode()).decode()
         headers = {
-            "Authorization": f"Basic {token}"
+            "Authorization": f"Basic {token_b64}"
         }
 
         url_build_id = f"https://dev.azure.com/{organization}/{project}/_apis/pipelines/{pipeline_id}/runs?api-version=7.1"
-        print("url_build_id", url_build_id)
+        print("[INFO] Fetching builds from:", url_build_id)
         builds_response = requests.get(url_build_id, headers=headers)
-        print("builds_response", builds_response)
-        builds = builds_response.json()
+        print(f"[INFO] Builds response status: {builds_response.status_code}")
+
+        if builds_response.status_code != 200:
+            print(f"[ERROR] Unexpected status {builds_response.status_code} fetching builds.")
+            print(f"[ERROR] Response body: {builds_response.text[:2000]}")
+            return None
+
+        try:
+            builds = builds_response.json()
+        except Exception as json_err:
+            print(f"[ERROR] Failed to parse builds response as JSON: {json_err}")
+            print(f"[ERROR] Raw response body: {builds_response.text[:2000]}")
+            return None
+
         build_id = next((build['id'] for build in builds['value'] if build['result'] == 'succeeded'), None)
-        print("build_id", build_id)
+        print(f"[INFO] Latest successful build_id: {build_id}")
 
         if not build_id:
-            print("No se encontró un build exitoso.")
+            print("[ERROR] No successful build found in pipeline runs.")
+            available = [(b.get('id'), b.get('result')) for b in builds.get('value', [])]
+            print(f"[INFO] Available runs (id, result): {available}")
             return None
 
         url_artifact = f"https://dev.azure.com/{organization}/{project}/_apis/build/builds/{build_id}/artifacts?artifactName={artifact_name}&api-version=7.1"
-        print("url_artifact", url_artifact)
+        print("[INFO] Fetching artifact from:", url_artifact)
         artifact_response = requests.get(url_artifact, headers=headers)
-        print("artifact_response", artifact_response)
-        artifact = artifact_response.json()
+        print(f"[INFO] Artifact response status: {artifact_response.status_code}")
+
+        if artifact_response.status_code != 200:
+            print(f"[ERROR] Unexpected status {artifact_response.status_code} fetching artifact.")
+            print(f"[ERROR] Response body: {artifact_response.text[:2000]}")
+            return None
+
+        try:
+            artifact = artifact_response.json()
+        except Exception as json_err:
+            print(f"[ERROR] Failed to parse artifact response as JSON: {json_err}")
+            print(f"[ERROR] Raw response body: {artifact_response.text[:2000]}")
+            return None
+
         artifact_download_url = artifact['resource']['downloadUrl']
+        print(f"[INFO] Downloading artifact from: {artifact_download_url}")
 
         response = requests.get(artifact_download_url, headers=headers, stream=True)
+        print(f"[INFO] Download response status: {response.status_code}")
+        if response.status_code != 200:
+            print(f"[ERROR] Failed to download artifact. Status: {response.status_code}")
+            print(f"[ERROR] Response body: {response.text[:2000]}")
+            return None
+
         os.makedirs("./kics_binary", exist_ok=True)
         file_path = os.path.join("./kics_binary", f"{artifact_name}.zip")
         with open(file_path, "wb") as file_stream:
@@ -36,20 +71,23 @@ def download_artifact(organization, project, artifact_name, token, pipeline_id):
                 if chunk:
                     file_stream.write(chunk)
 
-        print(f"Artifact descargado en: {file_path}")
+        print(f"[INFO] Artifact downloaded to: {file_path}")
         return file_path
     except Exception as error:
-        print(f"Error downloading artifact: {error}")
+        print(f"[ERROR] Unexpected error downloading artifact: {error}")
         return None
 
 def extrac_artifact(artifact_path):
     import zipfile
     try:
+        print(f"[INFO] Extracting artifact: {artifact_path}")
         with zipfile.ZipFile(artifact_path, 'r') as zip_ref:
             zip_ref.extractall("./kics_binary")
-        print(f"Artifact extracted to: ./kics_binary")
+        print(f"[INFO] Artifact extracted to: ./kics_binary")
     except zipfile.BadZipFile as e:
-        print(f"Error extracting artifact: {e}")
+        print(f"[ERROR] Bad zip file — the downloaded artifact may be corrupted or not a zip: {e}")
+        with open(artifact_path, 'rb') as f:
+            print(f"[ERROR] First 200 bytes of file: {f.read(200)}")
         
 # Example usage
 # organization = "your-organization"

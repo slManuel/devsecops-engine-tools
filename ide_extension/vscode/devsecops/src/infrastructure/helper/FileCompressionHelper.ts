@@ -30,7 +30,9 @@ export default class FileCompressionHelper {
     '__pycache__',
     '.pytest_cache',
     'venv',
-    '.env'
+    '.venv',
+    '.env',
+    '.gradle'
   ];
 
   // File extensions to exclude from compression
@@ -109,23 +111,55 @@ export default class FileCompressionHelper {
       const stat = fs.statSync(sourcePath);
 
       if (stat.isDirectory()) {
-        archive.glob('**/*', {
-          cwd: sourcePath,
-          dot: false,
-          ignore: [
-            // Exclude directories
-            ...this.EXCLUDE_DIRS.map(d => `${d}/**`),
-            ...this.EXCLUDE_DIRS.map(d => `**/${d}/**`),
-            // Exclude file extensions
-            ...this.EXCLUDE_FILE_EXTENSIONS.map(ext => `**/*${ext}`)
-          ]
-        });
+        // Walk the directory manually to skip excluded dirs BEFORE reading them,
+        // avoiding EACCES errors on directories like .gradle that we never need to scan.
+        this.addDirectoryToArchive(archive, sourcePath, '');
       } else {
         archive.file(sourcePath, { name: path.basename(sourcePath) });
       }
 
       archive.finalize();
     });
+  }
+
+  /**
+   * Recursively walks a directory and adds non-excluded entries to the archive.
+   * Excluded directories are never read (avoids EACCES on inaccessible dirs).
+   */
+  private static addDirectoryToArchive(
+    archive: archiver.Archiver,
+    dirPath: string,
+    archivePath: string
+  ): void {
+    let entries: string[];
+    try {
+      entries = fs.readdirSync(dirPath);
+    } catch {
+      // Skip directories we cannot read (permission denied, etc.)
+      return;
+    }
+
+    for (const entry of entries) {
+      const fullPath = path.join(dirPath, entry);
+      const entryArchivePath = archivePath ? `${archivePath}/${entry}` : entry;
+
+      let stat: fs.Stats;
+      try {
+        stat = fs.statSync(fullPath);
+      } catch {
+        continue;
+      }
+
+      if (stat.isDirectory()) {
+        if (!this.EXCLUDE_DIRS.includes(entry)) {
+          this.addDirectoryToArchive(archive, fullPath, entryArchivePath);
+        }
+      } else if (stat.isFile()) {
+        if (!this.EXCLUDE_FILE_EXTENSIONS.some(ext => entry.endsWith(ext))) {
+          archive.file(fullPath, { name: entryArchivePath });
+        }
+      }
+    }
   }
 
   /**

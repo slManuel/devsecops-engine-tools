@@ -56,10 +56,11 @@ export interface IDependenciesScanContext {
 }
 
 export interface ISeverityCounts {
+  very_critical: string;
   critical: string;
   high: string;
-  medium: string;
-  low: string;
+  medium_low: string;
+  unknown: string;
 }
 
 export class Mappers {

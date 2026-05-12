@@ -124,34 +124,39 @@ export class ScanContextMapper {
     }
 
     /**
-     * Calculates severity counts from findings
+     * Calculates severity counts from findings using the effective severity
+     * (respects the active classification model: severity or priority)
      */
     private static calculateSeverityCounts(findings: Finding[]): ISeverityCounts {
         const counts = {
+            very_critical: 0,
             critical: 0,
             high: 0,
-            medium: 0,
-            low: 0
+            medium_low: 0,
+            unknown: 0
         };
 
         findings.forEach(finding => {
-            const severity = finding.getSeverity().toLowerCase();
-            if (severity === 'critical') {
+            const severity = finding.getEffectiveSeverity().toLowerCase();
+            if (severity === 'very critical') {
+                counts.very_critical++;
+            } else if (severity === 'critical') {
                 counts.critical++;
             } else if (severity === 'high') {
                 counts.high++;
-            } else if (severity === 'medium') {
-                counts.medium++;
-            } else if (severity === 'low') {
-                counts.low++;
+            } else if (severity === 'medium low') {
+                counts.medium_low++;
+            } else {
+                counts.unknown++;
             }
         });
 
         return {
+            very_critical: counts.very_critical.toString(),
             critical: counts.critical.toString(),
             high: counts.high.toString(),
-            medium: counts.medium.toString(),
-            low: counts.low.toString()
+            medium_low: counts.medium_low.toString(),
+            unknown: counts.unknown.toString()
         };
     }
 

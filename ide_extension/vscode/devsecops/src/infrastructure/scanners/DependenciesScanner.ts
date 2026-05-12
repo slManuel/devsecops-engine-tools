@@ -30,7 +30,7 @@ export class DependenciesScanner implements IScannerGateway {
     dependencyCheckDatabase: string,
     scanLoader: any
   ): Promise<ScannerRes> {
-    BaseScannerHelper.initializeScan(
+    const startTime = BaseScannerHelper.initializeScan(
       outputChannel,
       this.metricsHelper,
       this.dockerErrorHandler,
@@ -49,7 +49,6 @@ export class DependenciesScanner implements IScannerGateway {
           const scannerImageAvailable = await ScannerImageManager.ensureScannerImageExists(
           containerEnginePath,
           containerImageName,
-          toolVersion,
           outputChannel,
           (message) => this.metricsHelper.captureOnly(message)
         );
@@ -62,7 +61,9 @@ export class DependenciesScanner implements IScannerGateway {
             "engine_dependencies",
             this.metricsHelper,
             outputChannel,
-            resolve
+            resolve,
+            undefined,
+            startTime
           );
           return;
         }
@@ -76,7 +77,8 @@ export class DependenciesScanner implements IScannerGateway {
           this.metricsHelper,
           elementToScan,
           "engine_dependencies",
-          () => resolve(new ScannerRes(false, [], null))
+          () => resolve(new ScannerRes(false, [], null)),
+          startTime
         );
 
         if ((dependenciesTool === "xray" || dependenciesTool === "dependency_check") && !dependenciesToken) {
@@ -89,7 +91,9 @@ export class DependenciesScanner implements IScannerGateway {
             "engine_dependencies",
             this.metricsHelper,
             outputChannel,
-            resolve
+            resolve,
+            undefined,
+            startTime
           );
           return;
         }
@@ -105,7 +109,13 @@ export class DependenciesScanner implements IScannerGateway {
         }
 
         const normalizedElementPath = ContainerEngineManager.normalizePathForDocker(elementToScan);
-        const containerCommand = `${containerEnginePath} run --rm ${dependencyCheckDatabaseVolume} -v ${normalizedElementPath}:/ms_artifact ${containerImageName}:${toolVersion} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --xray_mode ${xrayMode} --remote_config_repo docker_default_remote_config --module engine_dependencies --tool ${dependenciesTool} ${tokenParameter} --folder_path /ms_artifact --context true"`;
+        const versionEnv = toolVersion ? `-e ENGINE_VERSION=${toolVersion}` : '';
+        const customConfigPath = ScanConfigurationService.getCustomRemoteConfigPath();
+        const remoteConfigVolume = customConfigPath
+          ? `-v "${ContainerEngineManager.normalizePathForDocker(customConfigPath)}:/app/ms_remote_config"`
+          : '';
+        const remoteConfigRepo = customConfigPath ? 'ms_remote_config' : 'docker_default_remote_config';
+        const containerCommand = `${containerEnginePath} run --rm ${versionEnv} ${remoteConfigVolume} ${dependencyCheckDatabaseVolume} -v ${normalizedElementPath}:/ms_artifact ${containerImageName} sh -c "devsecops-engine-tools --platform_devops local --remote_config_source local --xray_mode ${xrayMode} --remote_config_repo ${remoteConfigRepo} --module engine_dependencies --tool ${dependenciesTool} ${tokenParameter} --folder_path /ms_artifact --context true"`;
 
         const debugMode = ScanConfigurationService.getDebugMode();
 
@@ -143,7 +153,8 @@ export class DependenciesScanner implements IScannerGateway {
             "engine_dependencies",
             this.metricsHelper,
             outputChannel,
-            resolve
+            resolve,
+            startTime
           );
         });
 
@@ -161,7 +172,9 @@ export class DependenciesScanner implements IScannerGateway {
             "engine_dependencies",
             this.metricsHelper,
             outputChannel,
-            resolve
+            resolve,
+            undefined,
+            startTime
           );
         }
       })();

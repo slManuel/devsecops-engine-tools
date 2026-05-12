@@ -20,11 +20,12 @@ export class BaseScannerHelper {
         metricsHelper: MetricsService,
         dockerErrorHandler: DockerService,
         networkErrorHandler: ErrorHandlingService
-    ): void {
+    ): number {
         outputChannel.show();
         metricsHelper.clearLogs();
         dockerErrorHandler.reset();
         networkErrorHandler.reset();
+        return Date.now();
     }
 
     /**
@@ -37,6 +38,7 @@ export class BaseScannerHelper {
         elementToScan: string,
         scanType: "engine_iac" | "engine_container" | "engine_dependencies",
         onTimeout: () => void,
+        startTime: number = 0,
         additionalCleanup?: () => void
     ): NodeJS.Timeout {
         const scanTimeout = ScanConfigurationService.getScanTimeout();
@@ -52,8 +54,9 @@ export class BaseScannerHelper {
                 additionalCleanup();
             }
             
+            const durationMs = startTime ? Date.now() - startTime : 0;
             // Collect failed metrics
-            void metricsHelper.collectFailedScanMetrics(elementToScan, scanType)
+            void metricsHelper.collectFailedScanMetrics(elementToScan, scanType, 'local-docker', durationMs)
                 .then(() => {
                     onTimeout();
                 })
@@ -98,16 +101,20 @@ export class BaseScannerHelper {
         scanType: "engine_iac" | "engine_container" | "engine_dependencies",
         metricsHelper: MetricsService,
         outputChannel: OutputChannel,
-        resolve: (value: ScannerRes) => void
+        resolve: (value: ScannerRes) => void,
+        startTime: number = 0
     ): Promise<void> {
         metricsHelper.captureLog(outputChannel, `Found ${findings.length} issues in scan`);
+        const durationMs = startTime ? Date.now() - startTime : 0;
         
         void metricsHelper.collectAndstoreMetricsData(
             elementToScan,
             findings,
             severityCounts,
             scanResult,
-            scanType
+            scanType,
+            'local-docker',
+            durationMs
         ).catch((error) => {
             metricsHelper.captureError(outputChannel, error, "storing metrics");
         });
@@ -126,7 +133,8 @@ export class BaseScannerHelper {
         metricsHelper: MetricsService,
         outputChannel: OutputChannel,
         resolve: (value: ScannerRes) => void,
-        additionalCleanup?: () => void
+        additionalCleanup?: () => void,
+        startTime: number = 0
     ): Promise<void> {
         metricsHelper.captureError(outputChannel, error, context);
         
@@ -134,7 +142,8 @@ export class BaseScannerHelper {
             additionalCleanup();
         }
         
-        await metricsHelper.collectFailedScanMetrics(elementToScan, scanType);
+        const durationMs = startTime ? Date.now() - startTime : 0;
+        await metricsHelper.collectFailedScanMetrics(elementToScan, scanType, 'local-docker', durationMs);
         resolve(new ScannerRes(false, [], null));
     }
 }

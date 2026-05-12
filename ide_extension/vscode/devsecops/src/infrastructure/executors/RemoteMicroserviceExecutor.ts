@@ -3,11 +3,7 @@ import { OutputChannel } from "vscode";
 import * as https from 'https';
 import * as http from 'http';
 import { URL } from 'url';
-const config: Record<string, string> = {
-    '--platform_devops': 'local',
-    '--remote_config_source': 'local',
-    '--remote_config_repo': 'docker_default_remote_config'
-};import { IScanExecutor, IScanExecutionConfig, IScanExecutionResult } from "./IScanExecutor";
+import { IScanExecutor, IScanExecutionConfig, IScanExecutionResult } from "./IScanExecutor";
 import { ScanConfigurationService } from "../config/ScanConfigurationService";
 import { ScanContextMapper } from "../mappers/ScanContextMapper";
 import FileCompressionHelper from "../helper/FileCompressionHelper";
@@ -80,6 +76,9 @@ export class RemoteMicroserviceExecutor implements IScanExecutor {
                 logCapture(`File prepared for upload: ${FileCompressionHelper.formatFileSize(fileSize)}`);
             }
 
+            // Start measuring from here: excludes file preparation (compression/export)
+            const scanStartTime = Date.now();
+
             // Step 2: Build configuration JSON
             const configJson = this.buildConfigJson(scanConfig);
             outputChannel.appendLine('⚙️ Configuration prepared');
@@ -149,7 +148,7 @@ export class RemoteMicroserviceExecutor implements IScanExecutor {
                 logCapture('Response parsed successfully');
             }
             
-            const executionTime = Date.now() - startTime;
+            const executionTime = Date.now() - scanStartTime;
 
             if (logCapture) {
                 logCapture(`Remote scan completed in ${executionTime}ms`);
@@ -248,6 +247,9 @@ export class RemoteMicroserviceExecutor implements IScanExecutor {
             case 'iac':
                 if (scanConfig.iacTool) {
                     config['--tool'] = scanConfig.iacTool;
+                    if (scanConfig.iacTool === 'kics') {
+                        config['--platform'] = 'openapi';
+                    }
                 }
                 config['--use_secrets_manager'] = 'true';
                 break;

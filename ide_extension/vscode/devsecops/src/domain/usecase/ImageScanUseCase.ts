@@ -33,6 +33,7 @@ export class ImageScanUseCase implements IImageScanUseCase {
       // Create MetricsService instance to capture logs during remote execution
       const metricsService = new MetricsService();
       metricsService.clearLogs();
+      const startTime = Date.now();
       
       try {
         // Build config for remote execution
@@ -40,7 +41,7 @@ export class ImageScanUseCase implements IImageScanUseCase {
           scanType: 'image',
           target: imageToScan,
           containerImageName: scanConfiguration.getContainerImageName(),
-          toolVersion: this.containerImageVersion,
+          engineToolsVersion: this.containerImageVersion,
           containerEnginePath: this.containerEnginePath
         };
 
@@ -66,7 +67,9 @@ export class ImageScanUseCase implements IImageScanUseCase {
             mappedResult.findings,
             mappedResult.severityCounts,
             mappedResult.success,
-            'engine_container'
+            'engine_container',
+            'remote-microservice',
+            result.executionTime ?? 0
           );
         } catch (metricsError) {
           // Log but don't fail the scan if metrics upload fails
@@ -77,7 +80,7 @@ export class ImageScanUseCase implements IImageScanUseCase {
       } catch (error) {
         // Send metrics for failed scan before throwing error
         metricsService.captureError(outputChannel, error, 'remote scan execution');
-        await metricsService.collectFailedScanMetrics(imageToScan, 'engine_container');
+        await metricsService.collectFailedScanMetrics(imageToScan, 'engine_container', 'remote-microservice', Date.now() - startTime);
         throw error;
       }
     }

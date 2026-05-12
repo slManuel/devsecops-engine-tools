@@ -33,6 +33,7 @@ export class DependenciesScanUseCase implements IDependenciesScanUseCase {
       // Create MetricsService instance to capture logs during remote execution
       const metricsService = new MetricsService();
       metricsService.clearLogs();
+      const startTime = Date.now();
       
       try {
         // Build config for remote execution
@@ -40,7 +41,7 @@ export class DependenciesScanUseCase implements IDependenciesScanUseCase {
           scanType: 'dependencies',
           target: folderToScan,
           containerImageName: scanConfiguration.getContainerImageName(),
-          toolVersion: this.containerImageVersion,
+          engineToolsVersion: this.containerImageVersion,
           containerEnginePath: this.containerEnginePath,
           dependenciesTool: scanConfiguration.getDependenciesTool(),
           dependenciesToken: scanConfiguration.getDependenciesToken(),
@@ -70,7 +71,9 @@ export class DependenciesScanUseCase implements IDependenciesScanUseCase {
             mappedResult.findings,
             mappedResult.severityCounts,
             mappedResult.success,
-            'engine_dependencies'
+            'engine_dependencies',
+            'remote-microservice',
+            result.executionTime ?? 0
           );
         } catch (metricsError) {
           // Log but don't fail the scan if metrics upload fails
@@ -81,7 +84,7 @@ export class DependenciesScanUseCase implements IDependenciesScanUseCase {
       } catch (error) {
         // Send metrics for failed scan before throwing error
         metricsService.captureError(outputChannel, error, 'remote scan execution');
-        await metricsService.collectFailedScanMetrics(folderToScan, 'engine_dependencies');
+        await metricsService.collectFailedScanMetrics(folderToScan, 'engine_dependencies', 'remote-microservice', Date.now() - startTime);
         throw error;
       }
     }

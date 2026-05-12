@@ -5,6 +5,7 @@ import { ISeverityCounts } from "../../domain/model/mappers/Mappers";
 import { IMetricsData, IMetricsInput } from "../../domain/model/metrics/IMetricsData";
 import { METRICS_DATA_UPLOAD_URL } from '../../application/appService/Constants';
 import { ErrorHandlingService } from './ErrorHandlingService';
+import { ScanConfigurationService } from '../config/ScanConfigurationService';
 
 /**
  * MetricsService - Consolidated service for metrics collection, storage, and management
@@ -71,13 +72,16 @@ export class MetricsService {
             tool: tool,
             scan_component: input.scan_component,
             scan_date: new Date().toLocaleString(),
+            findings_severity_very_critical: severityCounts.very_critical,
             findings_severity_critical: severityCounts.critical,
             findings_severity_high: severityCounts.high,
-            findings_severity_medium: severityCounts.medium,
-            findings_severity_low: severityCounts.low,
+            findings_severity_medium_low: severityCounts.medium_low,
+            findings_severity_unknown: severityCounts.unknown,
             total_findings: input.findings.length.toString(),
             exception_log: exceptionLog,
-            scan_status: scanStatus
+            scan_status: scanStatus,
+            execution_mode: input.execution_mode,
+            scan_duration_s: (input.scan_duration_ms / 1000).toFixed(2)
         };
 
         return metricsData;
@@ -85,14 +89,15 @@ export class MetricsService {
 
     private static parseSeverityCounts(severityCounts: IMetricsInput['severityCounts']) {
         if (!severityCounts) {
-            return { critical: "0", high: "0", medium: "0", low: "0" };
+            return { very_critical: "0", critical: "0", high: "0", medium_low: "0", unknown: "0" };
         }
 
         return {
+            very_critical: severityCounts.very_critical || "0",
             critical: severityCounts.critical || "0",
             high: severityCounts.high || "0",
-            medium: severityCounts.medium || "0",
-            low: severityCounts.low || "0"
+            medium_low: severityCounts.medium_low || "0",
+            unknown: severityCounts.unknown || "0"
         };
     }
 
@@ -119,6 +124,9 @@ export class MetricsService {
                 }
                 if (ErrorHandlingService.hasConfigurationErrors(logs)) {
                     return 'Error: Configuration issues';
+                }
+                if (ErrorHandlingService.hasMicroserviceErrors(logs)) {
+                    return 'Error: Microservice unavailable';
                 }
             }
             return 'Error: Unknown';
@@ -158,6 +166,12 @@ export class MetricsService {
         return new Promise((resolve, reject) => {
             const url = new URL(METRICS_DATA_UPLOAD_URL);
             const jsonPayload = JSON.stringify(metricsData);
+            const debugMode = ScanConfigurationService.getDebugMode();
+
+            if (debugMode) {
+                console.log('[DevSecOps Metrics] POST', METRICS_DATA_UPLOAD_URL);
+                console.log('[DevSecOps Metrics] Payload:', JSON.stringify(metricsData, null, 2));
+            }
 
             const options = {
                 hostname: url.hostname,
@@ -181,8 +195,14 @@ export class MetricsService {
 
                 response.on('end', () => {
                     if (response.statusCode && response.statusCode >= 200 && response.statusCode < 300) {
+                        if (debugMode) {
+                            console.log(`[DevSecOps Metrics] Response: ${response.statusCode} OK`);
+                        }
                         resolve();
                     } else {
+                        if (debugMode) {
+                            console.log(`[DevSecOps Metrics] Response: ${response.statusCode} ERROR - ${responseData}`);
+                        }
                         const error = new Error(`Remote upload failed with status ${response.statusCode}: ${responseData}`);
                         reject(error);
                     }
@@ -210,7 +230,9 @@ export class MetricsService {
         findings: Finding[],
         severityCounts: ISeverityCounts | null,
         scanResult: boolean,
-        scanType: "engine_iac" | "engine_container" | "engine_dependencies"
+        scanType: "engine_iac" | "engine_container" | "engine_dependencies",
+        executionMode: 'local-docker' | 'remote-microservice' = 'local-docker',
+        scanDurationMs: number = 0
     ): Promise<void> {
         try {
             const metricsInput: IMetricsInput = {
@@ -220,7 +242,9 @@ export class MetricsService {
                 scan_success: scanResult,
                 output_logs: this.outputLogs,
                 exception_message: `Found ${findings.length} issues in scan`,
-                tool: scanType
+                tool: scanType,
+                execution_mode: executionMode,
+                scan_duration_ms: scanDurationMs
             };
 
             const metricsData = MetricsService.collectMetrics(metricsInput);
@@ -248,7 +272,7 @@ export class MetricsService {
         networkErrorHandler: any
     ): void {
         const errorContext = {
-            imageTag: `${containerImageName}:${toolVersion}`,
+            imageTag: containerImageName,
             containerImageName,
             toolVersion
         };
@@ -270,47 +294,55 @@ export class MetricsService {
      */
     async collectFailedScanMetrics(
         elementToScan: string,
-        scanType: "engine_iac" | "engine_container" | "engine_dependencies"
+        scanType: "engine_iac" | "engine_container" | "engine_dependencies",
+        executionMode: 'local-docker' | 'remote-microservice' = 'local-docker',
+        scanDurationMs: number = 0
     ): Promise<void> {
         await this.collectAndstoreMetricsData(
             elementToScan,
             [],
             null,
             false,
-            scanType
+            scanType,
+            executionMode,
+            scanDurationMs
         );
     }
 
     /**
      * Calculates severity counts from scan context
      */
-    static calculateRawSeverityCounts<T extends { severity?: string }>(contexts: T[]): ISeverityCounts {
+    static calculateRawSeverityCounts<T extends { severity?: string; priority?: string }>(contexts: T[]): ISeverityCounts {
         const counts = {
+            very_critical: 0,
             critical: 0,
             high: 0,
-            medium: 0,
-            low: 0
+            medium_low: 0,
+            unknown: 0
         };
 
         contexts.forEach((context) => {
-            const severity = context.severity?.toLowerCase();
+            const effective = (context.priority || context.severity)?.toLowerCase();
 
-            if (severity === 'critical') {
+            if (effective === 'very critical') {
+                counts.very_critical++;
+            } else if (effective === 'critical') {
                 counts.critical++;
-            } else if (severity === 'high') {
+            } else if (effective === 'high') {
                 counts.high++;
-            } else if (severity === 'medium') {
-                counts.medium++;
-            } else if (severity === 'low') {
-                counts.low++;
+            } else if (effective === 'medium low') {
+                counts.medium_low++;
+            } else {
+                counts.unknown++;
             }
         });
 
         return {
+            very_critical: counts.very_critical.toString(),
             critical: counts.critical.toString(),
             high: counts.high.toString(),
-            medium: counts.medium.toString(),
-            low: counts.low.toString()
+            medium_low: counts.medium_low.toString(),
+            unknown: counts.unknown.toString()
         };
     }
 }

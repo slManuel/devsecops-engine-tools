@@ -5,6 +5,7 @@ import { ResultsTreeDataProvider } from "../tree/ResultsTreeDataProvider";
 import { dependenciesScanRequest } from "../application/InitEngineCore";
 import { ScanConfiguration } from "../domain/model/ScanConfiguration";
 import { ScanOutputLoader } from "../infrastructure/helper/LoadingAnimator";
+import { ErrorHandlingService } from "../infrastructure/services/ErrorHandlingService";
 
 export function registerDependenciesScanCommand(
     context: vscode.ExtensionContext,
@@ -28,7 +29,15 @@ export function registerDependenciesScanCommand(
 
             void vscode.window.showInformationMessage(`DevSecOps Dependencies Scanning: ${folderPath}`);
 
-            const useCase = await dependenciesScanRequest();
+            let useCase;
+            try {
+                useCase = await dependenciesScanRequest();
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+                void vscode.window.showErrorMessage(`Dependencies Scan configuration error: ${errorMessage}`);
+                return;
+            }
+
             const outputChannel = vscode.window.createOutputChannel("Dependencies Scan Results");
             outputChannel.clear();
 
@@ -68,7 +77,12 @@ export function registerDependenciesScanCommand(
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
                 scanLoader.showError(`Dependencies Scan failed: ${errorMessage}`);
-                void vscode.window.showErrorMessage("Dependencies Scan failed - Check Output for details");
+                const userMessage = ErrorHandlingService.isVpnError(errorMessage)
+                    ? "Cannot reach the microservice. Please check your VPN or internal Wi-Fi connection and try again."
+                    : ErrorHandlingService.isMicroserviceError(errorMessage)
+                    ? "The microservice is unavailable or the connection was interrupted. Please try again."
+                    : "Dependencies Scan failed - Check Output for details";
+                void vscode.window.showErrorMessage(userMessage);
                 // Mark the scan as failed but keep it visible
                 treeDataProvider.updateScanResultWithError(scanId, errorMessage);
             }

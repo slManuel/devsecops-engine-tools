@@ -122,7 +122,7 @@ export class LocalDockerExecutor implements IScanExecutor {
             outputChannel,
             scanConfig.containerImageName || '',
             scanConfig.iacTool || 'checkov',
-            scanConfig.toolVersion || 'latest',
+            scanConfig.engineToolsVersion || '',
             scanConfig.containerEnginePath || 'docker',
             undefined // scanLoader
         );
@@ -136,7 +136,7 @@ export class LocalDockerExecutor implements IScanExecutor {
             scanConfig.target,
             outputChannel,
             scanConfig.containerImageName || '',
-            scanConfig.toolVersion || 'latest',
+            scanConfig.engineToolsVersion || '',
             scanConfig.containerEnginePath || 'docker',
             undefined // scanLoader
         );
@@ -150,7 +150,7 @@ export class LocalDockerExecutor implements IScanExecutor {
             scanConfig.target,
             outputChannel,
             scanConfig.containerImageName || '',
-            scanConfig.toolVersion || 'latest',
+            scanConfig.engineToolsVersion || '',
             scanConfig.containerEnginePath || 'docker',
             scanConfig.dependenciesToken || '',
             scanConfig.xrayMode || '',

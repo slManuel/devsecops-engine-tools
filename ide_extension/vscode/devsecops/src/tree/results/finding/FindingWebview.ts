@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { findingDetailWebview } from './FindingDetail';
 import { Finding } from "../../../domain/model/Finding";
+import { AiMetricsService } from '../../../infrastructure/services/AiMetricsService';
 
 let vulnPanels: Map<string, vscode.WebviewPanel> = new Map();
 
@@ -79,24 +80,28 @@ function setupMessageHandler(panel: vscode.WebviewPanel, finding: Finding): void
         async (message) => {
             switch (message.command) {
                 case 'fixWithCopilot':
+                    AiMetricsService.track('fix_with_copilot', finding, 'webview');
                     await vscode.commands.executeCommand('devsecops.fixVulnerabilityWithCopilot', {
                         finding: finding,
                         sourceType: message.sourceType
                     });
                     break;
                 case 'explainWithCopilot':
+                    AiMetricsService.track('explain_with_copilot', finding, 'webview');
                     await vscode.commands.executeCommand('devsecops.explainVulnerabilityWithCopilot', {
                         finding: finding,
                         sourceType: message.sourceType
                     });
                     break;
                 case 'generateDependencyUpdate':
+                    AiMetricsService.track('generate_dependency_update', finding, 'webview');
                     await vscode.commands.executeCommand('devsecops.generateDependencyUpdate', {
                         finding: finding
                     });
                     break;
                 case 'autoFixWithAgent':
                 case 'autoFixDependenciesWithAgent':
+                    AiMetricsService.track('auto_fix_with_agent', finding, 'webview');
                     await vscode.commands.executeCommand('devsecops.autoFixDependenciesWithAgent', {
                         finding: finding
                     });

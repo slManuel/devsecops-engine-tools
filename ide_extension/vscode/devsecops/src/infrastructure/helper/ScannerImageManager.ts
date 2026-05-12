@@ -30,7 +30,6 @@ export class ScannerImageManager {
   async ensureScannerImageExists(
     containerEnginePath: string,
     containerImageName: string,
-    toolVersion: string,
     outputChannel: OutputChannel,
     logCapture?: (message: string) => void
   ): Promise<boolean> {
@@ -44,8 +43,8 @@ export class ScannerImageManager {
       return false;
     }
 
-    const imageTag = `${containerImageName}:${toolVersion}`;
-    const context: ErrorContext = { imageTag, containerImageName, toolVersion };
+    const imageTag = containerImageName;
+    const context: ErrorContext = { imageTag, containerImageName };
 
     const imageExists = await this.checkImageExists(containerEnginePath, imageTag, outputChannel, logCapture);
     if (imageExists) {
@@ -154,11 +153,10 @@ export class ScannerImageManager {
   static async ensureScannerImageExists(
     containerEnginePath: string,
     containerImageName: string,
-    toolVersion: string,
     outputChannel: OutputChannel,
     logCapture?: (message: string) => void
   ): Promise<boolean> {
     const manager = new ScannerImageManager();
-    return manager.ensureScannerImageExists(containerEnginePath, containerImageName, toolVersion, outputChannel, logCapture);
+    return manager.ensureScannerImageExists(containerEnginePath, containerImageName, outputChannel, logCapture);
   }
 }

@@ -47,7 +47,7 @@ export interface IScanExecutionConfig {
     
     // Scanner configuration
     containerImageName?: string;
-    toolVersion?: string;
+    engineToolsVersion?: string;
     containerEnginePath?: string;
     
     // Type-specific configs
