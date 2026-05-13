@@ -53,6 +53,7 @@ Main configuration file that defines scanning behavior, tool versions, and secur
     "EXTERNAL_DIR_REPOSITORY": "",
     "APP_ID_GITHUB": "",
     "INSTALLATION_ID_GITHUB": "",
+    "DOWNLOAD_EXTERNAL_MODULES": false,
     "DEFAULT_SEVERITY": "Critical",
     "DEFAULT_CATEGORY": "Compliance",
     "REGEX_CLEAN_RESOURCE": "",
@@ -215,6 +216,8 @@ Main configuration file that defines scanning behavior, tool versions, and secur
 - **GitHub Integration**:
   - `APP_ID_GITHUB`: GitHub App ID for authentication
   - `INSTALLATION_ID_GITHUB`: GitHub App installation ID
+- **Module Download Behavior**:
+  - `DOWNLOAD_EXTERNAL_MODULES`: Enables/disables Checkov external module downloads during scan execution
 - **Default Values**:
   - `DEFAULT_SEVERITY`: Default severity level for new rules (`"Critical"`)
   - `DEFAULT_CATEGORY`: Default category for new rules (`"Compliance"`)
@@ -354,6 +357,32 @@ devsecops-engine-tools \
 2. Include all required fields: `checkID`, `environment`, `guideline`, `severity`, `category`
 3. Set environment-specific enablement flags (`dev`, `pdn`, `qa`)
 4. Provide documentation guidelines URL
+
+### Checkov Runtime Mapping: `DOWNLOAD_EXTERNAL_MODULES`
+
+Engine IAC now maps the remote config key `CHECKOV.DOWNLOAD_EXTERNAL_MODULES` into the Checkov runtime configuration.
+
+- **What changed**: The generated Checkov runtime config includes the `--download-external-modules` behavior based on remote config.
+- **Why it matters**: Scanner behavior can now be controlled from `ConfigTool.json` without requiring local code changes.
+
+Set this key in `ConfigTool.json`:
+
+```json
+"CHECKOV": {
+  "DOWNLOAD_EXTERNAL_MODULES": false
+}
+```
+
+Behavior:
+
+- `DOWNLOAD_EXTERNAL_MODULES: true`: Enables downloading external modules during Checkov scan execution.
+- `DOWNLOAD_EXTERNAL_MODULES: false`: Disables downloading external modules during Checkov scan execution.
+
+Implementation notes:
+
+1. Add support for `download-external-modules` in the Checkov config model and serialization.
+2. Map `CHECKOV.DOWNLOAD_EXTERNAL_MODULES` when building Checkov execution config in the adapter.
+3. Include `DOWNLOAD_EXTERNAL_MODULES` in the engine_iac local remote config contract.
 
 ### Managing Exclusions
 1. Add exclusions to `Exclusions.json` with proper expiration dates
