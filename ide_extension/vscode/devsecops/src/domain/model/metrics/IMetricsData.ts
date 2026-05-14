@@ -10,7 +10,7 @@ export interface IMetricsData {
     findings_severity_unknown: string;
     total_findings: string;
     exception_log: string;
-    scan_status: 'Success with findings' | 'Success with no findings' | 'Error: Docker inactive' | 'Error: VPN inactive' | 'Error: Configuration issues' | 'Error: Microservice unavailable' | 'Error: Unknown';
+    scan_status: 'Success with findings' | 'Success with no findings' | 'Error: Docker inactive' | 'Error: VPN inactive' | 'Error: Configuration issues' | 'Error: Microservice unavailable' | 'Error: SSL certificate' | 'Error: Unknown';
     execution_mode: 'local-docker' | 'remote-microservice';
     scan_duration_s: string;
 }
