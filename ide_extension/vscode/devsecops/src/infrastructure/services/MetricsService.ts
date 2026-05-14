@@ -128,6 +128,9 @@ export class MetricsService {
                 if (ErrorHandlingService.hasMicroserviceErrors(logs)) {
                     return 'Error: Microservice unavailable';
                 }
+                if (ErrorHandlingService.hasCertificateErrors(logs)) {
+                    return 'Error: SSL certificate';
+                }
             }
             return 'Error: Unknown';
         }

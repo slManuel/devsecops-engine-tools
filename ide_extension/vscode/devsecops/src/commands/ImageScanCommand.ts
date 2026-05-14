@@ -94,6 +94,8 @@ export function registerImageScanCommand(
         scanLoader.showError(`Image Scan failed: ${errorMessage}`);
         const userMessage = ErrorHandlingService.isVpnError(errorMessage)
           ? "Cannot reach the microservice. Please check your VPN or internal Wi-Fi connection and try again."
+          : ErrorHandlingService.isSelfSignedCertificateError(errorMessage)
+          ? "SSL certificate error: self-signed certificate detected. Please update your certificates and try again."
           : ErrorHandlingService.isMicroserviceError(errorMessage)
           ? "The microservice is unavailable or the connection was interrupted. Please try again."
           : "Image Scan failed - Check Output for details";

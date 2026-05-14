@@ -32,7 +32,8 @@ export default class FileCompressionHelper {
     'venv',
     '.venv',
     '.env',
-    '.gradle'
+    '.gradle',
+    '.angular'
   ];
 
   // File extensions to exclude from compression

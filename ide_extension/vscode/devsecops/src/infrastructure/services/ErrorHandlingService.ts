@@ -49,6 +49,9 @@ export const ERROR_PATTERNS = {
         'connection termination',
         'ENOTFOUND',
         'getaddrinfo'
+    ],
+    certificate: [
+        'self signed certificate'
     ]
 } as const;
 
@@ -179,6 +182,10 @@ export class ErrorHandlingService {
         return this.hasErrorCategory(logs, 'microservice');
     }
 
+    public static hasCertificateErrors(logs: string[]): boolean {
+        return this.hasErrorCategory(logs, 'certificate');
+    }
+
     /**
      * Checks if a single error message string indicates microservice unavailability.
      * Used by scan commands to determine which user-facing message to show.
@@ -186,6 +193,10 @@ export class ErrorHandlingService {
     public static isVpnError(errorMessage: string): boolean {
         const lower = errorMessage.toLowerCase();
         return lower.includes('enotfound') || lower.includes('getaddrinfo');
+    }
+
+    public static isSelfSignedCertificateError(errorMessage: string): boolean {
+        return errorMessage.toLowerCase().includes('self signed certificate');
     }
 
     public static isMicroserviceError(errorMessage: string): boolean {
