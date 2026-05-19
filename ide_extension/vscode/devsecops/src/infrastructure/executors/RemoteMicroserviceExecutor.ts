@@ -22,8 +22,8 @@ import * as path from "path";
  */
 export class RemoteMicroserviceExecutor implements IScanExecutor {
     private microserviceUrl: string;
-    private readonly MAX_RETRIES = 3;
-    private readonly INITIAL_DELAY_MS = 2000;
+    private readonly MAX_RETRIES = 5;
+    private readonly INITIAL_DELAY_MS = 3000;
 
     constructor(microserviceUrl?: string) {
         this.microserviceUrl = microserviceUrl || ScanConfigurationService.getMicroserviceUrl() || '';
