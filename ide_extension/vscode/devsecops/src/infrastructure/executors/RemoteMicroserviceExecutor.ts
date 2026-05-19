@@ -5,6 +5,7 @@ import * as http from 'http';
 import { URL } from 'url';
 import { IScanExecutor, IScanExecutionConfig, IScanExecutionResult } from "./IScanExecutor";
 import { ScanConfigurationService } from "../config/ScanConfigurationService";
+import { ErrorHandlingService } from "../services/ErrorHandlingService";
 import { ScanContextMapper } from "../mappers/ScanContextMapper";
 import FileCompressionHelper from "../helper/FileCompressionHelper";
 import ContainerEngineManager from "../helper/ContainerEngineManager";
@@ -21,6 +22,8 @@ import * as path from "path";
  */
 export class RemoteMicroserviceExecutor implements IScanExecutor {
     private microserviceUrl: string;
+    private readonly MAX_RETRIES = 5;
+    private readonly INITIAL_DELAY_MS = 3000;
 
     constructor(microserviceUrl?: string) {
         this.microserviceUrl = microserviceUrl || ScanConfigurationService.getMicroserviceUrl() || '';
@@ -110,7 +113,7 @@ export class RemoteMicroserviceExecutor implements IScanExecutor {
                         cancellable: false
                     },
                     async (progress) => {
-                        return await this.sendScanRequest(
+                        return await this.executeWithRetry(
                             practice,
                             configJson,
                             compressedFilePath!, // Safe because we checked earlier
@@ -121,7 +124,7 @@ export class RemoteMicroserviceExecutor implements IScanExecutor {
                 );
             } else {
                 // No progress indicator for small files
-                response = await this.sendScanRequest(
+                response = await this.executeWithRetry(
                     practice,
                     configJson,
                     compressedFilePath!, // Safe because we checked earlier
@@ -316,6 +319,47 @@ export class RemoteMicroserviceExecutor implements IScanExecutor {
         }
         
         return obj;
+    }
+
+    /**
+     * Wraps sendScanRequest with exponential-backoff retry logic.
+     * Retries only on transient microservice errors (5xx / upstream errors).
+     * Does NOT retry on VPN/DNS or certificate errors.
+     */
+    private async executeWithRetry(
+        practice: string,
+        configJson: string,
+        filePath: string,
+        outputChannel: OutputChannel,
+        progressReporter?: vscode.Progress<{ message?: string; increment?: number }>
+    ): Promise<any> {
+        let lastError: Error | undefined;
+
+        for (let attempt = 1; attempt <= this.MAX_RETRIES; attempt++) {
+            try {
+                return await this.sendScanRequest(practice, configJson, filePath, outputChannel, progressReporter);
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                const isTransient =
+                    ErrorHandlingService.isMicroserviceError(errorMessage) &&
+                    !ErrorHandlingService.isVpnError(errorMessage) &&
+                    !ErrorHandlingService.isSelfSignedCertificateError(errorMessage);
+
+                if (!isTransient || attempt === this.MAX_RETRIES) {
+                    throw error;
+                }
+
+                lastError = error instanceof Error ? error : new Error(errorMessage);
+                const delay = this.INITIAL_DELAY_MS * Math.pow(2, attempt - 1) + Math.random() * 500;
+                outputChannel.appendLine(
+                    `⚠️ Microservice unavailable (attempt ${attempt}/${this.MAX_RETRIES}). Retrying in ${(delay / 1000).toFixed(1)}s...`
+                );
+                outputChannel.appendLine('');
+                await new Promise(res => setTimeout(res, delay));
+            }
+        }
+
+        throw lastError!;
     }
 
     /**
