@@ -92,6 +92,7 @@ class TestIacScan(unittest.TestCase):
             "folder_path": "example_folder",
             "environment": "test",
             "platform": "eks",
+            "token_external_checks": "token",
         }
         secret_tool = "example_secret"
         tool = "CHECKOV"
@@ -173,3 +174,110 @@ class TestIacScan(unittest.TestCase):
         # Assert the expected return values
         self.assertEqual(findings_list, [])
         self.assertIsNotNone(input_core)
+
+    def test_process_skip_search_folder_by_pattern_search(self):
+        dict_args = {
+            "remote_config_repo": "example_repo",
+            "remote_config_branch": "",
+            "folder_path": "example_folder",
+            "environment": "test",
+            "platform": "eks",
+            "token_external_checks": "token",
+        }
+        secret_tool = "example_secret"
+        tool = "CHECKOV"
+
+        self.remote_config_source_gateway.get_remote_config.side_effect = [
+            {
+                "SEARCH_PATTERN": ["AW", "NU"],
+                "IGNORE_SEARCH_PATTERN": "(.*_test)",
+                "EXCLUSIONS_PATH": "Exclusions.json",
+                "MESSAGE_INFO_ENGINE_IAC": "message test",
+                "UPDATE_SERVICE_WITH_FILE_NAME_CFT": "false",
+                "THRESHOLD": {
+                    "VULNERABILITY": {
+                        "Critical": 10,
+                        "High": 3,
+                        "Medium": 20,
+                        "Low": 30,
+                    },
+                    "COMPLIANCE": {"Critical": 4},
+                    "PRIORITY": {
+                        "Very Critical": 1,
+                        "Critical": 3,
+                        "High": 5,
+                        "Medium Low": 15,
+                    },
+                },
+                "CHECKOV": {
+                    "VERSION": "2.3.296",
+                    "USE_EXTERNAL_CHECKS_GIT": "True",
+                    "EXTERNAL_CHECKS_GIT": "rules",
+                    "EXTERNAL_GIT_SSH_HOST": "github",
+                    "EXTERNAL_GIT_PUBLIC_KEY_FINGERPRINT": "fingerprint",
+                    "USE_EXTERNAL_CHECKS_DIR": "False",
+                    "EXTERNAL_DIR_OWNER": "test",
+                    "EXTERNAL_DIR_REPOSITORY": "repository",
+                    "RULES": "",
+                },
+            },
+            {
+                "All": {
+                    "CHECKOV": [
+                        {
+                            "id": "CKV_K8S_8",
+                            "where": "all",
+                            "create_date": "18112023",
+                            "expired_date": "18032024",
+                            "severity": "HIGH",
+                            "hu": "4338704",
+                        }
+                    ]
+                },
+                "BY_PATTERN_SEARCH": {
+                    ".*example_pipeline": {
+                        "THRESHOLD": {
+                            "VULNERABILITY": {
+                                "Critical": 1,
+                                "High": 2,
+                                "Medium": 3,
+                                "Low": 4,
+                            },
+                            "COMPLIANCE": {"Critical": 1},
+                            "PRIORITY": {
+                                "Very Critical": 1,
+                                "Critical": 1,
+                                "High": 1,
+                                "Medium Low": 1,
+                            },
+                        },
+                        "SKIP_TOOL": {
+                            "create_date": "24012024",
+                            "expired_date": "30012024",
+                            "hu": "3423213",
+                        },
+                        "CHECKOV": [
+                            {
+                                "id": "CKV_K8S_9",
+                                "where": "deployment-configmap.yaml",
+                                "create_date": "18112023",
+                                "expired_date": "18032024",
+                                "severity": "HIGH",
+                                "hu": "4338704",
+                            }
+                        ],
+                    }
+                },
+            },
+        ]
+
+        self.devops_platform_gateway.get_variable.return_value = "example_pipeline"
+        self.tool_gateway.run_tool.return_value = ([], None)
+
+        findings_list, input_core = self.iac_scan.process(dict_args, secret_tool, tool, "qa")
+
+        self.assertEqual(findings_list, [])
+        self.assertEqual(len(input_core.totalized_exclusions), 2)
+        self.assertEqual(input_core.totalized_exclusions[0].id, "CKV_K8S_8")
+        self.assertEqual(input_core.totalized_exclusions[1].id, "CKV_K8S_9")
+        self.tool_gateway.run_tool.assert_not_called()

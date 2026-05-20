@@ -111,13 +111,19 @@ class IacScan:
 
         if config_tool.exclusions.get("All") is not None:
             config_tool.exclusions_all = config_tool.exclusions.get("All").get(tool)
-        if config_tool.exclusions.get(config_tool.scope_pipeline) is not None:
-            config_tool.exclusions_scope = config_tool.exclusions.get(
-                config_tool.scope_pipeline
-            ).get(tool)
-            skip_tool = bool(
-                config_tool.exclusions.get(config_tool.scope_pipeline).get("SKIP_TOOL")
-            )
+
+        exclusions_scope = config_tool.exclusions.get(config_tool.scope_pipeline)
+        if exclusions_scope is None:
+            for pattern, values in config_tool.exclusions.get(
+                "BY_PATTERN_SEARCH", {}
+            ).items():
+                if re.match(pattern, config_tool.scope_pipeline, re.IGNORECASE):
+                    exclusions_scope = values
+                    break
+
+        if exclusions_scope is not None:
+            config_tool.exclusions_scope = exclusions_scope.get(tool)
+            skip_tool = bool(exclusions_scope.get("SKIP_TOOL"))
 
         if dict_args["folder_path"]:
             if (
