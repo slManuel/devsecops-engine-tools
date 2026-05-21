@@ -294,6 +294,42 @@ Defines exclusion rules for repositories and specific security checks.
         "hu": "4338704"
       }
     ]
+  },
+  "BY_PATTERN_SEARCH": {
+    ".*_Repository_Test": {
+      "THRESHOLD": {
+        "VULNERABILITY": {
+          "Critical": 1,
+          "High": 4,
+          "Medium": 10,
+          "Low": 15
+        },
+        "COMPLIANCE": {
+          "Critical": 1
+        },
+        "PRIORITY": {
+          "Very Critical": 1,
+          "Critical": 4,
+          "High": 10,
+          "Medium Low": 15
+        }
+      },
+      "SKIP_TOOL": {
+        "create_date": "24012024",
+        "expired_date": "30012024",
+        "hu": "3423213"
+      },
+      "CHECKOV": [
+        {
+          "id": "CKV_K8S_24",
+          "where": "all",
+          "create_date": "18112023",
+          "expired_date": "18032024",
+          "severity": "HIGH",
+          "hu": "4338704"
+        }
+      ]
+    }
   }
 }
 ```
@@ -301,7 +337,9 @@ Defines exclusion rules for repositories and specific security checks.
 #### Exclusion Types
 - **All**: Global exclusions applied to all repositories
 - **Repository-specific**: Exclusions for specific repositories
+- **BY_PATTERN_SEARCH**: Regex-based exclusions for matching multiple pipeline names
 - **SKIP_TOOL**: Complete tool bypass for a repository
+- **THRESHOLD**: Optional threshold override by repository or pattern (VULNERABILITY, COMPLIANCE, PRIORITY)
 - **Rule-specific**: Exclusions for specific security rules with:
   - `id`: Security rule identifier
   - `where`: File or location scope ("all" for global)
