@@ -30,6 +30,23 @@
 	},
 	"BY_PATTERN_SEARCH": {
 		".*_Repository_Test": {
+			"THRESHOLD": {
+				"VULNERABILITY": {
+					"Critical": 1,
+					"High": 4,
+					"Medium": 10,
+					"Low": 15
+				},
+				"COMPLIANCE": {
+					"Critical": 1
+				},
+				"PRIORITY": {
+					"Very Critical": 1,
+					"Critical": 4,
+					"High": 10,
+					"Medium Low": 15
+				}
+			},
 			"SKIP_TOOL": {
 				"create_date": "24012024",
 				"expired_date": "30012024",
