@@ -1,32 +1,52 @@
-# DevSecOps Engine Tools
+# Conftest
 
-[![Maintained by Bancolombia](https://img.shields.io/badge/maintained_by-Bancolombia-yellow)](#)
-[![Build](https://github.com/bancolombia/devsecops-engine-tools/actions/workflows/build.yml/badge.svg)](https://github.com/bancolombia/devsecops-engine-tools/actions/workflows/build.yml)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=bancolombia_devsecops-engine-tools&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=bancolombia_devsecops-engine-tools)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=bancolombia_devsecops-engine-tools&metric=coverage)](https://sonarcloud.io/summary/new_code?id=bancolombia_devsecops-engine-tools)
-[![Python Version](https://img.shields.io/badge/python%20-%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%20%7C%203.14%20-blue)](#)
-[![PyPI](https://img.shields.io/pypi/v/devsecops-engine-tools)](https://pypi.org/project/devsecops-engine-tools/)
-[![Docker Pulls](https://img.shields.io/docker/pulls/bancolombia/devsecops-engine-tools
-)](https://hub.docker.com/r/bancolombia/devsecops-engine-tools)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11792/badge)](https://www.bestpractices.dev/projects/11792)
+[![Go Report Card](https://goreportcard.com/badge/open-policy-agent/opa)](https://goreportcard.com/report/open-policy-agent/conftest) [![Netlify](https://api.netlify.com/api/v1/badges/2d928746-3380-4123-b0eb-1fd74ba390db/deploy-status)](https://app.netlify.com/sites/vibrant-villani-65041c/deploys)
 
-# Objective
+Conftest helps you write tests against structured configuration data. Using Conftest you can
+write tests for your Kubernetes configuration, Tekton pipeline definitions, Terraform code,
+Serverless configs or any other config files.
 
-Tool that unifies the evaluation of the different devsecops practices being agnostic to the devops platform, using both open source and market tools.
+Conftest uses the Rego language from [Open Policy Agent](https://www.openpolicyagent.org/) for writing
+the assertions. You can read more about Rego in the [Policy Language](https://www.openpolicyagent.org/docs/policy-language)
+section in the Open Policy Agent documentation.
 
+Here's a quick example. Save the following as `policy/deployment.rego`:
 
-# Communications channel
+```rego
+package main
 
-Here are the channels we use to communicate about the project:
+deny contains msg if {
+  input.kind == "Deployment"
+  not input.spec.template.spec.securityContext.runAsNonRoot
 
-**1. Mailing list:** You can join our mailing list to always be informed at the following link: [CommunityDevsecopsEngine](https://groups.google.com/g/CommunityDevsecopsEngine)
+  msg := "Containers must not run as root"
+}
 
-**2. Email:** You can write to us by email:  MaintainersDevsecopsEngine@googlegroups.com
+deny contains msg if {
+  input.kind == "Deployment"
+  not input.spec.selector.matchLabels.app
 
-# Getting Started
+  msg := "Containers must provide app label for pod selectors"
+}
+```
 
-Please follow our [Getting Started Guide](https://bancolombia.github.io/devsecops-engine-tools/)
+Assuming you have a Kubernetes deployment in `deployment.yaml` you can run Conftest like so:
 
-# How can I help?
+```console
+$ conftest test deployment.yaml
+FAIL - deployment.yaml - Containers must not run as root
+FAIL - deployment.yaml - Containers must provide app label for pod selectors
 
-Review the issues, we hear new ideas. Read more [Contributing](https://github.com/bancolombia/devsecops-engine-tools/blob/trunk/docs/CONTRIBUTING.md)
+2 tests, 0 passed, 0 warnings, 2 failures, 0 exceptions
+```
+
+Conftest isn't specific to Kubernetes. It will happily let you write tests for any configuration files in a variety of different formats. See the [documentation](https://www.conftest.dev/) for [installation instructions](https://www.conftest.dev/install/) and
+more details about the features.
+
+## Want to contribute to Conftest?
+
+* See [DEVELOPMENT.md](DEVELOPMENT.md) to build and test Conftest itself.
+* See [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
+
+For discussions and questions join us on the [Open Policy Agent Slack](https://slack.openpolicyagent.org/)
+in the `#opa-conftest` channel.

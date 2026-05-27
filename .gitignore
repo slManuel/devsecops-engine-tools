@@ -93,6 +93,7 @@ cdxgen-*
 build/** 
 cdxgen-*
 copa
+conftest
 
 # Doc
 .docusaurus

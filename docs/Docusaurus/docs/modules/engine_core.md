@@ -210,7 +210,7 @@ Configuration of the driven adapters in the main layer and management of on/off 
     },
     "ENGINE_IAC": {
         "ENABLED": true,
-        "TOOL": "CHECKOV|KUBESCAPE|KICS",
+        "TOOL": "CHECKOV|KUBESCAPE|KICS|CONFTEST",
         "PRIORITY": "STANDARD|DISCREET"
     },
     "ENGINE_CONTAINER": {

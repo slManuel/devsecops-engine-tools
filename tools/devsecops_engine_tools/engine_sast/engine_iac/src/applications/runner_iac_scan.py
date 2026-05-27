@@ -10,6 +10,9 @@ from devsecops_engine_tools.engine_sast.engine_iac.src.infrastructure.driven_ada
 from devsecops_engine_tools.engine_sast.engine_iac.src.infrastructure.driven_adapters.kics.kics_tool import (
     KicsTool
 )
+from devsecops_engine_tools.engine_sast.engine_iac.src.infrastructure.driven_adapters.conftest.conftest_tool import (
+    ConftestTool
+)
 
 
 def runner_engine_iac(dict_args, tool, secret_tool, devops_platform_gateway, remote_config_source_gateway, env):
@@ -20,7 +23,8 @@ def runner_engine_iac(dict_args, tool, secret_tool, devops_platform_gateway, rem
         tools = {
             "CHECKOV": CheckovTool(),
             "KUBESCAPE": KubescapeTool(),
-            "KICS": KicsTool()
+            "KICS": KicsTool(),
+            "CONFTEST": ConftestTool(),
         }
 
         if tool in tools:

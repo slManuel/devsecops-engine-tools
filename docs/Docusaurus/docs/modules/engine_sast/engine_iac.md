@@ -170,6 +170,42 @@ Main configuration file that defines scanning behavior, tool versions, and secur
   },
   "KUBESCAPE": {
     "VERSION": "3.0.11"
+  },
+  "CONFTEST": {
+    "VERSION": "0.56.0",
+    "POLICY_PATH": "policy",
+    "USE_EXTERNAL_CHECKS_DIR": false,
+    "EXTERNAL_DIR_OWNER": "",
+    "EXTERNAL_DIR_REPOSITORY": "",
+    "EXTERNAL_DIR_POLICIES_PATH": "policy",
+    "APP_ID_GITHUB": "",
+    "INSTALLATION_ID_GITHUB": "",
+    "DEFAULT_SEVERITY": "high",
+    "DEFAULT_CATEGORY": "vulnerability",
+    "RULES": {
+      "RULES_N8N": {
+        "CONF_N8N_BC_1": {
+          "severity": "Critical",
+          "category": "Vulnerability"
+        },
+        "CONF_N8N_BC_2": {
+          "severity": "Medium",
+          "category": "Vulnerability"
+        },
+        "CONF_N8N_BC_3": {
+          "severity": "High",
+          "category": "Vulnerability"
+        },
+        "CONF_N8N_BC_4": {
+          "severity": "Low",
+          "category": "Compliance"
+        },
+        "CONF_N8N_BC_5": {
+          "severity": "Critical",
+          "category": "Vulnerability"
+        }
+      }
+    }
   }
 }
 ```
@@ -232,6 +268,21 @@ Main configuration file that defines scanning behavior, tool versions, and secur
 ##### Kubescape Tool Configuration
 - **VERSION**: Kubescape version to use (e.g., `"3.0.11"`)
 
+##### Conftest Tool Configuration
+- **VERSION**: Conftest version to download (e.g., `"0.56.0"`)
+- **POLICY_PATH**: Local path to the directory containing `.rego` policy files (default `"policy"`)
+- **External Policy Configuration** (via GitHub App):
+  - `USE_EXTERNAL_CHECKS_DIR`: Download policies from a GitHub repository (`true`/`false`)
+  - `EXTERNAL_DIR_OWNER`: GitHub organisation or user owning the policy repository
+  - `EXTERNAL_DIR_REPOSITORY`: Repository name containing the policies
+  - `EXTERNAL_DIR_POLICIES_PATH`: Path inside the repository where policies are stored
+  - `APP_ID_GITHUB`: GitHub App ID used for authentication
+  - `INSTALLATION_ID_GITHUB`: GitHub App installation ID
+- **Default Values**:
+  - `DEFAULT_SEVERITY`: Fallback severity when a rule has no entry in `RULES` (e.g., `"high"`)
+  - `DEFAULT_CATEGORY`: Fallback category when a rule has no entry in `RULES` (e.g., `"vulnerability"`)
+- **RULES**: Rule metadata keyed by platform group then rule ID (see [Security Rules Configuration](#security-rules-configuration) below)
+
 ##### Security Rules Configuration
 Each tool contains rule sets organized by technology:
 
@@ -256,6 +307,7 @@ Each tool contains rule sets organized by technology:
 - **RULES_OPENAPI**: API security rules for OpenAPI specifications
 - **RULES_SERVERLESS**: Serverless rules for AWS Lambda specifications
 - **RULES_BICEP**: Azure Bicep security rules for Azure Cloud infrastructure
+- **RULES_N8N**: n8n workflow security rules (authentication, transport security, dangerous nodes, error handling, hardcoded credentials)
 
 In the RULES section of each platform (RULES_DOCKER, RULES_K8S, RULES_CLOUDFORMATION, etc.), the body is empty. Example “RULES_DOCKER” {}, the tool executes all rules associated with it.
 
@@ -350,7 +402,7 @@ Defines exclusion rules for repositories and specific security checks.
 
 ## Main Responsibilities
 
-- **IaC Security Orchestration:** Executes IaC security tools (Checkov, KICS, Kubescape) on infrastructure code
+- **IaC Security Orchestration:** Executes IaC security tools (Checkov, KICS, Kubescape, Conftest) on infrastructure code
 - **Configuration Management:** Loads and processes scan configurations and exclusions from remote repositories
 - **Folder and File Discovery:** Identifies relevant folders/files for scanning based on patterns and configuration
 - **Exclusions Management:** Applies exclusion rules based on configuration and DevSecOps policy
@@ -363,13 +415,14 @@ Defines exclusion rules for repositories and specific security checks.
 - `runner_iac_scan.py`: Main entry point for IaC scan orchestration
 - `entry_point_tool.py`: Initializes the IaC engine and triggers the scan process
 - `iac_scan.py`: Core use case for executing the scan, handling configuration, exclusions, and result aggregation
-- **Adapters:** Integrations for IaC security tools (Checkov, KICS, Kubescape)
+- **Adapters:** Integrations for IaC security tools (Checkov, KICS, Kubescape, Conftest)
 
 ## Supported Tools and Features
 
 - **Checkov:** Scans Terraform, CloudFormation, Kubernetes, Docker, and more for security misconfigurations
 - **KICS:** Scans IaC files for vulnerabilities and compliance issues with OpenAPI support
 - **Kubescape:** Focused on Kubernetes security scanning with RBAC analysis
+- **Conftest:** Policy-as-code scanning using OPA/Rego policies; supports namespace-based platform filtering and GitHub-hosted policy repositories
 - **Configurable Exclusions:** Supports exclusion of files/folders and custom ignore patterns with expiration dates
 - **Thresholds and Policies:** Handles custom thresholds and build-breaking policies for vulnerabilities and compliance
 - **Multi-platform Support:** Cross-platform binary distribution for Linux, macOS, and Windows
