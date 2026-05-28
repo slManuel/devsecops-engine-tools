@@ -825,31 +825,26 @@
             "RULES_N8N": {
                 "CONF_N8N_BC_1": {
                     "checkID": "CONF_N8N_BC_1 Webhook node exposes an unauthenticated endpoint",
-                    "environment": { "dev": true, "qa": true, "pdn": true },
                     "severity": "Critical",
                     "category": "Vulnerability"
                 },
                 "CONF_N8N_BC_2": {
                     "checkID": "CONF_N8N_BC_2 HTTP Request node uses insecure HTTP",
-                    "environment": { "dev": true, "qa": true, "pdn": true },
                     "severity": "Medium",
                     "category": "Vulnerability"
                 },
                 "CONF_N8N_BC_3": {
                     "checkID": "CONF_N8N_BC_3 Execute Command node can introduce command-injection risks",
-                    "environment": { "dev": true, "qa": true, "pdn": true },
                     "severity": "High",
                     "category": "Vulnerability"
                 },
                 "CONF_N8N_BC_4": {
                     "checkID": "CONF_N8N_BC_4 Active workflow has no error-handling node",
-                    "environment": { "dev": true, "qa": true, "pdn": true },
                     "severity": "Low",
                     "category": "Compliance"
                 },
                 "CONF_N8N_BC_5": {
                     "checkID": "CONF_N8N_BC_5 Credential hardcoded in node parameter",
-                    "environment": { "dev": true, "qa": true, "pdn": true },
                     "severity": "Critical",
                     "category": "Vulnerability"
                 }
