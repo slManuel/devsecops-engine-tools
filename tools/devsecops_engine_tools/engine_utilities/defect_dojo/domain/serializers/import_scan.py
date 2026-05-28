@@ -36,6 +36,7 @@ list_scan_type = [
     "Checkmarx Scan",
     "Checkmarx Scan detailed",
     "Checkov Scan",
+    "Conftest Scan",
     "Clair Klar Scan",
     "Clair Scan",
     "Cloudsploit Scan",

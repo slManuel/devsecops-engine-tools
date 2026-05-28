@@ -189,7 +189,7 @@
     },
     "ENGINE_IAC": {
         "ENABLED": true,
-        "TOOL": "CHECKOV|KUBESCAPE|KICS",
+        "TOOL": "CHECKOV|KUBESCAPE|KICS|CONFTEST",
         "PRIORITY": "STANDARD|DISCREET"
     },
     "ENGINE_CONTAINER": {
