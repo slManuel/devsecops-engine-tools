@@ -109,6 +109,7 @@ def get_inputs_from_cli(args):
             "checkov",
             "kics",
             "kubescape",
+            "conftest",
             "trufflehog",
             "gitleaks",
             "prisma",
@@ -156,7 +157,7 @@ def get_inputs_from_cli(args):
     parser.add_argument(
         "-p",
         "--platform",
-        type=parse_choices({"all", "docker", "k8s", "cloudformation", "openapi", "terraform", "serverless", "bicep"}),
+        type=parse_choices({"all", "docker", "k8s", "cloudformation", "openapi", "terraform", "serverless", "bicep", "n8n"}),
         required=False,
         default="all",
         help="Platform to scan, applies only to the engine_iac tool and it is possible to select several {all, docker, k8s, cloudformation, openapi, terraform}",
@@ -262,7 +263,7 @@ def get_inputs_from_cli(args):
     )
 
     TOOLS = {
-        "engine_iac": ["checkov", "kics", "kubescape"],
+        "engine_iac": ["checkov", "kics", "kubescape", "conftest"],
         "engine_secret": ["trufflehog", "gitleaks", "all_tools"],
         "engine_container": ["prisma", "trivy"],
         "engine_dependencies": ["xray", "dependency_check", "trivy"],

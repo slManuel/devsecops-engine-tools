@@ -46,6 +46,10 @@ For more information about structure remote config visit [Structure Remote Confi
     <td><a href="https://www.kics.io/">KICS</a></td>
     <td>Free</td>
   </tr>
+  <tr>
+    <td><a href="https://www.conftest.dev/">CONFTEST</a></td>
+    <td>Free</td>
+  </tr>
    <tr>
     <td>ENGINE_DAST</td>
     <td><a href="https://projectdiscovery.io/nuclei">NUCLEI</a></td>
