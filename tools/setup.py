@@ -30,7 +30,7 @@ setup(
     package_dir={
         "devsecops_engine_tools": "devsecops_engine_tools",
     },
-    packages=find_packages(exclude=["**test**"]),
+    packages=find_packages(exclude=["*.test", "*.test.*"]),
     entry_points={
         'console_scripts': [
             'devsecops-engine-tools=devsecops_engine_tools.engine_core.src.applications.runner_engine_core:application_core',
