@@ -343,6 +343,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                 dd_max_retries,
                 {
                     "type": "white_list",
+                    "status": "Accepted",
                     "limit": dd_limits_query
                 },
             )
@@ -410,6 +411,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                 max_retries,
                 {
                     "type": "white_list",
+                    "status": "Accepted",
                 },
             )
 
@@ -512,6 +514,7 @@ class DefectDojoPlatform(VulnerabilityManagementGateway):
                 ],
                 {
                     "type": "black_list",
+                    "status": "Accepted"
                 },
             )
 
