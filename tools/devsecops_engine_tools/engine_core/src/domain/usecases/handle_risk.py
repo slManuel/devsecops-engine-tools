@@ -86,12 +86,30 @@ class HandleRisk:
 
         return filtered_engagements
 
-    def _exclude_services(self, dict_args, pipeline_name, service_list):
+    def _exclude_services(self, dict_args, pipeline_name, service_list, risk_config):
         risk_exclusions = self.remote_config_source_gateway.get_remote_config(
             dict_args["remote_config_repo"],
             "engine_risk/Exclusions.json",
             dict_args["remote_config_branch"],
         )
+
+        ignore_pattern = risk_config.get("IGNORE_ANALYSIS_PATTERN")
+        if ignore_pattern:
+            pattern_excluded = [
+                engagement
+                for engagement in service_list
+                if re.match(ignore_pattern, engagement.name, re.IGNORECASE)
+            ]
+            if pattern_excluded:
+                print(
+                    f"Services excluded by pattern: {[e.name for e in pattern_excluded]}"
+                )
+            service_list = [
+                engagement
+                for engagement in service_list
+                if not re.match(ignore_pattern, engagement.name, re.IGNORECASE)
+            ]
+
         if (
             pipeline_name in risk_exclusions
             and risk_exclusions[pipeline_name].get("SKIP_SERVICE", 0)
@@ -219,7 +237,7 @@ class HandleRisk:
                     service_list += [build_engagement]
 
         new_service_list = self._exclude_services(
-            dict_args, pipeline_name, service_list
+            dict_args, pipeline_name, service_list, risk_config
         )
 
         for engagement in new_service_list:

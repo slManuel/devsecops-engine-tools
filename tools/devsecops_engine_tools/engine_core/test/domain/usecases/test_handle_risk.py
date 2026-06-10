@@ -191,6 +191,7 @@ class TestHandleRisk(unittest.TestCase):
             MagicMock(name="service_1"),
             MagicMock(name="service_2"),
         ]
+        risk_config = {"IGNORE_ANALYSIS_PATTERN": None}
         self.remote_config_source_gateway.get_remote_config.return_value = {
             "pipeline_name": {
                 "SKIP_SERVICE": {"services": ["code_service_1", "code_service_2"]}
@@ -199,11 +200,32 @@ class TestHandleRisk(unittest.TestCase):
 
         # Call the process method
         result = self.handle_risk._exclude_services(
-            dict_args, pipeline_name, service_list
+            dict_args, pipeline_name, service_list, risk_config
         )
 
         # Assert the expected values
         assert type(result) == list
+
+    def test_exclude_services_ignore_pattern(self):
+        dict_args = {
+            "remote_config_repo": "test_repo",
+            "remote_config_branch": ""
+        }
+        pipeline_name = "pipeline_name"
+        eng1 = MagicMock()
+        eng1.name = "skip_service_1"
+        eng2 = MagicMock()
+        eng2.name = "keep_service_1"
+        service_list = [eng1, eng2]
+        risk_config = {"IGNORE_ANALYSIS_PATTERN": "^skip_.*"}
+        self.remote_config_source_gateway.get_remote_config.return_value = {}
+
+        result = self.handle_risk._exclude_services(
+            dict_args, pipeline_name, service_list, risk_config
+        )
+
+        assert len(result) == 1
+        assert result[0].name == "keep_service_1"
 
     def test_should_skip_analysis(self):
         remote_config = {"IGNORE_ANALYSIS_PATTERN": "pattern"}
