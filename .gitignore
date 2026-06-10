@@ -14,7 +14,7 @@ DevSecOps_Remote_Config
 .*DS_Store
 Pipfile
 
-#Distribucioes de lib
+#Distribuciones de lib
 **dist**
 **.egg-info/
 *.pyc
@@ -22,10 +22,19 @@ Pipfile
 **tools/build/**
 **build/lib**
 
-#Ignorar cualquir archivo TXT
+#Ignorar cualquier archivo TXT
 scanned_images.txt
 *.pyc
 data
+
+#Ignorar carpetas/archivos de agentes
+.agents
+.clinerules
+.cursor
+.github
+.opencode
+.windsurf
+AGENTS.md
 
 #Archivos de Pruebas
 .env
