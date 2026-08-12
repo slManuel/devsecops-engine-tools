@@ -52,6 +52,22 @@ Main configuration file that defines SonarQube integration behavior and reportin
 
 Defines exclusion rules for pipelines and patterns to skip SonarQube reporting.
 
+#### Tool-level skip policy
+
+`report sonar` sends existing findings to Vultracker; it does not run the native SonarQube analysis.
+To omit this reporting task, use the common policy:
+
+```json
+{
+  "All": { "SKIP_TOOL": true, "SKIP_TOOL_LIMIT_DATE": "31122999" },
+  "PIPELINE_NAME": { "SKIP_TOOL": "true", "SKIP_TOOL_LIMIT_DATE": "31122999" }
+}
+```
+
+The pipeline-specific entry overrides `All`. `true` and `"true"` are compatible values. The date is
+inclusive and uses `DDMMYYYY`; invalid, missing, or expired dates execute reporting. Existing
+reporting-specific branch and pattern rules remain independent.
+
 #### Structure
 ```json
 {

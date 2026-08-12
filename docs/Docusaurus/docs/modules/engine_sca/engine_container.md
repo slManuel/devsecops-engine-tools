@@ -211,6 +211,22 @@ Main configuration file that defines scanning behavior, tool versions, and secur
 
 Defines exclusion rules for repositories and specific vulnerability findings.
 
+#### Tool-level skip policy
+
+To omit the complete container scan, configure `SKIP_TOOL` and `SKIP_TOOL_LIMIT_DATE`. Finding
+exclusions under `PRISMA` or `TRIVY` continue to use their own `create_date` and `expired_date`.
+
+```json
+{
+  "All": { "SKIP_TOOL": true, "SKIP_TOOL_LIMIT_DATE": "31122999" },
+  "Repository_Test": { "SKIP_TOOL": "true", "SKIP_TOOL_LIMIT_DATE": "31122999" }
+}
+```
+
+The pipeline-specific entry overrides `All`; `true` and `"true"` are accepted for compatibility.
+The inclusive `DDMMYYYY` date must be valid and not expired. Invalid or unavailable configuration
+fails open and the scan continues.
+
 #### Structure
 ```json
 {

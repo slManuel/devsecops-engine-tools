@@ -186,7 +186,10 @@ class TestSecretScan(unittest.TestCase):
         mock_devops_gateway_instance = mock_devops_gateway.return_value
         mock_devops_gateway_instance.get_variable.return_value = "test_pipeline"
         exclusions = {
-            "test_pipeline": {"SKIP_TOOL": 1}
+            "test_pipeline": {
+                "SKIP_TOOL": True,
+                "SKIP_TOOL_LIMIT_DATE": "31122999",
+            }
         }
         result = secret_scan.skip_from_exclusion(exclusions, skip_tool_isp)
         self.assertTrue(result)
@@ -222,7 +225,10 @@ class TestSecretScan(unittest.TestCase):
         mock_devops_gateway_instance = mock_devops_gateway.return_value
         mock_devops_gateway_instance.get_variable.return_value = "test_pipeline"
         exclusions = {
-            "test_pipeline": {"SKIP_TOOL": 1}
+            "test_pipeline": {
+                "SKIP_TOOL": True,
+                "SKIP_TOOL_LIMIT_DATE": "31122999",
+            }
         }
         result = secret_scan.skip_from_exclusion(exclusions, skip_tool_isp)
         self.assertTrue(result)
@@ -258,7 +264,10 @@ class TestSecretScan(unittest.TestCase):
         mock_devops_gateway_instance = mock_devops_gateway.return_value
         mock_devops_gateway_instance.get_variable.return_value = "other_pipeline"
         exclusions = {
-            "test_pipeline": {"SKIP_TOOL": 1}
+            "test_pipeline": {
+                "SKIP_TOOL": True,
+                "SKIP_TOOL_LIMIT_DATE": "31122999",
+            }
         }
         result = secret_scan.skip_from_exclusion(exclusions, skip_tool_isp)
         self.assertFalse(result)

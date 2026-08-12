@@ -147,11 +147,8 @@ class TestIacScan(unittest.TestCase):
                     ]
                 },
                 "example_pipeline": {
-                    "SKIP_TOOL": {
-                        "create_date": "24012024",
-                        "expired_date": "30012024",
-                        "hu": "3423213",
-                    },
+                    "SKIP_TOOL": True,
+                    "SKIP_TOOL_LIMIT_DATE": "31122999",
                     "CHECKOV": [
                         {
                             "id": "CKV_K8S_8",
@@ -251,11 +248,8 @@ class TestIacScan(unittest.TestCase):
                                 "Medium Low": 1,
                             },
                         },
-                        "SKIP_TOOL": {
-                            "create_date": "24012024",
-                            "expired_date": "30012024",
-                            "hu": "3423213",
-                        },
+                        "SKIP_TOOL": True,
+                        "SKIP_TOOL_LIMIT_DATE": "31122999",
                         "CHECKOV": [
                             {
                                 "id": "CKV_K8S_9",

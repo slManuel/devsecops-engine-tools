@@ -21,6 +21,10 @@ import re
 
 from devsecops_engine_tools.engine_utilities.utils.logger_info import MyLogger
 from devsecops_engine_tools.engine_utilities import settings
+from devsecops_engine_tools.engine_core.src.infrastructure.helpers.skip_policy import (
+    applicable_exclusion,
+    should_skip_remote_config,
+)
 
 logger = MyLogger.__call__(**settings.SETTING_LOGGER).get_logger()
 
@@ -141,9 +145,9 @@ class HandleRisk:
 
     def _should_skip_analysis(self, remote_config, pipeline_name, exclusions):
         ignore_pattern = remote_config["IGNORE_ANALYSIS_PATTERN"]
+        exclusion = applicable_exclusion(exclusions, pipeline_name)
         return re.match(ignore_pattern, pipeline_name, re.IGNORECASE) or (
-            pipeline_name in exclusions
-            and exclusions[pipeline_name].get("SKIP_TOOL", 0)
+            should_skip_remote_config(exclusion)
         )
 
     def process(self, dict_args: any, remote_config: any):

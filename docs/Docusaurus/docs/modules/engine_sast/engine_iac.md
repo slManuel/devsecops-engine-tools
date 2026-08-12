@@ -331,11 +331,8 @@ Defines exclusion rules for repositories and specific security checks.
     ]
   },
   "Repository_Test": {
-    "SKIP_TOOL": {
-      "create_date": "24012024",
-      "expired_date": "30012024",
-      "hu": "3423213"
-    },
+    "SKIP_TOOL": true,
+    "SKIP_TOOL_LIMIT_DATE": "31122999",
     "CHECKOV": [
       {
         "id": "CKV_K8S_8",
@@ -366,11 +363,8 @@ Defines exclusion rules for repositories and specific security checks.
           "Medium Low": 15
         }
       },
-      "SKIP_TOOL": {
-        "create_date": "24012024",
-        "expired_date": "30012024",
-        "hu": "3423213"
-      },
+      "SKIP_TOOL": "true",
+      "SKIP_TOOL_LIMIT_DATE": "31122999",
       "CHECKOV": [
         {
           "id": "CKV_K8S_24",
@@ -388,6 +382,29 @@ Defines exclusion rules for repositories and specific security checks.
 
 #### Exclusion Types
 - **All**: Global exclusions applied to all repositories
+
+#### Tool-level skip policy
+
+`SKIP_TOOL` omits the complete IaC tool execution. It is separate from finding exclusions such as
+`CHECKOV`, whose entries may contain `create_date` and `expired_date`.
+
+```json
+{
+  "All": {
+    "SKIP_TOOL": true,
+    "SKIP_TOOL_LIMIT_DATE": "31122999"
+  },
+  "Repository_Test": {
+    "SKIP_TOOL": "true",
+    "SKIP_TOOL_LIMIT_DATE": "31122999"
+  }
+}
+```
+
+The repository-specific entry has priority over `All`. `true`, `"true"`, and values with spaces or
+different casing are accepted for compatibility. Numbers and objects are not accepted as skip flags.
+The limit date uses `DDMMYYYY`, is inclusive, and an invalid, missing, or expired date executes the
+tool. RemoteConfig errors fail open with a warning.
 - **Repository-specific**: Exclusions for specific repositories
 - **BY_PATTERN_SEARCH**: Regex-based exclusions for matching multiple pipeline names
 - **SKIP_TOOL**: Complete tool bypass for a repository

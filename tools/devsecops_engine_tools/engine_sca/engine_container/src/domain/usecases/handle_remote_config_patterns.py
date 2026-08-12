@@ -1,5 +1,10 @@
 import re
 
+from devsecops_engine_tools.engine_core.src.infrastructure.helpers.skip_policy import (
+    applicable_exclusion,
+    should_skip_remote_config,
+)
+
 
 class HandleRemoteConfigPatterns:
     def __init__(self, remote_config, exclusions, pipeline_name):
@@ -24,9 +29,5 @@ class HandleRemoteConfigPatterns:
 
         Return: bool: True -> skip tool, False -> not skip tool.
         """
-        if (self.pipeline_name in self.exclusions) and (
-            self.exclusions[self.pipeline_name].get("SKIP_TOOL", 0)
-        ):
-            return True
-        else:
-            return False
+        exclusion = applicable_exclusion(self.exclusions, self.pipeline_name)
+        return should_skip_remote_config(exclusion)

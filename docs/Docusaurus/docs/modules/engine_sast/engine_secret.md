@@ -119,6 +119,22 @@ Main configuration file that defines scanning behavior, tool versions, and secur
 
 Defines exclusion rules for repositories and specific secret scanning findings.
 
+#### Tool-level skip policy
+
+To omit the complete secret task, use `SKIP_TOOL` and `SKIP_TOOL_LIMIT_DATE`. Finding exclusions
+under `TRUFFLEHOG` and `GITLEAKS` retain `create_date` and `expired_date`.
+
+```json
+{
+  "All": { "SKIP_TOOL": true, "SKIP_TOOL_LIMIT_DATE": "31122999" },
+  "Repository_test": { "SKIP_TOOL": "true", "SKIP_TOOL_LIMIT_DATE": "31122999" }
+}
+```
+
+The repository-specific entry takes precedence over `All`. Both `true` and `"true"` are accepted
+for compatibility. The inclusive date must be valid `DDMMYYYY`; invalid, missing, or expired dates
+execute the task, and RemoteConfig failures fail open.
+
 #### Structure
 ```json
 {

@@ -172,6 +172,14 @@ Main configuration file that defines risk analysis behavior, scoring weights, an
   - `tag3`: 5 days exclusion
   - `tag4`: 0 days (immediate processing)
 
+##### Tool-level skip policy
+
+Risk consumes the same `SKIP_TOOL` policy as the scanners. A pipeline-specific entry has priority;
+when absent, `All` is used. `SKIP_TOOL` accepts boolean `true` and compatibility string `"true"`.
+`SKIP_TOOL_LIMIT_DATE` must be a valid inclusive `DDMMYYYY` date; missing, invalid, or expired dates
+do not skip Risk. Finding exclusions continue to use their existing `create_date` and `expired_date`
+fields.
+
 ##### Threshold Configuration
 
 **Basic Threshold Configuration:**

@@ -100,6 +100,23 @@ Main configuration file that defines scanning behavior, tool versions, and secur
 
 Defines exclusion rules for repositories and specific vulnerability findings.
 
+#### Tool-level skip policy
+
+Use `SKIP_TOOL` with `SKIP_TOOL_LIMIT_DATE` to omit the complete dependency scan. This is distinct
+from `XRAY`, `TRIVY`, or `DEPENDENCY_CHECK` finding exclusions, where `create_date` and
+`expired_date` remain valid.
+
+```json
+{
+  "All": { "SKIP_TOOL": true, "SKIP_TOOL_LIMIT_DATE": "31122999" },
+  "Repository_Test": { "SKIP_TOOL": "true", "SKIP_TOOL_LIMIT_DATE": "31122999" }
+}
+```
+
+The pipeline-specific entry takes precedence over `All`. `true` and the compatibility form `"true"`
+are accepted. The date is inclusive and must use `DDMMYYYY`; missing, invalid, or expired dates
+execute the scan. RemoteConfig failures fail open.
+
 #### Structure
 ```json
 {

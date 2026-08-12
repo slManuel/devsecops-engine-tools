@@ -11,7 +11,12 @@ def remote_config():
 
 @pytest.fixture
 def exclusions():
-    return {"dummy_pipeline": {"SKIP_TOOL": 1}}
+    return {
+        "dummy_pipeline": {
+            "SKIP_TOOL": True,
+            "SKIP_TOOL_LIMIT_DATE": "31122999",
+        }
+    }
 
 
 @pytest.fixture
@@ -36,3 +41,15 @@ def test_skip_from_exclusion(handle_remote):
 def test_not_skip_from_exclusion(handle_remote):
     handle_remote.pipeline_name = "another_pipeline"
     assert not handle_remote.skip_from_exclusion()
+
+
+def test_skip_from_all_when_pipeline_has_no_specific_entry(handle_remote):
+    handle_remote.exclusions = {
+        "All": {
+            "SKIP_TOOL": "true",
+            "SKIP_TOOL_LIMIT_DATE": "31122999",
+        }
+    }
+    handle_remote.pipeline_name = "another_pipeline"
+
+    assert handle_remote.skip_from_exclusion()

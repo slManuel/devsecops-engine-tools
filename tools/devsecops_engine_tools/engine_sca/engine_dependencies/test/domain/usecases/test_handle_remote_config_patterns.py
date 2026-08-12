@@ -55,7 +55,12 @@ def test_skip_from_exclusion():
     remote_config = {
         "remote_config_key": "remote_config_value",
     }
-    exclusions = {"pipeline1": {"SKIP_TOOL": {"hu": ""}}}
+    exclusions = {
+        "pipeline1": {
+            "SKIP_TOOL": True,
+            "SKIP_TOOL_LIMIT_DATE": "31122999",
+        }
+    }
     pipeline_name = "pipeline1"
 
     handle_remote_config_patterns_instance = HandleRemoteConfigPatterns(
@@ -79,3 +84,19 @@ def test_skip_from_exclusion_not_skip():
     result = handle_remote_config_patterns_instance.skip_from_exclusion()
 
     assert result == False
+
+
+def test_skip_from_all_when_pipeline_has_no_specific_entry():
+    remote_config = {"remote_config_key": "remote_config_value"}
+    exclusions = {
+        "All": {
+            "SKIP_TOOL": "true",
+            "SKIP_TOOL_LIMIT_DATE": "31122999",
+        }
+    }
+
+    handle_remote_config_patterns_instance = HandleRemoteConfigPatterns(
+        remote_config, exclusions, "pipeline"
+    )
+
+    assert handle_remote_config_patterns_instance.skip_from_exclusion() is True

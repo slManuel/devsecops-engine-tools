@@ -75,6 +75,23 @@ Main configuration file that defines scanning behavior, tool versions, and secur
 
 File that defines specific exclusions by tool and repository for function analysis.
 
+#### Tool-level skip policy
+
+`SKIP_TOOL` controls the Engine Tools function task. It is not a finding exclusion and therefore
+does not use `create_date`/`expired_date`.
+
+```json
+{
+  "All": { "SKIP_TOOL": true, "SKIP_TOOL_LIMIT_DATE": "31122999" },
+  "Repository_Test": { "SKIP_TOOL": "true", "SKIP_TOOL_LIMIT_DATE": "31122999" }
+}
+```
+
+The repository-specific entry has priority over `All`. The engine accepts boolean `true` and the
+legacy-compatible string `"true"`; the inclusive date must be valid `DDMMYYYY`. A missing, invalid,
+or expired date executes the task. Preparation before the task may still run and is tracked as a
+known limitation of this initiative.
+
 ```json
 {
   "All": {
