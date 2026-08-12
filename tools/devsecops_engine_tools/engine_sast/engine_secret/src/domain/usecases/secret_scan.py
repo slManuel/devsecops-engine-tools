@@ -9,6 +9,10 @@ from devsecops_engine_tools.engine_sast.engine_secret.src.domain.model.gateway.g
 from devsecops_engine_tools.engine_core.src.domain.model.gateway.devops_platform_gateway import (
     DevopsPlatformGateway,
 )
+from devsecops_engine_tools.engine_core.src.infrastructure.helpers.skip_policy import (
+    applicable_exclusion,
+    should_skip_remote_config,
+)
 from devsecops_engine_tools.engine_utilities.git_cli.model.gateway.git_gateway import (
     GitGateway
 )
@@ -96,9 +100,5 @@ class SecretScan:
             return True
         else:
             pipeline_name = self.devops_platform_gateway.get_variable("pipeline_name")
-            if (pipeline_name in exclusions) and (
-                exclusions[pipeline_name].get("SKIP_TOOL", 0)
-            ):
-                return True
-            else:
-                return False
+            exclusion = applicable_exclusion(exclusions, pipeline_name)
+            return should_skip_remote_config(exclusion)

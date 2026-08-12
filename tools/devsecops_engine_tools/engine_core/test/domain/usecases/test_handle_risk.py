@@ -230,7 +230,12 @@ class TestHandleRisk(unittest.TestCase):
     def test_should_skip_analysis(self):
         remote_config = {"IGNORE_ANALYSIS_PATTERN": "pattern"}
         pipeline_name = "pipeline"
-        exclusions = {"pipeline": {"SKIP_TOOL": 1}}
+        exclusions = {
+            "pipeline": {
+                "SKIP_TOOL": "true",
+                "SKIP_TOOL_LIMIT_DATE": "31122999",
+            }
+        }
 
         result = self.handle_risk._should_skip_analysis(
             remote_config, pipeline_name, exclusions

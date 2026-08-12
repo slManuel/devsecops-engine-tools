@@ -6,6 +6,10 @@ from devsecops_engine_tools.engine_sast.engine_iac.src.domain.model.gateways.too
 from devsecops_engine_tools.engine_core.src.domain.model.gateway.devops_platform_gateway import (
     DevopsPlatformGateway,
 )
+from devsecops_engine_tools.engine_core.src.infrastructure.helpers.skip_policy import (
+    applicable_exclusion,
+    should_skip_remote_config,
+)
 from devsecops_engine_tools.engine_sast.engine_iac.src.domain.model.config_tool import (
     ConfigTool,
 )
@@ -121,9 +125,14 @@ class IacScan:
                     exclusions_scope = values
                     break
 
+        if exclusions_scope is None:
+            exclusions_scope = applicable_exclusion(
+                config_tool.exclusions, config_tool.scope_pipeline
+            )
+
         if exclusions_scope is not None:
             config_tool.exclusions_scope = exclusions_scope.get(tool)
-            skip_tool = bool(exclusions_scope.get("SKIP_TOOL"))
+            skip_tool = should_skip_remote_config(exclusions_scope)
 
         if dict_args["folder_path"]:
             if (
